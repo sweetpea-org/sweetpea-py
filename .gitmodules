@@ -1,0 +1,3 @@
+[submodule "sweetpea-core"]
+	path = sweetpea-core
+	url = https://github.com/anniecherk/sweetpea-core
