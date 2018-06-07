@@ -5,6 +5,14 @@ from FrontEnd import *
 import operator as op
 
 
+def test_get_all_level_names():
+    color = Factor("color", ["red", "blue"])
+    text  = Factor("text",  ["red", "blue", "green"])
+    assert get_all_level_names([color, text]) == [('color', 'red'),
+                                                  ('color', 'blue'),
+                                                  ('text', 'red'),
+                                                  ('text', 'blue'),
+                                                  ('text', 'green')]
 
 # done
 def test_fullycrosssize():
