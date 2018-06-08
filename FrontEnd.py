@@ -29,7 +29,7 @@ crossing     = [color, text]
 experiment   = fully_cross_block(design, crossing, []) # constraints)
 (nVars, cnf) = synthesize_trials(experiment)
 """
-   
+
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -90,7 +90,7 @@ Not = namedtuple('Not', 'input')
 
 # ~~~~~~~~~~ Helper functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 """
-Helper function which grabs names from derived levels; 
+Helper function which grabs names from derived levels;
     if the level is non-derived the level *is* the name
 """
 def get_level_name(level: Any) -> Any:
@@ -99,7 +99,7 @@ def get_level_name(level: Any) -> Any:
     return level
 
 
-""" 
+"""
 Usage::
     >>> color = Factor("color", ["red", "blue"])
     >>> text  = Factor("text",  ["red", "blue", "green"])
@@ -133,7 +133,7 @@ def cnfToStr(expr: And) -> str:
 
 
 """
-A full crossing is the product of the number of levels 
+A full crossing is the product of the number of levels
 in all the factors in the xing.
 
 Usage::
@@ -158,22 +158,22 @@ Analogous to fully_cross_size:
 """
 def design_size(design: List[Factor]) -> int:
     return sum([len(f.levels) for f in design])
-    
+
 """
 Usage::
     >>> get_dep_xProduct(conLevel)
-[(('color', 'red'), ('text', 'red')), 
- (('color', 'red'), ('text', 'blue')), 
- (('color', 'blue'), ('text', 'red')), 
+[(('color', 'red'), ('text', 'red')),
+ (('color', 'red'), ('text', 'blue')),
+ (('color', 'blue'), ('text', 'red')),
  (('color', 'blue'), ('text', 'blue'))]
 :param level: A derived level which we want to get the crossing of
-:rtype: list of tuples of tuples of strings which represent the crossing 
+:rtype: list of tuples of tuples of strings which represent the crossing
 ** Careful! The length of the (outer) tuple depends on how many terms are part of the derivation! That's why there isn't a mypy annotation on the return type!
 """
 def get_dep_xProduct(level: DerivedLevel) -> List[Tuple[Any, ...]]:
     return list(product(*[[(depFact.name, x) for x in depFact.levels] for depFact in level.window.args]))
-    
-    
+
+
 """
 handy-dandy chunker from SO: https://stackoverflow.com/questions/312443/how-do-you-split-a-list-into-evenly-sized-chunks
 """
@@ -181,22 +181,22 @@ handy-dandy chunker from SO: https://stackoverflow.com/questions/312443/how-do-y
 def chunk(it: Iterable[Any], size: int) -> Iterator[Tuple[Any, ...]]:
     it = iter(it)
     return iter(lambda: tuple(islice(it, size)), ())
- 
+
 """
 This is a helper for getting how many directly encoded variables there are in the experiment.
 For instance, if we have the simple stoop experiment (at the bottom of this page) then
-    we have 4 trials, each of which encode state for 6 levels 
+    we have 4 trials, each of which encode state for 6 levels
     (this is because not all the factors are part of the full crossing)
     so there are 24 encoding variables
 """
 def encoding_variable_size(design: List[Factor], xing: List[Factor]) -> int:
-    return design_size(design) * fully_cross_size(xing)    
-    
+    return design_size(design) * fully_cross_size(xing)
+
 """ Simple helper to make process_derivations a tiny bit more legible
 """
 def get_derived_factors(design: List[Factor]) -> List[Factor]:
     is_derived = lambda x : isinstance(x.levels[0], DerivedLevel)
-    return list(filter(is_derived, design))   
+    return list(filter(is_derived, design))
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~ Functions that have to do with derivations (called from fully_cross_block) ~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -225,7 +225,7 @@ In the example above, the indicies of the design are:
     3    text:blue
     4    conFactor:con
     5    conFactor:inc
-So the tuple (4, [[0,2], [1,3]]) represents the information that 
+So the tuple (4, [[0,2], [1,3]]) represents the information that
     the derivedLevel con is true iff
         (color:red && text:red) ||
         (color:blue && text:blue)
@@ -237,7 +237,7 @@ def process_derivations(design: List[Factor], xing: List[Factor]) -> List[Deriva
     accum = []
     for fact in derived_factors:
         for level in fact.levels:
-            level_index = all_levels.index((fact.name, level.name))                 
+            level_index = all_levels.index((fact.name, level.name))
             x_product = get_dep_xProduct(level)
             # filter to valid pairs, and get their idxs
             valid_pairs = [pair for pair in x_product if level.window.func(pair[0][1], pair[1][1])]
@@ -249,32 +249,32 @@ def process_derivations(design: List[Factor], xing: List[Factor]) -> List[Deriva
 
 """
 This is a helper function that shifts the idxs of process_derivations.
-ie, if its a Transition(op.eq, [color, color]) (ie "repeat" color transition) 
+ie, if its a Transition(op.eq, [color, color]) (ie "repeat" color transition)
     then the indexes for the levels of color would be like (0, 0), (1, 1)
     but actually, the window size for a transition is 2, so what we really want is the indicies
     (0, 5), (1, 6) (assuming there are 4 levels in the design)
 So this helper function shifts over indices that were meant to be intepretted as being in a subsequent trial.
 TODO: general window case later
 """
-def shift_window(idxs: List[List[int]], window: Union[WithinTrial, Transition, Window], 
+def shift_window(idxs: List[List[int]], window: Union[WithinTrial, Transition, Window],
                                         trial_size:int) -> List[List[int]]:
     if isinstance(window, WithinTrial):
         return idxs
     elif isinstance(window, Transition):
         # update the idxs in slot 2 to be +trialsize
         return [[pair[0], pair[1]+trial_size] for pair in idxs]
-    #TODO: general constraint case 
+    #TODO: general constraint case
     elif isinstance(window, Window):
         window_width = len(window.args)
         print("WARNING THIS CASE IS NOT YET IMPLEMENTED")
         return idxs
-    else: 
+    else:
         raise ValueError("Wierd window encountered while processing derivations!")
-    
 
-    
+
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# ~~~~~~~~~~ Functions that have to do with desugaring (called from synthesize) ~~~~~~~~~~~~~~~~~~~~~~~~~ 
+# ~~~~~~~~~~ Functions that have to do with desugaring (called from synthesize) ~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -308,7 +308,7 @@ So for instance in the experiment
     color = Factor("color", ["red", "blue"])
     text  = Factor("text",  ["red", "blue"])
     design = crossing = [color, text, conFactor]
-    experiment   = fully_cross_block(design, crossing, []) 
+    experiment   = fully_cross_block(design, crossing, [])
 The first trial is represented by the boolean vars [1, 2, 3, 4]
     0 is true iff the trial is color:red
     1 is true iff the trial is color:blue
@@ -333,7 +333,7 @@ def desugar_consistency(fresh:int, hl_block:HLBlock) -> List[Request]:
 
 
 """
-We represent the fully crossed constraint by allocating additional boolean variables to represent each unique state. Only factors in xing will contribute to the number of states (there may be factors in the design that aren't in the xing). 
+We represent the fully crossed constraint by allocating additional boolean variables to represent each unique state. Only factors in xing will contribute to the number of states (there may be factors in the design that aren't in the xing).
 Continuing with example from desugar_consistency we will represent the states:
     (color:red, text:red)
     (color:red, text:blue)
@@ -381,7 +381,7 @@ This desugars pretty directly into the llrequests.
 The only thing to do here is to collect all the boolean vars that match the same level & pair them up according to k.
 Continuing with the example from desugar_consistency:
     say we want NoMoreThanKInARow 1 ("color", "red")
-    then we need to grab all the vars which indicate color-red : [1, 5, 9, 13] 
+    then we need to grab all the vars which indicate color-red : [1, 5, 9, 13]
     and then wrap them up so that we're making requests like:
         sum(1, 5)  LT 1
         sum(5, 9)  LT 1
@@ -402,8 +402,8 @@ TODO: not sure how 'balance' needs to be expressed given the current derivations
 def desugar_balance(fresh:int, factor_to_balance:Any, hl_block:HLBlock):
     print("WARNING THIS IS NOT YET IMPLEMENTED")
     return []
-  
-    
+
+
 """
 Goal is to produce a json structure like:
     { "fresh" : 18,
@@ -426,49 +426,49 @@ def jsonify(fresh:int, ll_calls: List[Request]) -> str:
     # wrap all the calls in a dictionary:
     return json.dumps({ "fresh" : fresh,
                         "requests" : ll_calls })
- 
 
-    
+
+
 """
 We desugar constraints in 2 ways; directly to CNF and by
     creating Requests to the backend. The requests are
     namedTuples that represent lowlevel requests:
 A request is: namedtuple('Request', 'equalityType k booleanValues')
     options for equality-type are "EQ", "LT" & "GT"
-We start keeping track of a "fresh" variable counter here; it starts at numTrials*numLevels+1. The convention is you use the fresh variable, and then update it. So fresh is like an always available new boolean variable. 
+We start keeping track of a "fresh" variable counter here; it starts at numTrials*numLevels+1. The convention is you use the fresh variable, and then update it. So fresh is like an always available new boolean variable.
 Recall an HLBlock is: namedtuple('HLBlock', 'design xing hlconstraints')
 #TODO
 """
 def desugar(hl_block: HLBlock) -> Tuple[int, And, List[Request]]:
     fresh = 1 + encoding_variable_size(hl_block.design, hl_block.xing)
     cnfs_created = []
-    reqs_created = [] 
+    reqs_created = []
     # -----------------------------------------------------------
     # These go directly to CNF
     # filter the constraints to route to the correct processesors
     derivations = list(filter(lambda x: isinstance(x, Derivation), hl_block.hlconstraints))
     desugared_ders = [desugar_derivation(fresh, x, hl_block) for x in derivations] # <- todo, not implemented
-    cnfs_created.extended(desugared_ders) 
+    cnfs_created.extended(desugared_ders)
 
     # -----------------------------------------------------------
     # These create lowlevel requests
     #reqs_created.append(desugar_consistency(hl_block))
     # filter for any NoMoreThanKInARow constraints in hl_block.hlconstraints
     #reqs_created.append(desugar_nomorethankinarow(k, level))
-    
+
     # -----------------------------------------------------------
     # This one does both...
     (cnf, reqs) = desugar_full_crossing(fresh, hl_block)
     cnfs_created.extend(cnf)
     reqs_created.extend(reqs)
-    
+
     return (fresh, cnfs_created, reqs_created)
 
 
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# ~~~~~~~~~~~~~ Top-Level functions ~~~~~~~~~~~~~~~~~~~~~     
+# ~~~~~~~~~~~~~ Top-Level functions ~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
@@ -503,6 +503,3 @@ def synthesize_trials(hl_block: HLBlock, output: str) -> str:
     # start subprocess call that calls unigen
     # decode the results
     return ""
-  
-
-
