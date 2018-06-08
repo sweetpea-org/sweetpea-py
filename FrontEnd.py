@@ -46,7 +46,7 @@ experiment   = fully_cross_block(design, crossing, []) # constraints)
 # Everything the user interacts with
 Factor       = namedtuple('Factor', 'name levels')
 Window       = namedtuple('Window', 'func args stride')
-Window.__new__.__defaults__ = (None, None, 1)
+Window.__new__.__defaults__ = (None, None, 1) # type: ignore
 
 WithinTrial  = namedtuple('WithinTrial', 'func args')
 Transition   = namedtuple('Transition', 'func args')
@@ -373,7 +373,7 @@ def desugar_full_crossing(fresh:int, hl_block:HLBlock) -> Tuple[And, List[Reques
     # Step 3:
     # 5. make Requests for each transposed list that add up to k=1.
     print("WARNING THIS IS NOT YET IMPLEMENTED")
-    return None # todo!
+    return Tuple[And([]), []]
 
 
 """
@@ -439,7 +439,7 @@ We start keeping track of a "fresh" variable counter here; it starts at numTrial
 Recall an HLBlock is: namedtuple('HLBlock', 'design xing hlconstraints')
 #TODO
 """
-def desugar(hl_block: HLBlock) -> Tuple[int, And, List[Request]]:
+def desugar(hl_block: HLBlock) -> Tuple[int, List[And], List[Request]]:
     fresh = 1 + encoding_variable_size(hl_block.design, hl_block.xing)
     cnfs_created = []
     reqs_created = []
@@ -448,7 +448,7 @@ def desugar(hl_block: HLBlock) -> Tuple[int, And, List[Request]]:
     # filter the constraints to route to the correct processesors
     derivations = list(filter(lambda x: isinstance(x, Derivation), hl_block.hlconstraints))
     desugared_ders = [desugar_derivation(fresh, x, hl_block) for x in derivations] # <- todo, not implemented
-    cnfs_created.extended(desugared_ders)
+    cnfs_created.extend(desugared_ders)
 
     # -----------------------------------------------------------
     # These create lowlevel requests
