@@ -8,7 +8,7 @@ typecheck:
 
 test: typecheck
 	@echo "Running tests..."
-	pytest tests.py
+	pytest -vv tests.py
 
 backend:
 	@echo "Building backend..."
