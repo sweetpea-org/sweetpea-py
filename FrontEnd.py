@@ -1,8 +1,8 @@
-from functools import reduce
+from functools import reduce, partial
 from collections import namedtuple
 from itertools import product
 import json
-from itertools import islice
+from itertools import islice, repeat
 from typing import Any, Dict, List, Union, Tuple, Iterator, Iterable
 
 
@@ -89,6 +89,7 @@ Not = namedtuple('Not', 'input')
 
 
 # ~~~~~~~~~~ Helper functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 """
 Helper function which grabs names from derived levels;
     if the level is non-derived the level *is* the name
@@ -111,14 +112,113 @@ def get_all_level_names(design: List[Factor]) -> List[Tuple[Any, Any]]:
     return [(factor.name, get_level_name(level)) for factor in design for level in factor.levels]
 
 
+def prepare_for_product(expr: Union[int, Not, Or, And]) -> List[Union[int, Not, Or, And]]:
+    if isinstance(expr, int) or isinstance(expr, Not) or isinstance(expr, Or):
+        return [expr]
+    elif isinstance(expr, And):
+        return expr.input_list
+
+
+def flatten_clause_list(l: List[Union[int, Not, Or, And]], cls: Any) -> List[Union[int, Not, Or, And]]:
+    flattened_list: List[Union[int, Not, Or, And]] = []
+    for i in l:
+        if isinstance(i, cls):
+            flattened_list.extend(i.input_list)
+        else:
+            flattened_list.append(i)
+    return flattened_list
+
+
+"""
+filters out duplicates in the list before constructing the final tuple.
+"""
+def clean_list(l: List[Union[int, Not, Or, And]]) -> List[Union[int, Not, Or, And]]:
+    new_list: List[Union[int, Not, Or, And]] = []
+    for i in l:
+        if i not in new_list:
+            new_list.append(i)
+    return new_list
+
+
+def build_or(l: List[Union[int, Not, Or, And]]) -> Or:
+    cleaned_list = clean_list(l)
+    return Or(cleaned_list)
+
+
+def build_and(l: List[Union[int, Not, Or, And]]) -> And:
+    cleaned_list = clean_list(l)
+    return And(cleaned_list)
+
+
+"""
+Used to filter out clauses like Or([1, Not(1)]) from the CNF formula. Takes a list of
+items that would be used to construct a single Or.
+"""
+def remove_tautologies(l: List[Union[int, Not, Or, And]]) -> bool:
+    for idx in range(0, len(l)):
+        if isinstance(l[idx], int):
+            for other in l[idx+1:]:
+                if isinstance(other, Not) and Not(l[idx]) == other:
+                    return False
+    return True
+
+
+"""
+This is the recursive version of toCNF, used as a helper of the same.
+"""
+def toCNFRec(expr: Union[int, Not, Iff, Or, And]) -> Union[int, Not, Or, And]:
+    if isinstance(expr, int):
+        return expr
+    elif isinstance(expr, Not):
+        if isinstance(expr.input, int):
+            return expr
+        elif isinstance(expr.input, Not):
+            return toCNFRec(expr.input.input)
+        elif isinstance(expr.input, And):
+            return toCNFRec(Or(list(map(Not, expr.input.input_list))))
+        elif isinstance(expr.input, Or):
+            return toCNFRec(And(list(map(Not, expr.input.input_list))))
+        else:
+            raise
+    elif isinstance(expr, Iff):
+        return toCNFRec(Or([And([expr.a, expr.b]),
+                            And([Not(expr.a), Not(expr.b)])]))
+    elif isinstance(expr, Or):
+        if len(expr.input_list) == 1:
+            return toCNFRec(expr.input_list[0])
+        converted_clauses = list(map(toCNFRec, expr.input_list))
+        converted_clauses = flatten_clause_list(converted_clauses, Or)
+        if any(isinstance(c, And) for c in converted_clauses):
+            product_input = list(map(prepare_for_product, converted_clauses))
+            or_lists = list(list(tup) for tup in product(*product_input))
+            or_lists = list(map(flatten_clause_list, or_lists, repeat(Or, len(or_lists))))
+            or_lists = list(filter(remove_tautologies, or_lists))
+            return build_and(list(map(build_or, or_lists)))
+        else:
+            return build_or(converted_clauses)
+    elif isinstance(expr, And):
+        if len(expr.input_list) == 1:
+            return toCNFRec(expr.input_list[0])
+        else:
+            converted_clauses = list(map(toCNFRec, expr.input_list))
+            flattened_clause_list = flatten_clause_list(converted_clauses, And)
+            return build_and(flattened_clause_list)
+
+
 """
 This is a helper function which takes boolean equations formatted with the namedTuples: Iff, And, Or, Not and converts them into CNF, ie, And([Or(...), Or(...) ...])
 General approach here: https://www.cs.jhu.edu/~jason/tutorials/convert-to-CNF.html
 TODO: is there a python implementation available?
 Note: toCNF may or maynot need access to fresh variables depending on implementation
+
+Even if the given expression doesn't begin with an And([...]), the resulting formula will.
+Redundant levels will also be collapsed, ie And([And([1])]) -> And([1])
 """
-def toCNF(boolean_func: Union[And, Or, Not, Iff]) -> And:
-    pass
+def toCNF(expr: Union[int, Not, Iff, Or, And]) -> And:
+    expr = toCNFRec(expr)
+    if not isinstance(expr, And):
+        expr = And([expr])
+    return expr
 
 
 """
@@ -128,8 +228,17 @@ ie, And([Or(1, 4), Or(5, -4, 2), Or(-1, -5)]) needs to print as:
     5 -4 2 0
     -1 -5 0
 """
-def cnfToStr(expr: And) -> str:
-    pass
+def cnfToStr(expr: Union[And, Or, Not, int]) -> str:
+    if isinstance(expr, int):
+        return str(expr)
+    elif isinstance(expr, Not):
+        return '-' + cnfToStr(expr.input)
+    elif isinstance(expr, Or):
+        return ' '.join(map(lambda x: cnfToStr(x), expr.input_list))
+    elif isinstance(expr, And):
+        return '\n'.join(map(lambda x: cnfToStr(x) + ' 0', expr.input_list)) + '\n'
+    else:
+        raise ValueError('expr was not an And, Or, Not, or int')
 
 
 """
