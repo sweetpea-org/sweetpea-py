@@ -127,5 +127,18 @@ def test_get_depxProduct():
                                           (('color', 'blue'), ('text', 'red')),
                                           (('color', 'blue'), ('text', 'blue'))]
 
+    integer = Factor("integer", ["1", "2"])
+    numeral = Factor("numeral", ["I", "II"])
+    text = Factor("text", ["one", "two"])
+    twoConLevel = DerivedLevel("twoCon", WithinTrial(lambda x: x, [integer, numeral, text]))
+    assert get_dep_xProduct(twoConLevel) == [(('integer', '1'), ('numeral', 'I'), ('text', 'one')),
+                                             (('integer', '1'), ('numeral', 'I'), ('text', 'two')),
+                                             (('integer', '1'), ('numeral', 'II'), ('text', 'one')),
+                                             (('integer', '1'), ('numeral', 'II'), ('text', 'two')),
+                                             (('integer', '2'), ('numeral', 'I'), ('text', 'one')),
+                                             (('integer', '2'), ('numeral', 'I'), ('text', 'two')),
+                                             (('integer', '2'), ('numeral', 'II'), ('text', 'one')),
+                                             (('integer', '2'), ('numeral', 'II'), ('text', 'two'))]
+
 def test_etc():
     assert None == None
