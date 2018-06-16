@@ -5,8 +5,20 @@ from FrontEnd import *
 import operator as op
 
 
+# Common variables for stroop.
+color = Factor("color", ["red", "blue"])
+text  = Factor("text",  ["red", "blue"])
+
+conLevel  = DerivedLevel("con", WithinTrial(op.eq, [color, text]))
+incLevel  = DerivedLevel("inc", WithinTrial(op.ne, [color, text]))
+conFactor = Factor("congruent?", [conLevel, incLevel])
+
+design = [color, text, conFactor]
+crossing = [color, text]
+blk = fully_cross_block(design, crossing, [])
+
+
 def test_get_all_level_names():
-    color = Factor("color", ["red", "blue"])
     text  = Factor("text",  ["red", "blue", "green"])
     assert get_all_level_names([color, text]) == [('color', 'red'),
                                                   ('color', 'blue'),
@@ -108,7 +120,6 @@ def test_cnfToStr():
 
 # done
 def test_fullycrosssize():
-    color = Factor("color", ["red", "blue"])
     text  = Factor("text",  ["red"])
     size  = Factor("size",  ["big", "small", "tiny"])
     assert fully_cross_size([color, color]) == 4
@@ -117,11 +128,13 @@ def test_fullycrosssize():
     assert fully_cross_size([size, color]) == 6
     assert fully_cross_size([text]) == 1
 
+
+def test_design_size():
+    assert design_size([color, text]) == 4
+    assert design_size([color, text, conFactor]) == 6
+
 # needs more tests
 def test_get_depxProduct():
-    color = Factor("color", ["red", "blue"])
-    text  = Factor("text",  ["red", "blue"])
-    conLevel  = DerivedLevel("con", WithinTrial(op.eq, [color, text]))
     assert get_dep_xProduct(conLevel) == [(('color', 'red'), ('text', 'red')),
                                           (('color', 'red'), ('text', 'blue')),
                                           (('color', 'blue'), ('text', 'red')),
@@ -140,5 +153,10 @@ def test_get_depxProduct():
                                              (('integer', '2'), ('numeral', 'II'), ('text', 'one')),
                                              (('integer', '2'), ('numeral', 'II'), ('text', 'two'))]
 
-def test_etc():
-    assert None == None
+
+def test_encoding_variable_size():
+    assert encoding_variable_size(blk.design, blk.xing) == 24
+
+
+def test_get_derived_factors():
+    assert get_derived_factors(design) == [conFactor]
