@@ -160,3 +160,35 @@ def test_encoding_variable_size():
 
 def test_get_derived_factors():
     assert get_derived_factors(design) == [conFactor]
+
+
+def two_con(i, n, t):
+    return (i == "1" and n == "I" and t == "two") or \
+        (i == "1" and n == "II" and t == "one") or \
+        (i == "2" and n == "I" and t == "one") or \
+        (i == "2" and n == "I" and t == "two") or \
+        (i == "2" and n == "II" and t == "one") or \
+        (i == "1" and n == "II" and t == "two")
+
+def two_not_con(i, n, t):
+    return not two_con(i, n, t)
+
+def test_process_derivations():
+    assert process_derivations(design, crossing) == [
+        Derivation(4, [[0, 2], [1, 3]]),
+        Derivation(5, [[0, 3], [1, 2]])]
+
+    integer = Factor("integer", ["1", "2"])
+    numeral = Factor("numeral", ["I", "II"])
+    text = Factor("text", ["one", "two"])
+
+    twoConLevel = DerivedLevel("twoCon", WithinTrial(two_con, [integer, numeral, text]))
+    twoNotConLevel = DerivedLevel("twoNotCon", WithinTrial(two_not_con, [integer, numeral, text]))
+    twoConFactor = Factor("twoCon?", [twoConLevel, twoNotConLevel])
+
+    one_two_design = [integer, numeral, text, twoConFactor]
+    one_two_crossing = [integer, numeral, text]
+
+    assert process_derivations(one_two_design, one_two_crossing) == [
+        Derivation(6, [[0, 2, 5], [0, 3, 4], [0, 3, 5], [1, 2, 4], [1, 2, 5], [1, 3, 4]]),
+        Derivation(7, [[0, 2, 4], [1, 3, 5]])]

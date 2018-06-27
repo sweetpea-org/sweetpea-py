@@ -348,9 +348,9 @@ def process_derivations(design: List[Factor], xing: List[Factor]) -> List[Deriva
         for level in fact.levels:
             level_index = all_levels.index((fact.name, level.name))
             x_product = get_dep_xProduct(level)
-            # filter to valid pairs, and get their idxs
-            valid_pairs = [pair for pair in x_product if level.window.func(pair[0][1], pair[1][1])]
-            valid_idxs = [[all_levels.index(level) for level in pair] for pair in valid_pairs]
+            # filter to valid tuples, and get their idxs
+            valid_tuples = [tup for tup in x_product if level.window.func(*map(lambda t: t[1], tup))]
+            valid_idxs = [[all_levels.index(level) for level in tup] for tup in valid_tuples]
             shifted_idxs = shift_window(valid_idxs, level.window, design_size(design))
             accum.append(Derivation(level_index, shifted_idxs))
     return accum
