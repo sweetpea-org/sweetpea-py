@@ -310,8 +310,6 @@ def get_derived_factors(design: List[Factor]) -> List[Factor]:
 # ~~~~~~~~~~ Functions that have to do with derivations (called from fully_cross_block) ~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-# TODO make sure this works for derivations over 2+ levels
 """
 Useage::
     >>> import operator as op
@@ -372,13 +370,10 @@ def shift_window(idxs: List[List[int]], window: Union[WithinTrial, Transition, W
     elif isinstance(window, Transition):
         # update the idxs in slot 2 to be +trialsize
         return [[pair[0], pair[1]+trial_size] for pair in idxs]
-    #TODO: general constraint case
     elif isinstance(window, Window):
-        window_width = len(window.args)
-        print("WARNING THIS CASE IS NOT YET IMPLEMENTED")
-        return idxs
+        return [reduce(lambda l, idx: l + [idx + len(l) * trial_size], idx_list, []) for idx_list in idxs]
     else:
-        raise ValueError("Wierd window encountered while processing derivations!")
+        raise ValueError("Weird window encountered while processing derivations!")
 
 
 
