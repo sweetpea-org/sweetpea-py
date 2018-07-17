@@ -428,12 +428,15 @@ So this desugaring applies the following constraints:
 It is an optimization to go directly to CNF instead of calling the backend, but it'll be cleaner to let the backend deal with that optimization rather than hacking it in here.
 """
 def desugar_consistency(fresh:int, hl_block:HLBlock) -> List[Request]:
-    # TODO:
-    # construct the level pairs by computing size_fully_crossed_block & getting the levels out of hl_block
-    print("WARNING THIS IS NOT YET IMPLEMENTED")
-    return []
+    requests = []
+    next_var = 1
+    for _ in range(fully_cross_size(hl_block.xing)):
+        for f in hl_block.design:
+            number_of_levels = len(f.levels)
+            requests.append(Request("EQ", 1, list(range(next_var, next_var + number_of_levels))))
+            next_var += number_of_levels
 
-
+    return requests
 
 
 """

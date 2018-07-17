@@ -193,10 +193,31 @@ def test_process_derivations():
         Derivation(6, [[0, 2, 5], [0, 3, 4], [0, 3, 5], [1, 2, 4], [1, 2, 5], [1, 3, 4]]),
         Derivation(7, [[0, 2, 4], [1, 3, 5]])]
 
-
 def test_shift_window():
     assert shift_window([[0, 0], [1, 1]], WithinTrial(lambda x: x, None), 0) == [[0, 0], [1, 1]]
     assert shift_window([[0, 0], [1, 1]], Transition(lambda x: x, None), 4) == [[0, 4], [1, 5]]
     assert shift_window([[0, 2, 4], [1, 3, 5]], Window(lambda x: x, None, 3), 6) == [[0, 8, 16], [1, 9, 17]]
     assert shift_window([[1, 1, 1, 1], [2, 2, 2, 2]], Window(lambda x: x, None, 4), 10) == \
         [[1, 11, 21, 31], [2, 12, 22, 32]]
+
+
+def test_desugar_consistency():
+    # From standard example
+    # [ Request("EQ", 1, [1, 2]), Request("EQ", 1, [3, 4]), ...]
+    assert desugar_consistency(0, blk) == \
+        list(map(lambda x: Request("EQ", 1, [x, x+1]), range(1, 24, 2)))
+
+    # Different case
+    f = Factor("a", ["b", "c", "d", "e"])
+    f_blk = fully_cross_block([f], [f], [])
+    assert desugar_consistency(0, f_blk) == \
+        list(map(lambda x: Request("EQ", 1, [x, x+1, x+2, x+3]), range(1, 16, 4)))
+
+    # Varied level lengths
+    f1 = Factor("a", ["b", "c", "d"])
+    f2 = Factor("e", ["f"])
+    f_blk = fully_cross_block([f1, f2], [f1, f2], [])
+    assert desugar_consistency(0, f_blk) == [
+        Request("EQ", 1, [1, 2, 3]), Request("EQ", 1, [4]),
+        Request("EQ", 1, [5, 6, 7]), Request("EQ", 1, [8]),
+        Request("EQ", 1, [9, 10, 11]), Request("EQ", 1, [12])]
