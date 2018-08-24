@@ -37,6 +37,16 @@ def test_toCNFRec():
 
     assert toCNFRec(Iff(1, 2)) == And([Or([1, Not(2)]), Or([2, Not(1)])])
 
+    assert toCNFRec(Iff(4, Or([And([0, 2]), And([1, 3])]))) == \
+        And(input_list=[
+            Or(input_list=[4, Not(input=0), Not(input=2)]),
+            Or(input_list=[4, Not(input=1), Not(input=3)]),
+            Or(input_list=[0, 1, Not(input=4)]),
+            Or(input_list=[0, 3, Not(input=4)]),
+            Or(input_list=[2, 1, Not(input=4)]),
+            Or(input_list=[2, 3, Not(input=4)])
+        ])
+
 
 def test_toCNF():
     # Simple cases
@@ -193,12 +203,31 @@ def test_process_derivations():
         Derivation(6, [[0, 2, 5], [0, 3, 4], [0, 3, 5], [1, 2, 4], [1, 2, 5], [1, 3, 4]]),
         Derivation(7, [[0, 2, 4], [1, 3, 5]])]
 
+
 def test_shift_window():
     assert shift_window([[0, 0], [1, 1]], WithinTrial(lambda x: x, None), 0) == [[0, 0], [1, 1]]
     assert shift_window([[0, 0], [1, 1]], Transition(lambda x: x, None), 4) == [[0, 4], [1, 5]]
     assert shift_window([[0, 2, 4], [1, 3, 5]], Window(lambda x: x, None, 3), 6) == [[0, 8, 16], [1, 9, 17]]
     assert shift_window([[1, 1, 1, 1], [2, 2, 2, 2]], Window(lambda x: x, None, 4), 10) == \
         [[1, 11, 21, 31], [2, 12, 22, 32]]
+
+
+def test_desugar_derivation():
+    # Congruent derivation
+    assert desugar_derivation(0, Derivation(4, [[0, 2], [1, 3]]), blk) == toCNF(And([
+        Iff(5,  Or([And([1,  3 ]), And([2,  4 ])])),
+        Iff(11, Or([And([7,  9 ]), And([8,  10])])),
+        Iff(17, Or([And([13, 15]), And([14, 16])])),
+        Iff(23, Or([And([19, 21]), And([20, 22])]))
+    ]))
+
+    # Incongruent derivation
+    assert desugar_derivation(0, Derivation(5, [[0, 3], [1, 2]]), blk) == toCNF(And([
+        Iff(6,  Or([And([1,  4 ]), And([2,  3 ])])),
+        Iff(12, Or([And([7,  10]), And([8,  9 ])])),
+        Iff(18, Or([And([13, 16]), And([14, 15])])),
+        Iff(24, Or([And([19, 22]), And([20, 21])]))
+    ]))
 
 
 def test_desugar_consistency():

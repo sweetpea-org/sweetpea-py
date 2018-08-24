@@ -361,7 +361,6 @@ ie, if its a Transition(op.eq, [color, color]) (ie "repeat" color transition)
     but actually, the window size for a transition is 2, so what we really want is the indicies
     (0, 5), (1, 6) (assuming there are 4 levels in the design)
 So this helper function shifts over indices that were meant to be intepretted as being in a subsequent trial.
-TODO: general window case later
 """
 def shift_window(idxs: List[List[int]], window: Union[WithinTrial, Transition, Window],
                                         trial_size:int) -> List[List[int]]:
@@ -402,8 +401,16 @@ one test is the experiment: color = ["r", "b", "g"]; text = ["r", "b"]; conFacto
 returns a list of CNF clauses (& mutates the fresh variable)
 """
 def desugar_derivation(fresh:int, derivation:Derivation, hl_block:HLBlock) -> And:
-    print("WARNING THIS IS NOT YET IMPLEMENTED")
-    return And([])
+    # I'm surely missing something, as I don't see the need to mutate fresh.
+    trial_size = design_size(hl_block.design)
+    cross_size = fully_cross_size(hl_block.xing)
+
+    iffs = []
+    for n in range(cross_size):
+        iffs.append(Iff(derivation.derivedIdx + (n * trial_size) + 1,
+                        Or(list(And(list(map(lambda x: x + (n * trial_size) + 1, l))) for l in derivation.dependentIdxs))))
+
+    return toCNF(And(iffs))
 
 
 """
