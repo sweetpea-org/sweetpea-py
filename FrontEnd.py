@@ -1,8 +1,8 @@
+import json
+
 from functools import reduce, partial
 from collections import namedtuple
-from itertools import product
-import json
-from itertools import islice, repeat
+from itertools import islice, repeat, product, chain, tee, accumulate
 from typing import Any, Dict, List, Union, Tuple, Iterator, Iterable
 
 
@@ -447,6 +447,16 @@ def desugar_consistency(fresh:int, hl_block:HLBlock) -> List[Request]:
 
 
 """
+Helper recipe from https://docs.python.org/3/library/itertools.html#itertools-recipes
+"""
+def pairwise(iterable):
+    "s -> (s0,s1), (s1,s2), (s2, s3), ..."
+    a, b = tee(iterable)
+    next(b, None)
+    return zip(a, b)
+
+
+"""
 We represent the fully crossed constraint by allocating additional boolean variables to represent each unique state. Only factors in xing will contribute to the number of states (there may be factors in the design that aren't in the xing).
 Continuing with example from desugar_consistency we will represent the states:
     (color:red, text:red)
@@ -468,26 +478,44 @@ This function returns BOTH some cnf clauses and some reqs.
 def desugar_full_crossing(fresh:int, hl_block:HLBlock) -> Tuple[And, List[Request]]:
     numStates = fully_cross_size(hl_block.xing) # same as number of trials in fully crossing
     numEncodingVars = encoding_variable_size(hl_block.design, hl_block.xing)
+
     # Step 1:
     numStateVars = numStates * numStates
     stateVars = list(range(fresh, fresh+numStateVars))
+
+    # TODO: isn't this lost as soon as the fn returns?
     fresh += numStateVars
+
     # Step 2:
     states = list(chunk(stateVars, numStates))
     transposed = list(map(list, zip(*states)))
     chunked_trials = list(chunk(list(range(1, numEncodingVars)), design_size(hl_block.design)))
-    # TODO: resume here!
+
     # 1. group chunked_trials into factor shaped subchunks
-        # ie, [[1, 2], [3, 4], [5, 6]], [[7, 8], ...
+    # ie, [[1, 2], [3, 4], [5, 6]], [[7, 8], ...
+    delimiters = list(accumulate([0] + list(map(lambda i: len(hl_block.design[i].levels), range(len(hl_block.design))))))
+    slices = list(pairwise(delimiters))
+    subchunked_trials = [[list(l[s[0]:s[1]]) for s in slices] for l in chunked_trials]
+
     # 2. grab the subchunks which correspond to levels in the xing
-        # ie, [[1, 2], [3, 4]], [[7, 8], [9, 10]], [[...
+    # ie, [[1, 2], [3, 4]], [[7, 8], [9, 10]], [[...
+    factor_dict = {factor.name: factor_index for factor_index, factor in enumerate(hl_block.design)}
+    keep_factor_indices = [factor_dict[factor.name] for factor in hl_block.xing]
+    subchunk_levels = [[chunked_trial[idx] for idx in keep_factor_indices] for chunked_trial in subchunked_trials]
+
     # 3. for each trial, take the itertools product of all the subchunks
-        # ie, [[1, 3], [1, 4], [2, 3], [2, 4]], ...
+    # ie, [[1, 3], [1, 4], [2, 3], [2, 4]], ...
+    products = [list(product(*subchunks)) for subchunks in subchunk_levels]
+    flattened_products = list(chain(*products))
+
     # 4. get those into an Iff w/ the state variables; ie Iff(25, And([1,3])) & then toCNF that & stash it on the queue.
+    iffs = [Iff(stateVars[n], And(list(flattened_products[n]))) for n in range(len(stateVars))]
+
     # Step 3:
     # 5. make Requests for each transposed list that add up to k=1.
-    print("WARNING THIS IS NOT YET IMPLEMENTED")
-    return Tuple[And([]), []]
+    requests = list(map(lambda l: Request("EQ", 1, l), transposed))
+
+    return (toCNF(And(iffs)), requests)
 
 
 """

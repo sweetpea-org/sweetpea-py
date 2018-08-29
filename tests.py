@@ -250,3 +250,17 @@ def test_desugar_consistency():
         Request("EQ", 1, [1, 2, 3]), Request("EQ", 1, [4]),
         Request("EQ", 1, [5, 6, 7]), Request("EQ", 1, [8]),
         Request("EQ", 1, [9, 10, 11]), Request("EQ", 1, [12])]
+
+
+def test_desugar_full_crossing():
+    assert desugar_full_crossing(25, blk) == (toCNF(And([
+        Iff(25, And([1,  3 ])), Iff(26, And([1,  4 ])), Iff(27, And([2,  3 ])), Iff(28, And([2,  4 ])),
+        Iff(29, And([7,  9 ])), Iff(30, And([7,  10])), Iff(31, And([8,  9 ])), Iff(32, And([8,  10])),
+        Iff(33, And([13, 15])), Iff(34, And([13, 16])), Iff(35, And([14, 15])), Iff(36, And([14, 16])),
+        Iff(37, And([19, 21])), Iff(38, And([19, 22])), Iff(39, And([20, 21])), Iff(40, And([20, 22]))
+    ])), [
+        Request("EQ", 1, [25, 29, 33, 37]),
+        Request("EQ", 1, [26, 30, 34, 38]),
+        Request("EQ", 1, [27, 31, 35, 39]),
+        Request("EQ", 1, [28, 32, 36, 40])
+    ])
