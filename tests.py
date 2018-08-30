@@ -264,3 +264,31 @@ def test_desugar_full_crossing():
         Request("EQ", 1, [27, 31, 35, 39]),
         Request("EQ", 1, [28, 32, 36, 40])
     ])
+
+
+def test_desugar_nomorethankinarow():
+    assert desugar_nomorethankinarow(0, 1, ("color", "red"), blk) == [
+        Request("LT", 1, [1,  7 ]),
+        Request("LT", 1, [7,  13]),
+        Request("LT", 1, [13, 19])
+    ]
+
+    assert desugar_nomorethankinarow(0, 2, ("color", "red"), blk) == [
+        Request("LT", 2, [1, 7,  13]),
+        Request("LT", 2, [7, 13, 19])
+    ]
+
+    assert desugar_nomorethankinarow(0, 1, ("color", "blue"), blk) == [
+        Request("LT", 1, [2,  8 ]),
+        Request("LT", 1, [8,  14]),
+        Request("LT", 1, [14, 20])
+    ]
+
+    assert desugar_nomorethankinarow(0, 2, ("color", "blue"), blk) == [
+        Request("LT", 2, [2, 8,  14]),
+        Request("LT", 2, [8, 14, 20])
+    ]
+
+    assert desugar_nomorethankinarow(0, 3, ("congruent?", "con"), blk) == [
+        Request("LT", 3, [5, 11, 17, 23])
+    ]

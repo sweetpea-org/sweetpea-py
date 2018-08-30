@@ -523,19 +523,35 @@ This desugars pretty directly into the llrequests.
 The only thing to do here is to collect all the boolean vars that match the same level & pair them up according to k.
 Continuing with the example from desugar_consistency:
     say we want NoMoreThanKInARow 1 ("color", "red")
-    then we need to grab all the vars which indicate color-red : [1, 5, 9, 13]
+    then we need to grab all the vars which indicate color-red : [1, 7, 13, 19]
     and then wrap them up so that we're making requests like:
-        sum(1, 5)  LT 1
-        sum(5, 9)  LT 1
-        sum(9, 13) LT 1
+        sum(1, 7)  LT 1
+        sum(7, 13)  LT 1
+        sum(13, 19) LT 1
     if it had been NoMoreThanKInARow 2 ("color", "red") the reqs would have been:
-        sum(1, 5, 9)  LT 2
-        sum(5, 9, 13) LT 2
+        sum(1, 7, 13)  LT 2
+        sum(7, 13, 19) LT 2
 TODO: off-by-one errors?
 """
-def desugar_nomorethankinarow(fresh:int, k:int, level:Any, hl_block:HLBlock) -> List[Request]:
-    print("WARNING THIS IS NOT YET IMPLEMENTED")
-    return []
+def desugar_nomorethankinarow(fresh:int, k:int, level:Tuple[str, str], hl_block:HLBlock) -> List[Request]:
+    # Generate a list of (factor name, level name) tuples from the block
+    level_tuples = [list(map(lambda level: (f.name, level if isinstance(level, str) else level.name), f.levels)) for f in hl_block.design]
+    flattened_tuples = list(chain(*level_tuples))
+
+    # Locate the specified level in the list
+    first_variable = flattened_tuples.index(level) + 1
+
+    # Build the variable list
+    design_var_count = design_size(hl_block.design)
+    num_trials = fully_cross_size(hl_block.xing)
+    var_list = list(accumulate(repeat(first_variable, num_trials), lambda acc, _: acc + design_var_count))
+
+    # Break up the var list into overlapping lists where len == k.
+    raw_sublists = [var_list[i:i+k+1] for i in range(0, len(var_list))]
+    sublists = list(filter(lambda l: len(l) == k + 1, raw_sublists))
+
+    # Build the requests
+    return list(map(lambda l: Request("LT", k, l), sublists))
 
 
 """
