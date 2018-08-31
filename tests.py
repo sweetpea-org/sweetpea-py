@@ -292,3 +292,12 @@ def test_desugar_nomorethankinarow():
     assert desugar_nomorethankinarow(0, 3, ("congruent?", "con"), blk) == [
         Request("LT", 3, [5, 11, 17, 23])
     ]
+
+
+def test_jsonify():
+    assert jsonify(34, [
+        Request("EQ", 1, [5, 10, 15, 20]),
+        Request("LT", 3, [1, 2, 3, 4])]) == (
+            '{"fresh": 34, "requests": ['
+            '{"equalityType": "EQ", "k": 1, "booleanValues": [5, 10, 15, 20]}, '
+            '{"equalityType": "LT", "k": 3, "booleanValues": [1, 2, 3, 4]}]}')

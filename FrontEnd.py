@@ -581,10 +581,10 @@ Passing along the "fresh" variable counter & a list of reqs to the backend
 Important! The backend is expecting json with these exact key names; if the names are change the backend Parser.hs file needs to be updated.
 """
 def jsonify(fresh:int, ll_calls: List[Request]) -> str:
-    # wrap all the calls in a dictionary:
-    return json.dumps({ "fresh" : fresh,
-                        "requests" : ll_calls })
+    requests = list(map(lambda r: {'equalityType': r.equalityType, 'k': r.k, 'booleanValues': r.booleanValues}, ll_calls))
 
+    return json.dumps({ "fresh" : fresh,
+                        "requests" : requests })
 
 
 """
