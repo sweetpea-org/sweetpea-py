@@ -605,12 +605,13 @@ def desugar(hl_block: HLBlock) -> Tuple[int, List[And], List[Request]]:
     # These go directly to CNF
     # filter the constraints to route to the correct processesors
     derivations = list(filter(lambda x: isinstance(x, Derivation), hl_block.hlconstraints))
-    desugared_ders = [desugar_derivation(fresh, x, hl_block) for x in derivations] # <- todo, not implemented
+    desugared_ders = [desugar_derivation(fresh, x, hl_block) for x in derivations]
     cnfs_created.extend(desugared_ders)
 
     # -----------------------------------------------------------
     # These create lowlevel requests
-    #reqs_created.append(desugar_consistency(hl_block))
+    reqs_created.extend(desugar_consistency(fresh, hl_block))
+
     # filter for any NoMoreThanKInARow constraints in hl_block.hlconstraints
     #reqs_created.append(desugar_nomorethankinarow(k, level))
 
@@ -621,8 +622,6 @@ def desugar(hl_block: HLBlock) -> Tuple[int, List[And], List[Request]]:
     reqs_created.extend(reqs)
 
     return (fresh, cnfs_created, reqs_created)
-
-
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
