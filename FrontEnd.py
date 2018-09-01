@@ -613,7 +613,21 @@ def desugar(hl_block: HLBlock) -> Tuple[int, List[And], List[Request]]:
     reqs_created.extend(desugar_consistency(fresh, hl_block))
 
     # filter for any NoMoreThanKInARow constraints in hl_block.hlconstraints
-    #reqs_created.append(desugar_nomorethankinarow(k, level))
+    constraints = list(filter(lambda c: isinstance(c, NoMoreThanKInARow), hl_block.hlconstraints))
+    for c in constraints:
+        # Apply the constraint to each level in the factor.
+        if isinstance(c.levels, Factor):
+            level_names = list(map(lambda l: get_level_name(l), c.levels))
+            level_tuples = list(map(lambda l_name: (c.levels.name, l_name), level_names))
+            requests = list(map(lambda t: desugar_nomorethankinarow(fresh, c.k, t, hl_block), level_tuples))
+            reqs_created.extend(list(chain(*requests)))
+
+        # Should be a Tuple containing the factor name, and the level name.
+        elif isinstance(c.levels, Tuple[str, str]):
+            reqs_created.extend(desugar_nomorethankinarow(fresh, c.k, c.levels, hl_block))
+
+        else:
+            print("Error: unrecognized levels specification in NoMoreThanKInARow constraint: " + c.levels)
 
     # -----------------------------------------------------------
     # This one does both...

@@ -11,7 +11,7 @@ conFactor = Factor("congruent?", [conLevel, incLevel])
 design       = [color, text, conFactor]
 
 k = 1
-constraints = [NoMoreThanKInARow(k, conLevel)]
+constraints = [NoMoreThanKInARow(k, ("congruent?", "con"))]
 
 crossing     = [color, text]
 block        = fullyCrossBlock(design, crossing, constraints)
