@@ -214,7 +214,7 @@ def test_shift_window():
 
 def test_desugar_derivation():
     # Congruent derivation
-    assert desugar_derivation(0, Derivation(4, [[0, 2], [1, 3]]), blk) == toCNF(And([
+    assert desugar_derivation(Derivation(4, [[0, 2], [1, 3]]), blk) == toCNF(And([
         Iff(5,  Or([And([1,  3 ]), And([2,  4 ])])),
         Iff(11, Or([And([7,  9 ]), And([8,  10])])),
         Iff(17, Or([And([13, 15]), And([14, 16])])),
@@ -222,7 +222,7 @@ def test_desugar_derivation():
     ]))
 
     # Incongruent derivation
-    assert desugar_derivation(0, Derivation(5, [[0, 3], [1, 2]]), blk) == toCNF(And([
+    assert desugar_derivation(Derivation(5, [[0, 3], [1, 2]]), blk) == toCNF(And([
         Iff(6,  Or([And([1,  4 ]), And([2,  3 ])])),
         Iff(12, Or([And([7,  10]), And([8,  9 ])])),
         Iff(18, Or([And([13, 16]), And([14, 15])])),
@@ -233,27 +233,27 @@ def test_desugar_derivation():
 def test_desugar_consistency():
     # From standard example
     # [ Request("EQ", 1, [1, 2]), Request("EQ", 1, [3, 4]), ...]
-    assert desugar_consistency(0, blk) == \
+    assert desugar_consistency(blk) == \
         list(map(lambda x: Request("EQ", 1, [x, x+1]), range(1, 24, 2)))
 
     # Different case
     f = Factor("a", ["b", "c", "d", "e"])
     f_blk = fully_cross_block([f], [f], [])
-    assert desugar_consistency(0, f_blk) == \
+    assert desugar_consistency(f_blk) == \
         list(map(lambda x: Request("EQ", 1, [x, x+1, x+2, x+3]), range(1, 16, 4)))
 
     # Varied level lengths
     f1 = Factor("a", ["b", "c", "d"])
     f2 = Factor("e", ["f"])
     f_blk = fully_cross_block([f1, f2], [f1, f2], [])
-    assert desugar_consistency(0, f_blk) == [
+    assert desugar_consistency(f_blk) == [
         Request("EQ", 1, [1, 2, 3]), Request("EQ", 1, [4]),
         Request("EQ", 1, [5, 6, 7]), Request("EQ", 1, [8]),
         Request("EQ", 1, [9, 10, 11]), Request("EQ", 1, [12])]
 
 
 def test_desugar_full_crossing():
-    assert desugar_full_crossing(25, blk) == (toCNF(And([
+    assert desugar_full_crossing(25, blk) == (41, toCNF(And([
         Iff(25, And([1,  3 ])), Iff(26, And([1,  4 ])), Iff(27, And([2,  3 ])), Iff(28, And([2,  4 ])),
         Iff(29, And([7,  9 ])), Iff(30, And([7,  10])), Iff(31, And([8,  9 ])), Iff(32, And([8,  10])),
         Iff(33, And([13, 15])), Iff(34, And([13, 16])), Iff(35, And([14, 15])), Iff(36, And([14, 16])),
@@ -267,29 +267,29 @@ def test_desugar_full_crossing():
 
 
 def test_desugar_nomorethankinarow():
-    assert desugar_nomorethankinarow(0, 1, ("color", "red"), blk) == [
+    assert desugar_nomorethankinarow(1, ("color", "red"), blk) == [
         Request("LT", 1, [1,  7 ]),
         Request("LT", 1, [7,  13]),
         Request("LT", 1, [13, 19])
     ]
 
-    assert desugar_nomorethankinarow(0, 2, ("color", "red"), blk) == [
+    assert desugar_nomorethankinarow(2, ("color", "red"), blk) == [
         Request("LT", 2, [1, 7,  13]),
         Request("LT", 2, [7, 13, 19])
     ]
 
-    assert desugar_nomorethankinarow(0, 1, ("color", "blue"), blk) == [
+    assert desugar_nomorethankinarow(1, ("color", "blue"), blk) == [
         Request("LT", 1, [2,  8 ]),
         Request("LT", 1, [8,  14]),
         Request("LT", 1, [14, 20])
     ]
 
-    assert desugar_nomorethankinarow(0, 2, ("color", "blue"), blk) == [
+    assert desugar_nomorethankinarow(2, ("color", "blue"), blk) == [
         Request("LT", 2, [2, 8,  14]),
         Request("LT", 2, [8, 14, 20])
     ]
 
-    assert desugar_nomorethankinarow(0, 3, ("congruent?", "con"), blk) == [
+    assert desugar_nomorethankinarow(3, ("congruent?", "con"), blk) == [
         Request("LT", 3, [5, 11, 17, 23])
     ]
 

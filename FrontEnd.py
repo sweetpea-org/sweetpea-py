@@ -398,10 +398,9 @@ So, for the second trial (since the window size in this example is 1) it would b
 90% sure this is the correct way to generalize to derivations involving 2+ levels & various windowsizes
 one test is the experiment: color = ["r", "b", "g"]; text = ["r", "b"]; conFactor; fullycross(color, text) + noMoreThanKInARow 1 conLevel
 
-returns a list of CNF clauses (& mutates the fresh variable)
+returns a list of CNF clauses
 """
-def desugar_derivation(fresh:int, derivation:Derivation, hl_block:HLBlock) -> And:
-    # I'm surely missing something, as I don't see the need to mutate fresh.
+def desugar_derivation(derivation:Derivation, hl_block:HLBlock) -> And:
     trial_size = design_size(hl_block.design)
     cross_size = fully_cross_size(hl_block.xing)
 
@@ -434,7 +433,7 @@ So this desugaring applies the following constraints:
     sum(15, 16) EQ 1
 It is an optimization to go directly to CNF instead of calling the backend, but it'll be cleaner to let the backend deal with that optimization rather than hacking it in here.
 """
-def desugar_consistency(fresh:int, hl_block:HLBlock) -> List[Request]:
+def desugar_consistency(hl_block:HLBlock) -> List[Request]:
     requests = []
     next_var = 1
     for _ in range(fully_cross_size(hl_block.xing)):
@@ -475,7 +474,7 @@ same as desugar_consistency above, collect all the state vars that represent eac
     (and 3 more of these for each of the other states).
 This function returns BOTH some cnf clauses and some reqs.
 """
-def desugar_full_crossing(fresh:int, hl_block:HLBlock) -> Tuple[And, List[Request]]:
+def desugar_full_crossing(fresh:int, hl_block:HLBlock) -> Tuple[int, And, List[Request]]:
     numStates = fully_cross_size(hl_block.xing) # same as number of trials in fully crossing
     numEncodingVars = encoding_variable_size(hl_block.design, hl_block.xing)
 
@@ -483,7 +482,6 @@ def desugar_full_crossing(fresh:int, hl_block:HLBlock) -> Tuple[And, List[Reques
     numStateVars = numStates * numStates
     stateVars = list(range(fresh, fresh+numStateVars))
 
-    # TODO: isn't this lost as soon as the fn returns?
     fresh += numStateVars
 
     # Step 2:
@@ -515,7 +513,7 @@ def desugar_full_crossing(fresh:int, hl_block:HLBlock) -> Tuple[And, List[Reques
     # 5. make Requests for each transposed list that add up to k=1.
     requests = list(map(lambda l: Request("EQ", 1, l), transposed))
 
-    return (toCNF(And(iffs)), requests)
+    return (fresh, toCNF(And(iffs)), requests)
 
 
 """
@@ -533,7 +531,7 @@ Continuing with the example from desugar_consistency:
         sum(7, 13, 19) LT 2
 TODO: off-by-one errors?
 """
-def desugar_nomorethankinarow(fresh:int, k:int, level:Tuple[str, str], hl_block:HLBlock) -> List[Request]:
+def desugar_nomorethankinarow(k:int, level:Tuple[str, str], hl_block:HLBlock) -> List[Request]:
     # Generate a list of (factor name, level name) tuples from the block
     level_tuples = [list(map(lambda level: (f.name, level if isinstance(level, str) else level.name), f.levels)) for f in hl_block.design]
     flattened_tuples = list(chain(*level_tuples))
@@ -605,12 +603,12 @@ def desugar(hl_block: HLBlock) -> Tuple[int, List[And], List[Request]]:
     # These go directly to CNF
     # filter the constraints to route to the correct processesors
     derivations = list(filter(lambda x: isinstance(x, Derivation), hl_block.hlconstraints))
-    desugared_ders = [desugar_derivation(fresh, x, hl_block) for x in derivations]
+    desugared_ders = [desugar_derivation(x, hl_block) for x in derivations]
     cnfs_created.extend(desugared_ders)
 
     # -----------------------------------------------------------
     # These create lowlevel requests
-    reqs_created.extend(desugar_consistency(fresh, hl_block))
+    reqs_created.extend(desugar_consistency(hl_block))
 
     # filter for any NoMoreThanKInARow constraints in hl_block.hlconstraints
     constraints = list(filter(lambda c: isinstance(c, NoMoreThanKInARow), hl_block.hlconstraints))
@@ -619,23 +617,23 @@ def desugar(hl_block: HLBlock) -> Tuple[int, List[And], List[Request]]:
         if isinstance(c.levels, Factor):
             level_names = list(map(lambda l: get_level_name(l), c.levels))
             level_tuples = list(map(lambda l_name: (c.levels.name, l_name), level_names))
-            requests = list(map(lambda t: desugar_nomorethankinarow(fresh, c.k, t, hl_block), level_tuples))
+            requests = list(map(lambda t: desugar_nomorethankinarow(c.k, t, hl_block), level_tuples))
             reqs_created.extend(list(chain(*requests)))
 
         # Should be a Tuple containing the factor name, and the level name.
         elif isinstance(c.levels, Tuple[str, str]):
-            reqs_created.extend(desugar_nomorethankinarow(fresh, c.k, c.levels, hl_block))
+            reqs_created.extend(desugar_nomorethankinarow(c.k, c.levels, hl_block))
 
         else:
             print("Error: unrecognized levels specification in NoMoreThanKInARow constraint: " + c.levels)
 
     # -----------------------------------------------------------
     # This one does both...
-    (cnf, reqs) = desugar_full_crossing(fresh, hl_block)
+    (new_fresh, cnf, reqs) = desugar_full_crossing(fresh, hl_block)
     cnfs_created.extend(cnf)
     reqs_created.extend(reqs)
 
-    return (fresh, cnfs_created, reqs_created)
+    return (new_fresh, cnfs_created, reqs_created)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
