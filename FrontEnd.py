@@ -1,10 +1,12 @@
 import json
+import os
+import shutil
+import subprocess
 
 from functools import reduce, partial
 from collections import namedtuple
 from itertools import islice, repeat, product, chain, tee, accumulate
 from typing import Any, Dict, List, Union, Tuple, Iterator, Iterable
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -630,7 +632,7 @@ def desugar(hl_block: HLBlock) -> Tuple[int, List[And], List[Request]]:
     # -----------------------------------------------------------
     # This one does both...
     (new_fresh, cnf, reqs) = desugar_full_crossing(fresh, hl_block)
-    cnfs_created.extend(cnf)
+    cnfs_created.append(cnf)
     reqs_created.extend(reqs)
 
     return (new_fresh, cnfs_created, reqs_created)
@@ -661,14 +663,45 @@ This is where the magic happens. Desugars the constraints from fully_cross_block
 def synthesize_trials(hl_block: HLBlock, output: str) -> str:
     (fresh, cnfs, reqs) = desugar(hl_block)
     result = jsonify(fresh, reqs)
-    with open('ll_constraints.json') as f:  # important: the backend is looking for a file with this name
+
+    # Important: the backend is looking for a file with this name
+    # TODO: This is making assumptions about where sweetpea-py is being run from, we should make this less brittle.
+    with open('sweetpea-core/ll_constraints.json', 'w') as f:
         f.write(result)
-    # TODO: start subprocess call w/ backend on ll_constraints.json
-        # this should call the process "stack exec generate-popcount > ex.cnf"
-    # append to the file "ex.cnf" of the successful subprocess call w/ cnfs generated from desugaring
-        # note: this will involve updating the DIMACS header which can either be done by
-        # 1) parsing the header, incrementing the numVars & numClauses & writing new header
-        # 2) passing the backend the CNF and offloading the update to the backend
-    # start subprocess call that calls unigen
-    # decode the results
+
+    # Start subprocess that calls "stack exec generate-popcount > ex.cnf"
+    with open('ex-start.cnf', 'w') as f:
+        subprocess.run(['stack', 'exec', 'generate-popcount'],
+                       cwd='sweetpea-core',
+                       check=True,
+                       stdout=f)
+
+    # Append to the file "ex.cnf" of the successful subprocess call w/ cnfs generated from desugaring
+    # This involves updating the DIMACS header to update the number of clauses.
+    cnf = toCNF(And(cnfs))
+    cnf_str = cnfToStr(cnf)
+    additional_clauses = cnf_str.count('\n')
+
+    original_file = open('ex-start.cnf')
+    header = original_file.readline()
+
+    header_segments = header.strip().split(' ')
+    clause_count = int(header_segments[3])
+    clause_count += additional_clauses
+    new_header = ' '.join(header_segments[:3] + [str(clause_count)]) + '\n'
+
+    new_file = open('ex.cnf', 'w')
+    new_file.write(new_header)
+    new_file.write(cnf_str)
+    shutil.copyfileobj(original_file, new_file)
+
+    original_file.close()
+    new_file.close()
+
+    os.remove("ex-start.cnf")
+
+    # TODO: Start subprocess call that calls unigen
+
+    # TODO: Decode the results
+
     return ""
