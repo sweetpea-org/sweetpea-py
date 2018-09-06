@@ -653,9 +653,9 @@ def fully_cross_block(design: List[Factor], xing: List[Factor], constraints: Any
 """
 TODO: also psyNeuLink readable
 """
-def decode(design : List[Factor], result : str) -> str:
+def decode(hl_block: HLBlock, solution: List[int]) -> str:
     print("WARNING THIS IS NOT YET IMPLEMENTED")
-    return "human readable string"
+    return "Received assignment: " + str(solution)
 
 """
 This is where the magic happens. Desugars the constraints from fully_cross_block (which results in some direct cnfs being produced and some requests to the backend being produced). Then calls unigen on the full cnf file. Then decodes that cnf file into (1) something human readable & (2) psyNeuLink readable.
@@ -700,8 +700,27 @@ def synthesize_trials(hl_block: HLBlock, output: str) -> str:
 
     os.remove("ex-start.cnf")
 
-    # TODO: Start subprocess call that calls unigen
+    # Assumes unigen is present on the PATH
+    # Perusing the code, it appears that unigen uses an exit code of 0 to indicate error, while positive
+    # exit codes seem to indicate some form of success.
+    #  https://bitbucket.org/kuldeepmeel/unigen/src/4677b2ec4553b2a44a31910db0037820abdc1394/ugen2/cmsat/Main.cpp?at=master&fileviewer=file-view-default#Main.cpp-831
+    unigen = subprocess.run(['unigen', '--verbosity=0', 'ex.cnf', 'unigen-results.out'])
+    if (unigen.returncode == 0):
+        print("ERROR: Either something went wrong while running unigen, or the formula was unsatisfiable")
+        exit(1)
 
-    # TODO: Decode the results
+    lines: List[str] = []
+    with open('unigen-results.out', 'r') as f:
+        lines = f.readlines()
+
+    os.remove('unigen-results.out')
+
+    # Convert each solution line to a list of variables
+    solutions = list(map(lambda l: list(map(int, l.strip()[1:].split()[:-1])), lines))
+    solutions = list(filter(lambda s: s, solutions))
+
+    # Decode the results
+    for s in solutions:
+        print(decode(hl_block, s))
 
     return ""
