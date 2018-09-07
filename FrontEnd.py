@@ -654,8 +654,23 @@ def fully_cross_block(design: List[Factor], xing: List[Factor], constraints: Any
 TODO: also psyNeuLink readable
 """
 def decode(hl_block: HLBlock, solution: List[int]) -> str:
-    print("WARNING THIS IS NOT YET IMPLEMENTED")
-    return "Received assignment: " + str(solution)
+    num_encoding_vars = encoding_variable_size(hl_block.design, hl_block.xing);
+    vars_per_trial = design_size(hl_block.design)
+
+    nested_assignment_strs = [list(map(lambda l: f.name + " " + get_level_name(l), f.levels)) for f in hl_block.design]
+    column_widths = list(map(lambda l: max(list(map(len, l))), nested_assignment_strs))
+    format_str = reduce(lambda a, b: a + '{{:<{}}} | '.format(b), column_widths, '')[:-3] + '\n'
+
+    assignment_strs = list(chain(*nested_assignment_strs))
+
+    # Looks like [[2, 4, 6], [8, 10, 12], [14, 16, 18], [20, 22, 23]]
+    trial_assignments = list(map(lambda l: list(filter(lambda n: n > 0, l)), list(chunk(solution[:24], 6))))
+
+    # Looks like [['color red', 'text blue', 'congruent? con'], ['color blue', ...] ...]
+    trials = [list(map(lambda v: assignment_strs[(v % vars_per_trial) - 1], trial_assignment)) for trial_assignment in trial_assignments]
+
+    return reduce(lambda a, b: a + format_str.format(*b), trials, '')
+
 
 """
 This is where the magic happens. Desugars the constraints from fully_cross_block (which results in some direct cnfs being produced and some requests to the backend being produced). Then calls unigen on the full cnf file. Then decodes that cnf file into (1) something human readable & (2) psyNeuLink readable.
@@ -713,6 +728,7 @@ def synthesize_trials(hl_block: HLBlock, output: str) -> str:
     with open('unigen-results.out', 'r') as f:
         lines = f.readlines()
 
+    os.remove('ex.cnf')
     os.remove('unigen-results.out')
 
     # Convert each solution line to a list of variables
@@ -720,7 +736,9 @@ def synthesize_trials(hl_block: HLBlock, output: str) -> str:
     solutions = list(filter(lambda s: s, solutions))
 
     # Decode the results
-    for s in solutions:
-        print(decode(hl_block, s))
+    result = reduce(lambda a, b: a + decode(hl_block, b) + '\n', solutions, '')
 
-    return ""
+    # Print the results nicely before returning
+    print('\n' + result)
+
+    return result

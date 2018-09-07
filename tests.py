@@ -301,3 +301,8 @@ def test_jsonify():
             '{"fresh": 34, "requests": ['
             '{"equalityType": "EQ", "k": 1, "booleanValues": [5, 10, 15, 20]}, '
             '{"equalityType": "LT", "k": 3, "booleanValues": [1, 2, 3, 4]}]}')
+
+
+def test_decode():
+    # TODO
+    assert True
