@@ -664,7 +664,8 @@ def decode(hl_block: HLBlock, solution: List[int]) -> str:
     assignment_strs = list(chain(*nested_assignment_strs))
 
     # Looks like [[2, 4, 6], [8, 10, 12], [14, 16, 18], [20, 22, 23]]
-    trial_assignments = list(map(lambda l: list(filter(lambda n: n > 0, l)), list(chunk(solution[:24], 6))))
+    trial_assignments = list(map(lambda l: list(filter(lambda n: n > 0, l)),
+                                 list(chunk(solution[:num_encoding_vars], vars_per_trial))))
 
     # Looks like [['color red', 'text blue', 'congruent? con'], ['color blue', ...] ...]
     trials = [list(map(lambda v: assignment_strs[(v % vars_per_trial) - 1], trial_assignment)) for trial_assignment in trial_assignments]

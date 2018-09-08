@@ -304,5 +304,43 @@ def test_jsonify():
 
 
 def test_decode():
-    # TODO
-    assert True
+    solution = [-1,   2,  -3,   4,   5,  -6,
+                -7,   8,   9, -10, -11,  12,
+                13, -14, -15,  16, -17,  18,
+                19, -20,  21, -22,  23, -24]
+    assert decode(blk, solution) == \
+        ("color blue | text blue | congruent? con\n" +
+         "color blue | text red  | congruent? inc\n" +
+         "color red  | text blue | congruent? inc\n" +
+         "color red  | text red  | congruent? con\n")
+
+    solution = [ -1,   2, -3,   4,   5,  -6,
+                  7,  -8, -9,  10, -11,  12,
+                 13, -14, 15, -16,  17, -18,
+                -19,  20, 21, -22, -23,  24]
+    assert decode(blk, solution) == \
+        ("color blue | text blue | congruent? con\n" +
+         "color red  | text blue | congruent? inc\n" +
+         "color red  | text red  | congruent? con\n" +
+         "color blue | text red  | congruent? inc\n")
+
+    solution = [-1,   2,   3,  -4,  -5,   6,
+                -7,   8,  -9,  10,  11, -12,
+                13, -14,  15, -16,  17, -18,
+                19, -20, -21,  22, -23,  24]
+    assert decode(blk, solution) == \
+        ("color blue | text red  | congruent? inc\n" +
+         "color blue | text blue | congruent? con\n" +
+         "color red  | text red  | congruent? con\n" +
+         "color red  | text blue | congruent? inc\n")
+
+    f1 = Factor("a", ["b", "c", "d"])
+    f2 = Factor("e", ["f"])
+    f_blk = fully_cross_block([f1, f2], [f1, f2], [])
+    solution = [-1,  2, -3, 4,
+                -1, -2,  3, 4,
+                 1, -2  -3, 4]
+    assert decode(f_blk, solution) == \
+        ("a c | e f\n" +
+         "a d | e f\n" +
+         "a b | e f\n")
