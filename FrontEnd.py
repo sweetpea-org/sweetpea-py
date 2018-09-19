@@ -690,63 +690,14 @@ def synthesize_trials(hl_block: HLBlock, output: str) -> str:
     (fresh, cnfs, reqs) = desugar(hl_block)
     result = jsonify(fresh, cnfs, reqs)
 
-    # Important: the backend is looking for a file with this name
-    # TODO: This is making assumptions about where sweetpea-py is being run from, we should make this less brittle.
-    with open('sweetpea-core/ll_constraints.json', 'w') as f:
-        f.write(result)
-
-    # Start subprocess that calls "stack exec generate-popcount > ex.cnf"
-    with open('ex-start.cnf', 'w') as f:
-        subprocess.run(['stack', 'exec', 'generate-popcount'],
-                       cwd='sweetpea-core',
-                       check=True,
-                       stdout=f)
-
-    # Append to the file "ex.cnf" of the successful subprocess call w/ cnfs generated from desugaring
-    # This involves updating the DIMACS header to update the number of clauses.
-    cnf = toCNF(And(cnfs))
-    cnf_str = "placeholder"
-    additional_clauses = cnf_str.count('\n')
-
-    original_file = open('ex-start.cnf')
-    header = original_file.readline()
-
-    header_segments = header.strip().split(' ')
-    clause_count = int(header_segments[3])
-    clause_count += additional_clauses
-    new_header = ' '.join(header_segments[:3] + [str(clause_count)]) + '\n'
-
-    new_file = open('ex.cnf', 'w')
-    new_file.write(new_header)
-    new_file.write(cnf_str)
-    shutil.copyfileobj(original_file, new_file)
-
-    original_file.close()
-    new_file.close()
-
-    os.remove("ex-start.cnf")
-
-    # Assumes unigen is present on the PATH
-    # Perusing the code, it appears that unigen uses an exit code of 0 to indicate error, while positive
-    # exit codes seem to indicate some form of success.
-    #  https://bitbucket.org/kuldeepmeel/unigen/src/4677b2ec4553b2a44a31910db0037820abdc1394/ugen2/cmsat/Main.cpp?at=master&fileviewer=file-view-default#Main.cpp-831
-    unigen = subprocess.run(['unigen', '--verbosity=0', 'ex.cnf', 'unigen-results.out'])
-    if (unigen.returncode == 0):
-        print("ERROR: Either something went wrong while running unigen, or the formula was unsatisfiable")
-        exit(1)
-
-    lines: List[str] = []
-    with open('unigen-results.out', 'r') as f:
-        lines = f.readlines()
-
-    os.remove('ex.cnf')
-    os.remove('unigen-results.out')
-
-    # Convert each solution line to a list of variables
-    solutions = list(map(lambda l: list(map(int, l.strip()[1:].split()[:-1])), lines))
-    solutions = list(filter(lambda s: s, solutions))
+    # TODO:
+    # 1. Start a container for the sweetpea server, making sure to use -d and -p to map the port.
+    # 2. POST to /experiments/generate using the result of jsonify as the body.
+    # 3. Stop and then remove the docker container.
+    # 4. Decode the solutions list from the server response.
 
     # Decode the results
+    solutions: List[List[int]] = []
     result = reduce(lambda a, b: a + decode(hl_block, b) + '\n', solutions, '')
 
     # Print the results nicely before returning
