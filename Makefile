@@ -1,6 +1,6 @@
-.PHONY: all typecheck test backend
+.PHONY: all typecheck test
 
-all: typecheck test backend
+all: typecheck test
 
 typecheck:
 	@echo "Typechecking..."
@@ -9,7 +9,3 @@ typecheck:
 test: typecheck
 	@echo "Running tests..."
 	pytest -vv tests.py
-
-backend:
-	@echo "Building backend..."
-	cd sweetpea-core && stack build && cd -
