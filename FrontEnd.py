@@ -1,5 +1,7 @@
+import docker
 import json
 import os
+import requests
 import shutil
 import subprocess
 
@@ -688,16 +690,34 @@ This is where the magic happens. Desugars the constraints from fully_cross_block
 """
 def synthesize_trials(hl_block: HLBlock, output: str) -> str:
     (fresh, cnfs, reqs) = desugar(hl_block)
-    result = jsonify(fresh, cnfs, reqs)
 
-    # TODO:
-    # 1. Start a container for the sweetpea server, making sure to use -d and -p to map the port.
-    # 2. POST to /experiments/generate using the result of jsonify as the body.
-    # 3. Stop and then remove the docker container.
-    # 4. Decode the solutions list from the server response.
+    json_data = jsonify(fresh, cnfs, reqs)
 
-    # Decode the results
     solutions: List[List[int]] = []
+
+    docker_client = docker.from_env()
+
+    # 1. Start a container for the sweetpea server, making sure to use -d and -p to map the port.
+    container = docker_client.containers.run("sweetpea/server", detach=True, ports={8080: 8080})
+
+    # 2. POST to /experiments/generate using the result of jsonify as the body.
+    try:
+        health_check = requests.get('http://localhost:8080/')
+        if health_check.status_code != 200:
+            raise RuntimeError("SweetPea server healthcheck returned non-200 reponse! " + str(health_check.status_code))
+
+        experiments_request = requests.post('http://localhost:8080/experiments/generate', data = json_data)
+        if experiments_request.status_code != 200:
+            raise RuntimeError("Received non-200 response from experiment generation! " + str(experiments_request.status_code))
+
+        solutions = experiments_request.json()['solutions']
+
+    # 3. Stop and then remove the docker container.
+    finally:
+        container.stop()
+        container.remove()
+
+    # 4. Decode the results
     result = reduce(lambda a, b: a + decode(hl_block, b) + '\n', solutions, '')
 
     # Print the results nicely before returning
