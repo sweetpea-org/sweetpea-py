@@ -224,23 +224,31 @@ def toCNF(expr: Union[int, Not, Iff, Or, And]) -> And:
 
 
 """
-Need to pretty-print results of the toCNF call in the DIMACS format
-ie, And([Or(1, 4), Or(5, -4, 2), Or(-1, -5)]) needs to print as:
-    1 4 0
-    5 -4 2 0
-    -1 -5 0
+Need to convert the tuple representation to a json list representation.
+ie, And([Or(1, 4), Or(5, -4, 2), Or(-1, -5)]) needs to become:
+[[1,   4],
+ [5,  -4],
+ [-1  -5]]
 """
-def cnfToStr(expr: Union[And, Or, Not, int]) -> str:
-    if isinstance(expr, int):
-        return str(expr)
-    elif isinstance(expr, Not):
-        return '-' + cnfToStr(expr.input)
-    elif isinstance(expr, Or):
-        return ' '.join(map(lambda x: cnfToStr(x), expr.input_list))
-    elif isinstance(expr, And):
-        return '\n'.join(map(lambda x: cnfToStr(x) + ' 0', expr.input_list)) + '\n'
-    else:
-        raise ValueError('expr was not an And, Or, Not, or int')
+def cnfToJson(expr: List[And]) -> List[List[int]]:
+    or_list = []
+
+    for a in expr:
+        for o in a.input_list:
+            if isinstance(o, Or):
+                l: List[int] = []
+                for n in o.input_list:
+                    if isinstance(n, int):
+                        l.append(n)
+                    elif isinstance(n, Not):
+                        l.append(-n.input)
+                    else:
+                        raise ValueError("Value was not Not tuple or int")
+                or_list.append(l)
+            else:
+                raise ValueError("Value was not Or tuple")
+
+    return or_list
 
 
 """
@@ -580,10 +588,12 @@ Goal is to produce a json structure like:
 Passing along the "fresh" variable counter & a list of reqs to the backend
 Important! The backend is expecting json with these exact key names; if the names are change the backend Parser.hs file needs to be updated.
 """
-def jsonify(fresh:int, ll_calls: List[Request]) -> str:
+def jsonify(fresh:int, cnfs: List[And], ll_calls: List[Request]) -> str:
+    cnfList = cnfToJson(cnfs)
     requests = list(map(lambda r: {'equalityType': r.equalityType, 'k': r.k, 'booleanValues': r.booleanValues}, ll_calls))
 
     return json.dumps({ "fresh" : fresh,
+                        "cnfs" : cnfList,
                         "requests" : requests })
 
 
@@ -678,7 +688,7 @@ This is where the magic happens. Desugars the constraints from fully_cross_block
 """
 def synthesize_trials(hl_block: HLBlock, output: str) -> str:
     (fresh, cnfs, reqs) = desugar(hl_block)
-    result = jsonify(fresh, reqs)
+    result = jsonify(fresh, cnfs, reqs)
 
     # Important: the backend is looking for a file with this name
     # TODO: This is making assumptions about where sweetpea-py is being run from, we should make this less brittle.
@@ -695,7 +705,7 @@ def synthesize_trials(hl_block: HLBlock, output: str) -> str:
     # Append to the file "ex.cnf" of the successful subprocess call w/ cnfs generated from desugaring
     # This involves updating the DIMACS header to update the number of clauses.
     cnf = toCNF(And(cnfs))
-    cnf_str = cnfToStr(cnf)
+    cnf_str = "placeholder"
     additional_clauses = cnf_str.count('\n')
 
     original_file = open('ex-start.cnf')

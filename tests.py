@@ -104,28 +104,28 @@ def test_toCNF():
 
 
 def test_cnfToStr():
-    assert cnfToStr(And([1])) == "1 0\n"
-    assert cnfToStr(And([Not(5)])) == "-5 0\n"
-    assert cnfToStr(Or([1, 2, Not(4)])) == "1 2 -4"
+    assert cnfToJson([And([Or([1])])]) == [[1]]
+    assert cnfToJson([And([Or([Not(5)])])]) == [[-5]]
+    assert cnfToJson([And([Or([1, 2, Not(4)])])]) == [[1, 2, -4]]
 
-    assert cnfToStr(And([Or([1, 4]), Or([5, -4, 2]), Or([-1, -5])])) == "\n".join([
-        "1 4 0",
-        "5 -4 2 0",
-        "-1 -5 0\n"])
+    assert cnfToJson([And([Or([1, 4]), Or([5, -4, 2]), Or([-1, -5])])]) == [
+        [1, 4],
+        [5, -4, 2],
+        [-1, -5]]
 
-    assert cnfToStr(And([
+    assert cnfToJson([And([
         Or([1, 3, Not(2)]),
         Or([1, 3, 5]),
         Or([1, 4, Not(2)]),
         Or([1, 4, 5]),
         Or([2, 3, 1, 5]),
-        Or([2, 4, 1, 5])])) == "\n".join([
-        "1 3 -2 0",
-        "1 3 5 0",
-        "1 4 -2 0",
-        "1 4 5 0",
-        "2 3 1 5 0",
-        "2 4 1 5 0\n"])
+        Or([2, 4, 1, 5])])]) == [
+            [1, 3, -2],
+            [1, 3, 5],
+            [1, 4, -2],
+            [1, 4, 5],
+            [2, 3, 1, 5],
+            [2, 4, 1, 5]]
 
 
 # done
@@ -295,10 +295,17 @@ def test_desugar_nomorethankinarow():
 
 
 def test_jsonify():
-    assert jsonify(34, [
+    fresh = 34
+    cnfs = [And([Or([1, 2, 3])]),
+            And([Or([-4, 5, -6])])]
+    requests = [
         Request("EQ", 1, [5, 10, 15, 20]),
-        Request("LT", 3, [1, 2, 3, 4])]) == (
-            '{"fresh": 34, "requests": ['
+        Request("LT", 3, [1, 2, 3, 4])]
+
+    assert jsonify(fresh, cnfs, requests) == (
+            '{"fresh": 34, '
+            '"cnfs": [[1, 2, 3], [-4, 5, -6]], '
+            '"requests": ['
             '{"equalityType": "EQ", "k": 1, "booleanValues": [5, 10, 15, 20]}, '
             '{"equalityType": "LT", "k": 3, "booleanValues": [1, 2, 3, 4]}]}')
 
