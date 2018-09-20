@@ -315,31 +315,31 @@ def test_decode():
                 -7,   8,   9, -10, -11,  12,
                 13, -14, -15,  16, -17,  18,
                 19, -20,  21, -22,  23, -24]
-    assert decode(blk, solution) == \
-        ("color blue | text blue | congruent? con\n" +
-         "color blue | text red  | congruent? inc\n" +
-         "color red  | text blue | congruent? inc\n" +
-         "color red  | text red  | congruent? con\n")
+    assert decode(blk, solution) == {
+        'color':      ['blue', 'blue', 'red',  'red'],
+        'text':       ['blue', 'red',  'blue', 'red'],
+        'congruent?': ['con',  'inc',  'inc',  'con']
+    }
 
     solution = [ -1,   2, -3,   4,   5,  -6,
                   7,  -8, -9,  10, -11,  12,
                  13, -14, 15, -16,  17, -18,
                 -19,  20, 21, -22, -23,  24]
-    assert decode(blk, solution) == \
-        ("color blue | text blue | congruent? con\n" +
-         "color red  | text blue | congruent? inc\n" +
-         "color red  | text red  | congruent? con\n" +
-         "color blue | text red  | congruent? inc\n")
+    assert decode(blk, solution) == {
+        'color':      ['blue', 'red',  'red', 'blue'],
+        'text':       ['blue', 'blue', 'red', 'red'],
+        'congruent?': ['con',  'inc',  'con', 'inc']
+    }
 
     solution = [-1,   2,   3,  -4,  -5,   6,
                 -7,   8,  -9,  10,  11, -12,
                 13, -14,  15, -16,  17, -18,
                 19, -20, -21,  22, -23,  24]
-    assert decode(blk, solution) == \
-        ("color blue | text red  | congruent? inc\n" +
-         "color blue | text blue | congruent? con\n" +
-         "color red  | text red  | congruent? con\n" +
-         "color red  | text blue | congruent? inc\n")
+    assert decode(blk, solution) == {
+        'color':      ['blue', 'blue', 'red', 'red'],
+        'text':       ['red',  'blue', 'red', 'blue'],
+        'congruent?': ['inc',  'con',  'con', 'inc']
+    }
 
     f1 = Factor("a", ["b", "c", "d"])
     f2 = Factor("e", ["f"])
@@ -347,7 +347,7 @@ def test_decode():
     solution = [-1,  2, -3, 4,
                 -1, -2,  3, 4,
                  1, -2  -3, 4]
-    assert decode(f_blk, solution) == \
-        ("a c | e f\n" +
-         "a d | e f\n" +
-         "a b | e f\n")
+    assert decode(f_blk, solution) == {
+        'a': ['c', 'd', 'b'],
+        'e': ['f', 'f', 'f']
+    }

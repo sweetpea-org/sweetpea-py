@@ -663,32 +663,37 @@ def fully_cross_block(design: List[Factor], xing: List[Factor], constraints: Any
     return HLBlock(design, xing, all_constraints)
 
 """
-TODO: also psyNeuLink readable
+Decodes a single solution into a dict of this form:
+{
+  '<factor name>': ['<trial 1 label>', '<trial 2 label>, ...]
+  ...
+}
 """
-def decode(hl_block: HLBlock, solution: List[int]) -> str:
+def decode(hl_block: HLBlock, solution: List[int]) -> dict:
     num_encoding_vars = encoding_variable_size(hl_block.design, hl_block.xing);
     vars_per_trial = design_size(hl_block.design)
-
-    nested_assignment_strs = [list(map(lambda l: f.name + " " + get_level_name(l), f.levels)) for f in hl_block.design]
-    column_widths = list(map(lambda l: max(list(map(len, l))), nested_assignment_strs))
-    format_str = reduce(lambda a, b: a + '{{:<{}}} | '.format(b), column_widths, '')[:-3] + '\n'
-
-    assignment_strs = list(chain(*nested_assignment_strs))
 
     # Looks like [[2, 4, 6], [8, 10, 12], [14, 16, 18], [20, 22, 23]]
     trial_assignments = list(map(lambda l: list(filter(lambda n: n > 0, l)),
                                  list(chunk(solution[:num_encoding_vars], vars_per_trial))))
 
-    # Looks like [['color red', 'text blue', 'congruent? con'], ['color blue', ...] ...]
-    trials = [list(map(lambda v: assignment_strs[(v % vars_per_trial) - 1], trial_assignment)) for trial_assignment in trial_assignments]
+    transposed: List[List[int]] = list(map(list, zip(*trial_assignments)))
+    assignment_indices = [list(map(lambda n: (n - 1) % vars_per_trial, s)) for s in transposed]
 
-    return reduce(lambda a, b: a + format_str.format(*b), trials, '')
+    factor_names = list(map(lambda f: f.name, hl_block.design))
+    factors = list(zip(factor_names, assignment_indices))
+
+    level_names = list(map(lambda tup: tup[1], get_all_level_names(hl_block.design)))
+
+    experiment = {c: list(map(lambda idx: level_names[idx], v)) for (c,v) in factors}
+
+    return experiment
 
 
 """
 This is where the magic happens. Desugars the constraints from fully_cross_block (which results in some direct cnfs being produced and some requests to the backend being produced). Then calls unigen on the full cnf file. Then decodes that cnf file into (1) something human readable & (2) psyNeuLink readable.
 """
-def synthesize_trials(hl_block: HLBlock, output: str) -> str:
+def synthesize_trials(hl_block: HLBlock) -> List[dict]:
     (fresh, cnfs, reqs) = desugar(hl_block)
 
     json_data = jsonify(fresh, cnfs, reqs)
@@ -718,9 +723,6 @@ def synthesize_trials(hl_block: HLBlock, output: str) -> str:
         container.remove()
 
     # 4. Decode the results
-    result = reduce(lambda a, b: a + decode(hl_block, b) + '\n', solutions, '')
-
-    # Print the results nicely before returning
-    print('\n' + result)
+    result = list(map(lambda s: decode(hl_block, s), solutions))
 
     return result
