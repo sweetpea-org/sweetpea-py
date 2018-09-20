@@ -4,7 +4,7 @@ all: typecheck test
 
 typecheck:
 	@echo "Typechecking..."
-	mypy FrontEnd.py tests.py
+	mypy --ignore-missing-imports FrontEnd.py tests.py
 
 test: typecheck
 	@echo "Running tests..."
