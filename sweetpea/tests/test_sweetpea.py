@@ -352,3 +352,11 @@ def test_decode():
         'a': ['c', 'd', 'b'],
         'e': ['f', 'f', 'f']
     }
+
+
+def test_desugar_with_constraint():
+    constraints = [NoMoreThanKInARow(1, ("congruent?", "con"))]
+    blk = fully_cross_block(design, crossing, constraints)
+
+    # This was blowing up with an error.
+    desugar(blk)

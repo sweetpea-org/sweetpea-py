@@ -8,7 +8,7 @@ import subprocess
 from functools import reduce, partial
 from collections import namedtuple
 from itertools import islice, repeat, product, chain, tee, accumulate
-from typing import Any, Dict, List, Union, Tuple, Iterator, Iterable
+from typing import Any, Dict, List, Union, Tuple, Iterator, Iterable, cast
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -627,6 +627,7 @@ def desugar(hl_block: HLBlock) -> Tuple[int, List[And], List[Request]]:
     # filter for any NoMoreThanKInARow constraints in hl_block.hlconstraints
     constraints = list(filter(lambda c: isinstance(c, NoMoreThanKInARow), hl_block.hlconstraints))
     for c in constraints:
+
         # Apply the constraint to each level in the factor.
         if isinstance(c.levels, Factor):
             level_names = list(map(lambda l: get_level_name(l), c.levels))
@@ -635,8 +636,8 @@ def desugar(hl_block: HLBlock) -> Tuple[int, List[And], List[Request]]:
             reqs_created.extend(list(chain(*requests)))
 
         # Should be a Tuple containing the factor name, and the level name.
-        elif isinstance(c.levels, Tuple[str, str]):
-            reqs_created.extend(desugar_nomorethankinarow(c.k, c.levels, hl_block))
+        elif isinstance(c.levels, tuple) and len(c.levels) == 2:
+            reqs_created.extend(desugar_nomorethankinarow(c.k, cast(Tuple[str, str], c.levels), hl_block))
 
         else:
             print("Error: unrecognized levels specification in NoMoreThanKInARow constraint: " + c.levels)

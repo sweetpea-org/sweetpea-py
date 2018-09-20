@@ -8,4 +8,4 @@ typecheck:
 
 test: typecheck
 	@echo "Running tests..."
-	python3 -m nose
+	python3 -m pytest -vv
