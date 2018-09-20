@@ -1,8 +1,9 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #          yay, testing! run: `pytest tests.py`
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-from FrontEnd import *
 import operator as op
+
+from sweetpea import *
 
 
 # Common variables for stroop.

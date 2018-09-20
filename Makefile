@@ -4,8 +4,8 @@ all: typecheck test
 
 typecheck:
 	@echo "Typechecking..."
-	mypy --ignore-missing-imports FrontEnd.py tests.py
+	mypy --ignore-missing-imports sweetpea/__init__.py sweetpea/tests/test_sweetpea.py
 
 test: typecheck
 	@echo "Running tests..."
-	pytest -vv tests.py
+	python3 -m nose

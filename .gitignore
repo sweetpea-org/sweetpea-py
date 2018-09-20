@@ -23,3 +23,5 @@ cabal.project.local
 .HTF/
 test/K*
 ex.cnf
+build
+sweetpea.egg-info
