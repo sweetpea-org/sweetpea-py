@@ -4,6 +4,7 @@ import os
 import requests
 import shutil
 import subprocess
+import tempfile
 
 from functools import reduce, partial
 from collections import namedtuple
@@ -713,8 +714,14 @@ def synthesize_trials(hl_block: HLBlock) -> List[dict]:
             raise RuntimeError("SweetPea server healthcheck returned non-200 reponse! " + str(health_check.status_code))
 
         experiments_request = requests.post('http://localhost:8080/experiments/generate', data = json_data)
-        if experiments_request.status_code != 200:
-            raise RuntimeError("Received non-200 response from experiment generation! " + str(experiments_request.status_code))
+        if experiments_request.status_code != 200 or not experiments_request.json()['ok']:
+            tmp_filename = ""
+            with tempfile.NamedTemporaryFile(delete=False) as f:
+                f.write(str.encode(json_data))
+                tmp_filename = f.name
+
+            raise RuntimeError("Received non-200 response from experiment generation! Request body saved to temp file '" +
+                tmp_filename + "' status_code=" + str(experiments_request.status_code) + " response_body=" + str(experiments_request.text))
 
         solutions = experiments_request.json()['solutions']
 
