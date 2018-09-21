@@ -13,4 +13,4 @@ echo "Building new distribution archives"
 python3 setup.py sdist bdist_wheel
 
 echo "Publishing new distribution to pypi.org"
-twine upload dist/*
+python3 -m twine upload dist/*
