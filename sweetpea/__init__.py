@@ -5,6 +5,7 @@ import requests
 import shutil
 import subprocess
 import tempfile
+import time
 
 from functools import reduce, partial
 from collections import namedtuple
@@ -704,8 +705,14 @@ def synthesize_trials(hl_block: HLBlock) -> List[dict]:
 
     docker_client = docker.from_env()
 
+    # Make sure the local image is up-to-date.
+    docker_client.images.pull("sweetpea/server")
+
     # 1. Start a container for the sweetpea server, making sure to use -d and -p to map the port.
     container = docker_client.containers.run("sweetpea/server", detach=True, ports={8080: 8080})
+
+    # Give the server time to finish starting to avoid connection reset errors.
+    time.sleep(1)
 
     # 2. POST to /experiments/generate using the result of jsonify as the body.
     try:
