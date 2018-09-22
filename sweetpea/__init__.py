@@ -632,7 +632,8 @@ def desugar(hl_block: HLBlock) -> Tuple[int, List[And], List[Request]]:
 
         # Apply the constraint to each level in the factor.
         if isinstance(c.levels, Factor):
-            level_names = list(map(lambda l: get_level_name(l), c.levels))
+            levels = c.levels.levels  # Get the actual levels out of the factor.
+            level_names = list(map(lambda l: get_level_name(l), levels))
             level_tuples = list(map(lambda l_name: (c.levels.name, l_name), level_names))
             requests = list(map(lambda t: desugar_nomorethankinarow(c.k, t, hl_block), level_tuples))
             reqs_created.extend(list(chain(*requests)))

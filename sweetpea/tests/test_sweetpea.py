@@ -360,3 +360,10 @@ def test_desugar_with_constraint():
 
     # This was blowing up with an error.
     desugar(blk)
+
+
+def test_desugar_with_factor_constraint():
+    constraints = [NoMoreThanKInARow(1, conFactor)]
+    blk = fully_cross_block(design, crossing, constraints)
+
+    desugar(blk)
