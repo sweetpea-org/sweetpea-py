@@ -694,6 +694,21 @@ def decode(hl_block: HLBlock, solution: List[int]) -> dict:
 
 
 """
+Display the generated experiments in human-friendly form.
+"""
+def print_experiments(hl_block: HLBlock, experiments: List[dict]):
+    nested_assignment_strs = [list(map(lambda l: f.name + " " + get_level_name(l), f.levels)) for f in hl_block.design]
+    column_widths = list(map(lambda l: max(list(map(len, l))), nested_assignment_strs))
+
+    format_str = reduce(lambda a, b: a + '{{:<{}}} | '.format(b), column_widths, '')[:-3] + '\n'
+
+    for e in experiments:
+        strs = [list(map(lambda v: name + " " + v, values)) for (name,values) in e.items()]
+        transposed = list(map(list, zip(*strs)))
+        print(reduce(lambda a, b: a + format_str.format(*b), transposed, ''))
+
+
+"""
 This is where the magic happens. Desugars the constraints from fully_cross_block (which results in some direct cnfs being produced and some requests to the backend being produced). Then calls unigen on the full cnf file. Then decodes that cnf file into (1) something human readable & (2) psyNeuLink readable.
 """
 def synthesize_trials(hl_block: HLBlock) -> List[dict]:
