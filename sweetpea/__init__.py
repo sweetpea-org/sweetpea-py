@@ -715,7 +715,7 @@ This is where the magic happens. Desugars the constraints from fully_cross_block
 def synthesize_trials(hl_block: HLBlock) -> List[dict]:
     (fresh, cnfs, reqs) = desugar(hl_block)
 
-    json_data = jsonify(fresh, cnfs, reqs)
+    json_data = jsonify(fresh - 1, cnfs, reqs)
 
     solutions: List[List[int]] = []
 
