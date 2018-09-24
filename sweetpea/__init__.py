@@ -376,12 +376,12 @@ ie, if its a Transition(op.eq, [color, color]) (ie "repeat" color transition)
     (0, 5), (1, 6) (assuming there are 4 levels in the design)
 So this helper function shifts over indices that were meant to be intepretted as being in a subsequent trial.
 """
-def shift_window(idxs: List[List[int]], window: Union[WithinTrial, Transition, Window],
-                                        trial_size:int) -> List[List[int]]:
+def shift_window(idxs: List[List[int]],
+                 window: Union[WithinTrial, Transition, Window],
+                 trial_size:int) -> List[List[int]]:
     if isinstance(window, WithinTrial):
         return idxs
     elif isinstance(window, Transition):
-        # update the idxs in slot 2 to be +trialsize
         return [[pair[0], pair[1]+trial_size] for pair in idxs]
     elif isinstance(window, Window):
         return [reduce(lambda l, idx: l + [idx + len(l) * trial_size], idx_list, []) for idx_list in idxs]
@@ -501,7 +501,7 @@ def desugar_full_crossing(fresh:int, hl_block:HLBlock) -> Tuple[int, And, List[R
     # Step 2:
     states = list(chunk(stateVars, numStates))
     transposed = list(map(list, zip(*states)))
-    chunked_trials = list(chunk(list(range(1, numEncodingVars)), design_size(hl_block.design)))
+    chunked_trials = list(chunk(list(range(1, numEncodingVars + 1)), design_size(hl_block.design)))
 
     # 1. group chunked_trials into factor shaped subchunks
     # ie, [[1, 2], [3, 4], [5, 6]], [[7, 8], ...

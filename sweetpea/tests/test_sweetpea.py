@@ -367,3 +367,22 @@ def test_desugar_with_factor_constraint():
     blk = fully_cross_block(design, crossing, constraints)
 
     desugar(blk)
+
+
+def test_desugar_with_derived_transition_levels():
+    color_transition = Factor("color_transition", [
+        DerivedLevel("repeat", Transition(lambda c1, c2: c1 == c2, [color, color])),
+        DerivedLevel("switch", Transition(lambda c1, c2: c1 != c2, [color, color]))
+    ])
+
+    design.append(color_transition)
+    constraints = [NoMoreThanKInARow(2, color_transition)]
+    blk = fully_cross_block(design, crossing, constraints)
+
+    desugar(blk)
+
+
+def test_desugar_full_crossing_with_simpler_stroop():
+    blk = fully_cross_block([color, text], [color, text], [])
+
+    desugar_full_crossing(0, blk)
