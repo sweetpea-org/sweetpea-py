@@ -713,6 +713,8 @@ def print_experiments(hl_block: HLBlock, experiments: List[dict]):
 This is where the magic happens. Desugars the constraints from fully_cross_block (which results in some direct cnfs being produced and some requests to the backend being produced). Then calls unigen on the full cnf file. Then decodes that cnf file into (1) something human readable & (2) psyNeuLink readable.
 """
 def synthesize_trials(hl_block: HLBlock) -> List[dict]:
+    # TOOD: Do this in separate thread, and output some kind of progress indicator.
+    print("Generating design formula...")
     (fresh, cnfs, reqs) = desugar(hl_block)
 
     json_data = jsonify(fresh - 1, cnfs, reqs)
@@ -722,15 +724,19 @@ def synthesize_trials(hl_block: HLBlock) -> List[dict]:
     docker_client = docker.from_env()
 
     # Make sure the local image is up-to-date.
+    print("Updating docker image...")
     docker_client.images.pull("sweetpea/server")
 
     # 1. Start a container for the sweetpea server, making sure to use -d and -p to map the port.
+    print("Starting docker container...")
     container = docker_client.containers.run("sweetpea/server", detach=True, ports={8080: 8080})
 
     # Give the server time to finish starting to avoid connection reset errors.
     time.sleep(1)
 
     # 2. POST to /experiments/generate using the result of jsonify as the body.
+    # TOOD: Do this in separate thread, and output some kind of progress indicator.
+    print("Sending formula to backend...")
     try:
         health_check = requests.get('http://localhost:8080/')
         if health_check.status_code != 200:
@@ -750,6 +756,7 @@ def synthesize_trials(hl_block: HLBlock) -> List[dict]:
 
     # 3. Stop and then remove the docker container.
     finally:
+        print("Stopping docker container...")
         container.stop()
         container.remove()
 
