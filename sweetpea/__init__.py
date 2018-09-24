@@ -126,7 +126,7 @@ def prepare_for_product(expr: Union[int, Not, Or, And]) -> List[Union[int, Not, 
 
 
 def flatten_clause_list(l: List[Union[int, Not, Or, And]], cls: Any) -> List[Union[int, Not, Or, And]]:
-    flattened_list: List[Union[int, Not, Or, And]] = []
+    flattened_list = cast(List[Union[int, Not, Or, And]], [])
     for i in l:
         if isinstance(i, cls):
             flattened_list.extend(i.input_list)
@@ -139,7 +139,7 @@ def flatten_clause_list(l: List[Union[int, Not, Or, And]], cls: Any) -> List[Uni
 filters out duplicates in the list before constructing the final tuple.
 """
 def clean_list(l: List[Union[int, Not, Or, And]]) -> List[Union[int, Not, Or, And]]:
-    new_list: List[Union[int, Not, Or, And]] = []
+    new_list = cast(List[Union[int, Not, Or, And]], [])
     for i in l:
         if i not in new_list:
             new_list.append(i)
@@ -240,7 +240,7 @@ def cnfToJson(expr: List[And]) -> List[List[int]]:
     for a in expr:
         for o in a.input_list:
             if isinstance(o, Or):
-                l: List[int] = []
+                l = cast(List[int], [])
                 for n in o.input_list:
                     if isinstance(n, int):
                         l.append(n)
@@ -662,7 +662,7 @@ def desugar(hl_block: HLBlock) -> Tuple[int, List[And], List[Request]]:
 Returns a fully crossed block that we'll process with synthesize!
 """
 def fully_cross_block(design: List[Factor], xing: List[Factor], constraints: Any) -> HLBlock:
-    derivation_constraints : List[Any] = process_derivations(design, xing)
+    derivation_constraints = cast(List[Any], process_derivations(design, xing))
     all_constraints = [FullyCross, Consistency] + derivation_constraints + constraints
     return HLBlock(design, xing, all_constraints)
 
@@ -681,7 +681,7 @@ def decode(hl_block: HLBlock, solution: List[int]) -> dict:
     trial_assignments = list(map(lambda l: list(filter(lambda n: n > 0, l)),
                                  list(chunk(solution[:num_encoding_vars], vars_per_trial))))
 
-    transposed: List[List[int]] = list(map(list, zip(*trial_assignments)))
+    transposed = cast(List[List[int]], list(map(list, zip(*trial_assignments))))
     assignment_indices = [list(map(lambda n: (n - 1) % vars_per_trial, s)) for s in transposed]
 
     factor_names = list(map(lambda f: f.name, hl_block.design))
@@ -717,7 +717,7 @@ def synthesize_trials(hl_block: HLBlock) -> List[dict]:
 
     json_data = jsonify(fresh - 1, cnfs, reqs)
 
-    solutions: List[List[int]] = []
+    solutions = cast(List[List[int]], [])
 
     docker_client = docker.from_env()
 

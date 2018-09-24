@@ -303,12 +303,14 @@ def test_jsonify():
         Request("EQ", 1, [5, 10, 15, 20]),
         Request("LT", 3, [1, 2, 3, 4])]
 
-    assert jsonify(fresh, cnfs, requests) == (
-            '{"fresh": 34, '
-            '"cnfs": [[1, 2, 3], [-4, 5, -6]], '
-            '"requests": ['
-            '{"equalityType": "EQ", "k": 1, "booleanValues": [5, 10, 15, 20]}, '
-            '{"equalityType": "LT", "k": 3, "booleanValues": [1, 2, 3, 4]}]}')
+    result = json.loads(jsonify(fresh, cnfs, requests))
+
+    assert result['fresh'] == 34
+    assert result['cnfs'] == [[1, 2, 3], [-4, 5, -6]]
+    assert result['requests'] == [
+        {"equalityType": "EQ", "k": 1, "booleanValues": [5, 10, 15, 20]},
+        {"equalityType": "LT", "k": 3, "booleanValues": [1, 2, 3, 4]}
+    ]
 
 
 def test_decode():
