@@ -592,13 +592,20 @@ Goal is to produce a json structure like:
 Passing along the "fresh" variable counter & a list of reqs to the backend
 Important! The backend is expecting json with these exact key names; if the names are change the backend Parser.hs file needs to be updated.
 """
-def jsonify(fresh:int, cnfs: List[And], ll_calls: List[Request]) -> str:
+def jsonify(fresh:int, cnfs: List[And], ll_calls: List[Request], support: int) -> str:
     cnfList = cnfToJson(cnfs)
     requests = list(map(lambda r: {'equalityType': r.equalityType, 'k': r.k, 'booleanValues': r.booleanValues}, ll_calls))
 
     return json.dumps({ "fresh" : fresh,
                         "cnfs" : cnfList,
-                        "requests" : requests })
+                        "requests" : requests,
+                        "unigen" : {
+                            "support" : support,
+                            "arguments" : [
+                                "--verbosity=0",
+                                "--samples=500"
+                            ]
+                        }})
 
 
 """
@@ -717,7 +724,8 @@ def synthesize_trials(hl_block: HLBlock) -> List[dict]:
     print("Generating design formula...")
     (fresh, cnfs, reqs) = desugar(hl_block)
 
-    json_data = jsonify(fresh - 1, cnfs, reqs)
+    support = encoding_variable_size(hl_block.design, hl_block.xing)
+    json_data = jsonify(fresh - 1, cnfs, reqs, support)
 
     solutions = cast(List[List[int]], [])
 

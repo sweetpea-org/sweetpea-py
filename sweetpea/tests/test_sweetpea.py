@@ -303,9 +303,16 @@ def test_jsonify():
         Request("EQ", 1, [5, 10, 15, 20]),
         Request("LT", 3, [1, 2, 3, 4])]
 
-    result = json.loads(jsonify(fresh, cnfs, requests))
+    result = json.loads(jsonify(fresh, cnfs, requests, 24))
 
     assert result['fresh'] == 34
+    assert result['unigen'] == {
+        'support': 24,
+        'arguments': [
+            '--verbosity=0',
+            '--samples=500'
+        ]
+    }
     assert result['cnfs'] == [[1, 2, 3], [-4, 5, -6]]
     assert result['requests'] == [
         {"equalityType": "EQ", "k": 1, "booleanValues": [5, 10, 15, 20]},
