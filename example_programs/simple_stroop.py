@@ -2,8 +2,8 @@ import operator as op
 
 from sweetpea import *
 
-color = Factor("color", ["red", "blue"])
-text  = Factor("text",  ["red", "blue"])
+color = Factor("color", ["red", "blue", "green"])
+text  = Factor("text",  ["red", "blue", "green"])
 
 conLevel  = DerivedLevel("con", WithinTrial(op.eq, [color, text]))
 incLevel  = DerivedLevel("inc", WithinTrial(op.ne, [color, text]))
