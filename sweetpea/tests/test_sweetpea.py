@@ -212,7 +212,7 @@ def test_jsonify():
         'support': 24,
         'arguments': [
             '--verbosity=0',
-            '--samples=500'
+            '--samples=100'
         ]
     }
     assert result['cnfs'] == [[1, 2, 3], [-4, 5, -6]]

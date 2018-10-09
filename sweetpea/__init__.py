@@ -459,7 +459,7 @@ def jsonify(fresh:int, cnfs: List[And], ll_calls: List[Request], support: int) -
                             "support" : support,
                             "arguments" : [
                                 "--verbosity=0",
-                                "--samples=500"
+                                "--samples=100"
                             ]
                         }})
 
