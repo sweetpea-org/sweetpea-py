@@ -4,6 +4,7 @@
 import operator as op
 
 from sweetpea import *
+from sweetpea.logic import to_cnf
 
 
 # Common variables for stroop.
@@ -26,107 +27,6 @@ def test_get_all_level_names():
                                                   ('text', 'red'),
                                                   ('text', 'blue'),
                                                   ('text', 'green')]
-
-def test_toCNFRec():
-    assert toCNFRec(1) == 1
-
-    assert toCNFRec(Not(1)) == Not(1)
-    assert toCNFRec(Not(Not(1))) == 1
-    assert toCNFRec(Not(Not(And([1, 2])))) == And([1, 2])
-    assert toCNFRec(Not(And([1, 2]))) == Or([Not(1), Not(2)])
-    assert toCNFRec(Not(Or([1, 2]))) == And([Not(1), Not(2)])
-
-    assert toCNFRec(Iff(1, 2)) == And([Or([1, Not(2)]), Or([2, Not(1)])])
-
-    assert toCNFRec(Iff(4, Or([And([0, 2]), And([1, 3])]))) == \
-        And(input_list=[
-            Or(input_list=[4, Not(input=0), Not(input=2)]),
-            Or(input_list=[4, Not(input=1), Not(input=3)]),
-            Or(input_list=[0, 1, Not(input=4)]),
-            Or(input_list=[0, 3, Not(input=4)]),
-            Or(input_list=[2, 1, Not(input=4)]),
-            Or(input_list=[2, 3, Not(input=4)])
-        ])
-
-
-def test_toCNF():
-    # Simple cases
-    assert toCNF(1) == And([1])
-    assert toCNF(And([1, 2])) == And([1, 2])
-    assert toCNF(Not(5)) == And([Not(5)])
-    assert toCNF(And([5])) == And([5])
-    assert toCNF(And([2, 3, 5])) == And([2, 3, 5])
-    assert toCNF(Or([2])) == And([2])
-    assert toCNF(Or([1, 2, 3])) == And([Or([1, 2, 3])])
-    assert toCNF(Or([1, And([2]), 3])) == And([Or([1, 2, 3])])
-
-    assert toCNF(And([Or([1, Not(2), Not(3)]), Or([Not(4), 5, 6])])) == \
-        And([Or([1, Not(2), Not(3)]), Or([Not(4), 5, 6])])
-    assert toCNF(Or([And([1, 2]), 3])) == And([Or([1, 3]), Or([2, 3])])
-
-    # Collapsing
-    assert toCNF(And([1, And([2])])) == And([1, 2])
-    assert toCNF(And([And([1]), And([2])])) == And([1, 2])
-    assert toCNF(And([And([1, 2, 3]), And([4])])) == And([1, 2, 3, 4])
-    assert toCNF(And([Or([1, 2]), And([3, 4])])) == And([Or([1, 2]), 3, 4])
-    assert toCNF(Or([1, Or([3, 4]), And([5, 6])])) == And([Or([1, 3, 4, 5]), Or([1, 3, 4, 6])])
-    assert toCNF(Or([1, Or([3, 4]), And([5])])) == And([Or([1, 3, 4, 5])])
-
-    # DeMorgan's laws
-    assert toCNF(Not(And([1, 3]))) == And([Or([Not(1), Not(3)])])
-    assert toCNF(Not(Or([1, 3]))) == And([Not(1), Not(3)])
-
-    # Not yet in CNF
-    assert toCNF(Not(Not(Not(And([1, 3]))) == And([Or([Not(1), Not(3)])])))
-    assert toCNF(Or([1, And([2, 3]), 4])) == And([Or([1, 2, 4]), Or([1, 3, 4])])
-
-    assert toCNF(Or([And([1, 2]), And([3, 4])])) == And([
-        Or([1, 3]), Or([1, 4]), Or([2, 3]), Or([2, 4])])
-    assert toCNF(And([Not(2), Or([1, 5])])) == And([Not(2), Or([1, 5])])
-
-    assert toCNF(Or([And([3, 4]), And([Not(2), Or([1, 5])])])) == \
-        And([
-            Or([3, Not(2)]),
-            Or([3, 1, 5]),
-            Or([4, Not(2)]),
-            Or([4, 1, 5])
-        ])
-
-    assert toCNF(Or([Or([And([1, 2]), And([3, 4])]),
-                     And([Not(2), Or([1, 5])])])) == \
-        And([
-            Or([1, 3, Not(2)]),
-            Or([1, 3, 5]),
-            Or([1, 4, Not(2)]),
-            Or([1, 4, 5]),
-            Or([2, 3, 1, 5]),
-            Or([2, 4, 1, 5])
-        ])
-
-
-def test_cnfToStr():
-    assert cnfToJson([And([Or([1])])]) == [[1]]
-    assert cnfToJson([And([Or([Not(5)])])]) == [[-5]]
-    assert cnfToJson([And([Or([1, 2, Not(4)])])]) == [[1, 2, -4]]
-
-    assert cnfToJson([And([Or([1, 4]), Or([5, -4, 2]), Or([-1, -5])])]) == [
-        [1, 4],
-        [5, -4, 2],
-        [-1, -5]]
-
-    assert cnfToJson([And([
-        Or([1, 3, Not(2)]),
-        Or([1, 3, 5]),
-        Or([1, 4, Not(2)]),
-        Or([1, 4, 5]),
-        Or([2, 3, 1, 5]),
-        Or([2, 4, 1, 5])])]) == [
-            [1, 3, -2],
-            [1, 3, 5],
-            [1, 4, -2],
-            [1, 4, 5],
-            [2, 3, 1, 5],
-            [2, 4, 1, 5]]
 
 
 # done
@@ -215,20 +115,20 @@ def test_shift_window():
 
 def test_desugar_derivation():
     # Congruent derivation
-    assert desugar_derivation(Derivation(4, [[0, 2], [1, 3]]), blk) == toCNF(And([
+    assert desugar_derivation(Derivation(4, [[0, 2], [1, 3]]), blk, 24) == to_cnf(And([
         Iff(5,  Or([And([1,  3 ]), And([2,  4 ])])),
         Iff(11, Or([And([7,  9 ]), And([8,  10])])),
         Iff(17, Or([And([13, 15]), And([14, 16])])),
         Iff(23, Or([And([19, 21]), And([20, 22])]))
-    ]))
+    ]), 24)
 
     # Incongruent derivation
-    assert desugar_derivation(Derivation(5, [[0, 3], [1, 2]]), blk) == toCNF(And([
+    assert desugar_derivation(Derivation(5, [[0, 3], [1, 2]]), blk, 24) == to_cnf(And([
         Iff(6,  Or([And([1,  4 ]), And([2,  3 ])])),
         Iff(12, Or([And([7,  10]), And([8,  9 ])])),
         Iff(18, Or([And([13, 16]), And([14, 15])])),
         Iff(24, Or([And([19, 22]), And([20, 21])]))
-    ]))
+    ]), 24)
 
 
 def test_desugar_consistency():
@@ -254,12 +154,14 @@ def test_desugar_consistency():
 
 
 def test_desugar_full_crossing():
-    assert desugar_full_crossing(25, blk) == (41, toCNF(And([
+    (expected_cnf, _) = to_cnf(And([
         Iff(25, And([1,  3 ])), Iff(26, And([1,  4 ])), Iff(27, And([2,  3 ])), Iff(28, And([2,  4 ])),
         Iff(29, And([7,  9 ])), Iff(30, And([7,  10])), Iff(31, And([8,  9 ])), Iff(32, And([8,  10])),
         Iff(33, And([13, 15])), Iff(34, And([13, 16])), Iff(35, And([14, 15])), Iff(36, And([14, 16])),
         Iff(37, And([19, 21])), Iff(38, And([19, 22])), Iff(39, And([20, 21])), Iff(40, And([20, 22]))
-    ])), [
+    ]), 41)
+
+    assert desugar_full_crossing(25, blk) == (41, expected_cnf, [
         Request("EQ", 1, [25, 29, 33, 37]),
         Request("EQ", 1, [26, 30, 34, 38]),
         Request("EQ", 1, [27, 31, 35, 39]),

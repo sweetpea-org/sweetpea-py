@@ -11,6 +11,8 @@ from functools import reduce, partial
 from collections import namedtuple
 from itertools import islice, repeat, product, chain, tee, accumulate
 from typing import Any, Dict, List, Union, Tuple, Iterator, Iterable, cast
+from sweetpea.logic import Iff, And, Or, Not, to_cnf, cnf_to_json
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -75,19 +77,6 @@ NoMoreThanKInARow = namedtuple('NoMoreThanKInARow', 'k levels')
 Request = namedtuple('Request', 'equalityType k booleanValues')
 
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Some nice boolean functions
-"""
-input_list is a list of the things being "anded" together
-    for instance, `a && b` becomes And([a, b])
-for Iff the args are `a` and `b`, as in, `a iff b`
-"""
-And = namedtuple('And', 'input_list')
-Or  = namedtuple('Or' , 'input_list')
-Iff = namedtuple('Iff', 'a b')
-Not = namedtuple('Not', 'input')
-
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #         "Front End" transformations
@@ -118,143 +107,6 @@ def get_all_level_names(design: List[Factor]) -> List[Tuple[Any, Any]]:
     return [(factor.name, get_level_name(level)) for factor in design for level in factor.levels]
 
 
-def prepare_for_product(expr: Union[int, Not, Or, And]) -> List[Union[int, Not, Or, And]]:
-    if isinstance(expr, int) or isinstance(expr, Not) or isinstance(expr, Or):
-        return [expr]
-    elif isinstance(expr, And):
-        return expr.input_list
-
-
-def flatten_clause_list(l: List[Union[int, Not, Or, And]], cls: Any) -> List[Union[int, Not, Or, And]]:
-    flattened_list = cast(List[Union[int, Not, Or, And]], [])
-    for i in l:
-        if isinstance(i, cls):
-            flattened_list.extend(i.input_list)
-        else:
-            flattened_list.append(i)
-    return flattened_list
-
-
-"""
-filters out duplicates in the list before constructing the final tuple.
-"""
-def clean_list(l: List[Union[int, Not, Or, And]]) -> List[Union[int, Not, Or, And]]:
-    new_list = cast(List[Union[int, Not, Or, And]], [])
-    for i in l:
-        if i not in new_list:
-            new_list.append(i)
-    return new_list
-
-
-def build_or(l: List[Union[int, Not, Or, And]]) -> Or:
-    cleaned_list = clean_list(l)
-    return Or(cleaned_list)
-
-
-def build_and(l: List[Union[int, Not, Or, And]]) -> And:
-    cleaned_list = clean_list(l)
-    return And(cleaned_list)
-
-
-"""
-Used to filter out clauses like Or([1, Not(1)]) from the CNF formula. Takes a list of
-items that would be used to construct a single Or.
-"""
-def remove_tautologies(l: List[Union[int, Not, Or, And]]) -> bool:
-    for idx in range(0, len(l)):
-        if isinstance(l[idx], int):
-            for other in l[idx+1:]:
-                if isinstance(other, Not) and Not(l[idx]) == other:
-                    return False
-    return True
-
-
-"""
-This is the recursive version of toCNF, used as a helper of the same.
-"""
-def toCNFRec(expr: Union[int, Not, Iff, Or, And]) -> Union[int, Not, Or, And]:
-    if isinstance(expr, int):
-        return expr
-    elif isinstance(expr, Not):
-        if isinstance(expr.input, int):
-            return expr
-        elif isinstance(expr.input, Not):
-            return toCNFRec(expr.input.input)
-        elif isinstance(expr.input, And):
-            return toCNFRec(Or(list(map(Not, expr.input.input_list))))
-        elif isinstance(expr.input, Or):
-            return toCNFRec(And(list(map(Not, expr.input.input_list))))
-        else:
-            raise
-    elif isinstance(expr, Iff):
-        return toCNFRec(Or([And([expr.a, expr.b]),
-                            And([Not(expr.a), Not(expr.b)])]))
-    elif isinstance(expr, Or):
-        if len(expr.input_list) == 1:
-            return toCNFRec(expr.input_list[0])
-        converted_clauses = list(map(toCNFRec, expr.input_list))
-        converted_clauses = flatten_clause_list(converted_clauses, Or)
-        if any(isinstance(c, And) for c in converted_clauses):
-            product_input = list(map(prepare_for_product, converted_clauses))
-            or_lists = list(list(tup) for tup in product(*product_input))
-            or_lists = list(map(flatten_clause_list, or_lists, repeat(Or, len(or_lists))))
-            or_lists = list(filter(remove_tautologies, or_lists))
-            return build_and(list(map(build_or, or_lists)))
-        else:
-            return build_or(converted_clauses)
-    elif isinstance(expr, And):
-        if len(expr.input_list) == 1:
-            return toCNFRec(expr.input_list[0])
-        else:
-            converted_clauses = list(map(toCNFRec, expr.input_list))
-            flattened_clause_list = flatten_clause_list(converted_clauses, And)
-            return build_and(flattened_clause_list)
-
-
-"""
-This is a helper function which takes boolean equations formatted with the namedTuples: Iff, And, Or, Not and converts them into CNF, ie, And([Or(...), Or(...) ...])
-General approach here: https://www.cs.jhu.edu/~jason/tutorials/convert-to-CNF.html
-TODO: is there a python implementation available?
-Note: toCNF may or maynot need access to fresh variables depending on implementation
-
-Even if the given expression doesn't begin with an And([...]), the resulting formula will.
-Redundant levels will also be collapsed, ie And([And([1])]) -> And([1])
-"""
-def toCNF(expr: Union[int, Not, Iff, Or, And]) -> And:
-    expr = toCNFRec(expr)
-    if not isinstance(expr, And):
-        expr = And([expr])
-    return expr
-
-
-"""
-Need to convert the tuple representation to a json list representation.
-ie, And([Or(1, 4), Or(5, -4, 2), Or(-1, -5)]) needs to become:
-[[1,   4],
- [5,  -4],
- [-1  -5]]
-"""
-def cnfToJson(expr: List[And]) -> List[List[int]]:
-    or_list = []
-
-    for a in expr:
-        for o in a.input_list:
-            if isinstance(o, Or):
-                l = cast(List[int], [])
-                for n in o.input_list:
-                    if isinstance(n, int):
-                        l.append(n)
-                    elif isinstance(n, Not):
-                        l.append(-n.input)
-                    else:
-                        raise ValueError("Value was not Not tuple or int")
-                or_list.append(l)
-            else:
-                raise ValueError("Value was not Or tuple")
-
-    return or_list
-
-
 """
 A full crossing is the product of the number of levels
 in all the factors in the xing.
@@ -274,6 +126,7 @@ def fully_cross_size(xing: List[Factor]) -> int:
         acc *= len(fact.levels)
     return acc
 
+
 """
 Analogous to fully_cross_size:
 >>> design_size([color, text])
@@ -281,6 +134,7 @@ Analogous to fully_cross_size:
 """
 def design_size(design: List[Factor]) -> int:
     return sum([len(f.levels) for f in design])
+
 
 """
 Usage::
@@ -320,6 +174,7 @@ def encoding_variable_size(design: List[Factor], xing: List[Factor]) -> int:
 def get_derived_factors(design: List[Factor]) -> List[Factor]:
     is_derived = lambda x : isinstance(x.levels[0], DerivedLevel)
     return list(filter(is_derived, design))
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~ Functions that have to do with derivations (called from fully_cross_block) ~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -389,7 +244,6 @@ def shift_window(idxs: List[List[int]],
         raise ValueError("Weird window encountered while processing derivations!")
 
 
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~ Functions that have to do with desugaring (called from synthesize) ~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -414,7 +268,7 @@ one test is the experiment: color = ["r", "b", "g"]; text = ["r", "b"]; conFacto
 
 returns a list of CNF clauses
 """
-def desugar_derivation(derivation:Derivation, hl_block:HLBlock) -> And:
+def desugar_derivation(derivation:Derivation, hl_block:HLBlock, fresh: int) -> Tuple[And, int]:
     trial_size = design_size(hl_block.design)
     cross_size = fully_cross_size(hl_block.xing)
 
@@ -423,7 +277,7 @@ def desugar_derivation(derivation:Derivation, hl_block:HLBlock) -> And:
         iffs.append(Iff(derivation.derivedIdx + (n * trial_size) + 1,
                         Or(list(And(list(map(lambda x: x + (n * trial_size) + 1, l))) for l in derivation.dependentIdxs))))
 
-    return toCNF(And(iffs))
+    return to_cnf(And(iffs), fresh)
 
 
 """
@@ -527,7 +381,8 @@ def desugar_full_crossing(fresh:int, hl_block:HLBlock) -> Tuple[int, And, List[R
     # 5. make Requests for each transposed list that add up to k=1.
     requests = list(map(lambda l: Request("EQ", 1, l), transposed))
 
-    return (fresh, toCNF(And(iffs)), requests)
+    (cnf, new_fresh) = to_cnf(And(iffs), fresh)
+    return (new_fresh, cnf, requests)
 
 
 """
@@ -593,7 +448,7 @@ Passing along the "fresh" variable counter & a list of reqs to the backend
 Important! The backend is expecting json with these exact key names; if the names are change the backend Parser.hs file needs to be updated.
 """
 def jsonify(fresh:int, cnfs: List[And], ll_calls: List[Request], support: int) -> str:
-    cnfList = cnfToJson(cnfs)
+    cnfList = cnf_to_json(cnfs)
     requests = list(map(lambda r: {'equalityType': r.equalityType, 'k': r.k, 'booleanValues': r.booleanValues}, ll_calls))
 
     return json.dumps({ "fresh" : fresh,
@@ -626,8 +481,9 @@ def desugar(hl_block: HLBlock) -> Tuple[int, List[And], List[Request]]:
     # These go directly to CNF
     # filter the constraints to route to the correct processesors
     derivations = list(filter(lambda x: isinstance(x, Derivation), hl_block.hlconstraints))
-    desugared_ders = [desugar_derivation(x, hl_block) for x in derivations]
-    cnfs_created.extend(desugared_ders)
+    for d in derivations:
+        (cnfs, fresh) = desugar_derivation(d, hl_block, fresh)
+        cnfs_created.append(cnfs)
 
     # -----------------------------------------------------------
     # These create lowlevel requests
@@ -672,6 +528,7 @@ def fully_cross_block(design: List[Factor], xing: List[Factor], constraints: Any
     derivation_constraints = cast(List[Any], process_derivations(design, xing))
     all_constraints = [FullyCross, Consistency] + derivation_constraints + constraints
     return HLBlock(design, xing, all_constraints)
+
 
 """
 Decodes a single solution into a dict of this form:
