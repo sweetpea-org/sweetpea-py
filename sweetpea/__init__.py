@@ -9,6 +9,7 @@ import time
 
 from functools import reduce, partial
 from collections import namedtuple
+from datetime import datetime
 from itertools import islice, repeat, product, chain, tee, accumulate
 from typing import Any, Dict, List, Union, Tuple, Iterator, Iterable, cast
 from sweetpea.logic import Iff, And, Or, Not, to_cnf, cnf_to_json
@@ -578,8 +579,11 @@ This is where the magic happens. Desugars the constraints from fully_cross_block
 """
 def synthesize_trials(hl_block: HLBlock) -> List[dict]:
     # TOOD: Do this in separate thread, and output some kind of progress indicator.
-    print("Generating design formula...")
+    print("Generating design formula... ", end='', flush=True)
+    t_start = datetime.now()
     (fresh, cnfs, reqs) = desugar(hl_block)
+    t_end = datetime.now()
+    print(str((t_end - t_start).seconds) + "s")
 
     support = encoding_variable_size(hl_block.design, hl_block.xing)
     json_data = jsonify(fresh - 1, cnfs, reqs, support)
@@ -589,19 +593,29 @@ def synthesize_trials(hl_block: HLBlock) -> List[dict]:
     docker_client = docker.from_env()
 
     # Make sure the local image is up-to-date.
-    print("Updating docker image...")
-    docker_client.images.pull("sweetpea/server")
+    print("Updating docker image... ", end='', flush=True)
+    try:
+        t_start = datetime.now()
+        docker_client.images.pull("sweetpea/server")
+        t_end = datetime.now()
+        print(str((t_end - t_start).seconds) + "s")
+    except:
+        print("An error occurred while updating the docker image, continuing with locally-cached image.")
 
     # 1. Start a container for the sweetpea server, making sure to use -d and -p to map the port.
-    print("Starting docker container...")
+    print("Starting docker container... ", end='', flush=True)
+    t_start = datetime.now()
     container = docker_client.containers.run("sweetpea/server", detach=True, ports={8080: 8080})
+    t_end = datetime.now()
+    print(str((t_end - t_start).seconds) + "s")
 
     # Give the server time to finish starting to avoid connection reset errors.
     time.sleep(1)
 
     # 2. POST to /experiments/generate using the result of jsonify as the body.
     # TOOD: Do this in separate thread, and output some kind of progress indicator.
-    print("Sending formula to backend...")
+    print("Sending formula to backend... ", end='', flush=True)
+    t_start = datetime.now()
     try:
         health_check = requests.get('http://localhost:8080/')
         if health_check.status_code != 200:
@@ -618,12 +632,17 @@ def synthesize_trials(hl_block: HLBlock) -> List[dict]:
                 tmp_filename + "' status_code=" + str(experiments_request.status_code) + " response_body=" + str(experiments_request.text))
 
         solutions = experiments_request.json()['solutions']
+        t_end = datetime.now()
+        print(str((t_end - t_start).seconds) + "s")
 
     # 3. Stop and then remove the docker container.
     finally:
-        print("Stopping docker container...")
+        print("Stopping docker container... ", end='', flush=True)
+        t_start = datetime.now()
         container.stop()
         container.remove()
+        t_end = datetime.now()
+        print(str((t_end - t_start).seconds) + "s")
 
     # 4. Decode the results
     result = list(map(lambda s: decode(hl_block, s), solutions))
