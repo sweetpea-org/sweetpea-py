@@ -7,6 +7,7 @@ import subprocess
 import tempfile
 import time
 
+from ascii_graph import Pyasciigraph
 from functools import reduce, partial
 from collections import namedtuple
 from datetime import datetime
@@ -646,5 +647,16 @@ def synthesize_trials(hl_block: HLBlock) -> List[dict]:
 
     # 4. Decode the results
     result = list(map(lambda s: decode(hl_block, s['assignment']), solutions))
+
+    # Dump histogram of frequency distribution, just to make sure it's somewhat even.
+    print()
+    print("Found " + str(len(solutions)) + " distinct solutions.")
+    print()
+    hist_data = [("Solution #" + str(idx + 1), sol['frequency']) for idx, sol in enumerate(solutions)]
+    hist_data.sort(key=lambda tup: tup[1], reverse=True)
+
+    graph = Pyasciigraph()
+    for line in  graph.graph('Most Frequently Sampled Solutions', hist_data[:15]):
+        print(line)
 
     return result
