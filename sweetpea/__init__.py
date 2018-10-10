@@ -588,7 +588,7 @@ def synthesize_trials(hl_block: HLBlock) -> List[dict]:
     support = encoding_variable_size(hl_block.design, hl_block.xing)
     json_data = jsonify(fresh - 1, cnfs, reqs, support)
 
-    solutions = cast(List[List[int]], [])
+    solutions = cast(List[dict], [])
 
     docker_client = docker.from_env()
 
