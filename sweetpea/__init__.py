@@ -645,6 +645,6 @@ def synthesize_trials(hl_block: HLBlock) -> List[dict]:
         print(str((t_end - t_start).seconds) + "s")
 
     # 4. Decode the results
-    result = list(map(lambda s: decode(hl_block, s), solutions))
+    result = list(map(lambda s: decode(hl_block, s['assignment']), solutions))
 
     return result
