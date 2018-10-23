@@ -460,7 +460,14 @@ def __jsonify(fresh:int, cnfs: List[And], ll_calls: List[Request], support: int)
                             "support" : support,
                             "arguments" : [
                                 "--verbosity=0",
-                                "--samples=100"
+                                "--samples=100",
+                                "--kappa=0.638",
+                                "--pivotUniGen=27.0",
+                                "--maxLoopTime=3000",
+                                "--maxTotalTime=72000",
+                                "--tApproxMC=1",
+                                "--pivotAC=60",
+                                "--gaussuntil=400"
                             ]
                         }})
 
