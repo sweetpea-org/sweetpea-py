@@ -195,29 +195,29 @@ def test_desugar_nomorethankinarow():
     from sweetpea import __desugar_nomorethankinarow
 
     assert __desugar_nomorethankinarow(1, ("color", "red"), blk) == [
-        Request("LT", 1, [1,  7 ]),
-        Request("LT", 1, [7,  13]),
-        Request("LT", 1, [13, 19])
+        Request("LT", 2, [1,  7 ]),
+        Request("LT", 2, [7,  13]),
+        Request("LT", 2, [13, 19])
     ]
 
     assert __desugar_nomorethankinarow(2, ("color", "red"), blk) == [
-        Request("LT", 2, [1, 7,  13]),
-        Request("LT", 2, [7, 13, 19])
+        Request("LT", 3, [1, 7,  13]),
+        Request("LT", 3, [7, 13, 19])
     ]
 
     assert __desugar_nomorethankinarow(1, ("color", "blue"), blk) == [
-        Request("LT", 1, [2,  8 ]),
-        Request("LT", 1, [8,  14]),
-        Request("LT", 1, [14, 20])
+        Request("LT", 2, [2,  8 ]),
+        Request("LT", 2, [8,  14]),
+        Request("LT", 2, [14, 20])
     ]
 
     assert __desugar_nomorethankinarow(2, ("color", "blue"), blk) == [
-        Request("LT", 2, [2, 8,  14]),
-        Request("LT", 2, [8, 14, 20])
+        Request("LT", 3, [2, 8,  14]),
+        Request("LT", 3, [8, 14, 20])
     ]
 
     assert __desugar_nomorethankinarow(3, ("congruent?", "con"), blk) == [
-        Request("LT", 3, [5, 11, 17, 23])
+        Request("LT", 4, [5, 11, 17, 23])
     ]
 
 

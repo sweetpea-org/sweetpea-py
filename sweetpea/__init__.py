@@ -394,13 +394,12 @@ Continuing with the example from __desugar_consistency:
     say we want NoMoreThanKInARow 1 ("color", "red")
     then we need to grab all the vars which indicate color-red : [1, 7, 13, 19]
     and then wrap them up so that we're making requests like:
-        sum(1, 7)  LT 1
-        sum(7, 13)  LT 1
-        sum(13, 19) LT 1
+        sum(1, 7)  LT 2
+        sum(7, 13)  LT 2
+        sum(13, 19) LT 2
     if it had been NoMoreThanKInARow 2 ("color", "red") the reqs would have been:
-        sum(1, 7, 13)  LT 2
-        sum(7, 13, 19) LT 2
-TODO: off-by-one errors?
+        sum(1, 7, 13)  LT 3
+        sum(7, 13, 19) LT 3
 """
 def __desugar_nomorethankinarow(k:int, level:Tuple[str, str], hl_block:HLBlock) -> List[Request]:
     # Generate a list of (factor name, level name) tuples from the block
@@ -420,7 +419,7 @@ def __desugar_nomorethankinarow(k:int, level:Tuple[str, str], hl_block:HLBlock) 
     sublists = list(filter(lambda l: len(l) == k + 1, raw_sublists))
 
     # Build the requests
-    return list(map(lambda l: Request("LT", k, l), sublists))
+    return list(map(lambda l: Request("LT", k + 1, l), sublists))
 
 
 """
