@@ -558,6 +558,79 @@ def __generate_json_data(hl_block: HLBlock) -> str:
     return __jsonify(fresh - 1, cnfs, reqs, support)
 
 
+def __generate_json_request(hl_block: HLBlock) -> str:
+    print("Generating design formula... ", end='', flush=True)
+    t_start = datetime.now()
+    json_data = __generate_json_data(hl_block)
+    t_end = datetime.now()
+    print(str((t_end - t_start).seconds) + "s")
+    return json_data
+
+
+def __update_docker_image(docker_client):
+    print("Updating docker image... ", end='', flush=True)
+    try:
+        t_start = datetime.now()
+        docker_client.images.pull("sweetpea/server")
+        t_end = datetime.now()
+        print(str((t_end - t_start).seconds) + "s")
+    except:
+        print("An error occurred while updating the docker image, continuing with locally-cached image.")
+
+
+def __start_docker_container(docker_client):
+    print("Starting docker container... ", end='', flush=True)
+    t_start = datetime.now()
+    container = docker_client.containers.run("sweetpea/server", detach=True, ports={8080: 8080})
+    t_end = datetime.now()
+    print(str((t_end - t_start).seconds) + "s")
+    time.sleep(1) # Give the server time to finish starting to avoid connection reset errors.
+    return container
+
+
+def __stop_docker_container(container):
+    print("Stopping docker container... ", end='', flush=True)
+    t_start = datetime.now()
+    container.stop()
+    container.remove()
+    t_end = datetime.now()
+    print(str((t_end - t_start).seconds) + "s")
+
+
+"""
+Approximates the number of solutions to the CNF formula generated for this experiment.
+Expects the sharpSAT binary to be present on the PATH
+"""
+def __approximate_solution_count(hl_block: HLBlock) -> int:
+    json_data = __generate_json_request(hl_block)
+    approx_sol_cnt = -1
+
+    docker_client = docker.from_env()
+    __update_docker_image(docker_client)
+    container = __start_docker_container(docker_client)
+    try:
+        cnf_request = requests.post('http://localhost:8080/experiments/build-cnf', data = json_data)
+        if cnf_request.status_code != 200:
+            raise RuntimeError("Received non-200 response from CNF generation!")
+        else:
+            # Write the CNF to a tmp file
+            tmp_filename = ""
+            with tempfile.NamedTemporaryFile(delete=False) as f:
+                f.write(str.encode(cnf_request.text))
+                tmp_filename = f.name
+
+            print("Approximating solution count with sharpSAT...", end='', flush=True)
+            t_start = datetime.now()
+            output = subprocess.check_output(["sharpSAT", "-q", tmp_filename])
+            approx_sol_cnt = int(output.decode().split('\n')[0])
+            t_end = datetime.now()
+            print(str((t_end - t_start).seconds) + "s")
+
+    finally:
+        __stop_docker_container(container)
+
+    return approx_sol_cnt
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~ Top-Level functions ~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -655,35 +728,17 @@ This is where the magic happens. Desugars the constraints from fully_cross_block
 """
 def synthesize_trials(hl_block: HLBlock) -> List[dict]:
     # TODO: Do this in separate thread, and output some kind of progress indicator.
-    print("Generating design formula... ", end='', flush=True)
-    t_start = datetime.now()
-    json_data = __generate_json_data(hl_block)
-    t_end = datetime.now()
-    print(str((t_end - t_start).seconds) + "s")
+    json_data = __generate_json_request(hl_block)
 
     solutions = cast(List[dict], [])
 
     docker_client = docker.from_env()
 
     # Make sure the local image is up-to-date.
-    print("Updating docker image... ", end='', flush=True)
-    try:
-        t_start = datetime.now()
-        docker_client.images.pull("sweetpea/server")
-        t_end = datetime.now()
-        print(str((t_end - t_start).seconds) + "s")
-    except:
-        print("An error occurred while updating the docker image, continuing with locally-cached image.")
+    __update_docker_image(docker_client)
 
     # 1. Start a container for the sweetpea server, making sure to use -d and -p to map the port.
-    print("Starting docker container... ", end='', flush=True)
-    t_start = datetime.now()
-    container = docker_client.containers.run("sweetpea/server", detach=True, ports={8080: 8080})
-    t_end = datetime.now()
-    print(str((t_end - t_start).seconds) + "s")
-
-    # Give the server time to finish starting to avoid connection reset errors.
-    time.sleep(1)
+    container = __start_docker_container(docker_client)
 
     # 2. POST to /experiments/generate using the result of __jsonify as the body.
     # TOOD: Do this in separate thread, and output some kind of progress indicator.
@@ -710,12 +765,7 @@ def synthesize_trials(hl_block: HLBlock) -> List[dict]:
 
     # 3. Stop and then remove the docker container.
     finally:
-        print("Stopping docker container... ", end='', flush=True)
-        t_start = datetime.now()
-        container.stop()
-        container.remove()
-        t_end = datetime.now()
-        print(str((t_end - t_start).seconds) + "s")
+        __stop_docker_container(container)
 
     # 4. Decode the results
     result = list(map(lambda s: __decode(hl_block, s['assignment']), solutions))
