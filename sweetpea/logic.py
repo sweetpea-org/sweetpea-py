@@ -15,6 +15,16 @@ FormulaAndFresh = Tuple[Formula, int]
 
 """
 Converts to CNF using the pattern described on https://en.wikipedia.org/wiki/Conjunctive_normal_form#Converting_from_first-order_logic
+The conversion is naive, which means it is subject to an exponential explosion
+in the length of the formula. The upside is that it does not introduce any new
+variables, which constrains the overall size of the solution space. (#SAT)
+"""
+def to_cnf_naive(f: FormulaWithIff, next_variable: int) -> Tuple[And, int]:
+    raise Exception("to_cnf_naive is not yet implemented")
+
+
+"""
+Converts to CNF using the pattern described on https://en.wikipedia.org/wiki/Conjunctive_normal_form#Converting_from_first-order_logic
 However, distributing ORs over ANDs is done via switching variables, to keep the
 converted formula small, as described here: https://www.cs.jhu.edu/~jason/tutorials/convert-to-CNF.html
 """
@@ -26,6 +36,16 @@ def to_cnf_switching(f: FormulaWithIff, next_variable: int) -> Tuple[And, int]:
     if not isinstance(formula, And):
         formula = And([formula])
     return (formula, fresh)
+
+
+"""
+Converts to CNF using the Tseitin transformation. This will introduce addtional
+variables, which will increase #SAT, but provides a linear bound on the length
+increase of the new formula.
+https://en.wikipedia.org/wiki/Tseytin_transformation
+"""
+def to_cnf_tseitin(f: FormulaWithIff, next_variable: int) -> Tuple[And, int]:
+    raise Exception("to_cnf_tseitin is not yet implemented")
 
 
 def cnf_to_json(formula: List[And]) -> List[List[int]]:

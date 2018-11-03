@@ -1,7 +1,15 @@
-from sweetpea.logic import Iff, And, Or, Not, to_cnf_switching, cnf_to_json
+from sweetpea.logic import Iff, And, Or, Not, to_cnf_naive, to_cnf_switching, to_cnf_tseitin, cnf_to_json
 
 
-def test_to_cnf():
+def test_to_cnf_naive():
+    try:
+        to_cnf_naive(1) # Should raise an error until implemented.
+    except Exception:
+        return
+    assert false
+
+
+def test_to_cnf_switching():
     formula = Or([
         And([3, 4]),
         And([Not(2), Or([1, 5])])
@@ -28,6 +36,13 @@ def test_to_cnf():
     ])
     assert to_cnf_switching(formula, 7) == (expected_cnf, 7)
 
+
+def test_to_cnf_tseitin():
+    try:
+        to_cnf_tseitin(1) # Should raise an error until implemented.
+    except Exception:
+        return
+    assert false
 
 
 def test_cnf_to_json():
