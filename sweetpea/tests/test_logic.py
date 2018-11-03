@@ -2,11 +2,26 @@ from sweetpea.logic import Iff, And, Or, Not, to_cnf_naive, to_cnf_switching, to
 
 
 def test_to_cnf_naive():
-    try:
-        to_cnf_naive(1) # Should raise an error until implemented.
-    except Exception:
-        return
-    assert false
+    assert to_cnf_naive(1, 2) == (And([1]), 2)
+    assert to_cnf_naive(And([1]), 2) == (And([1]), 2)
+    assert to_cnf_naive(And([1, 2]), 3) == (And([1, 2]), 3)
+
+    assert to_cnf_naive(Or([1, 2]), 3) == (And([Or([1, 2])]), 3)
+    assert to_cnf_naive(Or([1, And([2, 3])]), 4) == (And([Or([1, 2]), Or([1, 3])]), 4)
+
+    formula = And([
+        Iff(1, And([2, 3])),
+        Iff(4, And([5, 6]))
+    ])
+    expected_cnf = And([
+        Or([1, Not(2), Not(3)]),
+        Or([Not(1), 2]),
+        Or([Not(1), 3]),
+        Or([4, Not(5), Not(6)]),
+        Or([Not(4), 5]),
+        Or([Not(4), 6])
+    ])
+    assert to_cnf_switching(formula, 7) == (expected_cnf, 7)
 
 
 def test_to_cnf_switching():
@@ -99,6 +114,28 @@ def test_apply_demorgan():
     assert __apply_demorgan(Not(And([1, 2]))) == Or([Not(1), Not(2)])
 
     assert __apply_demorgan(Or([1, Not(And([2, 3]))])) == Or([1, Not(2), Not(3)])
+
+
+def test_distribute_ors_naive():
+    from sweetpea.logic import __distribute_ors_naive
+
+    # When f is int or Not, return it. (Not can only contain int, as we've
+    # already applied DeMorgan's laws)
+    assert __distribute_ors_naive(1) == 1
+    assert __distribute_ors_naive(Not(1)) == Not(1)
+
+    # When f in an Or, distribute the Or over the contained clauses.
+    assert __distribute_ors_naive(Or([1, 2])) == And([Or([1, 2])])
+    assert __distribute_ors_naive(Or([1, And([2, 3])])) == And([Or([1, 2]), Or([1, 3])])
+    assert __distribute_ors_naive(Or([And([1, 2]), And([3, 4])])) == And([
+        Or([1, 3]), Or([1, 4]), Or([2, 3]), Or([2, 4])
+    ])
+
+    # When f is an And, disitribute Ors over the contained clauses.
+    assert __distribute_ors_naive(And([1, Not(2)])) == And([1, Not(2)])
+    assert __distribute_ors_naive(And([1, Or([2, And([3, 4])])])) == And([
+        Or([2, 3]), Or([2, 4]), 1
+    ])
 
 
 def test_distribute_ors_switching():

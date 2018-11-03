@@ -20,7 +20,12 @@ in the length of the formula. The upside is that it does not introduce any new
 variables, which constrains the overall size of the solution space. (#SAT)
 """
 def to_cnf_naive(f: FormulaWithIff, next_variable: int) -> Tuple[And, int]:
-    raise Exception("to_cnf_naive is not yet implemented")
+    formula = __eliminate_iff(f)
+    formula = __apply_demorgan(formula)
+    formula = __distribute_ors_naive(formula)
+    if not isinstance(formula, And):
+        formula = And([formula])
+    return (formula, next_variable)
 
 
 """
@@ -100,6 +105,19 @@ def __apply_demorgan(f: Formula) -> Formula:
         elif isinstance(clause, int):
             return f
     elif isinstance(f, int):
+        return f
+
+
+def __distribute_ors_naive(f: Formula) -> Formula:
+    if isinstance(f, And):
+        return __build_and(list(map(__distribute_ors_naive, f.input_list)))
+    elif isinstance(f, Or):
+        clauses = list(map(__distribute_ors_naive, f.input_list))
+        crossable_clauses = list(map(__get_list_for_crossing, clauses))
+        crossed_clauses = list(product(*crossable_clauses))
+        or_list = list(map(__build_or, crossed_clauses))
+        return __build_and(cast(List[Formula], or_list))
+    elif isinstance(f, Not) or isinstance(f, int):
         return f
 
 
