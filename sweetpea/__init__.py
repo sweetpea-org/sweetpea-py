@@ -65,7 +65,7 @@ DerivedLevel = namedtuple('DerivedLevel', 'name window')
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Everything from the frontend
 
-HLBlock = namedtuple('HLBlock', 'design xing hlconstraints')
+HLBlock = namedtuple('HLBlock', 'design xing hlconstraints cnf_fn')
 ILBlock = namedtuple('ILBlock', 'startAddr endAddr design xing constraints')
 
 # constraints
@@ -279,7 +279,7 @@ def __desugar_derivation(derivation:Derivation, hl_block:HLBlock, fresh: int) ->
         iffs.append(Iff(derivation.derivedIdx + (n * trial_size) + 1,
                         Or(list(And(list(map(lambda x: x + (n * trial_size) + 1, l))) for l in derivation.dependentIdxs))))
 
-    return to_cnf_switching(And(iffs), fresh)
+    return hl_block.cnf_fn(And(iffs), fresh)
 
 
 """
@@ -383,7 +383,7 @@ def __desugar_full_crossing(fresh:int, hl_block:HLBlock) -> Tuple[int, And, List
     # 5. make Requests for each transposed list that add up to k=1.
     requests = list(map(lambda l: Request("EQ", 1, l), transposed))
 
-    (cnf, new_fresh) = to_cnf_switching(And(iffs), fresh)
+    (cnf, new_fresh) = hl_block.cnf_fn(And(iffs), fresh)
     return (new_fresh, cnf, requests)
 
 
@@ -636,12 +636,13 @@ def __approximate_solution_count(hl_block: HLBlock) -> int:
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 """
-Returns a fully crossed block that we'll process with synthesize!
+Returns a fully crossed block that we'll process with synthesize! Carries with it the function that
+should be used for all CNF conversions.
 """
-def fully_cross_block(design: List[Factor], xing: List[Factor], constraints: Any) -> HLBlock:
+def fully_cross_block(design: List[Factor], xing: List[Factor], constraints: Any, cnf_fn=to_cnf_switching) -> HLBlock:
     derivation_constraints = cast(List[Any], __process_derivations(design, xing))
     all_constraints = [FullyCross, Consistency] + derivation_constraints + constraints
-    return HLBlock(design, xing, all_constraints)
+    return HLBlock(design, xing, all_constraints, cnf_fn)
 
 
 """
