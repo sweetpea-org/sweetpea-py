@@ -13,7 +13,7 @@ from collections import namedtuple
 from datetime import datetime
 from itertools import islice, repeat, product, chain, tee, accumulate
 from typing import Any, Dict, List, Union, Tuple, Iterator, Iterable, cast
-from sweetpea.logic import Iff, And, Or, Not, to_cnf, cnf_to_json
+from sweetpea.logic import Iff, And, Or, Not, to_cnf_switching, cnf_to_json
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -279,7 +279,7 @@ def __desugar_derivation(derivation:Derivation, hl_block:HLBlock, fresh: int) ->
         iffs.append(Iff(derivation.derivedIdx + (n * trial_size) + 1,
                         Or(list(And(list(map(lambda x: x + (n * trial_size) + 1, l))) for l in derivation.dependentIdxs))))
 
-    return to_cnf(And(iffs), fresh)
+    return to_cnf_switching(And(iffs), fresh)
 
 
 """
@@ -383,7 +383,7 @@ def __desugar_full_crossing(fresh:int, hl_block:HLBlock) -> Tuple[int, And, List
     # 5. make Requests for each transposed list that add up to k=1.
     requests = list(map(lambda l: Request("EQ", 1, l), transposed))
 
-    (cnf, new_fresh) = to_cnf(And(iffs), fresh)
+    (cnf, new_fresh) = to_cnf_switching(And(iffs), fresh)
     return (new_fresh, cnf, requests)
 
 

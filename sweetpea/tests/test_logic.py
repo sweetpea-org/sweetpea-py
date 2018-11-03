@@ -1,9 +1,9 @@
-from sweetpea.logic import Iff, And, Or, Not, to_cnf, cnf_to_json
+from sweetpea.logic import Iff, And, Or, Not, to_cnf_switching, cnf_to_json
 
 
 def test_to_cnf():
     formula = Or([
-        And([3, 4]), 
+        And([3, 4]),
         And([Not(2), Or([1, 5])])
     ])
     expected_cnf = And([
@@ -12,7 +12,7 @@ def test_to_cnf():
         Or([1, 5, 6]),
         Or([Not(2), 6])
     ])
-    assert to_cnf(formula, 6) == (expected_cnf, 7)
+    assert to_cnf_switching(formula, 6) == (expected_cnf, 7)
 
     formula = And([
         Iff(1, And([2, 3])),
@@ -26,7 +26,7 @@ def test_to_cnf():
         Or([Not(4), 5]),
         Or([Not(4), 6])
     ])
-    assert to_cnf(formula, 7) == (expected_cnf, 7)
+    assert to_cnf_switching(formula, 7) == (expected_cnf, 7)
 
 
 
@@ -86,22 +86,22 @@ def test_apply_demorgan():
     assert __apply_demorgan(Or([1, Not(And([2, 3]))])) == Or([1, Not(2), Not(3)])
 
 
-def test_distribute_ors():
-    from sweetpea.logic import __distribute_ors
+def test_distribute_ors_switching():
+    from sweetpea.logic import __distribute_ors_switching
 
     # When lhs or rhs is a single variable, just distribute it.
-    assert __distribute_ors(Or([1, And([2, 3])]), 4) == (
+    assert __distribute_ors_switching(Or([1, And([2, 3])]), 4) == (
         And([Or([1, 2]), Or([1, 3])]),
         4
     )
 
-    assert __distribute_ors(Or([And([1, 2]), 3]), 4) == (
+    assert __distribute_ors_switching(Or([And([1, 2]), 3]), 4) == (
         And([Or([1, 3]), Or([2, 3])]),
         4
     )
 
     # Should distribute over multiple individual variables
-    assert __distribute_ors(Or([
+    assert __distribute_ors_switching(Or([
         1, 2, And([3, 4])
     ]), 5) == (
         And([
@@ -113,7 +113,7 @@ def test_distribute_ors():
 
     # When both the lhs and rhs are more than just a single variable,
     # then introduce a switching variable to limit the formula growth.
-    assert __distribute_ors(Or([And([1, 2]), And([3, 4])]), 5) == (
+    assert __distribute_ors_switching(Or([And([1, 2]), And([3, 4])]), 5) == (
         And([
             Or([1, Not(5)]),
             Or([2, Not(5)]),

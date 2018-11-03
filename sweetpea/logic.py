@@ -13,11 +13,16 @@ FormulaWithIff = Union[And, Or, Iff, Not, int]
 FormulaAndFresh = Tuple[Formula, int]
 
 
-def to_cnf(f: FormulaWithIff, next_variable: int) -> Tuple[And, int]:
+"""
+Converts to CNF using the pattern described on https://en.wikipedia.org/wiki/Conjunctive_normal_form#Converting_from_first-order_logic
+However, distributing ORs over ANDs is done via switching variables, to keep the
+converted formula small, as described here: https://www.cs.jhu.edu/~jason/tutorials/convert-to-CNF.html
+"""
+def to_cnf_switching(f: FormulaWithIff, next_variable: int) -> Tuple[And, int]:
     # https://en.wikipedia.org/wiki/Conjunctive_normal_form#Converting_from_first-order_logic
     formula = __eliminate_iff(f)
     formula = __apply_demorgan(formula)
-    (formula, fresh) = __distribute_ors(formula, next_variable)
+    (formula, fresh) = __distribute_ors_switching(formula, next_variable)
     if not isinstance(formula, And):
         formula = And([formula])
     return (formula, fresh)
@@ -78,7 +83,7 @@ def __apply_demorgan(f: Formula) -> Formula:
         return f
 
 
-def __distribute_ors(f: Formula, fresh: int) -> FormulaAndFresh:
+def __distribute_ors_switching(f: Formula, fresh: int) -> FormulaAndFresh:
     if isinstance(f, And):
         (clauses, new_fresh) = reduce(__apply_distribute_ors,
                                       f.input_list,
@@ -93,10 +98,10 @@ def __distribute_ors(f: Formula, fresh: int) -> FormulaAndFresh:
             if __should_not_combine(clauses):
                 return (f, fresh)
             elif __should_combine_naively(clauses):
-                return __distribute_ors(__naive_combination(clauses), new_fresh)
+                return __distribute_ors_switching(__naive_combination(clauses), new_fresh)
             else:
                 (new_formula, new_fresh) = __switching_combination(clauses, new_fresh)
-                return __distribute_ors(new_formula, new_fresh)
+                return __distribute_ors_switching(new_formula, new_fresh)
         else:
             return (clauses[0], new_fresh)
     elif isinstance(f, Not):
@@ -128,7 +133,7 @@ def __build_and(l: List[Formula]) -> And:
 def __apply_distribute_ors(acc: Tuple[List[Formula], int], elem: Formula) -> Tuple[List[Formula], int]:
     fs = acc[0]
     fresh = acc[1]
-    (f, new_fresh) = __distribute_ors(elem, fresh)
+    (f, new_fresh) = __distribute_ors_switching(elem, fresh)
     fs.append(f)
     return (fs, new_fresh)
 

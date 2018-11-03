@@ -4,7 +4,7 @@
 import operator as op
 
 from sweetpea import *
-from sweetpea.logic import to_cnf
+from sweetpea.logic import to_cnf_switching
 
 
 # Common variables for stroop.
@@ -133,7 +133,7 @@ def test_desugar_derivation():
     from sweetpea import __desugar_derivation
 
     # Congruent derivation
-    assert __desugar_derivation(Derivation(4, [[0, 2], [1, 3]]), blk, 24) == to_cnf(And([
+    assert __desugar_derivation(Derivation(4, [[0, 2], [1, 3]]), blk, 24) == to_cnf_switching(And([
         Iff(5,  Or([And([1,  3 ]), And([2,  4 ])])),
         Iff(11, Or([And([7,  9 ]), And([8,  10])])),
         Iff(17, Or([And([13, 15]), And([14, 16])])),
@@ -141,7 +141,7 @@ def test_desugar_derivation():
     ]), 24)
 
     # Incongruent derivation
-    assert __desugar_derivation(Derivation(5, [[0, 3], [1, 2]]), blk, 24) == to_cnf(And([
+    assert __desugar_derivation(Derivation(5, [[0, 3], [1, 2]]), blk, 24) == to_cnf_switching(And([
         Iff(6,  Or([And([1,  4 ]), And([2,  3 ])])),
         Iff(12, Or([And([7,  10]), And([8,  9 ])])),
         Iff(18, Or([And([13, 16]), And([14, 15])])),
@@ -176,7 +176,7 @@ def test_desugar_consistency():
 def test_desugar_full_crossing():
     from sweetpea import __desugar_full_crossing
 
-    (expected_cnf, _) = to_cnf(And([
+    (expected_cnf, _) = to_cnf_switching(And([
         Iff(25, And([1,  3 ])), Iff(26, And([1,  4 ])), Iff(27, And([2,  3 ])), Iff(28, And([2,  4 ])),
         Iff(29, And([7,  9 ])), Iff(30, And([7,  10])), Iff(31, And([8,  9 ])), Iff(32, And([8,  10])),
         Iff(33, And([13, 15])), Iff(34, And([13, 16])), Iff(35, And([14, 15])), Iff(36, And([14, 16])),
