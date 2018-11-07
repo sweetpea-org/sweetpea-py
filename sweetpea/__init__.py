@@ -597,6 +597,12 @@ def __stop_docker_container(container):
     print(str((t_end - t_start).seconds) + "s")
 
 
+def __check_server_health():
+    health_check = requests.get('http://localhost:8080/')
+    if health_check.status_code != 200:
+        raise RuntimeError("SweetPea server healthcheck returned non-200 reponse! " + str(health_check.status_code))
+
+
 """
 Approximates the number of solutions to the CNF formula generated for this experiment.
 Expects the sharpSAT binary to be present on the PATH
@@ -609,6 +615,8 @@ def __approximate_solution_count(hl_block: HLBlock) -> int:
     __update_docker_image(docker_client)
     container = __start_docker_container(docker_client)
     try:
+        __check_server_health()
+
         cnf_request = requests.post('http://localhost:8080/experiments/build-cnf', data = json_data)
         if cnf_request.status_code != 200:
             raise RuntimeError("Received non-200 response from CNF generation!")
@@ -725,6 +733,55 @@ def print_experiments(hl_block: HLBlock, experiments: List[dict]):
 
 
 """
+This is a helper function for getting some number of unique non-uniform solutions. It invokes a separate
+endpoint on the server that repeatedly computes individual solutions while updating the formula to exclude
+each solution once it has been found. It's intended to give users something somewhat useful, while
+we work through issues with unigen.
+"""
+def synthesize_trials_non_uniform(hl_block: HLBlock, trial_count: int) -> List[dict]:
+    json_data = __generate_json_request(hl_block)
+
+    solutions = cast(List[dict], [])
+
+    docker_client = docker.from_env()
+
+    # Make sure the local image is up-to-date.
+    __update_docker_image(docker_client)
+
+    # 1. Start a container for the sweetpea server, making sure to use -d and -p to map the port.
+    container = __start_docker_container(docker_client)
+
+    print("Sending formula to backend... ", end='', flush=True)
+    t_start = datetime.now()
+    try:
+        __check_server_health()
+
+        url = 'http://localhost:8080/experiments/generate/non-uniform/' + str(trial_count)
+        experiments_request = requests.post(url, data = json_data)
+        if experiments_request.status_code != 200 or not experiments_request.json()['ok']:
+            tmp_filename = ""
+            with tempfile.NamedTemporaryFile(delete=False) as f:
+                f.write(str.encode(json_data))
+                tmp_filename = f.name
+
+            raise RuntimeError("Received non-200 response from non-uniform experiment generation! Request body saved to temp file '" +
+                tmp_filename + "' status_code=" + str(experiments_request.status_code) + " response_body=" + str(experiments_request.text))
+
+        solutions = experiments_request.json()['solutions']
+        t_end = datetime.now()
+        print(str((t_end - t_start).seconds) + "s")
+
+    # 3. Stop and then remove the docker container.
+    finally:
+        __stop_docker_container(container)
+
+    # 4. Decode the results
+    result = list(map(lambda s: __decode(hl_block, s['assignment']), solutions))
+
+    return result
+
+
+"""
 This is where the magic happens. Desugars the constraints from fully_cross_block (which results in some direct cnfs being produced and some requests to the backend being produced). Then calls unigen on the full cnf file. Then decodes that cnf file into (1) something human readable & (2) psyNeuLink readable.
 """
 def synthesize_trials(hl_block: HLBlock) -> List[dict]:
@@ -746,9 +803,7 @@ def synthesize_trials(hl_block: HLBlock) -> List[dict]:
     print("Sending formula to backend... ", end='', flush=True)
     t_start = datetime.now()
     try:
-        health_check = requests.get('http://localhost:8080/')
-        if health_check.status_code != 200:
-            raise RuntimeError("SweetPea server healthcheck returned non-200 reponse! " + str(health_check.status_code))
+        __check_server_health()
 
         experiments_request = requests.post('http://localhost:8080/experiments/generate', data = json_data)
         if experiments_request.status_code != 200 or not experiments_request.json()['ok']:
