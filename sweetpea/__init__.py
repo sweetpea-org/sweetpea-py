@@ -14,6 +14,7 @@ from datetime import datetime
 from itertools import islice, repeat, product, chain, tee, accumulate
 from typing import Any, Dict, List, Union, Tuple, Iterator, Iterable, cast
 from sweetpea.logic import Iff, And, Or, Not, to_cnf_switching, cnf_to_json
+from sweetpea.docker import update_docker_image, start_docker_container, stop_docker_container
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -567,49 +568,6 @@ def __generate_json_request(hl_block: HLBlock) -> str:
     return json_data
 
 
-def __external_docker_mgmt():
-    return os.environ.get('SWEETPEA_EXTERNAL_DOCKER_MGMT') is not None
-
-
-def __update_docker_image(docker_client):
-    if __external_docker_mgmt():
-        return
-
-    print("Updating docker image... ", end='', flush=True)
-    try:
-        t_start = datetime.now()
-        docker_client.images.pull("sweetpea/server")
-        t_end = datetime.now()
-        print(str((t_end - t_start).seconds) + "s")
-    except:
-        print("An error occurred while updating the docker image, continuing with locally-cached image.")
-
-
-def __start_docker_container(docker_client):
-    if __external_docker_mgmt():
-        return
-
-    print("Starting docker container... ", end='', flush=True)
-    t_start = datetime.now()
-    container = docker_client.containers.run("sweetpea/server", detach=True, ports={8080: 8080})
-    t_end = datetime.now()
-    print(str((t_end - t_start).seconds) + "s")
-    time.sleep(1) # Give the server time to finish starting to avoid connection reset errors.
-    return container
-
-
-def __stop_docker_container(container):
-    if __external_docker_mgmt():
-        return
-
-    print("Stopping docker container... ", end='', flush=True)
-    t_start = datetime.now()
-    container.stop()
-    container.remove()
-    t_end = datetime.now()
-    print(str((t_end - t_start).seconds) + "s")
-
-
 def __check_server_health():
     health_check = requests.get('http://localhost:8080/')
     if health_check.status_code != 200:
@@ -624,9 +582,8 @@ def __approximate_solution_count(hl_block: HLBlock, timeout_in_seconds: int = 60
     json_data = __generate_json_request(hl_block)
     approx_sol_cnt = -1
 
-    docker_client = docker.from_env()
-    __update_docker_image(docker_client)
-    container = __start_docker_container(docker_client)
+    update_docker_image("sweetpea/server")
+    container = start_docker_container("sweetpea/server", 8080)
     try:
         __check_server_health()
 
@@ -648,7 +605,7 @@ def __approximate_solution_count(hl_block: HLBlock, timeout_in_seconds: int = 60
             print(str((t_end - t_start).seconds) + "s")
 
     finally:
-        __stop_docker_container(container)
+        stop_docker_container(container)
 
     return approx_sol_cnt
 
@@ -756,13 +713,11 @@ def synthesize_trials_non_uniform(hl_block: HLBlock, trial_count: int) -> List[d
 
     solutions = cast(List[dict], [])
 
-    docker_client = docker.from_env()
-
     # Make sure the local image is up-to-date.
-    __update_docker_image(docker_client)
+    update_docker_image("sweetpea/server")
 
     # 1. Start a container for the sweetpea server, making sure to use -d and -p to map the port.
-    container = __start_docker_container(docker_client)
+    container = start_docker_container("sweetpea/server", 8080)
 
     print("Sending formula to backend... ", end='', flush=True)
     t_start = datetime.now()
@@ -786,7 +741,7 @@ def synthesize_trials_non_uniform(hl_block: HLBlock, trial_count: int) -> List[d
 
     # 3. Stop and then remove the docker container.
     finally:
-        __stop_docker_container(container)
+        stop_docker_container(container)
 
     # 4. Decode the results
     result = list(map(lambda s: __decode(hl_block, s['assignment']), solutions))
@@ -803,13 +758,11 @@ def synthesize_trials(hl_block: HLBlock) -> List[dict]:
 
     solutions = cast(List[dict], [])
 
-    docker_client = docker.from_env()
-
     # Make sure the local image is up-to-date.
-    __update_docker_image(docker_client)
+    update_docker_image("sweetpea/server")
 
     # 1. Start a container for the sweetpea server, making sure to use -d and -p to map the port.
-    container = __start_docker_container(docker_client)
+    container = start_docker_container("sweetpea/server", 8080)
 
     # 2. POST to /experiments/generate using the result of __jsonify as the body.
     # TOOD: Do this in separate thread, and output some kind of progress indicator.
@@ -834,7 +787,7 @@ def synthesize_trials(hl_block: HLBlock) -> List[dict]:
 
     # 3. Stop and then remove the docker container.
     finally:
-        __stop_docker_container(container)
+        stop_docker_container(container)
 
     # 4. Decode the results
     result = list(map(lambda s: __decode(hl_block, s['assignment']), solutions))
