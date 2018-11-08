@@ -567,7 +567,14 @@ def __generate_json_request(hl_block: HLBlock) -> str:
     return json_data
 
 
+def __external_docker_mgmt():
+    return os.environ.get('SWEETPEA_EXTERNAL_DOCKER_MGMT') is not None
+
+
 def __update_docker_image(docker_client):
+    if __external_docker_mgmt():
+        return
+
     print("Updating docker image... ", end='', flush=True)
     try:
         t_start = datetime.now()
@@ -579,6 +586,9 @@ def __update_docker_image(docker_client):
 
 
 def __start_docker_container(docker_client):
+    if __external_docker_mgmt():
+        return
+
     print("Starting docker container... ", end='', flush=True)
     t_start = datetime.now()
     container = docker_client.containers.run("sweetpea/server", detach=True, ports={8080: 8080})
@@ -589,6 +599,9 @@ def __start_docker_container(docker_client):
 
 
 def __stop_docker_container(container):
+    if __external_docker_mgmt():
+        return
+
     print("Stopping docker container... ", end='', flush=True)
     t_start = datetime.now()
     container.stop()
@@ -607,7 +620,7 @@ def __check_server_health():
 Approximates the number of solutions to the CNF formula generated for this experiment.
 Expects the sharpSAT binary to be present on the PATH
 """
-def __approximate_solution_count(hl_block: HLBlock) -> int:
+def __approximate_solution_count(hl_block: HLBlock, timeout_in_seconds: int = 60) -> int:
     json_data = __generate_json_request(hl_block)
     approx_sol_cnt = -1
 
@@ -629,7 +642,7 @@ def __approximate_solution_count(hl_block: HLBlock) -> int:
 
             print("Approximating solution count with sharpSAT...", end='', flush=True)
             t_start = datetime.now()
-            output = subprocess.check_output(["sharpSAT", "-q", tmp_filename])
+            output = subprocess.check_output(["sharpSAT", "-q", "-t", str(timeout_in_seconds), tmp_filename])
             approx_sol_cnt = int(output.decode().split('\n')[0])
             t_end = datetime.now()
             print(str((t_end - t_start).seconds) + "s")
