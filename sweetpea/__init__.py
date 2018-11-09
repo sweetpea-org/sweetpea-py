@@ -578,7 +578,7 @@ def __check_server_health():
 Approximates the number of solutions to the CNF formula generated for this experiment.
 Expects the sharpSAT binary to be present on the PATH
 """
-def __approximate_solution_count(hl_block: HLBlock, timeout_in_seconds: int = 60) -> int:
+def __approximate_solution_count(hl_block: HLBlock, timeout_in_seconds: int = 60, cache_size_mb: int = 4096) -> int:
     json_data = __generate_json_request(hl_block)
     approx_sol_cnt = -1
 
@@ -599,7 +599,7 @@ def __approximate_solution_count(hl_block: HLBlock, timeout_in_seconds: int = 60
 
             print("Approximating solution count with sharpSAT...", end='', flush=True)
             t_start = datetime.now()
-            output = subprocess.check_output(["sharpSAT", "-q", "-t", str(timeout_in_seconds), tmp_filename])
+            output = subprocess.check_output(["sharpSAT", "-q", "-t", str(timeout_in_seconds), "-cs", str(cache_size_mb), tmp_filename])
             approx_sol_cnt = int(output.decode().split('\n')[0])
             t_end = datetime.now()
             print(str((t_end - t_start).seconds) + "s")
