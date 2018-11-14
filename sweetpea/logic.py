@@ -1,7 +1,8 @@
 from collections import namedtuple
 from functools import reduce
 from itertools import product
-from typing import Any, List, Tuple, Union, cast
+from typing import Any, Dict, List, Tuple, Union, cast
+from sweetpea.docker import update_docker_image, start_docker_container, stop_docker_container
 
 And = namedtuple('And', 'input_list')
 Or  = namedtuple('Or' , 'input_list')
@@ -11,6 +12,25 @@ Not = namedtuple('Not', 'c')
 Formula = Union[And, Or, Not, int]
 FormulaWithIff = Union[And, Or, Iff, Not, int]
 FormulaAndFresh = Tuple[Formula, int]
+
+
+# Simple Cache class used by the Tseitin transformation. Maintains the next fresh variable as
+# state, along with the cached values.
+class _Cache:
+    def __init__(self, next_variable: int) -> None:
+        self.cache = cast(Dict[str, int], {})
+        self.next_variable = next_variable
+
+    def get(self, s: str) -> int:
+        if s in self.cache:
+            return self.cache[s]
+        else:
+            self.cache[s] = self.next_variable
+            self.next_variable += 1
+            return self.cache[s]
+
+    def get_next_variable(self) -> int:
+        return self.next_variable
 
 
 """
@@ -50,7 +70,13 @@ increase of the new formula.
 https://en.wikipedia.org/wiki/Tseytin_transformation
 """
 def to_cnf_tseitin(f: FormulaWithIff, next_variable: int) -> Tuple[And, int]:
-    raise Exception("to_cnf_tseitin is not yet implemented")
+    clauses = cast(List[Formula], [])
+    cache = _Cache(next_variable)
+
+    new_rep = __tseitin_rep(f, clauses, cache)
+    clauses.append(new_rep)
+
+    return (And(clauses), cache.get_next_variable())
 
 
 def cnf_to_json(formula: List[And]) -> List[List[int]]:
@@ -224,3 +250,76 @@ def __order_clauses(c: Formula) -> int:
         return c.c
     else:
         return c
+
+
+def __tseitin_rep(f: FormulaWithIff,
+                  clauses: List[Formula],
+                  cache: _Cache) -> Formula:
+    if isinstance(f, And):
+        # Replace any subformulae
+        new_vars = list(map(lambda c: __tseitin_rep(c, clauses, cache), f.input_list))
+
+        # Get the variable that represents this clause
+        old_next_var = cache.get_next_variable()
+        new_rep = cache.get(str(And(new_vars)))
+
+        # Record the equivalences, if the cache missed.
+        if old_next_var == new_rep:
+            clauses.append(Or(cast(List[Formula], list(map(Not, new_vars))) +
+                              cast(List[Formula], [new_rep])))
+            clauses.extend(list(map(lambda v: Or([v, Not(new_rep)]), new_vars)))
+
+        return new_rep
+
+    elif isinstance(f, Or):
+        # Replace any subformulae
+        new_vars = list(map(lambda c: __tseitin_rep(c, clauses, cache), f.input_list))
+
+        # Get the variable that represents this clause
+        old_next_var = cache.get_next_variable()
+        new_rep = cache.get(str(Or(new_vars)))
+
+        # Record the equivalences, if the cache missed.
+        if old_next_var == new_rep:
+            clauses.append(Or(cast(List[Formula], new_vars) +
+                              cast(List[Formula], [Not(new_rep)])))
+            clauses.extend(list(map(lambda v: Or([Not(v), new_rep]), new_vars)))
+
+        return new_rep
+
+    elif isinstance(f, Iff):
+        # Replace any subformulae
+        new_p = __tseitin_rep(f.p, clauses, cache)
+        new_q = __tseitin_rep(f.q, clauses, cache)
+
+        # Get the variable that represents this clause
+        old_next_var = cache.get_next_variable()
+        new_rep = cache.get(str(Iff(new_p, new_q)))
+
+        # Record the equivalences, if the cache missed.
+        if old_next_var == new_rep:
+            clauses.append(Or([    new_p,      new_q,      new_rep ]))
+            clauses.append(Or([Not(new_p), Not(new_q),     new_rep ]))
+            clauses.append(Or([    new_p,  Not(new_q), Not(new_rep)]))
+            clauses.append(Or([Not(new_p),     new_q,  Not(new_rep)]))
+
+        return new_rep
+
+    elif isinstance(f, Not):
+        # Replace any subformulae in the Not clause.
+        new_f = __tseitin_rep(f.c, clauses, cache)
+
+        # Allocate a new variable to represent the new Not clause
+        old_next_var = cache.get_next_variable()
+        new_rep = cache.get(str(Not(new_f)))
+
+        # Record the equivalence between the new representation and the original.
+        if old_next_var == new_rep:
+            clauses.append(Or([    new_f,      new_rep ]))
+            clauses.append(Or([Not(new_f), Not(new_rep)]))
+
+        # Return it.
+        return new_rep
+
+    elif isinstance(f, int):
+        return f
