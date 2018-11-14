@@ -93,8 +93,10 @@ def cnf_to_json(formula: List[And]) -> List[List[int]]:
                     else:
                         raise ValueError("Value was not Not tuple or int")
                 or_list.append(l)
+            elif isinstance(o, int):
+                or_list.append([o])
             else:
-                raise ValueError("Value was not Or tuple")
+                raise ValueError("Value was not Or tuple or variable!")
     return or_list
 
 

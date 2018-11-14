@@ -70,6 +70,8 @@ def test_to_cnf_tseitin():
 
 
 def test_cnf_to_json():
+    assert cnf_to_json([And([1])]) == [[1]]
+
     assert cnf_to_json([And([Or([1])])]) == [[1]]
     assert cnf_to_json([And([Or([Not(5)])])]) == [[-5]]
     assert cnf_to_json([And([Or([1, 2, Not(4)])])]) == [[1, 2, -4]]
