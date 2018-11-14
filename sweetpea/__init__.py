@@ -13,7 +13,7 @@ from collections import namedtuple
 from datetime import datetime
 from itertools import islice, repeat, product, chain, tee, accumulate
 from typing import Any, Dict, List, Union, Tuple, Iterator, Iterable, cast
-from sweetpea.logic import Iff, And, Or, Not, to_cnf_switching, cnf_to_json
+from sweetpea.logic import Iff, And, Or, Not, to_cnf_tseitin, cnf_to_json
 from sweetpea.docker import update_docker_image, start_docker_container, stop_docker_container
 
 
@@ -617,7 +617,7 @@ def __approximate_solution_count(hl_block: HLBlock, timeout_in_seconds: int = 60
 Returns a fully crossed block that we'll process with synthesize! Carries with it the function that
 should be used for all CNF conversions.
 """
-def fully_cross_block(design: List[Factor], xing: List[Factor], constraints: Any, cnf_fn=to_cnf_switching) -> HLBlock:
+def fully_cross_block(design: List[Factor], xing: List[Factor], constraints: Any, cnf_fn=to_cnf_tseitin) -> HLBlock:
     derivation_constraints = cast(List[Any], __process_derivations(design, xing))
     all_constraints = [FullyCross, Consistency] + derivation_constraints + constraints
     return HLBlock(design, xing, all_constraints, cnf_fn)
