@@ -575,15 +575,15 @@ def __check_server_health():
 
 
 """
-Approximates the number of solutions to the CNF formula generated for this experiment.
-Expects the sharpSAT binary to be present on the PATH
+Invokes the backend to build the final CNF formula in DIMACS format, returning it as a string.
 """
-def __approximate_solution_count(hl_block: HLBlock, timeout_in_seconds: int = 60, cache_size_mb: int = 4096) -> int:
+def __generate_cnf(hl_block: HLBlock) -> str:
     json_data = __generate_json_request(hl_block)
-    approx_sol_cnt = -1
 
     update_docker_image("sweetpea/server")
     container = start_docker_container("sweetpea/server", 8080)
+
+    cnf_str = ""
     try:
         __check_server_health()
 
@@ -591,23 +591,38 @@ def __approximate_solution_count(hl_block: HLBlock, timeout_in_seconds: int = 60
         if cnf_request.status_code != 200:
             raise RuntimeError("Received non-200 response from CNF generation!")
         else:
-            # Write the CNF to a tmp file
-            tmp_filename = ""
-            with tempfile.NamedTemporaryFile(delete=False) as f:
-                f.write(str.encode(cnf_request.text))
-                tmp_filename = f.name
-
-            print("Approximating solution count with sharpSAT...", end='', flush=True)
-            t_start = datetime.now()
-            output = subprocess.check_output(["sharpSAT", "-q", "-t", str(timeout_in_seconds), "-cs", str(cache_size_mb), tmp_filename])
-            approx_sol_cnt = int(output.decode().split('\n')[0])
-            t_end = datetime.now()
-            print(str((t_end - t_start).seconds) + "s")
+            cnf_str = cnf_request.text
 
     finally:
         stop_docker_container(container)
 
+    return cnf_str
+
+
+"""
+Approximates the number of solutions to the CNF formula generated for this experiment.
+Expects the sharpSAT binary to be present on the PATH
+"""
+def __approximate_solution_count(hl_block: HLBlock, timeout_in_seconds: int = 60, cache_size_mb: int = 4096) -> int:
+    approx_sol_cnt = -1
+
+    cnf_str = __generate_cnf(hl_block)
+
+    # Write the CNF to a tmp file
+    tmp_filename = ""
+    with tempfile.NamedTemporaryFile(delete=False) as f:
+        f.write(str.encode(cnf_str))
+        tmp_filename = f.name
+
+    print("Approximating solution count with sharpSAT...", end='', flush=True)
+    t_start = datetime.now()
+    output = subprocess.check_output(["sharpSAT", "-q", "-t", str(timeout_in_seconds), "-cs", str(cache_size_mb), tmp_filename])
+    approx_sol_cnt = int(output.decode().split('\n')[0])
+    t_end = datetime.now()
+    print(str((t_end - t_start).seconds) + "s")
+
     return approx_sol_cnt
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~ Top-Level functions ~~~~~~~~~~~~~~~~~~~~~
