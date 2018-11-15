@@ -589,7 +589,7 @@ def __generate_cnf(hl_block: HLBlock) -> str:
 
         cnf_request = requests.post('http://localhost:8080/experiments/build-cnf', data = json_data)
         if cnf_request.status_code != 200:
-            raise RuntimeError("Received non-200 response from CNF generation!")
+            raise RuntimeError("Received non-200 response from CNF generation! response=" + str(cnf_request.status_code) + " body=" + cnf_request.text)
         else:
             cnf_str = cnf_request.text
 
