@@ -220,6 +220,20 @@ def test_desugar_nomorethankinarow():
         Request("LT", 4, [5, 11, 17, 23])
     ]
 
+    assert __desugar_nomorethankinarow(0, ("congruent?", "con"), blk) == [
+        Request("LT", 1, [5]),
+        Request("LT", 1, [11]),
+        Request("LT", 1, [17]),
+        Request("LT", 1, [23])
+    ]
+
+
+def test_desugar_forbid():
+    from sweetpea import __desugar_forbid
+
+    assert __desugar_forbid(("color", "red"), blk) == And([-1, -7, -13, -19])
+    assert __desugar_forbid(("congruent?", "con"), blk) == And([-5, -11, -17, -23])
+
 
 def test_jsonify():
     from sweetpea import __jsonify

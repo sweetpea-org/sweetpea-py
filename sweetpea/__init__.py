@@ -75,6 +75,7 @@ Consistency = namedtuple('Consistency', '')
 Derivation = namedtuple('Derivation', 'derivedIdx dependentIdxs')
 
 NoMoreThanKInARow = namedtuple('NoMoreThanKInARow', 'k levels')
+Forbid = namedtuple('Forbid', 'level')
 
 # output
 Request = namedtuple('Request', 'equalityType k booleanValues')
@@ -424,6 +425,30 @@ def __desugar_nomorethankinarow(k:int, level:Tuple[str, str], hl_block:HLBlock) 
 
 
 """
+This constraint encodes the idea that a particular level may _never_ occur.
+So with the stroop example, Forbid(("color", "red")) would yield:
+And([-3, -9, -15, -21]), which would all be directly appended to the CNF list.
+
+TODO: This conflicts with the constraints imposed by __desugar_full_crossing, so it isn't usable at the moment.
+We'll have to figure out what the right thing to do is for this case.
+"""
+def __desugar_forbid(level: Tuple[str, str], hl_block: HLBlock) -> And:
+    # Generate a list of (factor name, level name) tuples from the block
+    level_tuples = [list(map(lambda level: (f.name, level if isinstance(level, str) else level.name), f.levels)) for f in hl_block.design]
+    flattened_tuples = list(chain(*level_tuples))
+
+    # Locate the specified level in the list
+    first_variable = flattened_tuples.index(level) + 1
+
+    # Build the variable list
+    design_var_count = __design_size(hl_block.design)
+    num_trials = __fully_cross_size(hl_block.xing)
+    var_list = list(accumulate(repeat(first_variable, num_trials), lambda acc, _: acc + design_var_count))
+
+    return And(list(map(lambda n: n * -1, var_list)))
+
+
+"""
 TODO: not sure how 'balance' needs to be expressed given the current derivations. Ask Sebastian for a motivating example experiment.
 """
 def __desugar_balance(fresh:int, factor_to_balance:Any, hl_block:HLBlock):
@@ -515,6 +540,11 @@ def __desugar(hl_block: HLBlock) -> Tuple[int, List[And], List[Request]]:
 
         else:
             print("Error: unrecognized levels specification in NoMoreThanKInARow constraint: " + c.levels)
+
+    # filter for any Forbid constraints
+    constraints = list(filter(lambda c: isinstance(c, Forbid), hl_block.hlconstraints))
+    for c in constraints:
+        cnfs_created.append(__desugar_forbid(c.level, hl_block))
 
     # -----------------------------------------------------------
     # This one does both...
