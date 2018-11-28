@@ -1,4 +1,5 @@
 import operator as op
+import pytest
 
 from sweetpea import Factor, DerivedLevel, WithinTrial, NoMoreThanKInARow, Transition
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform
@@ -60,6 +61,7 @@ def test_correct_solution_count_with_congruence_factor_and_constrained():
     assert len(experiments) == 12
 
 
+@pytest.mark.skip(reason="Waiting for Transitions to be correctly implemented")
 def test_correct_solution_count_with_repeated_color_factor_but_unconstrained():
     design = [color, text, repeated_color_factor]
     crossing = [color, text]
