@@ -245,7 +245,7 @@ def test_jsonify():
         Request("EQ", 1, [5, 10, 15, 20]),
         Request("LT", 3, [1, 2, 3, 4])]
 
-    result = json.loads(__jsonify(fresh, cnfs, requests, 24))
+    result = json.loads(__jsonify(fresh, cnfs, requests, 24, 24))
 
     assert result['fresh'] == 34
     assert result['unigen']['support'] == 24

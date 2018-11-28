@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import tempfile
 import time
+import math
 
 from ascii_graph import Pyasciigraph
 from functools import reduce, partial
@@ -456,6 +457,11 @@ def __desugar_balance(fresh:int, factor_to_balance:Any, hl_block:HLBlock):
     return []
 
 
+def __count_solutions(hl_block: HLBlock) -> int:
+    fc_size = __fully_cross_size(hl_block.xing)
+    return math.factorial(fc_size)
+
+
 """
 Goal is to produce a json structure like:
     { "fresh" : 18,
@@ -474,9 +480,15 @@ Goal is to produce a json structure like:
 Passing along the "fresh" variable counter & a list of reqs to the backend
 Important! The backend is expecting json with these exact key names; if the names are change the backend Parser.hs file needs to be updated.
 """
-def __jsonify(fresh:int, cnfs: List[And], ll_calls: List[Request], support: int) -> str:
+def __jsonify(fresh:int, cnfs: List[And], ll_calls: List[Request], support: int, solution_count: int) -> str:
     cnfList = cnf_to_json(cnfs)
     requests = list(map(lambda r: {'equalityType': r.equalityType, 'k': r.k, 'booleanValues': r.booleanValues}, ll_calls))
+
+    # Taken from the unigen2.py script: https://bitbucket.org/kuldeepmeel/unigen/src/4677b2ec4553b2a44a31910db0037820abdc1394/UniGen2.py?at=master&fileviewer=file-view-default
+    kappa = 0.638
+    pivotUniGen = math.ceil(4.03 * (1 + 1 / kappa) * (1 + 1 / kappa))
+    logCount = math.log(solution_count, 2)
+    startIteration = int(round(logCount + math.log(1.8, 2) - math.log(pivotUniGen, 2))) - 2
 
     return json.dumps({ "fresh" : fresh,
                         "cnfs" : cnfList,
@@ -486,8 +498,9 @@ def __jsonify(fresh:int, cnfs: List[And], ll_calls: List[Request], support: int)
                             "arguments" : [
                                 "--verbosity=0",
                                 "--samples=100",
-                                "--kappa=0.638",
-                                "--pivotUniGen=27.0",
+                                "--kappa=" + str(kappa),
+                                "--pivotUniGen=" + str(pivotUniGen),
+                                "--startIteration=" + str(startIteration),
                                 "--maxLoopTime=3000",
                                 "--maxTotalTime=72000",
                                 "--tApproxMC=1",
@@ -586,7 +599,8 @@ def __decode(hl_block: HLBlock, solution: List[int]) -> dict:
 def __generate_json_data(hl_block: HLBlock) -> str:
     (fresh, cnfs, reqs) = __desugar(hl_block)
     support = __encoding_variable_size(hl_block.design, hl_block.xing)
-    return __jsonify(fresh - 1, cnfs, reqs, support)
+    solution_count = __count_solutions(hl_block)
+    return __jsonify(fresh - 1, cnfs, reqs, support, solution_count)
 
 
 def __generate_json_request(hl_block: HLBlock) -> str:
