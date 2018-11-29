@@ -40,28 +40,19 @@ class DerivationProcessor:
     @staticmethod
     def generate_derivations(block: Block) -> List[Derivation]:
         design = block.design
-        derived_factors = DerivationProcessor.get_derived_factors(design)
+        derived_factors = list(filter(lambda f: f.is_derived(), block.design))
         all_levels = get_all_level_names(design)
         accum = []
         for fact in derived_factors:
             for level in fact.levels:
                 level_index = all_levels.index((fact.name, level.name))
-                x_product = DerivationProcessor.get_dep_x_product(level)
+                x_product = level.get_dependent_cross_product()
                 # filter to valid tuples, and get their idxs
                 valid_tuples = [tup for tup in x_product if level.window.fn(*map(lambda t: t[1], tup))]
                 valid_idxs = [[all_levels.index(level) for level in tup] for tup in valid_tuples]
                 shifted_idxs = DerivationProcessor.shift_window(valid_idxs, level.window, block.variables_per_trial())
                 accum.append(Derivation(level_index, shifted_idxs))
         return accum
-
-    @staticmethod
-    def get_dep_x_product(level: DerivedLevel) -> List[Tuple[Any, ...]]:
-        return list(product(*[[(depFact.name, x) for x in depFact.levels] for depFact in level.window.args]))
-
-    @staticmethod
-    def get_derived_factors(design: List[Factor]) -> List[Factor]:
-        is_derived = lambda x : isinstance(x.levels[0], DerivedLevel)
-        return list(filter(is_derived, design))
 
     """
     This is a helper function that shifts the idxs of __process_derivations.

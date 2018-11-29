@@ -1,4 +1,5 @@
-from typing import Any, Type, List
+from typing import Any, Type, List, Tuple
+from itertools import product
 
 
 def require_type(label: str, type: Type, value: Any):
@@ -23,12 +24,18 @@ class Factor:
         require_non_empty_list('Factor levels', self.levels)
         # TODO: Validate that levels are all either strings or Derived levels.
 
+    def is_derived(self) -> bool:
+        return isinstance(self.levels[0], DerivedLevel)
+
 
 class DerivedLevel:
     def __init__(self, name, window):
         self.name = name
         self.window = window
         # TODO: validation
+
+    def get_dependent_cross_product(self) -> List[Tuple[Any, ...]]:
+        return list(product(*[[(dependent_factor.name, x) for x in dependent_factor.levels] for dependent_factor in self.window.args]))
 
 
 class WithinTrial:
