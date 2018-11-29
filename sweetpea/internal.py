@@ -37,6 +37,11 @@ def chunk(it: Iterable[Any], size: int) -> Iterator[Tuple[Any, ...]]:
     return iter(lambda: tuple(islice(it, size)), ())
 
 
+def chunk_list(it: Iterable[Any], size: int) -> Iterator[List[Any]]:
+    it = iter(it)
+    return iter(lambda: list(islice(it, size)), [])
+
+
 """
 Helper recipe from:
 https://docs.python.org/3/library/itertools.html#itertools-recipes

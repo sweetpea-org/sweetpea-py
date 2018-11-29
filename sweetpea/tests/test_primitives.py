@@ -10,6 +10,10 @@ con_level  = DerivedLevel("con", WithinTrial(op.eq, [color, text]))
 inc_level  = DerivedLevel("inc", WithinTrial(op.ne, [color, text]))
 con_factor = Factor("congruent?", [con_level, inc_level])
 
+color_repeats_level   = DerivedLevel("yes", Transition(op.eq, [color, color]))
+color_no_repeat_level = DerivedLevel("no", Transition(op.ne, [color, color]))
+color_repeats_factor  = Factor("color repeats?", [color_repeats_level, color_no_repeat_level])
+
 
 def test_factor_validation():
     Factor("factor name", ["level 1", "level 2"])
@@ -45,6 +49,12 @@ def test_factor_validation():
 def test_factor_is_derived():
     assert color.is_derived() == False
     assert con_factor.is_derived() == True
+
+
+def test_factor_has_complex_window():
+	assert color.has_complex_window() == False
+	assert con_factor.has_complex_window() == False
+	assert color_repeats_factor.has_complex_window() == True
 
 
 def test_derived_level_validation():

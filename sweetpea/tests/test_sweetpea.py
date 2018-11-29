@@ -88,8 +88,8 @@ def test_desugar_with_derived_transition_levels():
     from sweetpea import __desugar
 
     color_transition = Factor("color_transition", [
-        DerivedLevel("repeat", Transition(lambda c1, c2: c1 == c2, [color, color])),
-        DerivedLevel("switch", Transition(lambda c1, c2: c1 != c2, [color, color]))
+        DerivedLevel("repeat", Transition(op.eq, [color, color])),
+        DerivedLevel("switch", Transition(op.ne, [color, color]))
     ])
 
     design.append(color_transition)

@@ -1,8 +1,8 @@
 from abc import abstractmethod
 from functools import reduce
-from typing import List
+from typing import List, Union
 
-from sweetpea.primitives import Factor
+from sweetpea.primitives import Factor, Transition, Window
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.base_constraint import Constraint
 
@@ -43,6 +43,16 @@ class Block:
         pass
 
     """
+    Indicates the number of variables that are present in the core variable grid.
+    this does not include variables used to encode complex windows.
+
+    In a design _without_ complex windows, this is equivalent to variables_per_sample.
+    """
+    @abstractmethod
+    def grid_variables(self):
+        pass
+
+    """
     Indicates the total number of variables needed to encode the core experiment
     description.
 
@@ -52,6 +62,16 @@ class Block:
     @abstractmethod
     def variables_per_sample(self):
         pass
+
+    @abstractmethod
+    def variables_for_window(self, window: Union[Transition, Window]) -> int:
+        pass
+
+    """
+    Retrieve a factor by name.
+    """
+    def get_factor(self, factor_name: str) -> Factor:
+        return next(f for f in self.design if f.name == factor_name)
 
 
 """
@@ -71,10 +91,23 @@ class FullyCrossBlock(Block):
         return reduce(lambda sum, factor: sum * len(factor.levels), self.crossing, 1)
 
     def variables_per_trial(self):
-        return sum([len(factor.levels) for factor in self.design])
+        # Factors with complex windows are excluded because we don't want variables allocated
+        # in every trial when the window spans multiple trials.
+        grid_factors = filter(lambda f: not f.has_complex_window(), self.design)
+        return sum([len(factor.levels) for factor in grid_factors])
+
+    def grid_variables(self):
+        return self.trials_per_sample() * self.variables_per_trial()
 
     def variables_per_sample(self):
-        return self.trials_per_sample() * self.variables_per_trial()
+        complex_factors = list(filter(lambda f: f.has_complex_window(), self.design))
+        windows = list(map(lambda f: f.levels[0].window, complex_factors))
+        window_count = reduce(lambda total, w: total + self.variables_for_window(w), windows, 0)
+
+        return self.grid_variables() + window_count
+
+    def variables_for_window(self, window: Union[Transition, Window]) -> int:
+        return self.trials_per_sample() * 2 - window.width
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__

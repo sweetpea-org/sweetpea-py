@@ -42,6 +42,9 @@ class Factor(__Primitive):
     def is_derived(self) -> bool:
         return isinstance(self.levels[0], DerivedLevel)
 
+    def has_complex_window(self) -> bool:
+        return self.is_derived() and not isinstance(self.levels[0].window, WithinTrial)
+
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
@@ -65,6 +68,7 @@ class DerivedLevel(__Primitive):
         if window_type not in allowed_window_types:
             raise ValueError('DerivedLevel.window must be one of ' + 
                 str(allowed_window_types) + ', but was ' + str(window_type) + '.')
+        # TODO: Windows should be uniform.
 
     def get_dependent_cross_product(self) -> List[Tuple[Any, ...]]:
         return list(product(*[[(dependent_factor.name, x) for x in dependent_factor.levels] for dependent_factor in self.window.args]))
@@ -79,43 +83,48 @@ class DerivedLevel(__Primitive):
         return str(self.__dict__)
 
 
-class WithinTrial(__Primitive):
-    def __init__(self, fn, args):
+class __BaseWindow():
+    def __init__(self, fn, args, width: int, stride: int) -> None:
         self.fn = fn
         self.args = args
-        # TODO: validation
-
-    def __eq__(self, other):
-        return self.__dict__ == other.__dict__
-
-    def __repr__(self):
-        return str(self.__dict__)
-
-    def __str__(self):
-        return str(self.__dict__)
-
-
-class Transition(__Primitive):
-    def __init__(self, fn, args):
-        self.fn = fn
-        self.args = args
-        # TODO: validation
-
-    def __eq__(self, other):
-        return self.__dict__ == other.__dict__
-
-    def __repr__(self):
-        return str(self.__dict__)
-
-    def __str__(self):
-        return str(self.__dict__)
-
-
-class Window(__Primitive):
-    def __init__(self, fn, args, stride):
-        self.fn = fn
-        self.args = args
+        self.width = width
         self.stride = stride
+        # TODO: validation
+
+
+class WithinTrial(__Primitive, __BaseWindow):
+    def __init__(self, fn, args):
+        super().__init__(fn, args, 1, 1)
+        # TODO: validation
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    def __repr__(self):
+        return str(self.__dict__)
+
+    def __str__(self):
+        return str(self.__dict__)
+
+
+class Transition(__Primitive, __BaseWindow):
+    def __init__(self, fn, args):
+        super().__init__(fn, args, 2, 1)
+        # TODO: validation
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    def __repr__(self):
+        return str(self.__dict__)
+
+    def __str__(self):
+        return str(self.__dict__)
+
+
+class Window(__Primitive, __BaseWindow):
+    def __init__(self, fn, args, stride):
+        super().__init__(fn, args, len(args), stride)
         # TODO: validation
 
     def __eq__(self, other):
