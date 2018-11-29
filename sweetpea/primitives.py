@@ -2,26 +2,27 @@ from typing import Any, Type, List, Tuple
 from itertools import product
 
 
-def require_type(label: str, type: Type, value: Any):
-    if not isinstance(value, type):
-        raise ValueError(label + ' must be a ' + str(type) + '.')
+class __Primitive:
+    def require_type(self, label: str, type: Type, value: Any):
+        if not isinstance(value, type):
+            raise ValueError(label + ' must be a ' + str(type) + '.')
 
 
-def require_non_empty_list(label: str, value: Any):
-    require_type(label, List, value)
-    if len(value) == 0:
-        raise ValueError(label + ' must not be empty.')
+    def require_non_empty_list(self, label: str, value: Any):
+        self.require_type(label, List, value)
+        if len(value) == 0:
+            raise ValueError(label + ' must not be empty.')
 
 
-class Factor:
+class Factor(__Primitive):
     def __init__(self, name: str, levels) -> None:
         self.name = name
         self.levels = levels
         self.__validate()
 
     def __validate(self):
-        require_type('Factor.name', str, self.name)
-        require_non_empty_list('Factor.levels', self.levels)
+        self.require_type('Factor.name', str, self.name)
+        self.require_non_empty_list('Factor.levels', self.levels)
         level_type = type(self.levels[0])
         if level_type not in [str, DerivedLevel]:
             raise ValueError('Factor.levels must be either string or DerivedLevel')
@@ -42,14 +43,14 @@ class Factor:
         return isinstance(self.levels[0], DerivedLevel)
 
 
-class DerivedLevel:
+class DerivedLevel(__Primitive):
     def __init__(self, name, window):
         self.name = name
         self.window = window
         self.__validate()
 
     def __validate(self):
-        require_type('DerivedLevel.name', str, self.name)
+        self.require_type('DerivedLevel.name', str, self.name)
         window_type = type(self.window)
         allowed_window_types = [WithinTrial, Transition, Window]
         if window_type not in allowed_window_types:
@@ -60,21 +61,21 @@ class DerivedLevel:
         return list(product(*[[(dependent_factor.name, x) for x in dependent_factor.levels] for dependent_factor in self.window.args]))
 
 
-class WithinTrial:
+class WithinTrial(__Primitive):
     def __init__(self, fn, args):
         self.fn = fn
         self.args = args
         # TODO: validation
 
 
-class Transition:
+class Transition(__Primitive):
     def __init__(self, fn, args):
         self.fn = fn
         self.args = args
         # TODO: validation
 
 
-class Window:
+class Window(__Primitive):
     def __init__(self, fn, args, stride):
         self.fn = fn
         self.args = args

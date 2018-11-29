@@ -2,7 +2,7 @@ from typing import List, Tuple, Union, Any
 from functools import reduce
 from itertools import product
 
-from sweetpea.primitives import *
+from sweetpea.primitives import WithinTrial, Transition, Window
 from sweetpea.blocks import Block
 from sweetpea.constraints import Derivation
 from sweetpea.internal import get_all_level_names
