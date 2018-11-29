@@ -1,7 +1,7 @@
 import operator as op
 import pytest
 
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial
+from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 
 color = Factor("color", ["red", "blue"])
 text = Factor("text", ["red", "blue"])
@@ -26,10 +26,35 @@ def test_factor_validation():
     with pytest.raises(ValueError):
         Factor("name", [])
 
+    # Invalid level type
+    with pytest.raises(ValueError):
+        Factor("name", [1, 2])
+
+    # Valid level types, but not uniform.
+    with pytest.raises(ValueError):
+        Factor("name", ["level1", con_level])
+
+    # Derived levels with non-uniform window types
+    with pytest.raises(ValueError):
+        Factor("name", [
+            con_level, 
+            DerivedLevel("other", Transition(op.eq, [color, color]))
+        ])
+
 
 def test_factor_is_derived():
     assert color.is_derived() == False
     assert con_factor.is_derived() == True
+
+
+def test_derived_level_validation():
+    # Non-str name
+    with pytest.raises(ValueError):
+        DerivedLevel(42, WithinTrial(op.eq, [color, text]))    
+
+    # Invalid Window
+    with pytest.raises(ValueError):
+        DerivedLevel("name", 42)
 
 
 def test_derived_level_get_dependent_cross_product():

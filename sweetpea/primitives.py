@@ -20,9 +20,23 @@ class Factor:
         self.__validate()
 
     def __validate(self):
-        require_type('Factor name', str, self.name)
-        require_non_empty_list('Factor levels', self.levels)
-        # TODO: Validate that levels are all either strings or Derived levels.
+        require_type('Factor.name', str, self.name)
+        require_non_empty_list('Factor.levels', self.levels)
+        level_type = type(self.levels[0])
+        if level_type not in [str, DerivedLevel]:
+            raise ValueError('Factor.levels must be either string or DerivedLevel')
+    
+        for l in self.levels:
+            if type(l) != level_type:
+                raise ValueError('Expected all levels to be ' + str(level_type) + 
+                    ', but found ' + str(type(l)) + '.')
+
+        if level_type == DerivedLevel:
+            window_type = type(self.levels[0].window)
+            for dl in self.levels:
+                if type(dl.window) != window_type:
+                    raise ValueError('Expected all DerivedLevel.window types to be ' + 
+                        str(window_type) + ', but found ' + str(type(dl)) + '.')
 
     def is_derived(self) -> bool:
         return isinstance(self.levels[0], DerivedLevel)
@@ -32,7 +46,15 @@ class DerivedLevel:
     def __init__(self, name, window):
         self.name = name
         self.window = window
-        # TODO: validation
+        self.__validate()
+
+    def __validate(self):
+        require_type('DerivedLevel.name', str, self.name)
+        window_type = type(self.window)
+        allowed_window_types = [WithinTrial, Transition, Window]
+        if window_type not in allowed_window_types:
+            raise ValueError('DerivedLevel.window must be one of ' + 
+                str(allowed_window_types) + ', but was ' + str(window_type) + '.')
 
     def get_dependent_cross_product(self) -> List[Tuple[Any, ...]]:
         return list(product(*[[(dependent_factor.name, x) for x in dependent_factor.levels] for dependent_factor in self.window.args]))
