@@ -64,7 +64,7 @@ class FullyCrossBlock(Block):
         self.__validate()
 
     def __validate(self):
-        # TODO: validation - Forbid constraints aren't allowed with this block type.
+        # TODO: validation - 'Forbid' constraints aren't allowed with this block type.
         return
 
     def trials_per_sample(self):
@@ -75,3 +75,12 @@ class FullyCrossBlock(Block):
 
     def variables_per_sample(self):
         return self.trials_per_sample() * self.variables_per_trial()
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    def __repr__(self):
+        return str(self.__dict__)
+
+    def __str__(self):
+        return str(self.__dict__)

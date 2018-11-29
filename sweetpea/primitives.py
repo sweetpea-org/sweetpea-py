@@ -42,6 +42,15 @@ class Factor(__Primitive):
     def is_derived(self) -> bool:
         return isinstance(self.levels[0], DerivedLevel)
 
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    def __repr__(self):
+        return str(self.__dict__)
+
+    def __str__(self):
+        return str(self.__dict__)
+
 
 class DerivedLevel(__Primitive):
     def __init__(self, name, window):
@@ -60,12 +69,30 @@ class DerivedLevel(__Primitive):
     def get_dependent_cross_product(self) -> List[Tuple[Any, ...]]:
         return list(product(*[[(dependent_factor.name, x) for x in dependent_factor.levels] for dependent_factor in self.window.args]))
 
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    def __repr__(self):
+        return str(self.__dict__)
+
+    def __str__(self):
+        return str(self.__dict__)
+
 
 class WithinTrial(__Primitive):
     def __init__(self, fn, args):
         self.fn = fn
         self.args = args
         # TODO: validation
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    def __repr__(self):
+        return str(self.__dict__)
+
+    def __str__(self):
+        return str(self.__dict__)
 
 
 class Transition(__Primitive):
@@ -74,6 +101,15 @@ class Transition(__Primitive):
         self.args = args
         # TODO: validation
 
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    def __repr__(self):
+        return str(self.__dict__)
+
+    def __str__(self):
+        return str(self.__dict__)
+
 
 class Window(__Primitive):
     def __init__(self, fn, args, stride):
@@ -81,3 +117,12 @@ class Window(__Primitive):
         self.args = args
         self.stride = stride
         # TODO: validation
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    def __repr__(self):
+        return str(self.__dict__)
+
+    def __str__(self):
+        return str(self.__dict__)
