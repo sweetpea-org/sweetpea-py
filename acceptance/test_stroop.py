@@ -108,3 +108,14 @@ def test_correct_solution_count_with_repeated_color_and_text_factors_and_constra
     experiments  = synthesize_trials_non_uniform(block, 100)
 
     assert len(experiments) == 24
+
+
+def test_correct_solution_count_with_repeated_color_factor_and_no_repetition_allowed():
+    design = [color, text, repeated_color_factor]
+    crossing = [color, text]
+    constraints = [NoMoreThanKInARow(0, ("repeated color?", "yes"))]
+
+    block  = fully_cross_block(design, crossing, constraints)
+    experiments  = synthesize_trials_non_uniform(block, 100)
+
+    assert len(experiments) == 8
