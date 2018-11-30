@@ -330,6 +330,24 @@ def test_nomorethankinarow_with_transition():
     ]
 
 
+def test_nomorethankinarow_with_multiple_transitions():
+    block = fully_cross_block([color, text, color_repeats_factor, text_repeats_factor],
+                              [color, text],
+                              [])
+
+    backend_request = __run_nomorethankinarow(NoMoreThanKInARow(1, ("text repeats?", "yes")), block)
+    assert backend_request.ll_requests == [
+        LowLevelRequest("LT", 2, [23, 25]),
+        LowLevelRequest("LT", 2, [25, 27])
+    ]
+
+    backend_request = __run_nomorethankinarow(NoMoreThanKInARow(1, ("text repeats?", "no")), block)
+    assert backend_request.ll_requests == [
+        LowLevelRequest("LT", 2, [24, 26]),
+        LowLevelRequest("LT", 2, [26, 28])
+    ]
+
+
 def test_forbid():
     f = Forbid(("color", "red"))
     backend_request = BackendRequest(0)

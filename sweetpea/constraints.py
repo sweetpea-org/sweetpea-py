@@ -306,11 +306,7 @@ class NoMoreThanKInARow(Constraint):
     def __build_complex_variable_list(self, block: Block, level: Tuple[str, str]) -> List[int]:
         factor = block.get_factor(level[0])
         n = int(block.variables_for_window(factor.levels[0].window) / 2)
-        # TODO: Definitely going to break for multiple Transitions
-        start = block.grid_variables() + 1
-        if factor.levels[1].name == level[1]:
-            start += 1
-
+        start = block.first_variable_for_level(level[0], level[1]) + 1
         return reduce(lambda l, v: l + [start + (v * 2)], range(n), [])
 
     def __eq__(self, other):
