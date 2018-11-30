@@ -1,6 +1,6 @@
 import operator as op
 
-from sweetpea.internal import get_all_level_names
+from sweetpea.internal import get_all_level_names, intersperse
 from sweetpea.primitives import Factor, DerivedLevel, Transition
 
 
@@ -20,3 +20,14 @@ def test_get_all_level_names():
 
     assert get_all_level_names([color_repeats_factor]) == [('color repeats?', 'yes'),
                                                            ('color repeats?', 'no')]
+
+
+def test_intersperse():
+    assert list(intersperse('', ['yes', 'no', 'yes'])) == \
+        ['yes', '', 'no', '', 'yes']
+
+    assert list(intersperse('', ['yes', 'no', 'yes'], 2)) == \
+        ['yes', '', '', 'no', '', '', 'yes']
+
+    assert list(intersperse('', ['yes', 'no', 'yes'], 0)) == \
+        ['yes', 'no', 'yes']

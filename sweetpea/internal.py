@@ -1,4 +1,4 @@
-from itertools import islice, tee
+from itertools import islice, tee, chain, repeat
 from typing import Any, Tuple, List, Iterator, Iterable
 
 from sweetpea.primitives import Factor, DerivedLevel
@@ -51,3 +51,13 @@ def pairwise(iterable):
     a, b = tee(iterable)
     next(b, None)
     return zip(a, b)
+
+
+"""
+Another helper from SO, with modification for repeating the delimiter.
+https://stackoverflow.com/questions/5655708/python-most-elegant-way-to-intersperse-a-list-with-an-element
+"""
+def intersperse(delimiter, seq, repeat_delimiter = 1):
+    nested_list_seq = map(lambda elem: [elem], seq)
+    new_seq = zip(repeat([delimiter] * repeat_delimiter), nested_list_seq)
+    return chain(*islice(chain.from_iterable(new_seq), 1, None))

@@ -39,6 +39,32 @@ def test_fully_cross_block_first_variable_for_factor():
     assert block.first_variable_for_level("repeated text?", "no") == 23
 
 
+def test_fully_cross_block_decode_variable():
+    block = fully_cross_block([color, text, color_repeats_factor, text_repeats_factor],
+                              [color, text],
+                              [])
+
+    assert block.decode_variable(1) == ("color", "red")
+    assert block.decode_variable(2) == ("color", "blue")
+    assert block.decode_variable(5) == ("color", "red")
+    assert block.decode_variable(14) == ("color", "blue")
+
+    assert block.decode_variable(3) == ("text", "red")
+    assert block.decode_variable(4) == ("text", "blue")
+    assert block.decode_variable(15) == ("text", "red")
+    assert block.decode_variable(12) == ("text", "blue")
+
+    assert block.decode_variable(17) == ("repeated color?", "yes")
+    assert block.decode_variable(18) == ("repeated color?", "no")
+    assert block.decode_variable(19) == ("repeated color?", "yes")
+    assert block.decode_variable(22) == ("repeated color?", "no")
+
+    assert block.decode_variable(23) == ("repeated text?", "yes")
+    assert block.decode_variable(24) == ("repeated text?", "no")
+    assert block.decode_variable(27) == ("repeated text?", "yes")
+    assert block.decode_variable(28) == ("repeated text?", "no")
+
+
 def test_fully_cross_block_trials_per_sample():
     text_single  = Factor("text",  ["red"])
 

@@ -15,7 +15,7 @@ from itertools import product
 from typing import Any, List, Union, Tuple, cast
 
 from sweetpea.derivation_processor import DerivationProcessor
-from sweetpea.internal import chunk, get_level_name, get_all_level_names
+from sweetpea.internal import chunk, get_level_name, get_all_level_names, intersperse
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.blocks import Block, FullyCrossBlock
 from sweetpea.docker import update_docker_image, start_docker_container, stop_docker_container
@@ -43,28 +43,46 @@ def __desugar(block: Block) -> BackendRequest:
 
 """
 Decodes a single solution into a dict of this form:
-{
-  '<factor name>': ['<trial 1 label>', '<trial 2 label>, ...]
-  ...
-}
+
+    {
+      '<factor name>': ['<trial 1 label>', '<trial 2 label>, ...]
+      ...
+    }
+
+For factors that don't have a value for a given level, such as Transitions,
+the label will be ''.
 """
 def __decode(block: Block, solution: List[int]) -> dict:
-    num_encoding_vars = block.variables_per_sample()
-    vars_per_trial = block.variables_per_trial()
+    gt0 = lambda n: n > 0
+    simple_variables = list(filter(gt0, solution[:block.grid_variables()]))
+    complex_variables = list(filter(gt0, solution[block.grid_variables():block.variables_per_sample()]))
 
-    # Looks like [[2, 4, 6], [8, 10, 12], [14, 16, 18], [20, 22, 23]]
-    trial_assignments = list(map(lambda l: list(filter(lambda n: n > 0, l)),
-                                 list(chunk(solution[:num_encoding_vars], vars_per_trial))))
+    experiment = cast(dict, {})
 
-    transposed = cast(List[List[int]], list(map(list, zip(*trial_assignments))))
-    assignment_indices = [list(map(lambda n: (n - 1) % vars_per_trial, s)) for s in transposed]
+    # Simple factors
+    tuples = list(map(lambda v: block.decode_variable(v), simple_variables))
+    for (factor_name, level_name) in tuples:
+        if factor_name not in experiment:
+            experiment[factor_name] = []
+        experiment[factor_name].append(level_name)
 
-    factor_names = list(map(lambda f: f.name, block.design))
-    factors = list(zip(factor_names, assignment_indices))
+    # Complex factors - The challenge here is knowing when to insert '', rather than using the variables.
+    # Start after 'width' trials, and shift 'stride' trials for each variable.
+    complex_factors = list(filter(lambda f: f.has_complex_window(), block.design))
+    for f in complex_factors:
+        # Get variables for this factor
+        start = block.first_variable_for_level(f.name, f.levels[0].name) + 1
+        end = start + block.variables_for_window(f.levels[0].window)
+        variables = list(filter(lambda n: n in range(start, end), complex_variables))
 
-    level_names = list(map(lambda tup: tup[1], get_all_level_names(block.design)))
+        # Get the level names for the variables in the solution.
+        level_names = list(map(lambda v: block.decode_variable(v)[1], variables))
 
-    experiment = {c: list(map(lambda idx: level_names[idx], v)) for (c,v) in factors}
+        # Intersperse empty strings for the trials to which this factor does not apply.
+        level_names = list(intersperse('', level_names, f.levels[0].window.stride - 1))
+        level_names = list(repeat('', f.levels[0].window.width - 1)) + level_names
+
+        experiment[f.name] = level_names
 
     return experiment
 

@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from functools import reduce
-from typing import List, Union
+from typing import List, Union, Tuple
 
 from sweetpea.internal import get_all_level_names
 from sweetpea.primitives import Factor, Transition, Window
@@ -90,6 +90,30 @@ class Block:
                     offset += self.variables_for_window(f.levels[0].window)
 
             return self.grid_variables() + offset
+
+    """
+    Given a variable number from the SAT formula, this method will return
+    the associated factor and level name.
+    """
+    def decode_variable(self, variable: int) -> Tuple[str, str]:
+        # Shift to zero-based index
+        variable -= 1
+
+        if variable < self.grid_variables():
+            variable = variable % self.variables_per_trial()
+            simple_factors = list(filter(lambda f: not f.has_complex_window(), self.design))
+            simple_tuples = get_all_level_names(simple_factors)
+            return simple_tuples[variable]
+        else:
+            complex_factors = list(filter(lambda f: f.has_complex_window(), self.design))
+            for f in complex_factors:
+                start = self.first_variable_for_level(f.name, f.levels[0].name)
+                end = start + self.variables_for_window(f.levels[0].window)
+                if variable in range(start, end):
+                    tuples = get_all_level_names([f])
+                    return tuples[(variable - start) % f.levels[0].window.width]
+
+        raise RuntimeError('Unable to find factor/level for variable!')
 
 
 """
