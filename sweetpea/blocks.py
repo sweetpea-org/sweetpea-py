@@ -2,6 +2,7 @@ from abc import abstractmethod
 from functools import reduce
 from typing import List, Union
 
+from sweetpea.internal import get_all_level_names
 from sweetpea.primitives import Factor, Transition, Window
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.base_constraint import Constraint
@@ -73,6 +74,23 @@ class Block:
     def get_factor(self, factor_name: str) -> Factor:
         return next(f for f in self.design if f.name == factor_name)
 
+    def first_variable_for_level(self, factor_name: str, level_name: str) -> int:
+        all_levels = get_all_level_names(self.design)
+        idx = all_levels.index((factor_name, level_name))
+        if idx < self.variables_per_trial():
+            return idx
+        else:
+            offset = 0
+            complex_factors = filter(lambda f: f.has_complex_window(), self.design)
+            for f in complex_factors:
+                if f.name == factor_name:
+                    offset += f.levels.index(f.get_level(level_name))
+                    break
+                else:
+                    offset += self.variables_for_window(f.levels[0].window)
+
+            return self.grid_variables() + offset
+
 
 """
 A fully-crossed block. This block generates as many trials as needed to fully
@@ -84,7 +102,7 @@ class FullyCrossBlock(Block):
         self.__validate()
 
     def __validate(self):
-        # TODO: validation - 'Forbid' constraints aren't allowed with this block type.
+        # TODO: validation
         return
 
     def trials_per_sample(self):

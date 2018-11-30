@@ -17,8 +17,14 @@ con_factor = Factor("congruent?", [con_level, inc_level])
 
 # Repeated color factor
 repeated_color_factor = Factor("repeated color?", [
-  DerivedLevel("repeated", Transition(op.eq, [color, color])),
-  DerivedLevel("not repeated", Transition(op.ne, [color, color]))
+    DerivedLevel("yes", Transition(op.eq, [color, color])),
+    DerivedLevel("no",  Transition(op.ne, [color, color]))
+])
+
+# Repeated text factor
+repeated_text_factor = Factor("repeated text?", [
+    DerivedLevel("yes", Transition(op.eq, [text, text])),
+    DerivedLevel("no",  Transition(op.ne, [text, text]))
 ])
 
 
@@ -69,11 +75,22 @@ def test_correct_solution_count_with_repeated_color_factor_but_unconstrained():
 def test_correct_solution_count_with_repeated_color_factor_and_constrained():
     design = [color, text, repeated_color_factor]
     crossing = [color, text]
-    constraints = [NoMoreThanKInARow(1, ("repeated color?", "repeated"))]
+    constraints = [NoMoreThanKInARow(1, ("repeated color?", "yes"))]
 
     block  = fully_cross_block(design, crossing, constraints)
     experiments  = synthesize_trials_non_uniform(block, 100)
-    
+
     # With only two colors, there can never be two color repetitons anyways,
     # so the total should still be the same.
+    assert len(experiments) == 24
+
+
+def test_correct_solution_count_with_repeated_color_and_text_factors_but_unconstrained():
+    design = [color, text, repeated_color_factor, repeated_text_factor]
+    crossing = [color, text]
+    constraints = []
+
+    block  = fully_cross_block(design, crossing, constraints)
+    experiments  = synthesize_trials_non_uniform(block, 100)
+
     assert len(experiments) == 24

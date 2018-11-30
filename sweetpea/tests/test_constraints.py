@@ -16,9 +16,15 @@ con_level  = DerivedLevel("con", WithinTrial(op.eq, [color, text]))
 inc_level  = DerivedLevel("inc", WithinTrial(op.ne, [color, text]))
 con_factor = Factor("congruent?", [con_level, inc_level])
 
-color_repeats_level   = DerivedLevel("yes", Transition(op.eq, [color, color]))
-color_no_repeat_level = DerivedLevel("no", Transition(op.ne, [color, color]))
-color_repeats_factor  = Factor("color repeats?", [color_repeats_level, color_no_repeat_level])
+color_repeats_factor = Factor("color repeats?", [
+    DerivedLevel("yes", Transition(op.eq, [color, color])),
+    DerivedLevel("no",  Transition(op.ne, [color, color]))
+])
+
+text_repeats_factor = Factor("text repeats?", [
+    DerivedLevel("yes", Transition(op.eq, [text, text])),
+    DerivedLevel("no",  Transition(op.ne, [text, text]))
+])
 
 design = [color, text, con_factor]
 crossing = [color, text]
@@ -68,6 +74,18 @@ def test_consistency_with_transition():
     # to compare to) the variables only go up to 22.
     assert backend_request.ll_requests == \
         list(map(lambda x: LowLevelRequest("EQ", 1, [x, x+1]), range(1, 22, 2)))
+
+
+def test_consistency_with_multiple_transitions():
+    block = fully_cross_block([color, text, color_repeats_factor, text_repeats_factor],
+                              [color, text],
+                              [])
+
+    backend_request = BackendRequest(0)
+    Consistency.apply(block, backend_request)
+
+    assert backend_request.ll_requests == \
+        list(map(lambda x: LowLevelRequest("EQ", 1, [x, x+1]), range(1, 28, 2)))
 
 
 def test_fully_cross_simple():
@@ -192,7 +210,7 @@ def test_derivation_with_transition():
     assert backend_request.fresh == expected_fresh
     assert backend_request.cnfs == [expected_cnf]
 
-    # Incongruent derivation
+    # Color does not repeat derivation
     d = Derivation(17, [[0, 5], [1, 4]])
     backend_request = BackendRequest(23)
     d.apply(block, backend_request)
@@ -202,6 +220,40 @@ def test_derivation_with_transition():
         Iff(20, Or([And([5, 10]), And([6,  9 ])])),
         Iff(22, Or([And([9, 14]), And([10, 13])]))
     ]), 23)
+
+    assert backend_request.fresh == expected_fresh
+    assert backend_request.cnfs == [expected_cnf]
+
+
+def test_derivation_with_multiple_transitions():
+    block = fully_cross_block([color, text, color_repeats_factor, text_repeats_factor],
+                              [color, text],
+                              [])
+
+    # Text repeats derivation
+    d = Derivation(22, [[2, 6], [3, 7]])
+    backend_request = BackendRequest(29)
+    d.apply(block, backend_request)
+
+    (expected_cnf, expected_fresh) = to_cnf_tseitin(And([
+        Iff(23, Or([And([3,  7 ]), And([4,  8 ])])),
+        Iff(25, Or([And([7,  11]), And([8,  12])])),
+        Iff(27, Or([And([11, 15]), And([12, 16])]))
+    ]), 29)
+
+    assert backend_request.fresh == expected_fresh
+    assert backend_request.cnfs == [expected_cnf]
+
+    # Text does not repeat derivation
+    d = Derivation(23, [[2, 7], [3, 6]])
+    backend_request = BackendRequest(29)
+    d.apply(block, backend_request)
+
+    (expected_cnf, expected_fresh) = to_cnf_tseitin(And([
+        Iff(24, Or([And([3,  8 ]), And([4,  7 ])])),
+        Iff(26, Or([And([7,  12]), And([8,  11])])),
+        Iff(28, Or([And([11, 16]), And([12, 15])]))
+    ]), 29)
 
     assert backend_request.fresh == expected_fresh
     assert backend_request.cnfs == [expected_cnf]

@@ -11,9 +11,15 @@ con_level  = DerivedLevel("con", WithinTrial(op.eq, [color, text]))
 inc_level  = DerivedLevel("inc", WithinTrial(op.ne, [color, text]))
 con_factor = Factor("congruent?", [con_level, inc_level])
 
-color_repeats_level   = DerivedLevel("yes", Transition(op.eq, [color, color]))
-color_no_repeat_level = DerivedLevel("no", Transition(op.ne, [color, color]))
-color_repeats_factor  = Factor("color repeats?", [color_repeats_level, color_no_repeat_level])
+color_repeats_factor = Factor("repeated color?", [
+    DerivedLevel("yes", Transition(op.eq, [color, color])),
+    DerivedLevel("no",  Transition(op.ne, [color, color]))
+])
+
+text_repeats_factor = Factor("repeated text?", [
+    DerivedLevel("yes", Transition(op.eq, [text, text])),
+    DerivedLevel("no",  Transition(op.ne, [text, text]))
+])
 
 design = [color, text, con_factor]
 crossing = [color, text]
@@ -61,6 +67,19 @@ def test_generate_derivations_transition():
     assert DerivationProcessor.generate_derivations(block) == [
         Derivation(16, [[0, 4], [1, 5]]),
         Derivation(17, [[0, 5], [1, 4]])
+    ]
+
+
+def test_generate_derivations_with_multiple_transitions():
+    block = fully_cross_block([color, text, color_repeats_factor, text_repeats_factor],
+                              [color, text],
+                              [])
+
+    assert DerivationProcessor.generate_derivations(block) == [
+        Derivation(16, [[0, 4], [1, 5]]),
+        Derivation(17, [[0, 5], [1, 4]]),
+        Derivation(22, [[2, 6], [3, 7]]),
+        Derivation(23, [[2, 7], [3, 6]])
     ]
 
 

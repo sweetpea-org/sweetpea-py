@@ -1,6 +1,7 @@
 import operator as op
 import pytest
 
+from sweetpea import fully_cross_block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.blocks import FullyCrossBlock
 
@@ -12,9 +13,30 @@ con_level  = DerivedLevel("con", WithinTrial(op.eq, [color, text]))
 inc_level  = DerivedLevel("inc", WithinTrial(op.ne, [color, text]))
 con_factor = Factor("congruent?", [con_level, inc_level])
 
-color_repeats_level   = DerivedLevel("yes", Transition(op.eq, [color, color]))
-color_no_repeat_level = DerivedLevel("no", Transition(op.ne, [color, color]))
-color_repeats_factor  = Factor("color repeats?", [color_repeats_level, color_no_repeat_level])
+color_repeats_factor = Factor("repeated color?", [
+    DerivedLevel("yes", Transition(op.eq, [color, color])),
+    DerivedLevel("no",  Transition(op.ne, [color, color]))
+])
+
+text_repeats_factor = Factor("repeated text?", [
+    DerivedLevel("yes", Transition(op.eq, [text, text])),
+    DerivedLevel("no",  Transition(op.ne, [text, text]))
+])
+
+
+def test_fully_cross_block_first_variable_for_factor():
+    block = fully_cross_block([color, text, color_repeats_factor, text_repeats_factor],
+                              [color, text],
+                              [])
+
+    assert block.first_variable_for_level("color", "red") == 0
+    assert block.first_variable_for_level("color", "blue") == 1
+    assert block.first_variable_for_level("text", "red") == 2
+    assert block.first_variable_for_level("text", "blue") == 3
+    assert block.first_variable_for_level("repeated color?", "yes") == 16
+    assert block.first_variable_for_level("repeated color?", "no") == 17
+    assert block.first_variable_for_level("repeated text?", "yes") == 22
+    assert block.first_variable_for_level("repeated text?", "no") == 23
 
 
 def test_fully_cross_block_trials_per_sample():
@@ -35,8 +57,8 @@ def test_fully_cross_block_variables_per_trial():
 
     # Should exclude Transition and Windows from variables per trial count, as they don't always
     # have a representation in the first few trials. (Depending on the window width)
-    assert FullyCrossBlock([color, text, color_repeats_factor], 
-                           [color, text], 
+    assert FullyCrossBlock([color, text, color_repeats_factor],
+                           [color, text],
                            []).variables_per_trial() == 4
 
 
@@ -59,11 +81,15 @@ def test_fully_cross_block_variables_per_sample():
                            [color, text],
                            []).variables_per_sample() == 22
 
+    assert FullyCrossBlock([color, text, color_repeats_factor, text_repeats_factor],
+                           [color, text],
+                           []).variables_per_sample() == 28
+
 
 def test_fully_cross_block_variables_for_window():
     assert FullyCrossBlock([color, text, color_repeats_factor],
                            [color, text],
-                           []).variables_for_window(color_repeats_level.window) == 6
+                           []).variables_for_window(color_repeats_factor.levels[0].window) == 6
     assert FullyCrossBlock([color, text, color_repeats_factor],
                            [color, text],
-                           []).variables_for_window(color_no_repeat_level.window) == 6
+                           []).variables_for_window(color_repeats_factor.levels[0].window) == 6

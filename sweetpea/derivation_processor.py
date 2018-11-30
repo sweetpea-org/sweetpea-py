@@ -45,13 +45,7 @@ class DerivationProcessor:
         accum = []
         for fact in derived_factors:
             for level in fact.levels:
-                level_index = all_levels.index((fact.name, level.name))
-
-                # Shift level index for complex windows
-                if fact.has_complex_window():
-                    difference = level_index - block.variables_per_trial()
-                    level_index = difference + block.grid_variables()
-
+                level_index = block.first_variable_for_level(fact.name, level.name)
                 x_product = level.get_dependent_cross_product()
                 # filter to valid tuples, and get their idxs
                 valid_tuples = [tup for tup in x_product if level.window.fn(*map(lambda t: t[1], tup))]
