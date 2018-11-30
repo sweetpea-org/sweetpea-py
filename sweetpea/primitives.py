@@ -76,6 +76,21 @@ class Factor(__Primitive):
     def get_level(self, level_name: str) -> Union[str, DerivedLevel]:
         return next(l for l in self.levels if l.name == level_name)
 
+    """
+    Returns true if this factor applies to the given trial number. (1-based)
+    For example, Factors with Transition windows in the derived level don't apply
+    to Trial 1, but do apply to all subsequent trials.
+    """
+    def applies_to_trial(self, trial_number: int) -> bool:
+        if trial_number <= 0:
+            raise ValueError('Trial numbers may not be less than 1')
+
+        if not self.has_complex_window():
+            return True
+
+        window = self.levels[0].window
+        return trial_number >= window.width and (trial_number - window.width) % window.stride == 0
+
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 

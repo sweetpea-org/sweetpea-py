@@ -1,7 +1,7 @@
 import operator as op
 import pytest
 
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
+from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
 
 color = Factor("color", ["red", "blue"])
 text = Factor("text", ["red", "blue"])
@@ -41,7 +41,7 @@ def test_factor_validation():
     # Derived levels with non-uniform window types
     with pytest.raises(ValueError):
         Factor("name", [
-            con_level, 
+            con_level,
             DerivedLevel("other", Transition(op.eq, [color, color]))
         ])
 
@@ -57,10 +57,31 @@ def test_factor_has_complex_window():
 	assert color_repeats_factor.has_complex_window() == True
 
 
+def test_factor_applies_to_trial():
+    assert color.applies_to_trial(1) == True
+    assert color.applies_to_trial(2) == True
+    assert color.applies_to_trial(3) == True
+    assert color.applies_to_trial(4) == True
+
+    with pytest.raises(ValueError):
+        color.applies_to_trial(0)
+
+    assert color_repeats_factor.applies_to_trial(1) == False
+    assert color_repeats_factor.applies_to_trial(2) == True
+    assert color_repeats_factor.applies_to_trial(3) == True
+    assert color_repeats_factor.applies_to_trial(4) == True
+
+    f = Factor('f', [DerivedLevel('l', Window(op.eq, [color, color], 2))])
+    assert f.applies_to_trial(1) == False
+    assert f.applies_to_trial(2) == True
+    assert f.applies_to_trial(3) == False
+    assert f.applies_to_trial(4) == True
+
+
 def test_derived_level_validation():
     # Non-str name
     with pytest.raises(ValueError):
-        DerivedLevel(42, WithinTrial(op.eq, [color, text]))    
+        DerivedLevel(42, WithinTrial(op.eq, [color, text]))
 
     # Invalid Window
     with pytest.raises(ValueError):

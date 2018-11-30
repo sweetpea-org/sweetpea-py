@@ -190,7 +190,12 @@ the formula space. For example, for the simple stroop test:
 |       4 | 19   20  | 21   22  |  23    24  |
 ----------------------------------------------
 """
-def print_variable_grid(blk: Block):
+def print_encoding_diagram(blk: Block) -> None:
+    print(__generate_encoding_diagram(blk))
+
+def __generate_encoding_diagram(blk: Block) -> str:
+    diagram_str = ""
+
     design_size = blk.variables_per_trial()
     num_trials = blk.trials_per_sample()
     num_vars = blk.variables_per_sample()
@@ -227,18 +232,41 @@ def print_variable_grid(blk: Block):
     factor_names = list(map(lambda f: f.name, blk.design))
     header_str = header_format_str.format(*["Trial"] + factor_names)
     row_width = len(header_str)
-    print('-' * row_width)
-    print(header_str)
 
+    # First line
+    diagram_str += ('-' * row_width) + '\n'
+
+    # Header
+    diagram_str += header_str + '\n'
+
+    # Level names
     all_level_names = [ln for (fn, ln) in get_all_level_names(blk.design)]
-    print(row_format_str.format(*['#'] + all_level_names))
-    print('-' * row_width)
+    diagram_str += row_format_str.format(*['#'] + all_level_names) + '\n'
 
+    # Separator
+    diagram_str += ('-' * row_width) + '\n'
+
+    # Variables
     for t in range(num_trials):
-        args = [str(t + 1)] + list(map(str, range(t * design_size + 1, t * design_size + design_size + 2)))
-        print(row_format_str.format(*args))
+        args = [str(t + 1)] + list(map(str, range(t * design_size + 1, t * design_size + design_size + 1)))
 
-    print('-' * row_width)
+        for f in filter(lambda f: f.has_complex_window(), blk.design):
+            if f.applies_to_trial(t + 1):
+                variables = [blk.first_variable_for_level(f.name, l.name) - 1 for l in f.levels]
+                variables = list(map(lambda n: n + len(variables) * t, variables))
+                args += list(map(str, variables))
+            else:
+                args += list(repeat('', f.levels[0].window.width))
+
+        diagram_str += row_format_str.format(*args) + '\n'
+
+    # Footer
+    diagram_str += ('-' * row_width) + '\n'
+    return diagram_str
+
+
+def __number_of_columns(block: Block):
+    return sum([len(factor.levels) for factor in block.design])
 
 
 """

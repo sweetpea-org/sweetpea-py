@@ -1,7 +1,7 @@
 import operator as op
 import pytest
 
-from sweetpea import fully_cross_block, __decode
+from sweetpea import fully_cross_block, __decode, __generate_encoding_diagram
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.constraints import NoMoreThanKInARow
 from sweetpea.logic import to_cnf_tseitin
@@ -100,35 +100,48 @@ def test_decode_with_transition():
     assert decoded['color repeats?'] == ['',     'no',   'yes',  'no' ]
 
 
-def test_desugar_with_constraint():
-    from sweetpea import __desugar
-
-    constraints = [NoMoreThanKInARow(1, ("congruent?", "con"))]
-    blk = fully_cross_block(design, crossing, constraints)
-
-    # This was blowing up with an error.
-    __desugar(blk)
-
-
-def test_desugar_with_factor_constraint():
-    from sweetpea import __desugar
-
-    constraints = [NoMoreThanKInARow(1, con_factor)]
-    blk = fully_cross_block(design, crossing, constraints)
-
-    __desugar(blk)
+def test_generate_encoding_diagram():
+    assert __generate_encoding_diagram(blk) == "\
+----------------------------------------------\n\
+|   Trial |  color   |   text   | congruent? |\n\
+|       # | red blue | red blue |  con  inc  |\n\
+----------------------------------------------\n\
+|       1 |  1   2   |  3   4   |   5    6   |\n\
+|       2 |  7   8   |  9   10  |  11    12  |\n\
+|       3 | 13   14  | 15   16  |  17    18  |\n\
+|       4 | 19   20  | 21   22  |  23    24  |\n\
+----------------------------------------------\n"
 
 
-def test_desugar_with_derived_transition_levels():
-    from sweetpea import __desugar
+def test_generate_encoding_diagram_with_transition():
+    block = fully_cross_block([color, text, color_repeats_factor],
+                              [color, text],
+                              [])
 
-    color_transition = Factor("color_transition", [
-        DerivedLevel("repeat", Transition(op.eq, [color, color])),
-        DerivedLevel("switch", Transition(op.ne, [color, color]))
-    ])
+    assert __generate_encoding_diagram(block) == "\
+--------------------------------------------------\n\
+|   Trial |  color   |   text   | color repeats? |\n\
+|       # | red blue | red blue |   yes     no   |\n\
+--------------------------------------------------\n\
+|       1 |  1   2   |  3   4   |                |\n\
+|       2 |  5   6   |  7   8   |   17      18   |\n\
+|       3 |  9   10  | 11   12  |   19      20   |\n\
+|       4 | 13   14  | 15   16  |   21      22   |\n\
+--------------------------------------------------\n"
 
-    design.append(color_transition)
-    constraints = [NoMoreThanKInARow(2, color_transition)]
-    blk = fully_cross_block(design, crossing, constraints)
 
-    __desugar(blk)
+def test_generate_encoding_diagram_with_constraint_and_multiple_transitions():
+    block = fully_cross_block([color, text, con_factor, color_repeats_factor, text_repeats_factor],
+                              [color, text],
+                              [])
+
+    assert __generate_encoding_diagram(block) == "\
+-------------------------------------------------------------------------------\n\
+|   Trial |  color   |   text   | congruent? | color repeats? | text repeats? |\n\
+|       # | red blue | red blue |  con  inc  |   yes     no   |   yes    no   |\n\
+-------------------------------------------------------------------------------\n\
+|       1 |  1   2   |  3   4   |   5    6   |                |               |\n\
+|       2 |  7   8   |  9   10  |  11    12  |   25      26   |   31     32   |\n\
+|       3 | 13   14  | 15   16  |  17    18  |   27      28   |   33     34   |\n\
+|       4 | 19   20  | 21   22  |  23    24  |   29      30   |   35     36   |\n\
+-------------------------------------------------------------------------------\n"

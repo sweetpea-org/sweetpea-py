@@ -74,6 +74,10 @@ class Block:
     def get_factor(self, factor_name: str) -> Factor:
         return next(f for f in self.design if f.name == factor_name)
 
+    """
+    Returns the first index for this variable in a trial sequence representing the given factor and level.
+    (0 based)
+    """
     def first_variable_for_level(self, factor_name: str, level_name: str) -> int:
         all_levels = get_all_level_names(self.design)
         idx = all_levels.index((factor_name, level_name))
