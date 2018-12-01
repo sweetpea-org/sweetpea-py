@@ -6,6 +6,7 @@ from itertools import permutations
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
 from sweetpea.constraints import NoMoreThanKInARow, Derivation
 from sweetpea.derivation_processor import DerivationProcessor
+from sweetpea.blocks import Block
 from sweetpea import fully_cross_block
 
 
@@ -101,3 +102,39 @@ def test_shift_window():
     assert DerivationProcessor.shift_window([[0, 2, 4], [1, 3, 5]], Window(lambda x: x, [1, 2], 3), 6) == [[0, 8, 16], [1, 9, 17]]
     assert DerivationProcessor.shift_window([[1, 1, 1, 1], [2, 2, 2, 2]], Window(lambda x: x, [1, 2], 4), 10) == \
         [[1, 11, 21, 31], [2, 12, 22, 32]]
+
+
+def __get_simple_task_switching_block() -> Block:
+    color  = Factor("color",  ["red", "blue", "green"])
+    motion = Factor("motion", ["up", "down"])
+    task   = Factor("task",   ["color", "motion"])
+
+    # Response Definition
+    def response_left(task, color, motion):
+        return (task == "color"  and color  == "red") or \
+            (task == "motion" and motion == "up")
+
+    def response_right(task, color, motion):
+        return not response_left(task, color, motion)
+
+    response = Factor("response", [
+        DerivedLevel("left",  WithinTrial(response_left,  [task, color, motion])),
+        DerivedLevel("right", WithinTrial(response_right, [task, color, motion]))
+    ])
+
+    response_transition = Factor("response transition", [
+        DerivedLevel("repeat", Transition(op.eq, [response, response])),
+        DerivedLevel("switch", Transition(op.ne, [response, response]))
+    ])
+
+    return fully_cross_block([color, motion, task, response, response_transition],
+                             [color, motion, task],
+                             [])
+
+
+def test_generate_derivations_with_transition_that_depends_on_derived_levels():
+    block = __get_simple_task_switching_block()
+    derivations = DerivationProcessor.generate_derivations(block)
+
+    assert Derivation(108, [[7, 16], [8, 17]]) in derivations
+    assert Derivation(109, [[7, 17], [8, 16]]) in derivations

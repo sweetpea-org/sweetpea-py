@@ -108,3 +108,47 @@ def test_derived_level_get_dependent_cross_product():
         (('integer', '2'), ('numeral', 'I'), ('text', 'two')),
         (('integer', '2'), ('numeral', 'II'), ('text', 'one')),
         (('integer', '2'), ('numeral', 'II'), ('text', 'two'))]
+
+
+def test_derived_level_equality():
+    assert con_level == con_level
+
+    # Sometimes string levels may be compared directly to DerivedLevels
+    assert con_level != "blue"
+
+
+def __get_response_transition() -> Factor:
+    color  = Factor("color",  ["red", "blue", "green"])
+    motion = Factor("motion", ["up", "down"])
+    task   = Factor("task",   ["color", "motion"])
+
+    # Response Definition
+    def response_left(task, color, motion):
+        return (task == "color"  and color  == "red") or \
+            (task == "motion" and motion == "up")
+
+    def response_right(task, color, motion):
+        return not response_left(task, color, motion)
+
+    response = Factor("response", [
+        DerivedLevel("left",  WithinTrial(response_left,  [task, color, motion])),
+        DerivedLevel("right", WithinTrial(response_right, [task, color, motion]))
+    ])
+
+    return Factor("response transition", [
+        DerivedLevel("repeat", Transition(op.eq, [response, response])),
+        DerivedLevel("switch", Transition(op.ne, [response, response]))
+    ])
+
+
+def test_derived_level_get_dependent_cross_product_with_nesting():
+    response_transition = __get_response_transition()
+
+    assert response_transition.levels[0].get_dependent_cross_product() == [
+        (('response', 'left' ), ('response', 'left' )),
+        (('response', 'left' ), ('response', 'right')),
+        (('response', 'right'), ('response', 'left' )),
+        (('response', 'right'), ('response', 'right'))
+    ]
+
+

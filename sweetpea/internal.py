@@ -1,16 +1,7 @@
 from itertools import islice, tee, chain, repeat
 from typing import Any, Tuple, List, Iterator, Iterable
 
-from sweetpea.primitives import Factor, DerivedLevel
-
-"""
-Helper function which grabs names from derived levels;
-    if the level is non-derived the level *is* the name
-"""
-def get_level_name(level: Any) -> Any:
-    if isinstance(level, DerivedLevel):
-        return level.name
-    return level
+from sweetpea.primitives import Factor, DerivedLevel, get_level_name
 
 
 """

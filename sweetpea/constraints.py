@@ -3,11 +3,11 @@ from itertools import product, chain, accumulate, repeat
 from functools import reduce
 
 from sweetpea.base_constraint import Constraint
-from sweetpea.internal import chunk, chunk_list, pairwise, get_level_name, get_all_level_names
+from sweetpea.internal import chunk, chunk_list, pairwise, get_all_level_names
 from sweetpea.blocks import Block
 from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import Iff, And, Or
-from sweetpea.primitives import Factor
+from sweetpea.primitives import Factor, get_level_name
 
 
 """

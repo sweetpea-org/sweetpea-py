@@ -2,6 +2,16 @@ from typing import Any, Type, List, Tuple, Union
 from itertools import product
 
 
+"""
+Helper function which grabs names from derived levels;
+    if the level is non-derived the level *is* the name
+"""
+def get_level_name(level: Any) -> Any:
+    if isinstance(level, DerivedLevel):
+        return level.name
+    return level
+
+
 class __Primitive:
     def require_type(self, label: str, type: Type, value: Any):
         if not isinstance(value, type):
@@ -30,10 +40,10 @@ class DerivedLevel(__Primitive):
         # TODO: Windows should be uniform.
 
     def get_dependent_cross_product(self) -> List[Tuple[Any, ...]]:
-        return list(product(*[[(dependent_factor.name, x) for x in dependent_factor.levels] for dependent_factor in self.window.args]))
+        return list(product(*[[(dependent_factor.name, get_level_name(x)) for x in dependent_factor.levels] for dependent_factor in self.window.args]))
 
     def __eq__(self, other):
-        return self.__dict__ == other.__dict__
+        return type(self) == type(other) and self.__dict__ == other.__dict__
 
     def __repr__(self):
         return str(self.__dict__)
