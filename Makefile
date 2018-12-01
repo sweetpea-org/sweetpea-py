@@ -13,4 +13,4 @@ test: typecheck
 
 acceptance:
 	@echo "Running acceptance tests..."
-	python3 -m pytest -vv -p no:warnings acceptance
+	python3 -m pytest -p no:warnings acceptance

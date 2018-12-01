@@ -1,7 +1,12 @@
 import operator as op
 import pytest
 
-from sweetpea import *
+from itertools import permutations
+
+from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
+from sweetpea.constraints import NoMoreThanKInARow, Derivation
+from sweetpea.derivation_processor import DerivationProcessor
+from sweetpea import fully_cross_block
 
 
 color = Factor("color", ["red", "blue"])
@@ -54,15 +59,17 @@ def test_generate_derivations_within_trial():
     one_two_crossing = [integer, numeral, text]
 
     assert DerivationProcessor.generate_derivations(
-        FullyCrossBlock(one_two_design, one_two_crossing, [])) == [
+        fully_cross_block(one_two_design, one_two_crossing, [])) == [
         Derivation(6, [[0, 2, 5], [0, 3, 4], [0, 3, 5], [1, 2, 4], [1, 2, 5], [1, 3, 4]]),
         Derivation(7, [[0, 2, 4], [1, 3, 5]])]
 
 
-def test_generate_derivations_transition():
-    design = [color, text, color_repeats_factor]
-    crossing = [color, text]
-    block = fully_cross_block(design, crossing, [])
+@pytest.mark.parametrize('design',
+    [[color, text, color_repeats_factor],
+     [color, color_repeats_factor, text],
+     [color_repeats_factor, color, text]])
+def test_generate_derivations_transition(design):
+    block = fully_cross_block(design, [color, text], [])
 
     assert DerivationProcessor.generate_derivations(block) == [
         Derivation(16, [[0, 4], [1, 5]]),
@@ -70,7 +77,12 @@ def test_generate_derivations_transition():
     ]
 
 
-def test_generate_derivations_with_multiple_transitions():
+@pytest.mark.parametrize('design',
+    [[color, text, color_repeats_factor, text_repeats_factor],
+     [color, color_repeats_factor, text_repeats_factor, text],
+     [color_repeats_factor, color, text_repeats_factor, text],
+     [color_repeats_factor, text_repeats_factor, color, text]])
+def test_generate_derivations_with_multiple_transitions(design):
     block = fully_cross_block([color, text, color_repeats_factor, text_repeats_factor],
                               [color, text],
                               [])

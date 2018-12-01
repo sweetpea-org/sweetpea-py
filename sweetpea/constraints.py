@@ -88,7 +88,7 @@ class FullyCross(Constraint):
         fresh = backend_request.fresh
 
         num_states = block.trials_per_sample() # same as number of trials in fully crossing
-        variables_per_sample = block.variables_per_sample()
+        simple_design = list(filter(lambda f: not f.is_derived(), block.design))
 
         # Step 1:
         num_state_vars = num_states * num_states
@@ -99,17 +99,17 @@ class FullyCross(Constraint):
         # Step 2:
         states = list(chunk(stateVars, num_states))
         transposed = cast(List[List[int]], list(map(list, zip(*states))))
-        chunked_trials = list(chunk(list(range(1, variables_per_sample + 1)), block.variables_per_trial()))
+        chunked_trials = list(chunk(list(range(1, block.grid_variables() + 1)), block.variables_per_trial()))
 
         # 1. group chunked_trials into factor shaped subchunks
         # ie, [[1, 2], [3, 4], [5, 6]], [[7, 8], ...
-        delimiters = list(accumulate([0] + list(map(lambda i: len(block.design[i].levels), range(len(block.design))))))
+        delimiters = list(accumulate([0] + list(map(lambda i: len(simple_design[i].levels), range(len(simple_design))))))
         slices = list(pairwise(delimiters))
         subchunked_trials = [[list(l[s[0]:s[1]]) for s in slices] for l in chunked_trials]
 
         # 2. grab the subchunks which correspond to levels in the crossing
         # ie, [[1, 2], [3, 4]], [[7, 8], [9, 10]], [[...
-        factor_dict = {factor.name: factor_index for factor_index, factor in enumerate(block.design)}
+        factor_dict = {factor.name: factor_index for factor_index, factor in enumerate(simple_design)}
         keep_factor_indices = [factor_dict[factor.name] for factor in block.crossing]
         subchunk_levels = [[chunked_trial[idx] for idx in keep_factor_indices] for chunked_trial in subchunked_trials]
 
@@ -279,11 +279,7 @@ class NoMoreThanKInARow(Constraint):
             raise("Unrecognized levels specification in NoMoreThanKInARow constraint: " + self.levels)
 
     def __generate_requests(self, level:Tuple[str, str], block: Block) -> List[LowLevelRequest]:
-        # Generate a list of (factor name, level name) tuples from the block
-        level_tuples = get_all_level_names(block.design)
-
-        # Locate the specified level in the list
-        first_variable = level_tuples.index(level) + 1
+        first_variable = block.first_variable_for_level(level[0], level[1]) + 1
 
         # Build the variable list
         if first_variable <= block.variables_per_trial():

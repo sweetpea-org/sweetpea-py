@@ -79,11 +79,9 @@ class Block:
     (0 based)
     """
     def first_variable_for_level(self, factor_name: str, level_name: str) -> int:
-        all_levels = get_all_level_names(self.design)
-        idx = all_levels.index((factor_name, level_name))
-        if idx < self.variables_per_trial():
-            return idx
-        else:
+        f = self.get_factor(factor_name)
+
+        if f.has_complex_window():
             offset = 0
             complex_factors = filter(lambda f: f.has_complex_window(), self.design)
             for f in complex_factors:
@@ -94,6 +92,12 @@ class Block:
                     offset += self.variables_for_window(f.levels[0].window)
 
             return self.grid_variables() + offset
+
+        else:
+            simple_factors = list(filter(lambda f: not f.has_complex_window(), self.design))
+            simple_levels = get_all_level_names(simple_factors)
+            return simple_levels.index((factor_name, level_name))
+
 
     """
     Given a variable number from the SAT formula, this method will return
@@ -130,8 +134,9 @@ class FullyCrossBlock(Block):
         self.__validate()
 
     def __validate(self):
-        # TODO: validation
-        return
+        simple_factors = list(filter(lambda f: not f.is_derived(), self.crossing))
+        if len(simple_factors) != len(self.crossing):
+            raise ValueError('Factors with DerivedLevels are not allowed in the crossing!')
 
     def trials_per_sample(self):
         return reduce(lambda sum, factor: sum * len(factor.levels), self.crossing, 1)

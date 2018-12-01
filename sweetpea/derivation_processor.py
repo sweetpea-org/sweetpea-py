@@ -39,19 +39,20 @@ class DerivationProcessor:
     """
     @staticmethod
     def generate_derivations(block: Block) -> List[Derivation]:
-        design = block.design
         derived_factors = list(filter(lambda f: f.is_derived(), block.design))
-        all_levels = get_all_level_names(design)
         accum = []
+
         for fact in derived_factors:
             for level in fact.levels:
                 level_index = block.first_variable_for_level(fact.name, level.name)
                 x_product = level.get_dependent_cross_product()
+
                 # filter to valid tuples, and get their idxs
                 valid_tuples = [tup for tup in x_product if level.window.fn(*map(lambda t: t[1], tup))]
-                valid_idxs = [[all_levels.index(level) for level in tup] for tup in valid_tuples]
+                valid_idxs = [[block.first_variable_for_level(pair[0], pair[1]) for pair in tup_list] for tup_list in valid_tuples]
                 shifted_idxs = DerivationProcessor.shift_window(valid_idxs, level.window, block.variables_per_trial())
                 accum.append(Derivation(level_index, shifted_idxs))
+
         return accum
 
     """

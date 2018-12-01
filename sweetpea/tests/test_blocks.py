@@ -1,6 +1,8 @@
 import operator as op
 import pytest
 
+from itertools import permutations
+
 from sweetpea import fully_cross_block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.blocks import FullyCrossBlock
@@ -24,19 +26,33 @@ text_repeats_factor = Factor("repeated text?", [
 ])
 
 
-def test_fully_cross_block_first_variable_for_factor():
-    block = fully_cross_block([color, text, color_repeats_factor, text_repeats_factor],
-                              [color, text],
-                              [])
+def test_fully_cross_block_validate():
+    # Should not allow DerivedLevels in the crossing.
+    # I think it makes sense to prohibit this, but I could be wrong. At the very least,
+    # this will leave a reminder that, if it does make sense, there is more work in the
+    # codebase to allow it correctly. The FullyCross constraint won't handle it right now.
+    with pytest.raises(ValueError):
+        FullyCrossBlock([color, text, con_factor],
+                        [color, text, con_factor],
+                        [])
 
-    assert block.first_variable_for_level("color", "red") == 0
-    assert block.first_variable_for_level("color", "blue") == 1
-    assert block.first_variable_for_level("text", "red") == 2
-    assert block.first_variable_for_level("text", "blue") == 3
-    assert block.first_variable_for_level("repeated color?", "yes") == 16
-    assert block.first_variable_for_level("repeated color?", "no") == 17
-    assert block.first_variable_for_level("repeated text?", "yes") == 22
-    assert block.first_variable_for_level("repeated text?", "no") == 23
+
+@pytest.mark.parametrize('design,expected',
+    [([color, text, color_repeats_factor, text_repeats_factor], [0, 2, 16, 22]),
+     ([color, text, text_repeats_factor, color_repeats_factor], [0, 2, 22, 16]),
+     ([color_repeats_factor, text, color, text_repeats_factor], [2, 0, 16, 22]),
+     ([text_repeats_factor, text, color, color_repeats_factor], [2, 0, 22, 16])])
+def test_fully_cross_block_first_variable_for_factor(design, expected):
+    block = fully_cross_block(design, [color, text], [])
+
+    assert block.first_variable_for_level("color", "red") == expected[0]
+    assert block.first_variable_for_level("color", "blue") == expected[0] + 1
+    assert block.first_variable_for_level("text", "red") == expected[1]
+    assert block.first_variable_for_level("text", "blue") == expected[1] + 1
+    assert block.first_variable_for_level("repeated color?", "yes") == expected[2]
+    assert block.first_variable_for_level("repeated color?", "no") == expected[2] + 1
+    assert block.first_variable_for_level("repeated text?", "yes") == expected[3]
+    assert block.first_variable_for_level("repeated text?", "no") == expected[3] + 1
 
 
 def test_fully_cross_block_decode_variable():
@@ -63,6 +79,32 @@ def test_fully_cross_block_decode_variable():
     assert block.decode_variable(24) == ("repeated text?", "no")
     assert block.decode_variable(27) == ("repeated text?", "yes")
     assert block.decode_variable(28) == ("repeated text?", "no")
+
+
+def test_fully_cross_block_decode_variable_with_transition_first():
+    block = fully_cross_block([text_repeats_factor, text, color, color_repeats_factor],
+                              [color, text],
+                              [])
+
+    assert block.decode_variable(1) == ("text", "red")
+    assert block.decode_variable(2) == ("text", "blue")
+    assert block.decode_variable(5) == ("text", "red")
+    assert block.decode_variable(14) == ("text", "blue")
+
+    assert block.decode_variable(3) == ("color", "red")
+    assert block.decode_variable(4) == ("color", "blue")
+    assert block.decode_variable(15) == ("color", "red")
+    assert block.decode_variable(12) == ("color", "blue")
+
+    assert block.decode_variable(17) == ("repeated text?", "yes")
+    assert block.decode_variable(18) == ("repeated text?", "no")
+    assert block.decode_variable(19) == ("repeated text?", "yes")
+    assert block.decode_variable(22) == ("repeated text?", "no")
+
+    assert block.decode_variable(23) == ("repeated color?", "yes")
+    assert block.decode_variable(24) == ("repeated color?", "no")
+    assert block.decode_variable(27) == ("repeated color?", "yes")
+    assert block.decode_variable(28) == ("repeated color?", "no")
 
 
 def test_fully_cross_block_trials_per_sample():

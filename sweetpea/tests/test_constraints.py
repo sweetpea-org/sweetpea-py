@@ -1,6 +1,8 @@
 import operator as op
 import pytest
 
+from itertools import permutations
+
 from sweetpea import fully_cross_block
 from sweetpea.blocks import Block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
@@ -62,10 +64,9 @@ def test_consistency():
         LowLevelRequest("EQ", 1, [9, 10, 11]), LowLevelRequest("EQ", 1, [12])]
 
 
-def test_consistency_with_transition():
-    block = fully_cross_block([color, text, color_repeats_factor],
-                              [color, text],
-                              [])
+@pytest.mark.parametrize('design', permutations([color, text, color_repeats_factor]))
+def test_consistency_with_transition(design):
+    block = fully_cross_block(design, [color, text], [])
 
     backend_request = BackendRequest(0)
     Consistency.apply(block, backend_request)
@@ -76,16 +77,43 @@ def test_consistency_with_transition():
         list(map(lambda x: LowLevelRequest("EQ", 1, [x, x+1]), range(1, 22, 2)))
 
 
-def test_consistency_with_multiple_transitions():
-    block = fully_cross_block([color, text, color_repeats_factor, text_repeats_factor],
-                              [color, text],
-                              [])
+@pytest.mark.parametrize('design', permutations([color, text, color_repeats_factor, text_repeats_factor]))
+def test_consistency_with_multiple_transitions(design):
+    block = fully_cross_block(design, [color, text], [])
 
     backend_request = BackendRequest(0)
     Consistency.apply(block, backend_request)
 
     assert backend_request.ll_requests == \
         list(map(lambda x: LowLevelRequest("EQ", 1, [x, x+1]), range(1, 28, 2)))
+
+
+def test_consistency_with_transition_first_and_uneven_level_lengths():
+    color3 = Factor("color3", ["red", "blue", "green"])
+    color3_repeats_factor = Factor("color3 repeats?", [
+        DerivedLevel("yes", Transition(op.eq, [color3, color3])),
+        DerivedLevel("no",  Transition(op.ne, [color3, color3]))
+    ])
+
+    block = fully_cross_block([color3_repeats_factor, color3, text], [color3, text], [])
+
+    backend_request = BackendRequest(0)
+    Consistency.apply(block, backend_request)
+
+    assert backend_request.ll_requests == [
+        LowLevelRequest("EQ", 1, [1,  2,  3 ]), LowLevelRequest("EQ", 1, [4,  5 ]),
+        LowLevelRequest("EQ", 1, [6,  7,  8 ]), LowLevelRequest("EQ", 1, [9,  10]),
+        LowLevelRequest("EQ", 1, [11, 12, 13]), LowLevelRequest("EQ", 1, [14, 15]),
+        LowLevelRequest("EQ", 1, [16, 17, 18]), LowLevelRequest("EQ", 1, [19, 20]),
+        LowLevelRequest("EQ", 1, [21, 22, 23]), LowLevelRequest("EQ", 1, [24, 25]),
+        LowLevelRequest("EQ", 1, [26, 27, 28]), LowLevelRequest("EQ", 1, [29, 30]),
+
+        LowLevelRequest("EQ", 1, [31, 32]),
+        LowLevelRequest("EQ", 1, [33, 34]),
+        LowLevelRequest("EQ", 1, [35, 36]),
+        LowLevelRequest("EQ", 1, [37, 38]),
+        LowLevelRequest("EQ", 1, [39, 40])
+    ]
 
 
 def test_fully_cross_simple():
@@ -134,8 +162,11 @@ def test_fully_cross_with_constraint():
     ]
 
 
-def test_fully_cross_with_transition_in_design():
-    block = fully_cross_block([color, text, color_repeats_factor],
+@pytest.mark.parametrize('design',
+    [[color, text, color_repeats_factor],
+     [color_repeats_factor, color, text]])
+def test_fully_cross_with_transition_in_design(design):
+    block = fully_cross_block(design,
                               [color, text],
                               [])
 
@@ -156,6 +187,32 @@ def test_fully_cross_with_transition_in_design():
         LowLevelRequest("EQ", 1, [24, 28, 32, 36]),
         LowLevelRequest("EQ", 1, [25, 29, 33, 37]),
         LowLevelRequest("EQ", 1, [26, 30, 34, 38])
+    ]
+
+
+def test_fully_cross_with_uncrossed_simple_factors():
+    other = Factor('other', ['l1', 'l2'])
+    block = fully_cross_block([color, text, other],
+                              [color, text],
+                              [])
+
+    backend_request = BackendRequest(25)
+    FullyCross.apply(block, backend_request)
+
+    (expected_cnf, _) = to_cnf_tseitin(And([
+        Iff(25, And([1,  3 ])), Iff(26, And([1,  4 ])), Iff(27, And([2,  3 ])), Iff(28, And([2,  4 ])),
+        Iff(29, And([7,  9 ])), Iff(30, And([7,  10])), Iff(31, And([8,  9 ])), Iff(32, And([8,  10])),
+        Iff(33, And([13, 15])), Iff(34, And([13, 16])), Iff(35, And([14, 15])), Iff(36, And([14, 16])),
+        Iff(37, And([19, 21])), Iff(38, And([19, 22])), Iff(39, And([20, 21])), Iff(40, And([20, 22]))
+    ]), 41)
+
+    assert backend_request.fresh == 74
+    assert backend_request.cnfs == [expected_cnf]
+    assert backend_request.ll_requests == [
+        LowLevelRequest("EQ", 1, [25, 29, 33, 37]),
+        LowLevelRequest("EQ", 1, [26, 30, 34, 38]),
+        LowLevelRequest("EQ", 1, [27, 31, 35, 39]),
+        LowLevelRequest("EQ", 1, [28, 32, 36, 40])
     ]
 
 
@@ -312,10 +369,9 @@ def test_nomorethankinarow():
     ]
 
 
-def test_nomorethankinarow_with_transition():
-    block = fully_cross_block([color, text, color_repeats_factor],
-                              [color, text],
-                              [])
+@pytest.mark.parametrize('design', permutations([color, text, color_repeats_factor]))
+def test_nomorethankinarow_with_transition(design):
+    block = fully_cross_block(design, [color, text], [])
 
     backend_request = __run_nomorethankinarow(NoMoreThanKInARow(1, ("color repeats?", "yes")), block)
     assert backend_request.ll_requests == [

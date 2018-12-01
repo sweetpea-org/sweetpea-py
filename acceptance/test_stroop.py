@@ -1,6 +1,8 @@
 import operator as op
 import pytest
 
+from itertools import permutations
+
 from sweetpea import Factor, DerivedLevel, WithinTrial, NoMoreThanKInARow, Transition
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform
 
@@ -28,8 +30,8 @@ repeated_text_factor = Factor("repeated text?", [
 ])
 
 
-def test_correct_solution_count():
-    design = [color, text]
+@pytest.mark.parametrize('design', permutations([color, text]))
+def test_correct_solution_count(design):
     crossing = [color, text]
     constraints = []
 
@@ -39,8 +41,8 @@ def test_correct_solution_count():
     assert len(experiments) == 24
 
 
-def test_correct_solution_count_with_congruence_factor_but_unconstrained():
-    design = [color, text, con_factor]
+@pytest.mark.parametrize('design', permutations([color, text, con_factor]))
+def test_correct_solution_count_with_congruence_factor_but_unconstrained(design):
     crossing = [color, text]
     constraints = []
 
@@ -50,8 +52,8 @@ def test_correct_solution_count_with_congruence_factor_but_unconstrained():
     assert len(experiments) == 24
 
 
-def test_correct_solution_count_with_congruence_factor_and_constrained():
-    design = [color, text, con_factor]
+@pytest.mark.parametrize('design', permutations([color, text, con_factor]))
+def test_correct_solution_count_with_congruence_factor_and_constrained(design):
     crossing = [color, text]
     constraints = [NoMoreThanKInARow(1, ("congruent?", "con"))]
 
@@ -61,8 +63,8 @@ def test_correct_solution_count_with_congruence_factor_and_constrained():
     assert len(experiments) == 12
 
 
-def test_correct_solution_count_with_repeated_color_factor_but_unconstrained():
-    design = [color, text, repeated_color_factor]
+@pytest.mark.parametrize('design', permutations([color, text, repeated_color_factor]))
+def test_correct_solution_count_with_repeated_color_factor_but_unconstrained(design):
     crossing = [color, text]
     constraints = []
 
@@ -72,8 +74,8 @@ def test_correct_solution_count_with_repeated_color_factor_but_unconstrained():
     assert len(experiments) == 24
 
 
-def test_correct_solution_count_with_repeated_color_factor_and_constrained():
-    design = [color, text, repeated_color_factor]
+@pytest.mark.parametrize('design', permutations([color, text, repeated_color_factor]))
+def test_correct_solution_count_with_repeated_color_factor_and_constrained(design):
     crossing = [color, text]
     constraints = [NoMoreThanKInARow(1, ("repeated color?", "yes"))]
 
@@ -85,8 +87,8 @@ def test_correct_solution_count_with_repeated_color_factor_and_constrained():
     assert len(experiments) == 24
 
 
-def test_correct_solution_count_with_repeated_color_and_text_factors_but_unconstrained():
-    design = [color, text, repeated_color_factor, repeated_text_factor]
+@pytest.mark.parametrize('design', permutations([color, text, repeated_color_factor, repeated_text_factor]))
+def test_correct_solution_count_with_repeated_color_and_text_factors_but_unconstrained(design):
     crossing = [color, text]
     constraints = []
 
@@ -96,8 +98,8 @@ def test_correct_solution_count_with_repeated_color_and_text_factors_but_unconst
     assert len(experiments) == 24
 
 
-def test_correct_solution_count_with_repeated_color_and_text_factors_and_constrained():
-    design = [color, text, repeated_color_factor, repeated_text_factor]
+@pytest.mark.parametrize('design', permutations([color, text, repeated_color_factor, repeated_text_factor]))
+def test_correct_solution_count_with_repeated_color_and_text_factors_and_constrained(design):
     crossing = [color, text]
     constraints = [
         NoMoreThanKInARow(1, ("repeated color?", "yes")),
@@ -110,8 +112,8 @@ def test_correct_solution_count_with_repeated_color_and_text_factors_and_constra
     assert len(experiments) == 24
 
 
-def test_correct_solution_count_with_repeated_color_factor_and_no_repetition_allowed():
-    design = [color, text, repeated_color_factor]
+@pytest.mark.parametrize('design', permutations([color, text, repeated_color_factor]))
+def test_correct_solution_count_with_repeated_color_factor_and_no_repetition_allowed(design):
     crossing = [color, text]
     constraints = [NoMoreThanKInARow(0, ("repeated color?", "yes"))]
 
