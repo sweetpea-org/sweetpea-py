@@ -316,6 +316,21 @@ def test_derivation_with_multiple_transitions():
     assert backend_request.cnfs == [expected_cnf]
 
 
+def test_nomorethankinarow_validate():
+    with pytest.raises(ValueError):
+        NoMoreThanKInARow("yo", color)
+
+    # Levels must either be a factor/level tuple, or a Factor.
+    NoMoreThanKInARow(1, ("factor", "level"))
+    NoMoreThanKInARow(1, color)
+
+    with pytest.raises(ValueError):
+        NoMoreThanKInARow(1, 42)
+
+    with pytest.raises(ValueError):
+        NoMoreThanKInARow(1, ("factor", "level", "oops"))
+
+
 def __run_nomorethankinarow(c: NoMoreThanKInARow, block: Block = block) -> BackendRequest:
     backend_request = BackendRequest(0)
     c.apply(block, backend_request)

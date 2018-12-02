@@ -260,7 +260,18 @@ class NoMoreThanKInARow(Constraint):
     def __init__(self, k, levels):
         self.k = k
         self.levels = levels
-        # TODO: validation
+        self.__validate()
+
+    def __validate(self) -> None:
+        if not isinstance(self.k, int):
+            raise ValueError("NoMoreThanKInARow.k must be an integer.")
+
+        if not (isinstance(self.levels, Factor) or \
+                (isinstance(self.levels, tuple) and \
+                 len(self.levels) == 2 and \
+                 isinstance(self.levels[0], str) and \
+                 isinstance(self.levels[1], str))):
+            raise ValueError("NoMoreThanKInARow.levels must be either a Factor or a Tuple[str, str].")
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
         # Apply the constraint to each level in the factor.
