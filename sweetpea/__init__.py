@@ -248,12 +248,15 @@ def __generate_encoding_diagram(blk: Block) -> str:
 
     # Variables
     for t in range(num_trials):
-        args = [str(t + 1)] + list(map(str, range(t * design_size + 1, t * design_size + design_size + 1)))
-
-        for f in filter(lambda f: f.has_complex_window(), blk.design):
+        args = [str(t + 1)]
+        for f in blk.design:
             if f.applies_to_trial(t + 1):
-                variables = [blk.first_variable_for_level(f.name, l.name) - 1 for l in f.levels]
-                variables = list(map(lambda n: n + len(variables) * t, variables))
+                variables = [blk.first_variable_for_level(f.name, get_level_name(l)) for l in f.levels]
+                if f.has_complex_window():
+                    variables = list(map(lambda n: n - 1 + len(variables) * t, variables))
+                else:
+                    variables = list(map(lambda n: n + 1 + design_size * t, variables))
+
                 args += list(map(str, variables))
             else:
                 args += list(repeat('', f.levels[0].window.width))

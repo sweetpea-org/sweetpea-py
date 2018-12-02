@@ -145,3 +145,22 @@ def test_generate_encoding_diagram_with_constraint_and_multiple_transitions():
 |       3 | 13   14  | 15   16  |  17    18  |   27      28   |   33     34   |\n\
 |       4 | 19   20  | 21   22  |  23    24  |   29      30   |   35     36   |\n\
 -------------------------------------------------------------------------------\n"
+
+
+def test_generate_encoding_diagram_with_constraint_and_multiple_transitions_in_different_order():
+    block = fully_cross_block([text_repeats_factor, color, color_repeats_factor, text, con_factor],
+                              [color, text],
+                              [])
+
+    assert __generate_encoding_diagram(block) == "\
+-------------------------------------------------------------------------------\n\
+|   Trial | text repeats? |  color   | color repeats? |   text   | congruent? |\n\
+|       # |   yes    no   | red blue |   yes     no   | red blue |  con  inc  |\n\
+-------------------------------------------------------------------------------\n\
+|       1 |               |  1   2   |                |  3   4   |   5    6   |\n\
+|       2 |   25     26   |  7   8   |   31      32   |  9   10  |  11    12  |\n\
+|       3 |   27     28   | 13   14  |   33      34   | 15   16  |  17    18  |\n\
+|       4 |   29     30   | 19   20  |   35      36   | 21   22  |  23    24  |\n\
+-------------------------------------------------------------------------------\n"
+
+
