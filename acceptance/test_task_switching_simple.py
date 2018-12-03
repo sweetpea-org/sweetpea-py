@@ -53,8 +53,15 @@ response_transition = Factor("response transition", [
 ])
 
 
-def test_correct_solution_count():
-    design   = [color, motion, task, response, congruency, task_transition, response_transition]
+def __shuffled_design_sample():
+    perms = list(permutations([color, motion, task, response, congruency, task_transition, response_transition]))
+    shuffle(perms)
+    return perms[:6]
+
+
+# TODO: For some reason, some orderings are UNSAT
+@pytest.mark.parametrize('design', __shuffled_design_sample())
+def test_that_design_is_correctly_constrained(design):
     crossing = [color, motion, task]
 
     k = 2

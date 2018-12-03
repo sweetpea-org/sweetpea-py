@@ -88,7 +88,7 @@ class FullyCross(Constraint):
         fresh = backend_request.fresh
 
         num_states = block.trials_per_sample() # same as number of trials in fully crossing
-        simple_design = list(filter(lambda f: not f.is_derived(), block.design))
+        simple_design = list(filter(lambda f: not f.has_complex_window(), block.design))
 
         # Step 1:
         num_state_vars = num_states * num_states
