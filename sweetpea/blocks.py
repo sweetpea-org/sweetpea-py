@@ -61,13 +61,18 @@ class Block:
     Alternatively stated, this returns the number of variables in the formula
     that constitute the independent support.
     """
-    @abstractmethod
     def variables_per_sample(self):
-        pass
+        return reduce(lambda sum, f: sum + self.variables_for_factor(f), self.design, 0)
 
-    @abstractmethod
-    def variables_for_window(self, window: Union[Transition, Window]) -> int:
-        pass
+    """
+    Indicates the number of variables needed to encode this factor.
+    """
+    def variables_for_factor(self, factor: Factor) -> int:
+        variable_count = self.trials_per_sample() * len(factor.levels)
+        if factor.has_complex_window():
+            variable_count -= len(factor.levels) * (factor.levels[0].window.width - 1)
+
+        return variable_count
 
     """
     Retrieve a factor by name.
@@ -90,7 +95,7 @@ class Block:
                     offset += f.levels.index(f.get_level(level_name))
                     break
                 else:
-                    offset += self.variables_for_window(f.levels[0].window)
+                    offset += self.variables_for_factor(f)
 
             return self.grid_variables() + offset
 
@@ -117,7 +122,7 @@ class Block:
             complex_factors = list(filter(lambda f: f.has_complex_window(), self.design))
             for f in complex_factors:
                 start = self.first_variable_for_level(f.name, f.levels[0].name)
-                end = start + self.variables_for_window(f.levels[0].window)
+                end = start + self.variables_for_factor(f)
                 if variable in range(start, end):
                     tuples = get_all_level_names([f])
                     return tuples[(variable - start) % f.levels[0].window.width]
@@ -150,16 +155,6 @@ class FullyCrossBlock(Block):
 
     def grid_variables(self):
         return self.trials_per_sample() * self.variables_per_trial()
-
-    def variables_per_sample(self):
-        complex_factors = list(filter(lambda f: f.has_complex_window(), self.design))
-        windows = list(map(lambda f: f.levels[0].window, complex_factors))
-        window_count = reduce(lambda total, w: total + self.variables_for_window(w), windows, 0)
-
-        return self.grid_variables() + window_count
-
-    def variables_for_window(self, window: Union[Transition, Window]) -> int:
-        return self.trials_per_sample() * 2 - window.width
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__

@@ -4,7 +4,7 @@ import pytest
 from itertools import permutations
 
 from sweetpea import fully_cross_block
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
+from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
 from sweetpea.blocks import FullyCrossBlock
 
 color = Factor("color", ["red", "blue"])
@@ -23,6 +23,15 @@ color_repeats_factor = Factor("repeated color?", [
 text_repeats_factor = Factor("repeated text?", [
     DerivedLevel("yes", Transition(lambda texts: texts[0] == texts[1], [text])),
     DerivedLevel("no",  Transition(lambda texts: texts[0] != texts[1], [text]))
+])
+
+color3 = Factor("color3", ["red", "blue", "green"])
+
+yes_fn = lambda colors: colors[0] == colors[1] == colors[2]
+no_fn = lambda colors: not yes_fn(colors)
+color3_repeats_factor = Factor("color3 repeats?", [
+    DerivedLevel("yes", Window(yes_fn, [color3], 3, 1)),
+    DerivedLevel("no",  Window(no_fn, [color3], 3, 1))
 ])
 
 
@@ -53,6 +62,13 @@ def test_fully_cross_block_first_variable_for_factor(design, expected):
     assert block.first_variable_for_level("repeated color?", "no") == expected[2] + 1
     assert block.first_variable_for_level("repeated text?", "yes") == expected[3]
     assert block.first_variable_for_level("repeated text?", "no") == expected[3] + 1
+
+
+def test_fully_cross_block_first_variable_for_factor_with_color3():
+    block = fully_cross_block([color3_repeats_factor, color3, text], [color3, text], [])
+
+    assert block.first_variable_for_level("color3 repeats?", "yes") == 30
+    assert block.first_variable_for_level("color3 repeats?", "no") == 31
 
 
 def test_fully_cross_block_decode_variable():
@@ -154,10 +170,25 @@ def test_fully_cross_block_variables_per_sample():
                            []).variables_per_sample() == 28
 
 
-def test_fully_cross_block_variables_for_window():
+def test_fully_cross_block_variables_for_factor():
+    assert FullyCrossBlock([color, text], [color, text], []).variables_for_factor(color) == 8
+    assert FullyCrossBlock([color, text], [color, text], []).variables_for_factor(text) == 8
+
     assert FullyCrossBlock([color, text, color_repeats_factor],
                            [color, text],
-                           []).variables_for_window(color_repeats_factor.levels[0].window) == 6
+                           []).variables_for_factor(color_repeats_factor) == 6
     assert FullyCrossBlock([color, text, color_repeats_factor],
                            [color, text],
-                           []).variables_for_window(color_repeats_factor.levels[0].window) == 6
+                           []).variables_for_factor(color_repeats_factor) == 6
+
+    assert FullyCrossBlock([color3_repeats_factor, color3, text],
+                           [color3, text],
+                           []).variables_for_factor(color3) == 18
+
+    assert FullyCrossBlock([color3_repeats_factor, color3, text],
+                           [color3, text],
+                           []).variables_for_factor(text) == 12
+
+    assert FullyCrossBlock([color3_repeats_factor, color3, text],
+                           [color3, text],
+                           []).variables_for_factor(color3_repeats_factor) == 8

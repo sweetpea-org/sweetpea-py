@@ -72,7 +72,7 @@ def __decode(block: Block, solution: List[int]) -> dict:
     for f in complex_factors:
         # Get variables for this factor
         start = block.first_variable_for_level(f.name, f.levels[0].name) + 1
-        end = start + block.variables_for_window(f.levels[0].window)
+        end = start + block.variables_for_factor(f)
         variables = list(filter(lambda n: n in range(start, end), complex_variables))
 
         # Get the level names for the variables in the solution.
@@ -251,15 +251,15 @@ def __generate_encoding_diagram(blk: Block) -> str:
         args = [str(t + 1)]
         for f in blk.design:
             if f.applies_to_trial(t + 1):
-                variables = [blk.first_variable_for_level(f.name, get_level_name(l)) for l in f.levels]
+                variables = [blk.first_variable_for_level(f.name, get_level_name(l)) + 1 for l in f.levels]
                 if f.has_complex_window():
-                    variables = list(map(lambda n: n - 1 + len(variables) * t, variables))
+                    variables = list(map(lambda n: n + len(variables) * (t - f.levels[0].window.width + 1), variables))
                 else:
-                    variables = list(map(lambda n: n + 1 + design_size * t, variables))
+                    variables = list(map(lambda n: n + design_size * t, variables))
 
                 args += list(map(str, variables))
             else:
-                args += list(repeat('', f.levels[0].window.width))
+                args += list(repeat('', len(f.levels)))
 
         diagram_str += row_format_str.format(*args) + '\n'
 

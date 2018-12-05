@@ -14,6 +14,15 @@ color_repeats_level   = DerivedLevel("yes", Transition(op.eq, [color]))
 color_no_repeat_level = DerivedLevel("no", Transition(op.ne, [color]))
 color_repeats_factor  = Factor("color repeats?", [color_repeats_level, color_no_repeat_level])
 
+color3 = Factor("color3", ["red", "blue", "green"])
+
+yes_fn = lambda colors: colors[0] == colors[1] == colors[2]
+no_fn = lambda colors: not yes_fn(colors)
+color3_repeats_factor = Factor("color3 repeats?", [
+    DerivedLevel("yes", Window(yes_fn, [color3], 3, 1)),
+    DerivedLevel("no",  Window(no_fn, [color3], 3, 1))
+])
+
 
 def test_factor_validation():
     Factor("factor name", ["level 1", "level 2"])
@@ -76,6 +85,8 @@ def test_factor_applies_to_trial():
     assert f.applies_to_trial(2) == True
     assert f.applies_to_trial(3) == False
     assert f.applies_to_trial(4) == True
+
+    assert color3.applies_to_trial(1) == True
 
 
 def test_derived_level_validation():

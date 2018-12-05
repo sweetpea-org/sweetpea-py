@@ -2,7 +2,7 @@ import operator as op
 import pytest
 
 from sweetpea import fully_cross_block, __decode, __generate_encoding_diagram
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
+from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
 from sweetpea.constraints import NoMoreThanKInARow
 from sweetpea.logic import to_cnf_tseitin
 
@@ -164,3 +164,27 @@ def test_generate_encoding_diagram_with_constraint_and_multiple_transitions_in_d
 -------------------------------------------------------------------------------\n"
 
 
+def test_generate_encoding_diagram_with_windows():
+    color3 = Factor("color3", ["red", "blue", "green"])
+
+    yes_fn = lambda colors: colors[0] == colors[1] == colors[2]
+    no_fn = lambda colors: not yes_fn(colors)
+    color3_repeats_factor = Factor("color3 repeats?", [
+        DerivedLevel("yes", Window(yes_fn, [color3], 3, 1)),
+        DerivedLevel("no",  Window(no_fn, [color3], 3, 1))
+    ])
+
+    block = fully_cross_block([color3_repeats_factor, color3, text], [color3, text], [])
+
+    assert __generate_encoding_diagram(block) == "\
+---------------------------------------------------------\n\
+|   Trial | color3 repeats? |     color3     |   text   |\n\
+|       # |   yes      no   | red blue green | red blue |\n\
+---------------------------------------------------------\n\
+|       1 |                 |  1   2     3   |  4   5   |\n\
+|       2 |                 |  6   7     8   |  9   10  |\n\
+|       3 |    31      32   | 11   12   13   | 14   15  |\n\
+|       4 |    33      34   | 16   17   18   | 19   20  |\n\
+|       5 |    35      36   | 21   22   23   | 24   25  |\n\
+|       6 |    37      38   | 26   27   28   | 29   30  |\n\
+---------------------------------------------------------\n"

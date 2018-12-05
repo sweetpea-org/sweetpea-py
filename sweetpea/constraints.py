@@ -47,12 +47,11 @@ class Consistency(Constraint):
                 next_var += number_of_levels
 
         for f in filter(lambda f: f.has_complex_window(), block.design):
-            window = f.levels[0].window
-            variables_for_window = block.variables_for_window(window)
-            var_list = list(map(lambda n: n + next_var, range(variables_for_window)))
-            chunks = list(chunk_list(var_list, window.width))
+            variables_for_factor = block.variables_for_factor(f)
+            var_list = list(map(lambda n: n + next_var, range(variables_for_factor)))
+            chunks = list(chunk_list(var_list, len(f.levels)))
             backend_request.ll_requests += list(map(lambda v: LowLevelRequest("EQ", 1, v), chunks))
-            next_var += variables_for_window
+            next_var += variables_for_factor
 
 
 
@@ -312,7 +311,7 @@ class NoMoreThanKInARow(Constraint):
 
     def __build_complex_variable_list(self, block: Block, level: Tuple[str, str]) -> List[int]:
         factor = block.get_factor(level[0])
-        n = int(block.variables_for_window(factor.levels[0].window) / 2)
+        n = int(block.variables_for_factor(factor) / 2)
         start = block.first_variable_for_level(level[0], level[1]) + 1
         return reduce(lambda l, v: l + [start + (v * 2)], range(n), [])
 

@@ -88,12 +88,14 @@ def test_consistency_with_multiple_transitions(design):
         list(map(lambda x: LowLevelRequest("EQ", 1, [x, x+1]), range(1, 28, 2)))
 
 
-@pytest.mark.skip(reason='Need to revisit this once the general window case is implemented')
 def test_consistency_with_transition_first_and_uneven_level_lengths():
     color3 = Factor("color3", ["red", "blue", "green"])
+
+    yes_fn = lambda colors: colors[0] == colors[1] == colors[2]
+    no_fn = lambda colors: not yes_fn(colors)
     color3_repeats_factor = Factor("color3 repeats?", [
-        DerivedLevel("yes", Transition(op.eq, [color3, color3])),
-        DerivedLevel("no",  Transition(op.ne, [color3, color3]))
+        DerivedLevel("yes", Window(yes_fn, [color3], 3, 1)),
+        DerivedLevel("no",  Window(no_fn, [color3], 3, 1))
     ])
 
     block = fully_cross_block([color3_repeats_factor, color3, text], [color3, text], [])
@@ -112,8 +114,7 @@ def test_consistency_with_transition_first_and_uneven_level_lengths():
         LowLevelRequest("EQ", 1, [31, 32]),
         LowLevelRequest("EQ", 1, [33, 34]),
         LowLevelRequest("EQ", 1, [35, 36]),
-        LowLevelRequest("EQ", 1, [37, 38]),
-        LowLevelRequest("EQ", 1, [39, 40])
+        LowLevelRequest("EQ", 1, [37, 38])
     ]
 
 
