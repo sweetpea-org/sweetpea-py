@@ -39,8 +39,8 @@ response = Factor("response", [
 ])
 
 response_transition = Factor("response transition", [
-    DerivedLevel("repeat", Transition(op.eq, [response, response])),
-    DerivedLevel("switch", Transition(op.ne, [response, response]))
+    DerivedLevel("repeat", Transition(lambda responses: responses[0] == responses[1], [response])),
+    DerivedLevel("switch", Transition(lambda responses: responses[0] != responses[1], [response]))
 ])
 
 

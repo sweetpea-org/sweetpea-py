@@ -1,5 +1,5 @@
 from typing import Any, Type, List, Tuple, Union
-from itertools import product
+from itertools import product, chain, repeat
 
 
 """
@@ -29,6 +29,7 @@ class DerivedLevel(__Primitive):
         self.name = name
         self.window = window
         self.__validate()
+        self.__expand_window_arguments()
 
     def __validate(self):
         self.require_type('DerivedLevel.name', str, self.name)
@@ -37,7 +38,15 @@ class DerivedLevel(__Primitive):
         if window_type not in allowed_window_types:
             raise ValueError('DerivedLevel.window must be one of ' +
                 str(allowed_window_types) + ', but was ' + str(window_type) + '.')
+
+        if len(set(map(lambda f: f.name, self.window.args))) != len(self.window.args):
+            raise ValueError('Factors should not be repeated in the argument list to a derivation function.')
+
         # TODO: Windows should be uniform.
+
+    def __expand_window_arguments(self) -> None:
+        if isinstance(self.window, Transition) or isinstance(self.window, Window):
+            self.window.args = list(chain(*[list(repeat(arg, self.window.width)) for arg in self.window.args]))
 
     def get_dependent_cross_product(self) -> List[Tuple[Any, ...]]:
         return list(product(*[[(dependent_factor.name, get_level_name(x)) for x in dependent_factor.levels] for dependent_factor in self.window.args]))
@@ -120,6 +129,9 @@ class __BaseWindow():
         # TODO: validation
 
 
+"""
+TODO: Docs
+"""
 class WithinTrial(__Primitive, __BaseWindow):
     def __init__(self, fn, args):
         super().__init__(fn, args, 1, 1)
@@ -135,6 +147,9 @@ class WithinTrial(__Primitive, __BaseWindow):
         return str(self.__dict__)
 
 
+"""
+TODO: Docs
+"""
 class Transition(__Primitive, __BaseWindow):
     def __init__(self, fn, args):
         super().__init__(fn, args, 2, 1)
@@ -151,8 +166,8 @@ class Transition(__Primitive, __BaseWindow):
 
 
 class Window(__Primitive, __BaseWindow):
-    def __init__(self, fn, args, stride):
-        super().__init__(fn, args, len(args), stride)
+    def __init__(self, fn, args, width, stride):
+        super().__init__(fn, args, width, stride)
         # TODO: validation
 
     def __eq__(self, other):

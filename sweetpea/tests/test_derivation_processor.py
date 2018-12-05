@@ -18,13 +18,13 @@ inc_level  = DerivedLevel("inc", WithinTrial(op.ne, [color, text]))
 con_factor = Factor("congruent?", [con_level, inc_level])
 
 color_repeats_factor = Factor("repeated color?", [
-    DerivedLevel("yes", Transition(op.eq, [color, color])),
-    DerivedLevel("no",  Transition(op.ne, [color, color]))
+    DerivedLevel("yes", Transition(lambda colors: colors[0] == colors[1], [color])),
+    DerivedLevel("no",  Transition(lambda colors: colors[0] != colors[1], [color]))
 ])
 
 text_repeats_factor = Factor("repeated text?", [
-    DerivedLevel("yes", Transition(op.eq, [text, text])),
-    DerivedLevel("no",  Transition(op.ne, [text, text]))
+    DerivedLevel("yes", Transition(lambda texts: texts[0] == texts[1], [text])),
+    DerivedLevel("no",  Transition(lambda texts: texts[0] != texts[1], [text]))
 ])
 
 design = [color, text, con_factor]
@@ -96,45 +96,38 @@ def test_generate_derivations_with_multiple_transitions(design):
     ]
 
 
+def test_generate_argument_list_with_within_trial():
+    x_product = con_level.get_dependent_cross_product()
+
+    assert DerivationProcessor.generate_argument_list(con_level, x_product[0]) == ['red', 'red']
+    assert DerivationProcessor.generate_argument_list(con_level, x_product[1]) == ['red', 'blue']
+    assert DerivationProcessor.generate_argument_list(con_level, x_product[2]) == ['blue', 'red']
+    assert DerivationProcessor.generate_argument_list(con_level, x_product[3]) == ['blue', 'blue']
+
+
+def test_generate_argument_list_with_transition():
+    color_repeats_level = DerivedLevel("yes", Transition(lambda colors: colors[0] == colors[1], [color]))
+    x_product = color_repeats_level.get_dependent_cross_product()
+
+    assert DerivationProcessor.generate_argument_list(color_repeats_level, x_product[0]) == [['red', 'red']]
+    assert DerivationProcessor.generate_argument_list(color_repeats_level, x_product[1]) == [['red', 'blue']]
+    assert DerivationProcessor.generate_argument_list(color_repeats_level, x_product[2]) == [['blue', 'red']]
+    assert DerivationProcessor.generate_argument_list(color_repeats_level, x_product[3]) == [['blue', 'blue']]
+
+    double_repeat_level = DerivedLevel("name", Transition(lambda colors, texts: True, [color, text]))
+    x_product = double_repeat_level.get_dependent_cross_product()
+
+    assert DerivationProcessor.generate_argument_list(color_repeats_level, x_product[0]) == [['red', 'red'], ['red', 'red']]
+    assert DerivationProcessor.generate_argument_list(color_repeats_level, x_product[1]) == [['red', 'red'], ['red', 'blue']]
+    assert DerivationProcessor.generate_argument_list(color_repeats_level, x_product[2]) == [['red', 'red'], ['blue', 'red']]
+    assert DerivationProcessor.generate_argument_list(color_repeats_level, x_product[3]) == [['red', 'red'], ['blue', 'blue']]
+
+    assert DerivationProcessor.generate_argument_list(color_repeats_level, x_product[15]) == [['blue', 'blue'], ['blue', 'blue']]
+
+
 def test_shift_window():
     assert DerivationProcessor.shift_window([[0, 0], [1, 1]], WithinTrial(lambda x: x, None), 0) == [[0, 0], [1, 1]]
     assert DerivationProcessor.shift_window([[0, 0], [1, 1]], Transition(lambda x: x, None), 4) == [[0, 4], [1, 5]]
-    assert DerivationProcessor.shift_window([[0, 2, 4], [1, 3, 5]], Window(lambda x: x, [1, 2], 3), 6) == [[0, 8, 16], [1, 9, 17]]
-    assert DerivationProcessor.shift_window([[1, 1, 1, 1], [2, 2, 2, 2]], Window(lambda x: x, [1, 2], 4), 10) == \
+    assert DerivationProcessor.shift_window([[0, 2, 4], [1, 3, 5]], Window(lambda x: x, [1, 2], 2, 3), 6) == [[0, 8, 16], [1, 9, 17]]
+    assert DerivationProcessor.shift_window([[1, 1, 1, 1], [2, 2, 2, 2]], Window(lambda x: x, [1, 2], 2, 4), 10) == \
         [[1, 11, 21, 31], [2, 12, 22, 32]]
-
-
-def __get_simple_task_switching_block() -> Block:
-    color  = Factor("color",  ["red", "blue", "green"])
-    motion = Factor("motion", ["up", "down"])
-    task   = Factor("task",   ["color", "motion"])
-
-    # Response Definition
-    def response_left(task, color, motion):
-        return (task == "color"  and color  == "red") or \
-            (task == "motion" and motion == "up")
-
-    def response_right(task, color, motion):
-        return not response_left(task, color, motion)
-
-    response = Factor("response", [
-        DerivedLevel("left",  WithinTrial(response_left,  [task, color, motion])),
-        DerivedLevel("right", WithinTrial(response_right, [task, color, motion]))
-    ])
-
-    response_transition = Factor("response transition", [
-        DerivedLevel("repeat", Transition(op.eq, [response, response])),
-        DerivedLevel("switch", Transition(op.ne, [response, response]))
-    ])
-
-    return fully_cross_block([color, motion, task, response, response_transition],
-                             [color, motion, task],
-                             [])
-
-
-def test_generate_derivations_with_transition_that_depends_on_derived_levels():
-    block = __get_simple_task_switching_block()
-    derivations = DerivationProcessor.generate_derivations(block)
-
-    assert Derivation(108, [[7, 16], [8, 17]]) in derivations
-    assert Derivation(109, [[7, 17], [8, 16]]) in derivations

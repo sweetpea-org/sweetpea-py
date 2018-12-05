@@ -23,6 +23,7 @@ class Block:
         self.constraints = constraints
         self.cnf_fn = cnf_fn
         # TODO: validation
+        # TOOD: Make sure factor names are unique
 
     """
     Indicates the number of trials that are generated per sample for this block

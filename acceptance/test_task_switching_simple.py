@@ -1,4 +1,3 @@
-import operator as op
 import pytest
 
 from itertools import repeat, permutations
@@ -42,14 +41,14 @@ congruency = Factor("congruency", [
 
 # Task Transition
 task_transition = Factor("task transition", [
-    DerivedLevel("repeat", Transition(op.eq, [task, task])),
-    DerivedLevel("switch", Transition(op.ne, [task, task]))
+    DerivedLevel("repeat", Transition(lambda tasks: tasks[0] == tasks[1], [task])),
+    DerivedLevel("switch", Transition(lambda tasks: tasks[0] != tasks[1], [task]))
 ])
 
 # Response Transition
 response_transition = Factor("response transition", [
-    DerivedLevel("repeat", Transition(op.eq, [response, response])),
-    DerivedLevel("switch", Transition(op.ne, [response, response]))
+    DerivedLevel("repeat", Transition(lambda responses: responses[0] == responses[1], [response])),
+    DerivedLevel("switch", Transition(lambda responses: responses[0] != responses[1], [response]))
 ])
 
 

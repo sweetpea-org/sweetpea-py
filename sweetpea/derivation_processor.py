@@ -2,10 +2,10 @@ from typing import List, Tuple, Union, Any
 from functools import reduce
 from itertools import product
 
-from sweetpea.primitives import WithinTrial, Transition, Window
+from sweetpea.primitives import DerivedLevel, WithinTrial, Transition, Window
 from sweetpea.blocks import Block
 from sweetpea.constraints import Derivation
-from sweetpea.internal import get_all_level_names
+from sweetpea.internal import chunk_list, get_all_level_names
 
 
 class DerivationProcessor:
@@ -48,12 +48,21 @@ class DerivationProcessor:
                 x_product = level.get_dependent_cross_product()
 
                 # filter to valid tuples, and get their idxs
-                valid_tuples = [tup for tup in x_product if level.window.fn(*map(lambda t: t[1], tup))]
+                valid_tuples = [tup for tup in x_product if level.window.fn(*DerivationProcessor.generate_argument_list(level, tup))]
                 valid_idxs = [[block.first_variable_for_level(pair[0], pair[1]) for pair in tup_list] for tup_list in valid_tuples]
                 shifted_idxs = DerivationProcessor.shift_window(valid_idxs, level.window, block.variables_per_trial())
                 accum.append(Derivation(level_index, shifted_idxs))
 
         return accum
+
+    @staticmethod
+    def generate_argument_list(level: DerivedLevel, tup: Tuple) -> List:
+        level_values = list(map(lambda t: t[1], tup))
+        if isinstance(level.window, WithinTrial):
+            return level_values
+        else:
+            return list(chunk_list(level_values, level.window.width))
+
 
     """
     This is a helper function that shifts the idxs of __process_derivations.

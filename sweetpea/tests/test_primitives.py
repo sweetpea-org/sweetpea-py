@@ -10,8 +10,8 @@ con_level  = DerivedLevel("con", WithinTrial(op.eq, [color, text]))
 inc_level  = DerivedLevel("inc", WithinTrial(op.ne, [color, text]))
 con_factor = Factor("congruent?", [con_level, inc_level])
 
-color_repeats_level   = DerivedLevel("yes", Transition(op.eq, [color, color]))
-color_no_repeat_level = DerivedLevel("no", Transition(op.ne, [color, color]))
+color_repeats_level   = DerivedLevel("yes", Transition(op.eq, [color]))
+color_no_repeat_level = DerivedLevel("no", Transition(op.ne, [color]))
 color_repeats_factor  = Factor("color repeats?", [color_repeats_level, color_no_repeat_level])
 
 
@@ -42,7 +42,7 @@ def test_factor_validation():
     with pytest.raises(ValueError):
         Factor("name", [
             con_level,
-            DerivedLevel("other", Transition(op.eq, [color, color]))
+            DerivedLevel("other", Transition(lambda colors: colors[0] == colors[1], [color]))
         ])
 
 
@@ -71,7 +71,7 @@ def test_factor_applies_to_trial():
     assert color_repeats_factor.applies_to_trial(3) == True
     assert color_repeats_factor.applies_to_trial(4) == True
 
-    f = Factor('f', [DerivedLevel('l', Window(op.eq, [color, color], 2))])
+    f = Factor('f', [DerivedLevel('l', Window(op.eq, [color], 2, 2))])
     assert f.applies_to_trial(1) == False
     assert f.applies_to_trial(2) == True
     assert f.applies_to_trial(3) == False
@@ -86,6 +86,16 @@ def test_derived_level_validation():
     # Invalid Window
     with pytest.raises(ValueError):
         DerivedLevel("name", 42)
+
+    # Repeated factors in argument list.
+    with pytest.raises(ValueError):
+        DerivedLevel("name", WithinTrial(lambda x: x, [color, color]))
+
+
+def test_derived_level_argument_list_expansion():
+    # We should internally duplicate each factor to match the width of the window.
+    assert color_repeats_level.window.args == [color, color]
+    assert color_no_repeat_level.window.args == [color, color]
 
 
 def test_derived_level_get_dependent_cross_product():
@@ -108,6 +118,19 @@ def test_derived_level_get_dependent_cross_product():
         (('integer', '2'), ('numeral', 'I'), ('text', 'two')),
         (('integer', '2'), ('numeral', 'II'), ('text', 'one')),
         (('integer', '2'), ('numeral', 'II'), ('text', 'two'))]
+
+    mixed_level = DerivedLevel("mixed", WithinTrial(lambda x: x, [
+        Factor("color", ["red", "blue", "green"]),
+        Factor("boolean", ["true", "false"])
+    ]))
+    assert mixed_level.get_dependent_cross_product() == [
+        (('color', 'red'), ('boolean', 'true')),
+        (('color', 'red'), ('boolean', 'false')),
+        (('color', 'blue'), ('boolean', 'true')),
+        (('color', 'blue'), ('boolean', 'false')),
+        (('color', 'green'), ('boolean', 'true')),
+        (('color', 'green'), ('boolean', 'false'))
+    ]
 
 
 def test_derived_level_equality():
@@ -136,8 +159,8 @@ def __get_response_transition() -> Factor:
     ])
 
     return Factor("response transition", [
-        DerivedLevel("repeat", Transition(op.eq, [response, response])),
-        DerivedLevel("switch", Transition(op.ne, [response, response]))
+        DerivedLevel("repeat", Transition(lambda responses: responses[0] == responses[1], [response])),
+        DerivedLevel("switch", Transition(lambda responses: responses[0] != responses[1], [response]))
     ])
 
 
