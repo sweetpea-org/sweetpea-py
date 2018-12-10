@@ -1,6 +1,9 @@
 import operator as op
 
-from sweetpea import *
+from sweetpea.primitives import Factor, DerivedLevel, WithinTrial
+from sweetpea.constraints import NoMoreThanKInARow
+from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
+
 
 color_list = ["red", "green", "blue"]
 color = Factor("color", color_list)

@@ -58,7 +58,6 @@ def __shuffled_design_sample():
     return perms[:6]
 
 
-# TODO: For some reason, some orderings are UNSAT
 @pytest.mark.parametrize('design', __shuffled_design_sample())
 def test_that_design_is_correctly_constrained(design):
     crossing = [color, motion, task]

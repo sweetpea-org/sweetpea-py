@@ -1,4 +1,7 @@
-from sweetpea import *
+from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
+from sweetpea.constraints import NoMoreThanKInARow
+from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
+
 
 """
 Task Switching Design (simple)
@@ -87,15 +90,15 @@ if color-motion then task transition = switch
 if motion-color then task transition = switch
 """
 
-def task_repeat(colors, motions):
-    return (color[0] == color[1]) or (motions[0] == motions[1])
+def task_repeat(tasks):
+    return tasks[0] == tasks[1]
 
-def task_switch(colors, motions):
-    return not task_repeat(colors, motions)
+def task_switch(tasks):
+    return not task_repeat(tasks)
 
 task_transition = Factor("task_transition", [
-    DerivedLevel("repeat", Transition(task_repeat, [color, motion])),
-    DerivedLevel("switch", Transition(task_switch, [color, motion]))
+    DerivedLevel("repeat", Transition(task_repeat, [task])),
+    DerivedLevel("switch", Transition(task_switch, [task]))
 ])
 
 """
@@ -107,26 +110,25 @@ if left-right then task transition = switch
 if right-left then task transition = switch
 """
 
-def response_repeat(response0, response1):
-    return response0 == response1
+def response_repeat(responses):
+    return responses[0] == responses[1]
 
-def response_switch(response0, response1):
-    return not response_repeat(response0, response1)
+def response_switch(responses):
+    return not response_repeat(responses)
 
 resp_transition = Factor("resp_transition", [
-    DerivedLevel("repeat", Transition(response_repeat, [color, color])),
-    DerivedLevel("switch", Transition(response_switch, [color, color]))
+    DerivedLevel("repeat", Transition(response_repeat, [response])),
+    DerivedLevel("switch", Transition(response_switch, [response]))
 ])
 
 k = 7
 constraints = [NoMoreThanKInARow(k, task_transition),
                NoMoreThanKInARow(k, resp_transition)]
 
-design       = [congruency, response, task, task_transition, resp_transition, color, motion]
-
-crossing     = design
+design       = [color, motion, task, congruency, response, task_transition, resp_transition]
+crossing     = [color, motion, task]
 block        = fully_cross_block(design, crossing, constraints)
 
-experiments  = synthesize_trials(block)
+experiments  = synthesize_trials_non_uniform(block, 5)
 
 print_experiments(block, experiments)
