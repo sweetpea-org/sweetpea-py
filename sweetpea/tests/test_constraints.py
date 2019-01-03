@@ -318,6 +318,36 @@ def test_derivation_with_multiple_transitions():
     assert backend_request.cnfs == [expected_cnf]
 
 
+def test_derivation_with_three_level_transition():
+    f = Factor("f", ["a", "b", "c"])
+    f_transition = Factor("transition", [
+        DerivedLevel("aa", Transition(lambda c: c[0] == "a" and c[1] == "a", [f])),
+        DerivedLevel("ab", Transition(lambda c: c[0] == "a" and c[1] == "b", [f])),
+        DerivedLevel("ac", Transition(lambda c: c[0] == "a" and c[1] == "c", [f])),
+        DerivedLevel("ba", Transition(lambda c: c[0] == "b" and c[1] == "a", [f])),
+        DerivedLevel("bb", Transition(lambda c: c[0] == "b" and c[1] == "b", [f])),
+        DerivedLevel("bc", Transition(lambda c: c[0] == "b" and c[1] == "c", [f])),
+        DerivedLevel("ca", Transition(lambda c: c[0] == "c" and c[1] == "a", [f])),
+        DerivedLevel("cb", Transition(lambda c: c[0] == "c" and c[1] == "b", [f])),
+        DerivedLevel("cc", Transition(lambda c: c[0] == "c" and c[1] == "c", [f])),
+    ])
+
+    block = fully_cross_block([f, f_transition], [f], [])
+
+    # a-a derivation
+    d = Derivation(9, [[0, 3]], 9)
+    backend_request = BackendRequest(28)
+    d.apply(block, backend_request)
+
+    (expected_cnf, expected_fresh) = to_cnf_tseitin(And([
+        Iff(10, Or([And([1, 4])])),
+        Iff(19, Or([And([4, 7])]))
+    ]), 28)
+
+    assert backend_request.fresh == expected_fresh
+    assert backend_request.cnfs == [expected_cnf]
+
+
 def test_nomorethankinarow_validate():
     with pytest.raises(ValueError):
         NoMoreThanKInARow("yo", color)

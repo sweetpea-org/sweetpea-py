@@ -51,7 +51,7 @@ class DerivationProcessor:
                 valid_tuples = [tup for tup in x_product if level.window.fn(*DerivationProcessor.generate_argument_list(level, tup))]
                 valid_idxs = [[block.first_variable_for_level(pair[0], pair[1]) for pair in tup_list] for tup_list in valid_tuples]
                 shifted_idxs = DerivationProcessor.shift_window(valid_idxs, level.window, block.variables_per_trial())
-                accum.append(Derivation(level_index, shifted_idxs))
+                accum.append(Derivation(level_index, shifted_idxs, len(fact.levels)))
 
         return accum
 

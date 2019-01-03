@@ -176,9 +176,10 @@ levels & various windowsizes. One test is the experiment:
 
 """
 class Derivation(Constraint):
-    def __init__(self, derived_idx, dependent_idxs):
+    def __init__(self, derived_idx, dependent_idxs, width=2):
         self.derived_idx = derived_idx
         self.dependent_idxs = dependent_idxs
+        self.width = width
         # TODO: validation
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
@@ -216,7 +217,7 @@ class Derivation(Constraint):
         iffs = []
         for n in range(trial_count - 1):
             or_clause = Or(list(And(list(map(lambda x: x + (n * trial_size) + 1, l))) for l in self.dependent_idxs))
-            iffs.append(Iff(self.derived_idx + (n * 2) + 1, or_clause))
+            iffs.append(Iff(self.derived_idx + (n * self.width) + 1, or_clause))
 
         (cnf, new_fresh) = block.cnf_fn(And(iffs), backend_request.fresh)
 
