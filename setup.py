@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="sweetpea",
-    version="0.0.19",
+    version="0.0.20",
     author="Annie Cherkaev, Ben Draut",
     author_email="annie.cherk@gmail.com, drautb@cs.utah.edu",
     description="A language for synthesizing randomized experimental designs",
