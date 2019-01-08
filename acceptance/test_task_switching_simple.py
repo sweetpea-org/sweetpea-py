@@ -5,7 +5,7 @@ from random import shuffle
 
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.constraints import NoMoreThanKInARow
-from sweetpea import fully_cross_block, print_experiments, synthesize_trials_non_uniform, print_encoding_diagram, __generate_cnf
+from sweetpea import fully_cross_block, print_experiments, synthesize_trials_non_uniform, __generate_cnf
 from acceptance import assert_nomorethankinarow
 
 # Simple Factors

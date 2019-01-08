@@ -1,7 +1,7 @@
 import operator as op
 import pytest
 
-from sweetpea import fully_cross_block, __decode, __generate_encoding_diagram
+from sweetpea import fully_cross_block, __decode
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
 from sweetpea.constraints import NoMoreThanKInARow
 from sweetpea.logic import to_cnf_tseitin
@@ -98,93 +98,3 @@ def test_decode_with_transition():
     assert decoded['color'] ==          ['red',  'blue', 'blue', 'red']
     assert decoded['text']  ==          ['blue', 'red',  'blue', 'red']
     assert decoded['color repeats?'] == ['',     'no',   'yes',  'no' ]
-
-
-def test_generate_encoding_diagram():
-    assert __generate_encoding_diagram(blk) == "\
-----------------------------------------------\n\
-|   Trial |  color   |   text   | congruent? |\n\
-|       # | red blue | red blue |  con  inc  |\n\
-----------------------------------------------\n\
-|       1 |  1   2   |  3   4   |   5    6   |\n\
-|       2 |  7   8   |  9   10  |  11    12  |\n\
-|       3 | 13   14  | 15   16  |  17    18  |\n\
-|       4 | 19   20  | 21   22  |  23    24  |\n\
-----------------------------------------------\n"
-
-
-def test_generate_encoding_diagram_with_transition():
-    block = fully_cross_block([color, text, color_repeats_factor],
-                              [color, text],
-                              [])
-
-    assert __generate_encoding_diagram(block) == "\
---------------------------------------------------\n\
-|   Trial |  color   |   text   | color repeats? |\n\
-|       # | red blue | red blue |   yes     no   |\n\
---------------------------------------------------\n\
-|       1 |  1   2   |  3   4   |                |\n\
-|       2 |  5   6   |  7   8   |   17      18   |\n\
-|       3 |  9   10  | 11   12  |   19      20   |\n\
-|       4 | 13   14  | 15   16  |   21      22   |\n\
---------------------------------------------------\n"
-
-
-def test_generate_encoding_diagram_with_constraint_and_multiple_transitions():
-    block = fully_cross_block([color, text, con_factor, color_repeats_factor, text_repeats_factor],
-                              [color, text],
-                              [])
-
-    assert __generate_encoding_diagram(block) == "\
--------------------------------------------------------------------------------\n\
-|   Trial |  color   |   text   | congruent? | color repeats? | text repeats? |\n\
-|       # | red blue | red blue |  con  inc  |   yes     no   |   yes    no   |\n\
--------------------------------------------------------------------------------\n\
-|       1 |  1   2   |  3   4   |   5    6   |                |               |\n\
-|       2 |  7   8   |  9   10  |  11    12  |   25      26   |   31     32   |\n\
-|       3 | 13   14  | 15   16  |  17    18  |   27      28   |   33     34   |\n\
-|       4 | 19   20  | 21   22  |  23    24  |   29      30   |   35     36   |\n\
--------------------------------------------------------------------------------\n"
-
-
-def test_generate_encoding_diagram_with_constraint_and_multiple_transitions_in_different_order():
-    block = fully_cross_block([text_repeats_factor, color, color_repeats_factor, text, con_factor],
-                              [color, text],
-                              [])
-
-    assert __generate_encoding_diagram(block) == "\
--------------------------------------------------------------------------------\n\
-|   Trial | text repeats? |  color   | color repeats? |   text   | congruent? |\n\
-|       # |   yes    no   | red blue |   yes     no   | red blue |  con  inc  |\n\
--------------------------------------------------------------------------------\n\
-|       1 |               |  1   2   |                |  3   4   |   5    6   |\n\
-|       2 |   25     26   |  7   8   |   31      32   |  9   10  |  11    12  |\n\
-|       3 |   27     28   | 13   14  |   33      34   | 15   16  |  17    18  |\n\
-|       4 |   29     30   | 19   20  |   35      36   | 21   22  |  23    24  |\n\
--------------------------------------------------------------------------------\n"
-
-
-def test_generate_encoding_diagram_with_windows():
-    color3 = Factor("color3", ["red", "blue", "green"])
-
-    yes_fn = lambda colors: colors[0] == colors[1] == colors[2]
-    no_fn = lambda colors: not yes_fn(colors)
-    color3_repeats_factor = Factor("color3 repeats?", [
-        DerivedLevel("yes", Window(yes_fn, [color3], 3, 1)),
-        DerivedLevel("no",  Window(no_fn, [color3], 3, 1))
-    ])
-
-    block = fully_cross_block([color3_repeats_factor, color3, text], [color3, text], [])
-
-    assert __generate_encoding_diagram(block) == "\
----------------------------------------------------------\n\
-|   Trial | color3 repeats? |     color3     |   text   |\n\
-|       # |   yes      no   | red blue green | red blue |\n\
----------------------------------------------------------\n\
-|       1 |                 |  1   2     3   |  4   5   |\n\
-|       2 |                 |  6   7     8   |  9   10  |\n\
-|       3 |    31      32   | 11   12   13   | 14   15  |\n\
-|       4 |    33      34   | 16   17   18   | 19   20  |\n\
-|       5 |    35      36   | 21   22   23   | 24   25  |\n\
-|       6 |    37      38   | 26   27   28   | 29   30  |\n\
----------------------------------------------------------\n"
