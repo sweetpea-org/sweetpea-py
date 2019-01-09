@@ -45,8 +45,7 @@ class DerivedLevel(__Primitive):
         # TODO: Windows should be uniform.
 
     def __expand_window_arguments(self) -> None:
-        if isinstance(self.window, Transition) or isinstance(self.window, Window):
-            self.window.args = list(chain(*[list(repeat(arg, self.window.width)) for arg in self.window.args]))
+        self.window.args = list(chain(*[list(repeat(arg, self.window.width)) for arg in self.window.args]))
 
     def get_dependent_cross_product(self) -> List[Tuple[Any, ...]]:
         return list(product(*[[(dependent_factor.name, get_level_name(x)) for x in dependent_factor.levels] for dependent_factor in self.window.args]))
@@ -90,7 +89,11 @@ class Factor(__Primitive):
         return isinstance(self.levels[0], DerivedLevel)
 
     def has_complex_window(self) -> bool:
-        return self.is_derived() and not isinstance(self.levels[0].window, WithinTrial)
+        if not self.is_derived():
+            return False
+
+        window = self.levels[0].window
+        return window.width > 1 or window.stride > 1
 
     def get_level(self, level_name: str) -> Union[str, DerivedLevel]:
         return next(l for l in self.levels if l.name == level_name)
@@ -104,7 +107,7 @@ class Factor(__Primitive):
         if trial_number <= 0:
             raise ValueError('Trial numbers may not be less than 1')
 
-        if not self.has_complex_window():
+        if not self.is_derived():
             return True
 
         window = self.levels[0].window

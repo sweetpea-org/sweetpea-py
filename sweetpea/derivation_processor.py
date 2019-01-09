@@ -58,7 +58,8 @@ class DerivationProcessor:
     @staticmethod
     def generate_argument_list(level: DerivedLevel, tup: Tuple) -> List:
         level_values = list(map(lambda t: t[1], tup))
-        if isinstance(level.window, WithinTrial):
+        # For windows with a width of 1, we just pass the arguments directly, rather than putting them in lists.
+        if level.window.width == 1:
             return level_values
         else:
             return list(chunk_list(level_values, level.window.width))
@@ -76,11 +77,7 @@ class DerivationProcessor:
     def shift_window(idxs: List[List[int]],
                      window: Union[WithinTrial, Transition, Window],
                      trial_size:int) -> List[List[int]]:
-        if isinstance(window, WithinTrial):
+        if window.width == 1:
             return idxs
-        elif isinstance(window, Transition):
-            return [[pair[0], pair[1]+trial_size] for pair in idxs]
-        elif isinstance(window, Window):
-            return [reduce(lambda l, idx: l + [idx + len(l) * trial_size], idx_list, []) for idx_list in idxs]
         else:
-            raise ValueError("Weird window encountered while processing derivations!")
+            return [reduce(lambda l, idx: l + [idx + len(l) * trial_size], idx_list, []) for idx_list in idxs]

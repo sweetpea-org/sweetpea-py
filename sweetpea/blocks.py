@@ -69,7 +69,7 @@ class Block:
     """
     def variables_for_factor(self, factor: Factor) -> int:
         variable_count = self.trials_per_sample() * len(factor.levels)
-        if factor.has_complex_window():
+        if factor.is_derived():
             variable_count -= len(factor.levels) * (factor.levels[0].window.width - 1)
 
         return variable_count
