@@ -118,7 +118,6 @@ def test_generate_encoding_diagram_with_windows():
 ---------------------------------------------------------\n"
 
 
-@pytest.mark.skip
 def test_generate_encoding_diagram_with_window_with_stride():
     congruent_bookend = Factor("congruent bookend?", [
         DerivedLevel("yes", Window(lambda colors, texts: colors[0] == texts[0], [color, text], 1, 3)),
@@ -137,3 +136,22 @@ def test_generate_encoding_diagram_with_window_with_stride():
 |       3 |  9   10  | 11   12  |                    |\n\
 |       4 | 13   14  | 15   16  |    19        20    |\n\
 ------------------------------------------------------\n"
+
+    congruent_bookend = Factor("congruent bookend?", [
+        DerivedLevel("yes", Window(lambda colors, texts: colors[0] == texts[0], [color, text], 2, 2)),
+        DerivedLevel("no",  Window(lambda colors, texts: colors[0] == texts[0], [color, text], 2, 2))
+    ])
+
+    block = fully_cross_block([color, text, congruent_bookend], [color, text], [])
+
+    assert __generate_encoding_diagram(block) == "\
+------------------------------------------------------\n\
+|   Trial |  color   |   text   | congruent bookend? |\n\
+|       # | red blue | red blue |    yes       no    |\n\
+------------------------------------------------------\n\
+|       1 |  1   2   |  3   4   |                    |\n\
+|       2 |  5   6   |  7   8   |    17        18    |\n\
+|       3 |  9   10  | 11   12  |                    |\n\
+|       4 | 13   14  | 15   16  |    19        20    |\n\
+------------------------------------------------------\n"
+

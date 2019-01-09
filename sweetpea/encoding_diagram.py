@@ -82,7 +82,11 @@ def __generate_encoding_diagram(blk: Block) -> str:
             if f.applies_to_trial(t + 1):
                 variables = [blk.first_variable_for_level(f.name, get_level_name(l)) + 1 for l in f.levels]
                 if f.has_complex_window():
-                    variables = list(map(lambda n: n + len(variables) * (t - f.levels[0].window.width + 1), variables))
+                    width = f.levels[0].window.width
+                    stride = f.levels[0].window.stride
+                    stride_offset = (stride - 1) * int(t / stride)
+                    offset = t - width + 1 - stride_offset
+                    variables = list(map(lambda n: n + len(variables) * offset, variables))
                 else:
                     variables = list(map(lambda n: n + design_size * t, variables))
 
