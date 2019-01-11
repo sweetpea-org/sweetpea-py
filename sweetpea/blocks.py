@@ -67,12 +67,9 @@ class Block:
     """
     Indicates the number of variables needed to encode this factor.
     """
-    def variables_for_factor(self, factor: Factor) -> int:
-        variable_count = self.trials_per_sample() * len(factor.levels)
-        if factor.is_derived():
-            variable_count -= len(factor.levels) * (factor.levels[0].window.width - 1)
-
-        return variable_count
+    def variables_for_factor(self, f: Factor) -> int:
+        trial_list = range(1, self.trials_per_sample() + 1)
+        return reduce(lambda sum, t: sum + len(f.levels) if f.applies_to_trial(t) else sum, trial_list, 0)
 
     """
     Retrieve a factor by name.

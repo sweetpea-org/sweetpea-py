@@ -28,8 +28,8 @@ text_repeats_factor = Factor("repeated text?", [
 ])
 
 congruent_bookend = Factor("congruent bookend?", [
-    DerivedLevel("yes", Window(lambda colors, texts: colors[0] == texts[0], [color, text], 1, 3)),
-    DerivedLevel("no",  Window(lambda colors, texts: colors[0] == texts[0], [color, text], 1, 3))
+    DerivedLevel("yes", Window(lambda color, text: color == text, [color, text], 1, 3)),
+    DerivedLevel("no",  Window(lambda color, text: color != text, [color, text], 1, 3))
 ])
 
 design = [color, text, con_factor]
@@ -101,8 +101,7 @@ def test_generate_derivations_with_multiple_transitions(design):
     ]
 
 
-@pytest.mark.skip
-def test_generate_derivations_with_window(design):
+def test_generate_derivations_with_window():
     block = fully_cross_block([color, text, congruent_bookend], [color, text], [])
 
     assert DerivationProcessor.generate_derivations(block) == [

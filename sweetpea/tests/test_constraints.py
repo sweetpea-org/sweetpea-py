@@ -28,6 +28,11 @@ text_repeats_factor = Factor("text repeats?", [
     DerivedLevel("no",  Transition(lambda texts: texts[0] != texts[1], [text]))
 ])
 
+congruent_bookend = Factor("congruent bookend?", [
+    DerivedLevel("yes", Window(lambda color, text: color == text, [color, text], 1, 3)),
+    DerivedLevel("no",  Window(lambda color, text: color != text, [color, text], 1, 3))
+])
+
 design = [color, text, con_factor]
 crossing = [color, text]
 block = fully_cross_block(design, crossing, [])
@@ -115,6 +120,25 @@ def test_consistency_with_transition_first_and_uneven_level_lengths():
         LowLevelRequest("EQ", 1, [33, 34]),
         LowLevelRequest("EQ", 1, [35, 36]),
         LowLevelRequest("EQ", 1, [37, 38])
+    ]
+
+
+def test_consistency_with_general_window():
+    design = [color, text, congruent_bookend]
+    crossing = [color, text]
+    block = fully_cross_block(design, crossing, [])
+
+    backend_request = BackendRequest(0)
+    Consistency.apply(block, backend_request)
+
+    assert backend_request.ll_requests == [
+        LowLevelRequest("EQ", 1, [1,  2 ]), LowLevelRequest("EQ", 1, [3,  4 ]),
+        LowLevelRequest("EQ", 1, [5,  6 ]), LowLevelRequest("EQ", 1, [7,  8 ]),
+        LowLevelRequest("EQ", 1, [9,  10]), LowLevelRequest("EQ", 1, [11, 12]),
+        LowLevelRequest("EQ", 1, [13, 14]), LowLevelRequest("EQ", 1, [15, 16]),
+
+        LowLevelRequest("EQ", 1, [17, 18]),
+        LowLevelRequest("EQ", 1, [19, 20])
     ]
 
 

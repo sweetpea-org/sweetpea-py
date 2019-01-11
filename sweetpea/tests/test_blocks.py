@@ -25,6 +25,11 @@ text_repeats_factor = Factor("repeated text?", [
     DerivedLevel("no",  Transition(lambda texts: texts[0] != texts[1], [text]))
 ])
 
+congruent_bookend = Factor("congruent bookend?", [
+    DerivedLevel("yes", Window(lambda color, text: color == text, [color, text], 1, 3)),
+    DerivedLevel("no",  Window(lambda color, text: color != text, [color, text], 1, 3))
+])
+
 color3 = Factor("color3", ["red", "blue", "green"])
 
 yes_fn = lambda colors: colors[0] == colors[1] == colors[2]
@@ -192,3 +197,7 @@ def test_fully_cross_block_variables_for_factor():
     assert FullyCrossBlock([color3_repeats_factor, color3, text],
                            [color3, text],
                            []).variables_for_factor(color3_repeats_factor) == 8
+
+    assert FullyCrossBlock([color, text, congruent_bookend],
+                           [color, text],
+                           []).variables_for_factor(congruent_bookend) == 4
