@@ -19,17 +19,6 @@ congruent_bookend = Factor("congruent bookend?", [
     DerivedLevel("no",  Window(lambda color, text: color != text, [color, text], 1, 3))
 ])
 
-# crossing = [color, text]
-# design = [color, text, congruent_bookend]
-# constraints = []#[NoMoreThanKInARow(0, ("congruent bookend?", "no"))]
-# block = fully_cross_block(design, crossing, constraints)
-
-# experiments = synthesize_trials_non_uniform(block, 50)
-
-# print_encoding_diagram(block)
-# print(str(len(experiments)))
-# print_experiments(block, experiments)
-
 
 @pytest.mark.parametrize('design', permutations([color, text, congruent_bookend]))
 def test_correct_solution_count_when_unconstrained(design):
