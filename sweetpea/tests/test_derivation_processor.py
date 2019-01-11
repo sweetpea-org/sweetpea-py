@@ -50,8 +50,8 @@ def two_not_con(i, n, t):
 
 def test_generate_derivations_within_trial():
     assert DerivationProcessor.generate_derivations(blk) == [
-        Derivation(4, [[0, 2], [1, 3]]),
-        Derivation(5, [[0, 3], [1, 2]])]
+        Derivation(4, [[0, 2], [1, 3]], con_factor),
+        Derivation(5, [[0, 3], [1, 2]], con_factor)]
 
     integer = Factor("integer", ["1", "2"])
     numeral = Factor("numeral", ["I", "II"])
@@ -59,15 +59,15 @@ def test_generate_derivations_within_trial():
 
     twoConLevel = DerivedLevel("twoCon", WithinTrial(two_con, [integer, numeral, text]))
     twoNotConLevel = DerivedLevel("twoNotCon", WithinTrial(two_not_con, [integer, numeral, text]))
-    twoConFactor = Factor("twoCon?", [twoConLevel, twoNotConLevel])
+    two_con_factor = Factor("twoCon?", [twoConLevel, twoNotConLevel])
 
-    one_two_design = [integer, numeral, text, twoConFactor]
+    one_two_design = [integer, numeral, text, two_con_factor]
     one_two_crossing = [integer, numeral, text]
 
     assert DerivationProcessor.generate_derivations(
         fully_cross_block(one_two_design, one_two_crossing, [])) == [
-        Derivation(6, [[0, 2, 5], [0, 3, 4], [0, 3, 5], [1, 2, 4], [1, 2, 5], [1, 3, 4]]),
-        Derivation(7, [[0, 2, 4], [1, 3, 5]])]
+        Derivation(6, [[0, 2, 5], [0, 3, 4], [0, 3, 5], [1, 2, 4], [1, 2, 5], [1, 3, 4]], two_con_factor),
+        Derivation(7, [[0, 2, 4], [1, 3, 5]], two_con_factor)]
 
 
 @pytest.mark.parametrize('design',
@@ -78,8 +78,8 @@ def test_generate_derivations_transition(design):
     block = fully_cross_block(design, [color, text], [])
 
     assert DerivationProcessor.generate_derivations(block) == [
-        Derivation(16, [[0, 4], [1, 5]]),
-        Derivation(17, [[0, 5], [1, 4]])
+        Derivation(16, [[0, 4], [1, 5]], color_repeats_factor),
+        Derivation(17, [[0, 5], [1, 4]], color_repeats_factor)
     ]
 
 
@@ -94,10 +94,10 @@ def test_generate_derivations_with_multiple_transitions(design):
                               [])
 
     assert DerivationProcessor.generate_derivations(block) == [
-        Derivation(16, [[0, 4], [1, 5]]),
-        Derivation(17, [[0, 5], [1, 4]]),
-        Derivation(22, [[2, 6], [3, 7]]),
-        Derivation(23, [[2, 7], [3, 6]])
+        Derivation(16, [[0, 4], [1, 5]], color_repeats_factor),
+        Derivation(17, [[0, 5], [1, 4]], color_repeats_factor),
+        Derivation(22, [[2, 6], [3, 7]], text_repeats_factor),
+        Derivation(23, [[2, 7], [3, 6]], text_repeats_factor)
     ]
 
 
@@ -105,8 +105,8 @@ def test_generate_derivations_with_window():
     block = fully_cross_block([color, text, congruent_bookend], [color, text], [])
 
     assert DerivationProcessor.generate_derivations(block) == [
-        Derivation(16, [[0, 2], [1, 3]]),
-        Derivation(17, [[0, 3], [1, 2]])
+        Derivation(16, [[0, 2], [1, 3]], congruent_bookend),
+        Derivation(17, [[0, 3], [1, 2]], congruent_bookend)
     ]
 
 

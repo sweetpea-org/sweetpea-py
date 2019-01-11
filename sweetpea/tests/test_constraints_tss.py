@@ -62,7 +62,7 @@ def test_fully_cross_with_three_factors():
 
 
 def test_derivation_with_unusual_order():
-    d = Derivation(0, [[4, 2], [5, 3]])
+    d = Derivation(0, [[4, 2], [5, 3]], congruency)
     backend_request = BackendRequest(64)
     d.apply(block, backend_request)
 

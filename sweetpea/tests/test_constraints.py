@@ -244,7 +244,7 @@ def test_fully_cross_with_uncrossed_simple_factors():
 
 def test_derivation():
     # Congruent derivation
-    d = Derivation(4, [[0, 2], [1, 3]])
+    d = Derivation(4, [[0, 2], [1, 3]], con_factor)
     backend_request = BackendRequest(24)
     d.apply(block, backend_request)
 
@@ -259,7 +259,7 @@ def test_derivation():
     assert backend_request.cnfs == [expected_cnf]
 
     # Incongruent derivation
-    d = Derivation(5, [[0, 3], [1, 2]])
+    d = Derivation(5, [[0, 3], [1, 2]], con_factor)
     backend_request = BackendRequest(24)
     d.apply(block, backend_request)
 
@@ -280,7 +280,7 @@ def test_derivation_with_transition():
                               [])
 
     # Color repeats derivation
-    d = Derivation(16, [[0, 4], [1, 5]])
+    d = Derivation(16, [[0, 4], [1, 5]], color_repeats_factor)
     backend_request = BackendRequest(23)
     d.apply(block, backend_request)
 
@@ -294,7 +294,7 @@ def test_derivation_with_transition():
     assert backend_request.cnfs == [expected_cnf]
 
     # Color does not repeat derivation
-    d = Derivation(17, [[0, 5], [1, 4]])
+    d = Derivation(17, [[0, 5], [1, 4]], color_repeats_factor)
     backend_request = BackendRequest(23)
     d.apply(block, backend_request)
 
@@ -314,7 +314,7 @@ def test_derivation_with_multiple_transitions():
                               [])
 
     # Text repeats derivation
-    d = Derivation(22, [[2, 6], [3, 7]])
+    d = Derivation(22, [[2, 6], [3, 7]], text_repeats_factor)
     backend_request = BackendRequest(29)
     d.apply(block, backend_request)
 
@@ -328,7 +328,7 @@ def test_derivation_with_multiple_transitions():
     assert backend_request.cnfs == [expected_cnf]
 
     # Text does not repeat derivation
-    d = Derivation(23, [[2, 7], [3, 6]])
+    d = Derivation(23, [[2, 7], [3, 6]], text_repeats_factor)
     backend_request = BackendRequest(29)
     d.apply(block, backend_request)
 
@@ -359,7 +359,7 @@ def test_derivation_with_three_level_transition():
     block = fully_cross_block([f, f_transition], [f], [])
 
     # a-a derivation
-    d = Derivation(9, [[0, 3]], 9)
+    d = Derivation(9, [[0, 3]], f_transition)
     backend_request = BackendRequest(28)
     d.apply(block, backend_request)
 
@@ -367,6 +367,39 @@ def test_derivation_with_three_level_transition():
         Iff(10, Or([And([1, 4])])),
         Iff(19, Or([And([4, 7])]))
     ]), 28)
+
+    assert backend_request.fresh == expected_fresh
+    assert backend_request.cnfs == [expected_cnf]
+
+
+
+@pytest.mark.skip
+def test_derivation_with_general_window():
+    block = fully_cross_block([color, text, congruent_bookend],
+                              [color, text],
+                              [])
+    # congruent bookend - yes
+    d = Derivation(16, [[0, 2], [1, 3]], congruent_bookend)
+    backend_request = BackendRequest(19)
+    d.apply(block, backend_request)
+
+    (expected_cnf, expected_fresh) = to_cnf_tseitin(And([
+        Iff(17, Or([And([ 1, 3 ]), And([ 2, 4 ])])),
+        Iff(19, Or([And([13, 15]), And([14, 16])]))
+    ]), 19)
+
+    assert backend_request.fresh == expected_fresh
+    assert backend_request.cnfs == [expected_cnf]
+
+    # congruent bookend - no
+    d = Derivation(17, [[0, 3], [1, 2]], congruent_bookend)
+    backend_request = BackendRequest(19)
+    d.apply(block, backend_request)
+
+    (expected_cnf, expected_fresh) = to_cnf_tseitin(And([
+        Iff(18, Or([And([ 1, 4 ]), And([ 2, 3 ])])),
+        Iff(20, Or([And([13, 16]), And([14, 15])]))
+    ]), 19)
 
     assert backend_request.fresh == expected_fresh
     assert backend_request.cnfs == [expected_cnf]

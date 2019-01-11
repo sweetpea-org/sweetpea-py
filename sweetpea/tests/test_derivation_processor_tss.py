@@ -50,8 +50,8 @@ def test_generate_derivations_with_transition_that_depends_on_derived_levels():
                               [])
     derivations = DerivationProcessor.generate_derivations(block)
 
-    assert Derivation(64, [[6, 14], [7, 15]]) in derivations
-    assert Derivation(65, [[6, 15], [7, 14]]) in derivations
+    assert Derivation(64, [[6, 14], [7, 15]], response_transition) in derivations
+    assert Derivation(65, [[6, 15], [7, 14]], response_transition) in derivations
 
 
 def test_generate_derivations_when_derived_factor_precedes_dependencies():
@@ -60,5 +60,5 @@ def test_generate_derivations_when_derived_factor_precedes_dependencies():
                               [])
     derivations = DerivationProcessor.generate_derivations(block)
 
-    assert Derivation(0, [[4, 2], [5, 3]]) in derivations
-    assert Derivation(1, [[4, 3], [5, 2]]) in derivations
+    assert Derivation(0, [[4, 2], [5, 3]], congruency) in derivations
+    assert Derivation(1, [[4, 3], [5, 2]], congruency) in derivations
