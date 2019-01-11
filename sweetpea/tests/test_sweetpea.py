@@ -25,6 +25,11 @@ text_repeats_factor = Factor("text repeats?", [
     DerivedLevel("no",  Transition(lambda colors: colors[0] != colors[1], [text]))
 ])
 
+congruent_bookend = Factor("congruent bookend?", [
+    DerivedLevel("yes", Window(lambda color, text: color == text, [color, text], 1, 3)),
+    DerivedLevel("no",  Window(lambda color, text: color != text, [color, text], 1, 3))
+])
+
 design = [color, text, con_factor]
 crossing = [color, text]
 blk = fully_cross_block(design, crossing, [])
@@ -98,3 +103,20 @@ def test_decode_with_transition():
     assert decoded['color'] ==          ['red',  'blue', 'blue', 'red']
     assert decoded['text']  ==          ['blue', 'red',  'blue', 'red']
     assert decoded['color repeats?'] == ['',     'no',   'yes',  'no' ]
+
+
+def test_decode_with_general_window():
+    block = fully_cross_block([color, text, congruent_bookend],
+                              [color, text],
+                              [])
+
+    solution = [ 1,  -2,  -3,   4,
+                -5,   6,   7,  -8,
+                -9,   10, -11,  12,
+                 13, -14,  15, -16,
+                -17,  18,  19, -20]
+
+    decoded = __decode(block, solution)
+    assert decoded['color'] ==              ['red',  'blue', 'blue', 'red']
+    assert decoded['text']  ==              ['blue', 'red',  'blue', 'red']
+    assert decoded['congruent bookend?'] == ['no',   '',     '',     'yes']

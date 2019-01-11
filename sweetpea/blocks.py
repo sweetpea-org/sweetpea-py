@@ -122,7 +122,7 @@ class Block:
                 end = start + self.variables_for_factor(f)
                 if variable in range(start, end):
                     tuples = get_all_level_names([f])
-                    return tuples[(variable - start) % f.levels[0].window.width]
+                    return tuples[(variable - start) % len(f.levels)]
 
         raise RuntimeError('Unable to find factor/level for variable!')
 

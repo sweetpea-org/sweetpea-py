@@ -128,6 +128,27 @@ def test_fully_cross_block_decode_variable_with_transition_first():
     assert block.decode_variable(28) == ("repeated color?", "no")
 
 
+def test_fully_cross_block_decode_variable_with_general_window():
+    block = fully_cross_block([color, text, congruent_bookend],
+                              [color, text],
+                              [])
+
+    assert block.decode_variable(1) == ("color", "red")
+    assert block.decode_variable(2) == ("color", "blue")
+    assert block.decode_variable(5) == ("color", "red")
+    assert block.decode_variable(14) == ("color", "blue")
+
+    assert block.decode_variable(3) == ("text", "red")
+    assert block.decode_variable(4) == ("text", "blue")
+    assert block.decode_variable(15) == ("text", "red")
+    assert block.decode_variable(12) == ("text", "blue")
+
+    assert block.decode_variable(17) == ("congruent bookend?", "yes")
+    assert block.decode_variable(18) == ("congruent bookend?", "no")
+    assert block.decode_variable(19) == ("congruent bookend?", "yes")
+    assert block.decode_variable(20) == ("congruent bookend?", "no")
+
+
 def test_fully_cross_block_trials_per_sample():
     text_single  = Factor("text",  ["red"])
 

@@ -211,17 +211,20 @@ class Derivation(Constraint):
         backend_request.fresh = new_fresh
 
     def __apply_derivation_with_complex_window(self, block: Block, backend_request: BackendRequest) -> None:
-        # The number of constraints that a complex derivation generates is dependent on its stride....
-        # TODO: I'll have to do something about this when we implement general windows. Transition still
-        # Works because it can assume a stride of 1.
         trial_size = block.variables_per_trial()
         trial_count = block.trials_per_sample()
-
         iffs = []
-        for n in range(trial_count - 1):
-            or_clause = Or(list(And(list(map(lambda x: x + (n * trial_size) + 1, l))) for l in self.dependent_idxs))
-            num_levels = len(self.factor.levels)
-            iffs.append(Iff(self.derived_idx + (n * num_levels) + 1, or_clause))
+        f = self.factor
+        t = 0
+        for n in range(trial_count):
+            if not f.applies_to_trial(n + 1):
+                continue
+
+            num_levels = len(f.levels)
+            starting_trial = n - (f.levels[0].window.width - 1)
+            or_clause = Or(list(And(list(map(lambda x: x + (starting_trial * trial_size) + 1, l))) for l in self.dependent_idxs))
+            iffs.append(Iff(self.derived_idx + (t * num_levels) + 1, or_clause))
+            t += 1
 
         (cnf, new_fresh) = block.cnf_fn(And(iffs), backend_request.fresh)
 

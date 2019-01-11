@@ -372,8 +372,6 @@ def test_derivation_with_three_level_transition():
     assert backend_request.cnfs == [expected_cnf]
 
 
-
-@pytest.mark.skip
 def test_derivation_with_general_window():
     block = fully_cross_block([color, text, congruent_bookend],
                               [color, text],
