@@ -40,7 +40,9 @@ color3_repeats_factor = Factor("color3 repeats?", [
 ])
 
 
+@pytest.mark.skip
 def test_fully_cross_block_validate():
+    # TODO: This needs to be revised to validate based on the ancestral graph.
     # Should not allow DerivedLevels in the crossing.
     # I think it makes sense to prohibit this, but I could be wrong. At the very least,
     # this will leave a reminder that, if it does make sense, there is more work in the

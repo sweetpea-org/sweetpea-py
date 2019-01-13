@@ -137,9 +137,8 @@ class FullyCrossBlock(Block):
         self.__validate()
 
     def __validate(self):
-        simple_factors = list(filter(lambda f: not f.is_derived(), self.crossing))
-        if len(simple_factors) != len(self.crossing):
-            raise ValueError('Factors with DerivedLevels are not allowed in the crossing!')
+        # TODO: Ensure that no two factors in the crossing share a common ancestor.
+        pass
 
     def trials_per_sample(self):
         return reduce(lambda sum, factor: sum * len(factor.levels), self.crossing, 1)
