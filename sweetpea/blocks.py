@@ -3,7 +3,7 @@ from functools import reduce
 from typing import List, Union, Tuple
 
 from sweetpea.internal import get_all_level_names
-from sweetpea.primitives import Factor, Transition, Window
+from sweetpea.primitives import Factor, Transition, Window, get_level_name
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.base_constraint import Constraint
 
@@ -101,6 +101,26 @@ class Block:
             simple_levels = get_all_level_names(simple_factors)
             return simple_levels.index((factor_name, level_name))
 
+    """
+    Given a factor and a trial number (1-based) this function will return a list of the variables
+    representing the levels of the given factor for that trial. The variable list is also 1 based.
+    """
+    def factor_variables_for_trial(self, f: Factor, t: int) -> List[int]:
+        if not f.applies_to_trial(t):
+            raise ValueError('Factor does not apply to trial #' + str(t) + ' f=' + str(f))
+
+        previous_trials = sum(map(lambda trial: 1 if f.applies_to_trial(trial + 1) else 0, range(t))) - 1
+        levels = map(get_level_name, f.levels)
+        initial_sequence = list(map(lambda l: self.first_variable_for_level(f.name, l), levels))
+
+        offset = 0
+        if f.has_complex_window():
+            offset = len(f.levels) * previous_trials
+        else:
+            offset = self.variables_per_trial() * previous_trials
+
+        return list(map(lambda n: n + offset + 1, initial_sequence))
+
 
     """
     Given a variable number from the SAT formula, this method will return
@@ -140,8 +160,28 @@ class FullyCrossBlock(Block):
         # TODO: Ensure that no two factors in the crossing share a common ancestor.
         pass
 
+    """
+    Given a factor f, and a crossing size, this function will compute the number of trials
+    required to fully cross f with the other factors.
+
+    For example, if f is a transition, it doesn't apply to trial 1. So when the crossing_size
+    is 4, we'd actually need 5 trials to fully cross with f.
+
+    This is a helper for trials_per_sample.
+    """
+    def __trials_required_for_crossing(self, f: Factor, crossing_size: int) -> int:
+        trial = 0
+        counter = 0
+        while counter != crossing_size:
+            trial += 1
+            if f.applies_to_trial(trial):
+                counter += 1
+        return trial
+
     def trials_per_sample(self):
-        return reduce(lambda sum, factor: sum * len(factor.levels), self.crossing, 1)
+        crossing_size = reduce(lambda sum, factor: sum * len(factor.levels), self.crossing, 1)
+        required_trials = list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size), self.crossing))
+        return max(required_trials)
 
     def variables_per_trial(self):
         # Factors with complex windows are excluded because we don't want variables allocated
@@ -150,7 +190,10 @@ class FullyCrossBlock(Block):
         return sum([len(factor.levels) for factor in grid_factors])
 
     def grid_variables(self):
-        return self.trials_per_sample() * self.variables_per_trial()
+        return self.crossing_size() * self.variables_per_trial()
+
+    def crossing_size(self):
+        return reduce(lambda sum, factor: sum * len(factor.levels), self.crossing, 1)
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__

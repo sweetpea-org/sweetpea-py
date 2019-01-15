@@ -78,6 +78,18 @@ def test_fully_cross_block_first_variable_for_factor_with_color3():
     assert block.first_variable_for_level("color3 repeats?", "no") == 31
 
 
+def test_factor_variables_for_trial():
+    block = fully_cross_block([color, text, color_repeats_factor], [color, text], [])
+
+    assert block.factor_variables_for_trial(color, 1) == [1, 2]
+    assert block.factor_variables_for_trial(color, 4) == [13, 14]
+
+    assert block.factor_variables_for_trial(text, 2) == [7, 8]
+
+    assert block.factor_variables_for_trial(color_repeats_factor, 2) == [17, 18]
+    assert block.factor_variables_for_trial(color_repeats_factor, 4) == [21, 22]
+
+
 def test_fully_cross_block_decode_variable():
     block = fully_cross_block([color, text, color_repeats_factor, text_repeats_factor],
                               [color, text],
@@ -162,6 +174,19 @@ def test_fully_cross_block_trials_per_sample():
 
     assert FullyCrossBlock([color, text, color_repeats_factor], [color, text], []).trials_per_sample() == 4
 
+
+def test_fully_cross_block_trials_per_sample_with_transition_in_crossing():
+    block = fully_cross_block([color, text, color_repeats_factor],
+                              [text, color_repeats_factor],
+                              [])
+
+    # Typically, only 4 trials are needed to cross two factors each with two levels. (2 * 2 = 4)
+    # However, because one of these factors is a transition, it doesn't apply to the first trial.
+    # As a result, we actually need 5 trials to do a full crossing between the two.
+    assert block.trials_per_sample() == 5
+
+    # The crossing size is still just 4.
+    assert block.crossing_size() == 4
 
 def test_fully_cross_block_variables_per_trial():
     assert FullyCrossBlock([color, text], [], []).variables_per_trial() == 4
