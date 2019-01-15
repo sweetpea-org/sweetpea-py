@@ -190,7 +190,7 @@ class FullyCrossBlock(Block):
         return sum([len(factor.levels) for factor in grid_factors])
 
     def grid_variables(self):
-        return self.crossing_size() * self.variables_per_trial()
+        return self.trials_per_sample() * self.variables_per_trial()
 
     def crossing_size(self):
         return reduce(lambda sum, factor: sum * len(factor.levels), self.crossing, 1)

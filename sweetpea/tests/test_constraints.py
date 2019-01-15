@@ -242,6 +242,32 @@ def test_fully_cross_with_uncrossed_simple_factors():
     ]
 
 
+def test_fully_cross_with_transition_in_crossing():
+    direction = Factor("direction", ["up", "down"])
+
+    block = fully_cross_block([direction, color, color_repeats_factor],
+                              [direction, color_repeats_factor],
+                              [])
+
+    backend_request = BackendRequest(29)
+    FullyCross.apply(block, backend_request)
+
+    (expected_cnf, _) = to_cnf_tseitin(And([
+        Iff(29, And([ 5, 21])), Iff(30, And([ 5, 22])), Iff(31, And([ 6, 21])), Iff(32, And([ 6, 22])),
+        Iff(33, And([ 9, 23])), Iff(34, And([ 9, 24])), Iff(35, And([10, 23])), Iff(36, And([10, 24])),
+        Iff(37, And([13, 25])), Iff(38, And([13, 26])), Iff(39, And([14, 25])), Iff(40, And([14, 26])),
+        Iff(41, And([17, 27])), Iff(42, And([17, 28])), Iff(43, And([18, 27])), Iff(44, And([18, 28])),
+    ]), 45)
+
+    assert backend_request.fresh == 78
+    assert backend_request.cnfs == [expected_cnf]
+    assert backend_request.ll_requests == [
+        LowLevelRequest("EQ", 1, [29, 33, 37, 41]),
+        LowLevelRequest("EQ", 1, [30, 34, 38, 42]),
+        LowLevelRequest("EQ", 1, [31, 35, 39, 43]),
+        LowLevelRequest("EQ", 1, [32, 36, 40, 44])
+    ]
+
 def test_derivation():
     # Congruent derivation
     d = Derivation(4, [[0, 2], [1, 3]], con_factor)

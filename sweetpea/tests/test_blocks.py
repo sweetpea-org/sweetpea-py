@@ -90,6 +90,21 @@ def test_factor_variables_for_trial():
     assert block.factor_variables_for_trial(color_repeats_factor, 4) == [21, 22]
 
 
+def test_factor_variables_for_trial_with_expanded_crossing():
+    # Because a transition is included in the crossing, this design requires 5 trials.
+    block = fully_cross_block([color, text, color_repeats_factor], [color, color_repeats_factor], [])
+
+    assert block.factor_variables_for_trial(color, 1) == [1, 2]
+    assert block.factor_variables_for_trial(color, 5) == [17, 18]
+
+    assert block.factor_variables_for_trial(text, 2) == [7, 8]
+    assert block.factor_variables_for_trial(text, 5) == [19, 20]
+
+    assert block.factor_variables_for_trial(color_repeats_factor, 2) == [21, 22]
+    assert block.factor_variables_for_trial(color_repeats_factor, 4) == [25, 26]
+    assert block.factor_variables_for_trial(color_repeats_factor, 5) == [27, 28]
+
+
 def test_fully_cross_block_decode_variable():
     block = fully_cross_block([color, text, color_repeats_factor, text_repeats_factor],
                               [color, text],
