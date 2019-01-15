@@ -4,7 +4,7 @@ from functools import reduce
 
 from sweetpea.base_constraint import Constraint
 from sweetpea.internal import chunk, chunk_list, pairwise, get_all_level_names
-from sweetpea.blocks import Block
+from sweetpea.blocks import Block, FullyCrossBlock
 from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import Iff, And, Or
 from sweetpea.primitives import Factor, get_level_name
@@ -83,45 +83,29 @@ Continuing with example from __desugar_consistency we will represent the states:
 """
 class FullyCross(Constraint):
     @staticmethod
-    def apply(block: Block, backend_request: BackendRequest) -> None:
+    def apply(block: FullyCrossBlock, backend_request: BackendRequest) -> None:
         fresh = backend_request.fresh
+        num_states = block.crossing_size() # Number of trials needed to do a full crossing.
 
-        num_states = block.trials_per_sample() # same as number of trials in fully crossing
-        simple_design = list(filter(lambda f: not f.has_complex_window(), block.design))
+        # Step 1: Get a list of the trials that are involved in the crossing.
+        crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t), block.crossing)), range(1, block.trials_per_sample() + 1)))
 
-        # Step 1:
-        num_state_vars = num_states * num_states
-        stateVars = list(range(fresh, fresh + num_state_vars))
+        # Step 2: For each trial, cross all levels of all factors in the crossing.
+        crossings = []
+        for t in crossing_trials:
+            crossings.extend(list(product(*[block.factor_variables_for_trial(f, t) for f in block.crossing])))
 
+        # Step 3: Allocate additional variables to represent each crossing.
+        num_state_vars = len(crossings)
+        state_vars = list(range(fresh, fresh + num_state_vars))
         fresh += num_state_vars
 
-        # Step 2:
-        states = list(chunk(stateVars, num_states))
+        # Step 4: Associate each state variable with its crossing.
+        iffs = [Iff(state_vars[n], And(list(crossings[n]))) for n in range(len(state_vars))]
+
+        # Step 5: Constrain each crossing to occur in only one trial.
+        states = list(chunk(state_vars, num_states))
         transposed = cast(List[List[int]], list(map(list, zip(*states))))
-        chunked_trials = list(chunk(list(range(1, block.grid_variables() + 1)), block.variables_per_trial()))
-
-        # 1. group chunked_trials into factor shaped subchunks
-        # ie, [[1, 2], [3, 4], [5, 6]], [[7, 8], ...
-        delimiters = list(accumulate([0] + list(map(lambda i: len(simple_design[i].levels), range(len(simple_design))))))
-        slices = list(pairwise(delimiters))
-        subchunked_trials = [[list(l[s[0]:s[1]]) for s in slices] for l in chunked_trials]
-
-        # 2. grab the subchunks which correspond to levels in the crossing
-        # ie, [[1, 2], [3, 4]], [[7, 8], [9, 10]], [[...
-        factor_dict = {factor.name: factor_index for factor_index, factor in enumerate(simple_design)}
-        keep_factor_indices = [factor_dict[factor.name] for factor in block.crossing]
-        subchunk_levels = [[chunked_trial[idx] for idx in keep_factor_indices] for chunked_trial in subchunked_trials]
-
-        # 3. for each trial, take the itertools product of all the subchunks
-        # ie, [[1, 3], [1, 4], [2, 3], [2, 4]], ...
-        products = [list(product(*subchunks)) for subchunks in subchunk_levels]
-        flattened_products = list(chain(*products))
-
-        # 4. get those into an Iff w/ the state variables; ie Iff(25, And([1,3])) & then toCNF that & stash it on the queue.
-        iffs = [Iff(stateVars[n], And(list(flattened_products[n]))) for n in range(len(stateVars))]
-
-        # Step 3:
-        # 5. make Requests for each transposed list that add up to k=1.
         backend_request.ll_requests += list(map(lambda l: LowLevelRequest("EQ", 1, l), transposed))
 
         (cnf, new_fresh) = block.cnf_fn(And(iffs), fresh)
