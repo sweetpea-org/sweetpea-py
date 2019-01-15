@@ -48,3 +48,25 @@ def test_correct_solution_count_when_constrained(design):
     experiments  = synthesize_trials_non_uniform(block, 500)
 
     assert len(experiments) == 128
+
+
+@pytest.mark.parametrize('design', permutations([direction, color, repeated_color_factor]))
+def test_correct_solution_count_when_transition_in_crossing_and_unconstrained(design):
+    crossing = [direction, repeated_color_factor]
+    constraints = []
+
+    block  = fully_cross_block(design, crossing, constraints)
+    experiments  = synthesize_trials_non_uniform(block, 100)
+
+    assert len(experiments) == 96
+
+
+@pytest.mark.parametrize('design', permutations([direction, color, repeated_color_factor]))
+def test_correct_solution_count_when_transition_in_crossing_and_constrained(design):
+    crossing = [direction, repeated_color_factor]
+    constraints = [NoMoreThanKInARow(1, ("color", "red"))]
+
+    block  = fully_cross_block(design, crossing, constraints)
+    experiments  = synthesize_trials_non_uniform(block, 100)
+
+    assert len(experiments) == 32
