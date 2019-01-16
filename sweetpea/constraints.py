@@ -317,6 +317,14 @@ class AtMostKInARow(Constraint):
         return str(self.__dict__)
 
 
+"""
+Equivalent to AtMostKInARow.
+"""
+class NoMoreThanKInARow(Constraint):
+    def __new__(self, k, levels):
+        return AtMostKInARow(k, levels)
+
+
 class Forbid(Constraint):
     def __init__(self, level):
         self.level = level

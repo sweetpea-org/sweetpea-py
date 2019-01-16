@@ -6,7 +6,7 @@ from itertools import permutations
 from sweetpea import fully_cross_block
 from sweetpea.blocks import Block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
-from sweetpea.constraints import Consistency, FullyCross, Derivation, AtMostKInARow, Forbid
+from sweetpea.constraints import Consistency, FullyCross, Derivation, AtMostKInARow, NoMoreThanKInARow, Forbid
 from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import And, Or, Iff, to_cnf_tseitin
 
@@ -494,6 +494,15 @@ def test_atmostkinarow():
         LowLevelRequest("LT", 1, [11]),
         LowLevelRequest("LT", 1, [17]),
         LowLevelRequest("LT", 1, [23])
+    ]
+
+
+def test_nomorethankinarow_sugar():
+    backend_request = __run_atmostkinarow(NoMoreThanKInARow(1, ("color", "red")))
+    assert backend_request.ll_requests == [
+        LowLevelRequest("LT", 2, [1,  7 ]),
+        LowLevelRequest("LT", 2, [7,  13]),
+        LowLevelRequest("LT", 2, [13, 19])
     ]
 
 
