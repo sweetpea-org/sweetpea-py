@@ -16,7 +16,8 @@ setuptools.setup(
     install_requires=[
       'docker',
       'requests',
-      'ascii-graph'
+      'ascii-graph',
+      'networkx'
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
