@@ -119,8 +119,8 @@ resp_transition = Factor("resp_transition", DerivedLevel("repeat", Transition(re
                                             DerivedLevel("switch", Transition(resp_switch, [color0, color1])))
 
 k = 7
-constraints = [ NoMoreThanKInARow k task_transition,
-                NoMoreThanKInARow k resp_transition ]
+constraints = [ AtMostKInARow k task_transition,
+                AtMostKInARow k resp_transition ]
 
 design       = [congruency, response, task, task_transition, resp_transition, color, motion]
 

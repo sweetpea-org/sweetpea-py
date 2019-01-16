@@ -41,7 +41,7 @@ design       = [color, text, conFactor]
 crossing     = [color, text]
 
 k = 1
-constraints = [NoMoreThanKInARow(k, ("congruent?", "con"))]
+constraints = [AtMostKInARow(k, ("congruent?", "con"))]
 
 block        = fully_cross_block(design, crossing, constraints)
 

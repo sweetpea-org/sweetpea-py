@@ -3,7 +3,7 @@ import pytest
 
 from itertools import permutations
 
-from sweetpea import Factor, DerivedLevel, WithinTrial, NoMoreThanKInARow, Transition
+from sweetpea import Factor, DerivedLevel, WithinTrial, AtMostKInARow, Transition
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform
 
 

@@ -6,7 +6,7 @@ from itertools import permutations
 from sweetpea import fully_cross_block
 from sweetpea.blocks import Block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
-from sweetpea.constraints import Consistency, FullyCross, Derivation, NoMoreThanKInARow, Forbid
+from sweetpea.constraints import Consistency, FullyCross, Derivation, AtMostKInARow, Forbid
 from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import And, Or, Iff, to_cnf_tseitin
 

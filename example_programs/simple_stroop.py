@@ -1,7 +1,7 @@
 import operator as op
 
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial
-from sweetpea.constraints import NoMoreThanKInARow
+from sweetpea.constraints import AtMostKInARow
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
 
 
@@ -16,7 +16,7 @@ conFactor = Factor("congruent?", [conLevel, incLevel])
 design       = [color, text, conFactor]
 crossing     = [color, text]
 
-constraints = [NoMoreThanKInARow(1, ("congruent?", "con"))]
+constraints = [AtMostKInARow(1, ("congruent?", "con"))]
 
 block        = fully_cross_block(design, crossing, constraints)
 

@@ -4,7 +4,7 @@ import pytest
 from itertools import permutations
 
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
-from sweetpea.constraints import NoMoreThanKInARow, Derivation
+from sweetpea.constraints import AtMostKInARow, Derivation
 from sweetpea.derivation_processor import DerivationProcessor
 from sweetpea.blocks import Block
 from sweetpea import fully_cross_block

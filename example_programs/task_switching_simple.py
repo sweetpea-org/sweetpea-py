@@ -1,5 +1,5 @@
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
-from sweetpea.constraints import NoMoreThanKInARow
+from sweetpea.constraints import AtMostKInARow
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
 
 
@@ -122,8 +122,8 @@ resp_transition = Factor("resp_transition", [
 ])
 
 k = 7
-constraints = [NoMoreThanKInARow(k, task_transition),
-               NoMoreThanKInARow(k, resp_transition)]
+constraints = [AtMostKInARow(k, task_transition),
+               AtMostKInARow(k, resp_transition)]
 
 design       = [color, motion, task, congruency, response, task_transition, resp_transition]
 crossing     = [color, motion, task]

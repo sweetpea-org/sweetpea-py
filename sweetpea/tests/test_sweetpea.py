@@ -3,7 +3,7 @@ import pytest
 
 from sweetpea import fully_cross_block, __decode
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
-from sweetpea.constraints import NoMoreThanKInARow
+from sweetpea.constraints import AtMostKInARow
 from sweetpea.logic import to_cnf_tseitin
 
 

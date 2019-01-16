@@ -15,7 +15,7 @@ def some_fun(color0, text0, color1, text1, color2):
     return None
 
 
-NoMoreThanKInARow(k, conLevel)
+AtMostKInARow(k, conLevel)
 Balance(congruentFactor)
 
 

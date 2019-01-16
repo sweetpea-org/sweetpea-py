@@ -3,7 +3,7 @@ import pytest
 
 from itertools import permutations
 
-from sweetpea import Factor, DerivedLevel, WithinTrial, NoMoreThanKInARow, Transition
+from sweetpea import Factor, DerivedLevel, WithinTrial, AtMostKInARow, Transition
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform
 
 
@@ -55,7 +55,7 @@ def test_correct_solution_count_with_congruence_factor_but_unconstrained(design)
 @pytest.mark.parametrize('design', permutations([color, text, con_factor]))
 def test_correct_solution_count_with_congruence_factor_and_constrained(design):
     crossing = [color, text]
-    constraints = [NoMoreThanKInARow(1, ("congruent?", "con"))]
+    constraints = [AtMostKInARow(1, ("congruent?", "con"))]
 
     block  = fully_cross_block(design, crossing, constraints)
     experiments  = synthesize_trials_non_uniform(block, 100)
@@ -77,7 +77,7 @@ def test_correct_solution_count_with_repeated_color_factor_but_unconstrained(des
 @pytest.mark.parametrize('design', permutations([color, text, repeated_color_factor]))
 def test_correct_solution_count_with_repeated_color_factor_and_constrained(design):
     crossing = [color, text]
-    constraints = [NoMoreThanKInARow(1, ("repeated color?", "yes"))]
+    constraints = [AtMostKInARow(1, ("repeated color?", "yes"))]
 
     block  = fully_cross_block(design, crossing, constraints)
     experiments  = synthesize_trials_non_uniform(block, 100)
@@ -102,8 +102,8 @@ def test_correct_solution_count_with_repeated_color_and_text_factors_but_unconst
 def test_correct_solution_count_with_repeated_color_and_text_factors_and_constrained(design):
     crossing = [color, text]
     constraints = [
-        NoMoreThanKInARow(1, ("repeated color?", "yes")),
-        NoMoreThanKInARow(1, ("repeated text?", "yes"))
+        AtMostKInARow(1, ("repeated color?", "yes")),
+        AtMostKInARow(1, ("repeated text?", "yes"))
     ]
 
     block  = fully_cross_block(design, crossing, constraints)
@@ -115,7 +115,7 @@ def test_correct_solution_count_with_repeated_color_and_text_factors_and_constra
 @pytest.mark.parametrize('design', permutations([color, text, repeated_color_factor]))
 def test_correct_solution_count_with_repeated_color_factor_and_no_repetition_allowed(design):
     crossing = [color, text]
-    constraints = [NoMoreThanKInARow(0, ("repeated color?", "yes"))]
+    constraints = [AtMostKInARow(0, ("repeated color?", "yes"))]
 
     block  = fully_cross_block(design, crossing, constraints)
     experiments  = synthesize_trials_non_uniform(block, 100)

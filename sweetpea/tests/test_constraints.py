@@ -6,7 +6,7 @@ from itertools import permutations
 from sweetpea import fully_cross_block
 from sweetpea.blocks import Block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
-from sweetpea.constraints import Consistency, FullyCross, Derivation, NoMoreThanKInARow, Forbid
+from sweetpea.constraints import Consistency, FullyCross, Derivation, AtMostKInARow, Forbid
 from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import And, Or, Iff, to_cnf_tseitin
 
@@ -429,66 +429,66 @@ def test_derivation_with_general_window():
     assert backend_request.cnfs == [expected_cnf]
 
 
-def test_nomorethankinarow_validate():
+def test_atmostkinarow_validate():
     with pytest.raises(ValueError):
-        NoMoreThanKInARow("yo", color)
+        AtMostKInARow("yo", color)
 
     # Levels must either be a factor/level tuple, or a Factor.
-    NoMoreThanKInARow(1, ("factor", "level"))
-    NoMoreThanKInARow(1, color)
+    AtMostKInARow(1, ("factor", "level"))
+    AtMostKInARow(1, color)
 
     with pytest.raises(ValueError):
-        NoMoreThanKInARow(1, 42)
+        AtMostKInARow(1, 42)
 
     with pytest.raises(ValueError):
-        NoMoreThanKInARow(1, ("factor", "level", "oops"))
+        AtMostKInARow(1, ("factor", "level", "oops"))
 
 
-def __run_nomorethankinarow(c: NoMoreThanKInARow, block: Block = block) -> BackendRequest:
+def __run_atmostkinarow(c: AtMostKInARow, block: Block = block) -> BackendRequest:
     backend_request = BackendRequest(0)
     c.apply(block, backend_request)
     return backend_request
 
 
-def test_nomorethankinarow():
-    backend_request = __run_nomorethankinarow(NoMoreThanKInARow(3, color))
+def test_atmostkinarow():
+    backend_request = __run_atmostkinarow(AtMostKInARow(3, color))
     assert backend_request.ll_requests == [
         LowLevelRequest("LT", 4, [1,  7, 13, 19]),
         LowLevelRequest("LT", 4, [2,  8, 14, 20])
     ]
 
-    backend_request = __run_nomorethankinarow(NoMoreThanKInARow(1, ("color", "red")))
+    backend_request = __run_atmostkinarow(AtMostKInARow(1, ("color", "red")))
     assert backend_request.ll_requests == [
         LowLevelRequest("LT", 2, [1,  7 ]),
         LowLevelRequest("LT", 2, [7,  13]),
         LowLevelRequest("LT", 2, [13, 19])
     ]
 
-    backend_request = __run_nomorethankinarow(NoMoreThanKInARow(2, ("color", "red")))
+    backend_request = __run_atmostkinarow(AtMostKInARow(2, ("color", "red")))
     assert backend_request.ll_requests == [
         LowLevelRequest("LT", 3, [1, 7,  13]),
         LowLevelRequest("LT", 3, [7, 13, 19])
     ]
 
-    backend_request = __run_nomorethankinarow(NoMoreThanKInARow(1, ("color", "blue")))
+    backend_request = __run_atmostkinarow(AtMostKInARow(1, ("color", "blue")))
     assert backend_request.ll_requests == [
         LowLevelRequest("LT", 2, [2,  8 ]),
         LowLevelRequest("LT", 2, [8,  14]),
         LowLevelRequest("LT", 2, [14, 20])
     ]
 
-    backend_request = __run_nomorethankinarow(NoMoreThanKInARow(2, ("color", "blue")))
+    backend_request = __run_atmostkinarow(AtMostKInARow(2, ("color", "blue")))
     assert backend_request.ll_requests == [
         LowLevelRequest("LT", 3, [2, 8,  14]),
         LowLevelRequest("LT", 3, [8, 14, 20])
     ]
 
-    backend_request = __run_nomorethankinarow(NoMoreThanKInARow(3, ("congruent?", "con")))
+    backend_request = __run_atmostkinarow(AtMostKInARow(3, ("congruent?", "con")))
     assert backend_request.ll_requests == [
         LowLevelRequest("LT", 4, [5, 11, 17, 23])
     ]
 
-    backend_request = __run_nomorethankinarow(NoMoreThanKInARow(0, ("congruent?", "con")))
+    backend_request = __run_atmostkinarow(AtMostKInARow(0, ("congruent?", "con")))
     assert backend_request.ll_requests == [
         LowLevelRequest("LT", 1, [5]),
         LowLevelRequest("LT", 1, [11]),
@@ -498,34 +498,34 @@ def test_nomorethankinarow():
 
 
 @pytest.mark.parametrize('design', permutations([color, text, color_repeats_factor]))
-def test_nomorethankinarow_with_transition(design):
+def test_atmostkinarow_with_transition(design):
     block = fully_cross_block(design, [color, text], [])
 
-    backend_request = __run_nomorethankinarow(NoMoreThanKInARow(1, ("color repeats?", "yes")), block)
+    backend_request = __run_atmostkinarow(AtMostKInARow(1, ("color repeats?", "yes")), block)
     assert backend_request.ll_requests == [
         LowLevelRequest("LT", 2, [17, 19]),
         LowLevelRequest("LT", 2, [19, 21])
     ]
 
-    backend_request = __run_nomorethankinarow(NoMoreThanKInARow(1, ("color repeats?", "no")), block)
+    backend_request = __run_atmostkinarow(AtMostKInARow(1, ("color repeats?", "no")), block)
     assert backend_request.ll_requests == [
         LowLevelRequest("LT", 2, [18, 20]),
         LowLevelRequest("LT", 2, [20, 22])
     ]
 
 
-def test_nomorethankinarow_with_multiple_transitions():
+def test_atmostkinarow_with_multiple_transitions():
     block = fully_cross_block([color, text, color_repeats_factor, text_repeats_factor],
                               [color, text],
                               [])
 
-    backend_request = __run_nomorethankinarow(NoMoreThanKInARow(1, ("text repeats?", "yes")), block)
+    backend_request = __run_atmostkinarow(AtMostKInARow(1, ("text repeats?", "yes")), block)
     assert backend_request.ll_requests == [
         LowLevelRequest("LT", 2, [23, 25]),
         LowLevelRequest("LT", 2, [25, 27])
     ]
 
-    backend_request = __run_nomorethankinarow(NoMoreThanKInARow(1, ("text repeats?", "no")), block)
+    backend_request = __run_atmostkinarow(AtMostKInARow(1, ("text repeats?", "no")), block)
     assert backend_request.ll_requests == [
         LowLevelRequest("LT", 2, [24, 26]),
         LowLevelRequest("LT", 2, [26, 28])

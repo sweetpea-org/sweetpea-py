@@ -4,9 +4,9 @@ from itertools import repeat, permutations
 from random import shuffle
 
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
-from sweetpea.constraints import NoMoreThanKInARow
+from sweetpea.constraints import AtMostKInARow
 from sweetpea import fully_cross_block, print_experiments, synthesize_trials_non_uniform, __generate_cnf
-from acceptance import assert_nomorethankinarow
+from acceptance import assert_atmostkinarow
 
 # Simple Factors
 color  = Factor("color",  ["red", "blue"])
@@ -64,8 +64,8 @@ def test_that_design_is_correctly_constrained(design):
 
     k = 2
     constraints = [
-        NoMoreThanKInARow(k, task_transition),
-        NoMoreThanKInARow(k, response_transition)
+        AtMostKInARow(k, task_transition),
+        AtMostKInARow(k, response_transition)
     ]
 
     block = fully_cross_block(design, crossing, constraints)
@@ -73,5 +73,5 @@ def test_that_design_is_correctly_constrained(design):
 
     assert len(experiments) == 100, "Design: %s" % str(list(map(lambda f: f.name, design)))
     for c in constraints:
-        assert_nomorethankinarow(c, experiments)
+        assert_atmostkinarow(c, experiments)
 

@@ -156,7 +156,7 @@ levels & various windowsizes. One test is the experiment:
     color = ["r", "b", "g"];
     text = ["r", "b"];
     conFactor;
-    fullycross(color, text) + noMoreThanKInARow 1 conLevel
+    fullycross(color, text) + AtMostKInARow 1 conLevel
 
 """
 class Derivation(Constraint):
@@ -231,7 +231,7 @@ The only thing to do here is to collect all the boolean vars that match the same
 level & pair them up according to k.
 
 Continuing with the example from __desugar_consistency, say we want
-NoMoreThanKInARow 1 ("color", "red"), then we need to grab all the vars which
+AtMostKInARow 1 ("color", "red"), then we need to grab all the vars which
 indicate color-red:
 
     [1, 7, 13, 19]
@@ -242,12 +242,12 @@ and then wrap them up so that we're making requests like:
     sum(7, 13)  LT 2
     sum(13, 19) LT 2
 
-If it had been NoMoreThanKInARow 2 ("color", "red"), the reqs would have been:
+If it had been AtMostKInARow 2 ("color", "red"), the reqs would have been:
 
     sum(1, 7, 13)  LT 3
     sum(7, 13, 19) LT 3
 """
-class NoMoreThanKInARow(Constraint):
+class AtMostKInARow(Constraint):
     def __init__(self, k, levels):
         self.k = k
         self.levels = levels
@@ -255,14 +255,14 @@ class NoMoreThanKInARow(Constraint):
 
     def __validate(self) -> None:
         if not isinstance(self.k, int):
-            raise ValueError("NoMoreThanKInARow.k must be an integer.")
+            raise ValueError("AtMostKInARow.k must be an integer.")
 
         if not (isinstance(self.levels, Factor) or \
                 (isinstance(self.levels, tuple) and \
                  len(self.levels) == 2 and \
                  isinstance(self.levels[0], str) and \
                  isinstance(self.levels[1], str))):
-            raise ValueError("NoMoreThanKInARow.levels must be either a Factor or a Tuple[str, str].")
+            raise ValueError("AtMostKInARow.levels must be either a Factor or a Tuple[str, str].")
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
         # Apply the constraint to each level in the factor.
@@ -278,7 +278,7 @@ class NoMoreThanKInARow(Constraint):
             backend_request.ll_requests += self.__generate_requests(cast(Tuple[str, str], self.levels), block)
 
         else:
-            raise("Unrecognized levels specification in NoMoreThanKInARow constraint: " + self.levels)
+            raise("Unrecognized levels specification in AtMostKInARow constraint: " + self.levels)
 
     def __generate_requests(self, level:Tuple[str, str], block: Block) -> List[LowLevelRequest]:
         first_variable = block.first_variable_for_level(level[0], level[1]) + 1
