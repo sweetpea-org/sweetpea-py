@@ -130,6 +130,7 @@ class __BaseWindow():
         self.width = width
         self.stride = stride
         # TODO: validation
+        # TODO: args should all be factors
 
 
 """

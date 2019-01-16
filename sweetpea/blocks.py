@@ -1,11 +1,14 @@
 from abc import abstractmethod
 from functools import reduce
+from itertools import combinations
+from networkx import has_path
 from typing import List, Union, Tuple
 
 from sweetpea.internal import get_all_level_names
 from sweetpea.primitives import Factor, Transition, Window, get_level_name
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.base_constraint import Constraint
+from sweetpea.design_graph import DesignGraph
 
 
 """
@@ -157,8 +160,22 @@ class FullyCrossBlock(Block):
         self.__validate()
 
     def __validate(self):
-        # TODO: Ensure that no two factors in the crossing share a common ancestor.
-        pass
+        self.__validate_crossing()
+
+    def __validate_crossing(self):
+        dg = DesignGraph(self.design).graph
+        combos = combinations(self.crossing, 2)
+
+        errors = []
+        template = "'{}' depends on '{}'"
+        for c in combos:
+            if has_path(dg, c[0].name, c[1].name):
+                errors.append(template.format(c[0].name, c[1].name))
+            elif has_path(dg, c[1].name, c[0].name):
+                errors.append(template.format(c[1].name, c[0].name))
+
+        if errors:
+            raise ValueError("This crossing is invalid! The following errors were found:\n" + reduce(lambda accum, s: accum + s + "\n", errors, ""))
 
     """
     Given a factor f, and a crossing size, this function will compute the number of trials

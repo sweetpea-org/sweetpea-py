@@ -10,6 +10,7 @@ from sweetpea.blocks import FullyCrossBlock
 color = Factor("color", ["red", "blue"])
 text  = Factor("text",  ["red", "blue"])
 size  = Factor("size",  ["big", "small", "tiny"])
+direction = Factor("direction", ["up", "down"])
 
 con_level  = DerivedLevel("con", WithinTrial(op.eq, [color, text]))
 inc_level  = DerivedLevel("inc", WithinTrial(op.ne, [color, text]))
@@ -40,13 +41,8 @@ color3_repeats_factor = Factor("color3 repeats?", [
 ])
 
 
-@pytest.mark.skip
 def test_fully_cross_block_validate():
-    # TODO: This needs to be revised to validate based on the ancestral graph.
-    # Should not allow DerivedLevels in the crossing.
-    # I think it makes sense to prohibit this, but I could be wrong. At the very least,
-    # this will leave a reminder that, if it does make sense, there is more work in the
-    # codebase to allow it correctly. The FullyCross constraint won't handle it right now.
+    # Invalid crossings
     with pytest.raises(ValueError):
         FullyCrossBlock([color, text, con_factor],
                         [color, text, con_factor],
@@ -92,7 +88,7 @@ def test_factor_variables_for_trial():
 
 def test_factor_variables_for_trial_with_expanded_crossing():
     # Because a transition is included in the crossing, this design requires 5 trials.
-    block = fully_cross_block([color, text, color_repeats_factor], [color, color_repeats_factor], [])
+    block = fully_cross_block([color, text, color_repeats_factor], [text, color_repeats_factor], [])
 
     assert block.factor_variables_for_trial(color, 1) == [1, 2]
     assert block.factor_variables_for_trial(color, 5) == [17, 18]
@@ -181,11 +177,21 @@ def test_fully_cross_block_decode_variable_with_general_window():
 def test_fully_cross_block_trials_per_sample():
     text_single  = Factor("text",  ["red"])
 
-    assert FullyCrossBlock([], [color, color], []).trials_per_sample() == 4
-    assert FullyCrossBlock([], [color, color, color], []).trials_per_sample() == 8
-    assert FullyCrossBlock([], [size, text_single], []).trials_per_sample() == 3
-    assert FullyCrossBlock([], [size, color], []).trials_per_sample() == 6
-    assert FullyCrossBlock([], [text_single], []).trials_per_sample() == 1
+    assert FullyCrossBlock([color, text],
+                           [color, text],
+                           []).trials_per_sample() == 4
+    assert FullyCrossBlock([color, text, direction],
+                           [color, text, direction],
+                           []).trials_per_sample() == 8
+    assert FullyCrossBlock([size, text_single],
+                           [size, text_single],
+                           []).trials_per_sample() == 3
+    assert FullyCrossBlock([size, color],
+                           [size, color],
+                           []).trials_per_sample() == 6
+    assert FullyCrossBlock([text_single],
+                           [text_single],
+                           []).trials_per_sample() == 1
 
     assert FullyCrossBlock([color, text, color_repeats_factor], [color, text], []).trials_per_sample() == 4
 
