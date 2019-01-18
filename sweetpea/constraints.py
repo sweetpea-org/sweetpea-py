@@ -249,18 +249,18 @@ class _KInARow(Constraint):
             levels = self.levels.levels  # Get the actual levels out of the factor.
             level_names = list(map(lambda l: get_level_name(l), levels))
             level_tuples = list(map(lambda l_name: (self.levels.name, l_name), level_names))
-            requests = list(map(lambda t: self.generate_requests(t, block), level_tuples))
-            backend_request.ll_requests += list(chain(*requests))
+            for t in level_tuples:
+                self.apply_to_backend_request(t, block, backend_request)
 
         # Should be a Tuple containing the factor name, and the level name.
         elif isinstance(self.levels, tuple) and len(self.levels) == 2:
-            backend_request.ll_requests += self.generate_requests(cast(Tuple[str, str], self.levels), block)
+            self.apply_to_backend_request(cast(Tuple[str, str], self.levels), block, backend_request)
 
         else:
             raise("Unrecognized levels specification in AtMostKInARow constraint: " + self.levels)
 
     @abstractmethod
-    def generate_requests(self, level: Tuple[str, str], block: Block) -> List[LowLevelRequest]:
+    def apply_to_backend_request(self, level: Tuple[str, str], block: Block, backend_request: BackendRequest) -> None:
         pass
 
 
@@ -287,7 +287,7 @@ If it had been AtMostKInARow 2 ("color", "red"), the reqs would have been:
     sum(7, 13, 19) LT 3
 """
 class AtMostKInARow(_KInARow):
-    def generate_requests(self, level: Tuple[str, str], block: Block) -> List[LowLevelRequest]:
+    def apply_to_backend_request(self, level: Tuple[str, str], block: Block, backend_request: BackendRequest) -> None:
         first_variable = block.first_variable_for_level(level[0], level[1]) + 1
 
         # Build the variable list
@@ -301,7 +301,7 @@ class AtMostKInARow(_KInARow):
         sublists = list(filter(lambda l: len(l) == self.k + 1, raw_sublists))
 
         # Build the requests
-        return list(map(lambda l: LowLevelRequest("LT", self.k + 1, l), sublists))
+        backend_request.ll_requests += list(map(lambda l: LowLevelRequest("LT", self.k + 1, l), sublists))
 
     def __build_variable_list(self, block: Block, first_variable: int) -> List[int]:
         design_var_count = block.variables_per_trial()
@@ -333,8 +333,8 @@ class NoMoreThanKInARow(Constraint):
 
 
 class ExactlyKInARow(_KInARow):
-    def generate_requests(self, t: Tuple[str, str], b: Block) -> List[LowLevelRequest]:
-        return []
+    def apply_to_backend_request(self, t: Tuple[str, str], b: Block, backend_request: BackendRequest) -> None:
+        pass
 
 
 class Forbid(Constraint):
