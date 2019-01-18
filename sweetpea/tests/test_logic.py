@@ -1,4 +1,4 @@
-from sweetpea.logic import Iff, And, Or, Not, to_cnf_naive, to_cnf_switching, to_cnf_tseitin, cnf_to_json
+from sweetpea.logic import If, Iff, And, Or, Not, to_cnf_naive, to_cnf_switching, to_cnf_tseitin, cnf_to_json
 
 
 def test_to_cnf_naive():
@@ -98,6 +98,9 @@ def test_cnf_to_json():
 
 def test_eliminate_iff():
     from sweetpea.logic import __eliminate_iff
+
+    # P -> Q  ==> (~P v Q)
+    assert __eliminate_iff(If(1, 2)) == Or([Not(1), 2])
 
     # P <-> Q ==> (P v ~Q) ^ (~P v Q)
     assert __eliminate_iff(Iff(1, 2)) == And([Or([1, Not(2)]), Or([Not(1), 2])])
@@ -217,6 +220,33 @@ def test_tseitin_rep_not():
     cache = _Cache(2)
     assert cache.get(str(Not(1))) == 2 # Prewarm the cache.
     assert __tseitin_rep(Not(1), clauses, cache) == 2
+    assert clauses == []
+
+
+def test_tseitin_rep_if():
+    from sweetpea.logic import __tseitin_rep, _Cache
+
+    clauses = []
+    cache = _Cache(3)
+
+    # Make sure return is correct and value was cached.
+    assert __tseitin_rep(If(1, 2), clauses, cache) == 3
+    assert cache.get(str(If(1, 2))) == 3
+
+    # Make sure equivalence clauses were added.
+    assert Or([Not(1),     2,  Not(3)]) in clauses
+    assert Or([    1,      3]) in clauses
+    assert Or([Not(2),     3]) in clauses
+
+    # Don't duplicate clauses when the cache was already populated.
+    clauses = []
+    cache = _Cache(3)
+
+    # Prewarm the cache.
+    assert cache.get(str(If(1, 2))) == 3
+    assert __tseitin_rep(If(1, 2), clauses, cache) == 3
+
+    # Make sure no clauses were added.
     assert clauses == []
 
 

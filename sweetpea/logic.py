@@ -5,12 +5,13 @@ from typing import Any, Dict, List, Tuple, Union, cast
 from sweetpea.docker import update_docker_image, start_docker_container, stop_docker_container
 
 And = namedtuple('And', 'input_list')
-Or  = namedtuple('Or' , 'input_list')
+Or  = namedtuple('Or',  'input_list')
+If  = namedtuple('If',  'p q')
 Iff = namedtuple('Iff', 'p q')
 Not = namedtuple('Not', 'c')
 
 Formula = Union[And, Or, Not, int]
-FormulaWithIff = Union[And, Or, Iff, Not, int]
+FormulaWithIff = Union[And, Or, If, Iff, Not, int]
 FormulaAndFresh = Tuple[Formula, int]
 
 
@@ -105,6 +106,8 @@ def __eliminate_iff(f: FormulaWithIff) -> Formula:
         return And(list(map(__eliminate_iff, f.input_list)))
     elif isinstance(f, Or):
         return Or(list(map(__eliminate_iff, f.input_list)))
+    elif isinstance(f, If):
+        return __eliminate_iff(Or([Not(f.p), f.q]))
     elif isinstance(f, Iff):
         new_formula = And([
             Or([f.p, Not(f.q)]),
@@ -286,6 +289,23 @@ def __tseitin_rep(f: FormulaWithIff,
             clauses.append(Or(cast(List[Formula], new_vars) +
                               cast(List[Formula], [Not(new_rep)])))
             clauses.extend(list(map(lambda v: Or([Not(v), new_rep]), new_vars)))
+
+        return new_rep
+
+    elif isinstance(f, If):
+        # Replace any subformulae
+        new_p = __tseitin_rep(f.p, clauses, cache)
+        new_q = __tseitin_rep(f.q, clauses, cache)
+
+         # Get the variable that represents this clause
+        old_next_var = cache.get_next_variable()
+        new_rep = cache.get(str(If(new_p, new_q)))
+
+        # Record the equivalences, if the cache missed.
+        if old_next_var == new_rep:
+            clauses.append(Or([Not(new_p), new_q, Not(new_rep)]))
+            clauses.append(Or([    new_p,  new_rep]))
+            clauses.append(Or([Not(new_q), new_rep]))
 
         return new_rep
 
