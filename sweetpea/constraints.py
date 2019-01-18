@@ -1,4 +1,5 @@
-from typing import List, Tuple, cast
+from abc import abstractmethod
+from typing import List, Tuple, Any, cast
 from itertools import product, chain, accumulate, repeat
 from functools import reduce
 
@@ -225,6 +226,44 @@ class Derivation(Constraint):
         return str(self.__dict__)
 
 
+class _KInARow(Constraint):
+    def __init__(self, k, levels):
+        self.k = k
+        self.levels = levels
+        self.__validate()
+
+    def __validate(self) -> None:
+        if not isinstance(self.k, int):
+            raise ValueError("k must be an integer.")
+
+        if not (isinstance(self.levels, Factor) or \
+                (isinstance(self.levels, tuple) and \
+                 len(self.levels) == 2 and \
+                 isinstance(self.levels[0], str) and \
+                 isinstance(self.levels[1], str))):
+            raise ValueError("levels must be either a Factor or a Tuple[str, str].")
+
+    def apply(self, block: Block, backend_request: BackendRequest) -> None:
+        # Apply the constraint to each level in the factor.
+        if isinstance(self.levels, Factor):
+            levels = self.levels.levels  # Get the actual levels out of the factor.
+            level_names = list(map(lambda l: get_level_name(l), levels))
+            level_tuples = list(map(lambda l_name: (self.levels.name, l_name), level_names))
+            requests = list(map(lambda t: self.generate_requests(t, block), level_tuples))
+            backend_request.ll_requests += list(chain(*requests))
+
+        # Should be a Tuple containing the factor name, and the level name.
+        elif isinstance(self.levels, tuple) and len(self.levels) == 2:
+            backend_request.ll_requests += self.generate_requests(cast(Tuple[str, str], self.levels), block)
+
+        else:
+            raise("Unrecognized levels specification in AtMostKInARow constraint: " + self.levels)
+
+    @abstractmethod
+    def generate_requests(self, level: Tuple[str, str], block: Block) -> List[LowLevelRequest]:
+        pass
+
+
 """
 This desugars pretty directly into the llrequests.
 The only thing to do here is to collect all the boolean vars that match the same
@@ -247,40 +286,8 @@ If it had been AtMostKInARow 2 ("color", "red"), the reqs would have been:
     sum(1, 7, 13)  LT 3
     sum(7, 13, 19) LT 3
 """
-class AtMostKInARow(Constraint):
-    def __init__(self, k, levels):
-        self.k = k
-        self.levels = levels
-        self.__validate()
-
-    def __validate(self) -> None:
-        if not isinstance(self.k, int):
-            raise ValueError("AtMostKInARow.k must be an integer.")
-
-        if not (isinstance(self.levels, Factor) or \
-                (isinstance(self.levels, tuple) and \
-                 len(self.levels) == 2 and \
-                 isinstance(self.levels[0], str) and \
-                 isinstance(self.levels[1], str))):
-            raise ValueError("AtMostKInARow.levels must be either a Factor or a Tuple[str, str].")
-
-    def apply(self, block: Block, backend_request: BackendRequest) -> None:
-        # Apply the constraint to each level in the factor.
-        if isinstance(self.levels, Factor):
-            levels = self.levels.levels  # Get the actual levels out of the factor.
-            level_names = list(map(lambda l: get_level_name(l), levels))
-            level_tuples = list(map(lambda l_name: (self.levels.name, l_name), level_names))
-            requests = list(map(lambda t: self.__generate_requests(t, block), level_tuples))
-            backend_request.ll_requests += list(chain(*requests))
-
-        # Should be a Tuple containing the factor name, and the level name.
-        elif isinstance(self.levels, tuple) and len(self.levels) == 2:
-            backend_request.ll_requests += self.__generate_requests(cast(Tuple[str, str], self.levels), block)
-
-        else:
-            raise("Unrecognized levels specification in AtMostKInARow constraint: " + self.levels)
-
-    def __generate_requests(self, level:Tuple[str, str], block: Block) -> List[LowLevelRequest]:
+class AtMostKInARow(_KInARow):
+    def generate_requests(self, level: Tuple[str, str], block: Block) -> List[LowLevelRequest]:
         first_variable = block.first_variable_for_level(level[0], level[1]) + 1
 
         # Build the variable list
@@ -323,6 +330,11 @@ Equivalent to AtMostKInARow.
 class NoMoreThanKInARow(Constraint):
     def __new__(self, k, levels):
         return AtMostKInARow(k, levels)
+
+
+class ExactlyKInARow(_KInARow):
+    def generate_requests(self, t: Tuple[str, str], b: Block) -> List[LowLevelRequest]:
+        return []
 
 
 class Forbid(Constraint):
