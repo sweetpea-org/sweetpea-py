@@ -265,6 +265,11 @@ class _KInARow(Constraint):
         else:
             return self.__build_variable_list(block, level)
 
+    def _build_variable_sublists(self, block: Block, level: Tuple[str, str], sublist_length: int) -> List[List[int]]:
+        var_list = self._build_variable_list(block, level)
+        raw_sublists = [var_list[i:i+sublist_length] for i in range(0, len(var_list))]
+        return list(filter(lambda l: len(l) == sublist_length, raw_sublists))
+
     def __build_variable_list(self, block: Block, level: Tuple[str, str]) -> List[int]:
         first_variable = block.first_variable_for_level(level[0], level[1]) + 1
         design_var_count = block.variables_per_trial()
@@ -306,12 +311,7 @@ If it had been AtMostKInARow 2 ("color", "red"), the reqs would have been:
 """
 class AtMostKInARow(_KInARow):
     def apply_to_backend_request(self, block: Block, level: Tuple[str, str], backend_request: BackendRequest) -> None:
-        # Build the variable list
-        var_list = self._build_variable_list(block, level)
-
-        # Break up the var list into overlapping lists where len == k.
-        raw_sublists = [var_list[i:i+self.k+1] for i in range(0, len(var_list))]
-        sublists = list(filter(lambda l: len(l) == self.k + 1, raw_sublists))
+        sublists = self._build_variable_sublists(block, level, self.k + 1)
 
         # Build the requests
         backend_request.ll_requests += list(map(lambda l: LowLevelRequest("LT", self.k + 1, l), sublists))
