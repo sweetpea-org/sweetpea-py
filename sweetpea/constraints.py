@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import List, Tuple, Any, cast
+from typing import List, Tuple, Any, Union, cast
 from itertools import product, chain, accumulate, repeat
 from functools import reduce
 
@@ -7,7 +7,7 @@ from sweetpea.base_constraint import Constraint
 from sweetpea.internal import chunk, chunk_list, pairwise, get_all_level_names
 from sweetpea.blocks import Block, FullyCrossBlock
 from sweetpea.backend import LowLevelRequest, BackendRequest
-from sweetpea.logic import Iff, And, Or
+from sweetpea.logic import If, Iff, And, Or, Not, FormulaWithIff
 from sweetpea.primitives import Factor, get_level_name
 
 
@@ -334,9 +334,51 @@ class NoMoreThanKInARow(Constraint):
         return AtMostKInARow(k, levels)
 
 
+"""
+Requires that if the given level exists at all, it must exist in a sequence of exactly K.
+"""
 class ExactlyKInARow(_KInARow):
     def apply_to_backend_request(self, block: Block, level: Tuple[str, str], backend_request: BackendRequest) -> None:
-        pass
+        sublists = self._build_variable_sublists(block, level, self.k)
+        implications = []
+
+        # Handle the regular cases (1 => 2 ^ ... ^ n ^ ~n+1)
+        trim = len(sublists) if self.k > 1 else len(sublists) - 1
+        for idx, l in enumerate(sublists[:trim]):
+            if idx > 0:
+                p_list = [Not(sublists[idx-1][0]), l[0]]
+                p = And(p_list) if len(p_list) > 1 else p_list[0]
+            else:
+                p = l[0]
+
+            if idx < len(sublists) - 1:
+                q_list = cast(List[Any], l[1:]) + [Not(sublists[idx+1][-1])]
+                q = And(q_list) if len(q_list) > 1 else q_list[0]
+            else:
+                q = And(l[1:]) if len(l[1:]) > 1 else l[self.k - 1]
+
+            implications.append(If(p, q))
+
+        # Handle the tail
+        if len(sublists[-1]) > 1:
+            tail = sublists[-1]
+            tail.reverse()
+            for idx in range(len(tail) - 1):
+                implications.append(If(l[idx], l[idx + 1]))
+
+        (cnf, new_fresh) = block.cnf_fn(And(implications), backend_request.fresh)
+
+        backend_request.cnfs.append(cnf)
+        backend_request.fresh = new_fresh
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    def __repr__(self):
+        return str(self.__dict__)
+
+    def __str__(self):
+        return str(self.__dict__)
 
 
 class Forbid(Constraint):

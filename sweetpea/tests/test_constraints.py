@@ -445,7 +445,7 @@ def test_atmostkinarow_validate():
 
 
 def __run_kinarow(c: Constraint, block: Block = block) -> BackendRequest:
-    backend_request = BackendRequest(0)
+    backend_request = BackendRequest(block.variables_per_sample() + 1)
     c.apply(block, backend_request)
     return backend_request
 
@@ -541,17 +541,38 @@ def test_atmostkinarow_with_multiple_transitions():
     ]
 
 
-@pytest.mark.skip
 def test_exactlykinarow():
     backend_request = __run_kinarow(ExactlyKInARow(1, ("color", "red")))
     (expected_cnf, expected_fresh) = to_cnf_tseitin(And([
-        If(1, Not(2)),
-        If(And([Not(1), 2]), Not(3)),
-        If(And([Not(2), 3]), Not(4))
+        If(1, Not(7)),
+        If(And([Not(1), 7]), Not(13)),
+        If(And([Not(7), 13]), Not(19))
     ]), 25)
 
     assert backend_request.fresh == expected_fresh
-    assert backend_request.cnfs == expected_cnf
+    assert backend_request.cnfs == [expected_cnf]
+
+    backend_request = __run_kinarow(ExactlyKInARow(2, ("color", "red")))
+    (expected_cnf, expected_fresh) = to_cnf_tseitin(And([
+        If(1, And([7, Not(13)])),
+        If(And([Not(1), 7]), And([13, Not(19)])),
+        If(And([Not(7), 13]), 19),
+        If(19, 13)
+    ]), 25)
+
+    assert backend_request.fresh == expected_fresh
+    assert backend_request.cnfs == [expected_cnf]
+
+    backend_request = __run_kinarow(ExactlyKInARow(3, ("color", "red")))
+    (expected_cnf, expected_fresh) = to_cnf_tseitin(And([
+        If(1, And([7, 13, Not(19)])),
+        If(And([Not(1), 7]), And([13, 19])),
+        If(19, 13),
+        If(13, 7)
+    ]), 25)
+
+    assert backend_request.fresh == expected_fresh
+    assert backend_request.cnfs == [expected_cnf]
 
 
 def test_forbid():

@@ -3,7 +3,8 @@ import pytest
 
 from itertools import permutations
 
-from sweetpea import Factor, DerivedLevel, WithinTrial, AtMostKInARow, Transition
+from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
+from sweetpea.constraints import AtMostKInARow, ExactlyKInARow
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform
 
 
@@ -61,6 +62,17 @@ def test_correct_solution_count_with_congruence_factor_and_constrained(design):
     experiments  = synthesize_trials_non_uniform(block, 100)
 
     assert len(experiments) == 12
+
+
+@pytest.mark.parametrize('design', permutations([color, text, con_factor]))
+def test_correct_solution_count_with_congruence_factor_and_constrained_exactly(design):
+    crossing = [color, text]
+    constraints = [ExactlyKInARow(2, con_factor)]
+
+    block  = fully_cross_block(design, crossing, constraints)
+    experiments  = synthesize_trials_non_uniform(block, 100)
+
+    assert len(experiments) == 8
 
 
 @pytest.mark.parametrize('design', permutations([color, text, repeated_color_factor]))
