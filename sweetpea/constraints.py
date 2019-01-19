@@ -250,17 +250,35 @@ class _KInARow(Constraint):
             level_names = list(map(lambda l: get_level_name(l), levels))
             level_tuples = list(map(lambda l_name: (self.levels.name, l_name), level_names))
             for t in level_tuples:
-                self.apply_to_backend_request(t, block, backend_request)
+                self.apply_to_backend_request(block, t, backend_request)
 
         # Should be a Tuple containing the factor name, and the level name.
         elif isinstance(self.levels, tuple) and len(self.levels) == 2:
-            self.apply_to_backend_request(cast(Tuple[str, str], self.levels), block, backend_request)
+            self.apply_to_backend_request(block, cast(Tuple[str, str], self.levels), backend_request)
 
         else:
             raise("Unrecognized levels specification in AtMostKInARow constraint: " + self.levels)
 
+    def _build_variable_list(self, block: Block, level: Tuple[str, str]) -> List[int]:
+        if block.get_factor(level[0]).has_complex_window():
+            return self.__build_complex_variable_list(block, level)
+        else:
+            return self.__build_variable_list(block, level)
+
+    def __build_variable_list(self, block: Block, level: Tuple[str, str]) -> List[int]:
+        first_variable = block.first_variable_for_level(level[0], level[1]) + 1
+        design_var_count = block.variables_per_trial()
+        num_trials = block.trials_per_sample()
+        return list(accumulate(repeat(first_variable, num_trials), lambda acc, _: acc + design_var_count))
+
+    def __build_complex_variable_list(self, block: Block, level: Tuple[str, str]) -> List[int]:
+        factor = block.get_factor(level[0])
+        n = int(block.variables_for_factor(factor) / 2)
+        start = block.first_variable_for_level(level[0], level[1]) + 1
+        return reduce(lambda l, v: l + [start + (v * 2)], range(n), [])
+
     @abstractmethod
-    def apply_to_backend_request(self, level: Tuple[str, str], block: Block, backend_request: BackendRequest) -> None:
+    def apply_to_backend_request(self, block: Block, level: Tuple[str, str], backend_request: BackendRequest) -> None:
         pass
 
 
@@ -287,14 +305,9 @@ If it had been AtMostKInARow 2 ("color", "red"), the reqs would have been:
     sum(7, 13, 19) LT 3
 """
 class AtMostKInARow(_KInARow):
-    def apply_to_backend_request(self, level: Tuple[str, str], block: Block, backend_request: BackendRequest) -> None:
-        first_variable = block.first_variable_for_level(level[0], level[1]) + 1
-
+    def apply_to_backend_request(self, block: Block, level: Tuple[str, str], backend_request: BackendRequest) -> None:
         # Build the variable list
-        if first_variable <= block.variables_per_trial():
-            var_list = self.__build_variable_list(block, first_variable)
-        else:
-            var_list = self.__build_complex_variable_list(block, level)
+        var_list = self._build_variable_list(block, level)
 
         # Break up the var list into overlapping lists where len == k.
         raw_sublists = [var_list[i:i+self.k+1] for i in range(0, len(var_list))]
@@ -302,17 +315,6 @@ class AtMostKInARow(_KInARow):
 
         # Build the requests
         backend_request.ll_requests += list(map(lambda l: LowLevelRequest("LT", self.k + 1, l), sublists))
-
-    def __build_variable_list(self, block: Block, first_variable: int) -> List[int]:
-        design_var_count = block.variables_per_trial()
-        num_trials = block.trials_per_sample()
-        return list(accumulate(repeat(first_variable, num_trials), lambda acc, _: acc + design_var_count))
-
-    def __build_complex_variable_list(self, block: Block, level: Tuple[str, str]) -> List[int]:
-        factor = block.get_factor(level[0])
-        n = int(block.variables_for_factor(factor) / 2)
-        start = block.first_variable_for_level(level[0], level[1]) + 1
-        return reduce(lambda l, v: l + [start + (v * 2)], range(n), [])
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
@@ -333,7 +335,7 @@ class NoMoreThanKInARow(Constraint):
 
 
 class ExactlyKInARow(_KInARow):
-    def apply_to_backend_request(self, t: Tuple[str, str], b: Block, backend_request: BackendRequest) -> None:
+    def apply_to_backend_request(self, block: Block, level: Tuple[str, str], backend_request: BackendRequest) -> None:
         pass
 
 
