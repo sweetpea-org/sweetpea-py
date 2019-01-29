@@ -212,6 +212,10 @@ class FullyCrossBlock(Block):
     def crossing_size(self):
         return reduce(lambda sum, factor: sum * len(factor.levels), self.crossing, 1)
 
+    def draw_design_graph(self):
+        dg = DesignGraph(self.design)
+        dg.draw()
+
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 

@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="sweetpea",
-    version="0.0.22",
+    version="0.0.23",
     author="Annie Cherkaev, Ben Draut",
     author_email="annie.cherk@gmail.com, drautb@cs.utah.edu",
     description="A language for synthesizing randomized experimental designs",
@@ -17,7 +17,8 @@ setuptools.setup(
       'docker',
       'requests',
       'ascii-graph',
-      'networkx'
+      'networkx',
+      'matplotlib'
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

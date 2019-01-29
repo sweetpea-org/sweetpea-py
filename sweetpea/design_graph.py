@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import networkx as nx
 
 from typing import List
@@ -31,6 +32,10 @@ class DesignGraph():
                     g.add_edge(f.name, depended_on_factor.name)
 
         return g
+
+    def draw(self):
+        nx.draw(self.graph, with_labels=True)
+        plt.show()
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
