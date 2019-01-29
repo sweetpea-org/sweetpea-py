@@ -70,3 +70,14 @@ def test_correct_solution_count_when_transition_in_crossing_and_constrained(desi
     experiments  = synthesize_trials_non_uniform(block, 100)
 
     assert len(experiments) == 32
+
+
+@pytest.mark.parametrize('design', permutations([color, repeated_color_factor]))
+def test_correct_solution_count_when_crossing_with_derived_transition(design):
+    crossing = [color, repeated_color_factor]
+    constraints = []
+
+    block  = fully_cross_block(design, crossing, constraints)
+    experiments  = synthesize_trials_non_uniform(block, 100)
+
+    assert len(experiments) == 4

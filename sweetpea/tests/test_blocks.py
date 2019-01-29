@@ -41,14 +41,6 @@ color3_repeats_factor = Factor("color3 repeats?", [
 ])
 
 
-def test_fully_cross_block_validate():
-    # Invalid crossings
-    with pytest.raises(ValueError):
-        FullyCrossBlock([color, text, con_factor],
-                        [color, text, con_factor],
-                        [])
-
-
 @pytest.mark.parametrize('design,expected',
     [([color, text, color_repeats_factor, text_repeats_factor], [0, 2, 16, 22]),
      ([color, text, text_repeats_factor, color_repeats_factor], [0, 2, 22, 16]),

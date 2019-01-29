@@ -166,16 +166,16 @@ class FullyCrossBlock(Block):
         dg = DesignGraph(self.design).graph
         combos = combinations(self.crossing, 2)
 
-        errors = []
+        warnings = []
         template = "'{}' depends on '{}'"
         for c in combos:
             if has_path(dg, c[0].name, c[1].name):
-                errors.append(template.format(c[0].name, c[1].name))
+                warnings.append(template.format(c[0].name, c[1].name))
             elif has_path(dg, c[1].name, c[0].name):
-                errors.append(template.format(c[1].name, c[0].name))
+                warnings.append(template.format(c[1].name, c[0].name))
 
-        if errors:
-            raise ValueError("This crossing is invalid! The following errors were found:\n" + reduce(lambda accum, s: accum + s + "\n", errors, ""))
+        if warnings:
+            print("WARNING: There are dependencies between factors in the crossing. This may lead to unsatisfiable designs.\n" + reduce(lambda accum, s: accum + s + "\n", warnings, ""))
 
     """
     Given a factor f, and a crossing size, this function will compute the number of trials
