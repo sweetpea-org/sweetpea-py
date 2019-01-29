@@ -4,6 +4,7 @@ from itertools import combinations
 from networkx import has_path
 from typing import List, Union, Tuple
 
+from sweetpea.backend import BackendRequest
 from sweetpea.internal import get_all_level_names
 from sweetpea.primitives import Factor, Transition, Window, get_level_name
 from sweetpea.logic import to_cnf_tseitin
@@ -148,6 +149,18 @@ class Block:
                     return tuples[(variable - start) % len(f.levels)]
 
         raise RuntimeError('Unable to find factor/level for variable!')
+
+    """
+    Apply all constraints to build a BackendRequest. Formerly known as __desugar in __init.py__
+    """
+    def build_backend_request(self) -> BackendRequest:
+        fresh = 1 + self.variables_per_sample()
+        backend_request = BackendRequest(fresh)
+
+        for c in self.constraints:
+            c.apply(self, backend_request)
+
+        return backend_request
 
 
 """

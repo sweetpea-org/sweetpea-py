@@ -31,16 +31,6 @@ def __count_solutions(block: Block) -> int:
     return math.factorial(fc_size)
 
 
-def __desugar(block: Block) -> BackendRequest:
-    fresh = 1 + block.variables_per_sample()
-    backend_request = BackendRequest(fresh)
-
-    for c in block.constraints:
-        c.apply(block, backend_request)
-
-    return backend_request
-
-
 """
 Decodes a single solution into a dict of this form:
 
@@ -88,7 +78,7 @@ def __decode(block: Block, solution: List[int]) -> dict:
 
 
 def __generate_json_data(block: Block) -> str:
-    backend_request = __desugar(block)
+    backend_request = block.build_backend_request()
     support = block.variables_per_sample()
     solution_count = __count_solutions(block)
     return backend_request.to_json(support, solution_count)
