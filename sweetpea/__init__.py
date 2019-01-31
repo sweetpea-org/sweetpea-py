@@ -99,6 +99,12 @@ def __check_server_health():
         raise RuntimeError("SweetPea server healthcheck returned non-200 reponse! " + str(health_check.status_code))
 
 
+def save_cnf(block: Block, filename: str) -> None:
+    cnf_str = __generate_cnf(block)
+    with open(filename, 'w') as f:
+        f.write(cnf_str)
+
+
 """
 Invokes the backend to build the final CNF formula in DIMACS format, returning it as a string.
 """
