@@ -1,7 +1,11 @@
+import operator as op
+
+from functools import reduce
 from math import factorial
 from typing import Dict
 
 from sweetpea.blocks import Block
+from sweetpea.constraints import ExactlyKInARow, AtMostKInARow
 from sweetpea import __generate_cnf
 
 
@@ -25,3 +29,19 @@ def collect_design_metrics(block: Block) -> Dict:
         'cnf_total_variables': int(dimacs_header[2]),
         'cnf_total_clauses': int(dimacs_header[3])
     }
+
+
+def __count_solutions(block: Block) -> int:
+    full_set_count = __count_unconstrained_sequences(block)
+    prohibited_count = __count_prohibited_sequences(block)
+    return full_set_count - prohibited_count
+
+
+def __count_unconstrained_sequences(block: Block) -> int:
+    l = block.trials_per_sample()
+    x_comp = [f for f in block.design if f not in block.crossing]
+    return reduce(lambda acc, f: acc * pow(len(f.levels), l), x_comp, factorial(l))
+
+
+def __count_prohibited_sequences(block: Block) -> int:
+    return 0
