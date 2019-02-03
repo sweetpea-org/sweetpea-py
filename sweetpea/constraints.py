@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from copy import deepcopy
 from typing import List, Tuple, Any, Union, cast
 from itertools import product, chain, accumulate, repeat
 from functools import reduce
@@ -227,37 +228,47 @@ class Derivation(Constraint):
 
 
 class _KInARow(Constraint):
-    def __init__(self, k, levels):
+    def __init__(self, k, level):
         self.k = k
-        self.levels = levels
+        self.level = level
         self.__validate()
 
     def __validate(self) -> None:
         if not isinstance(self.k, int):
             raise ValueError("k must be an integer.")
 
-        if not (isinstance(self.levels, Factor) or \
-                (isinstance(self.levels, tuple) and \
-                 len(self.levels) == 2 and \
-                 isinstance(self.levels[0], str) and \
-                 isinstance(self.levels[1], str))):
-            raise ValueError("levels must be either a Factor or a Tuple[str, str].")
+        if not (isinstance(self.level, Factor) or \
+                (isinstance(self.level, tuple) and \
+                 len(self.level) == 2 and \
+                 isinstance(self.level[0], str) and \
+                 isinstance(self.level[1], str))):
+            raise ValueError("level must be either a Factor or a Tuple[str, str].")
+
+    def desugar(self) -> List[Constraint]:
+        constraints = cast(List[Constraint], [self])
+
+        # Generate the constraint for each level in the factor.
+        if isinstance(self.level, Factor):
+            levels = self.level.levels  # Get the actual levels out of the factor.
+            level_names = list(map(lambda l: get_level_name(l), levels))
+            level_tuples = list(map(lambda l_name: (self.level.name, l_name), level_names))
+
+            constraints = []
+            for t in level_tuples:
+                constraint_copy = deepcopy(self)
+                constraint_copy.level = t
+                constraints.append(constraint_copy)
+
+        return constraints
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
-        # Apply the constraint to each level in the factor.
-        if isinstance(self.levels, Factor):
-            levels = self.levels.levels  # Get the actual levels out of the factor.
-            level_names = list(map(lambda l: get_level_name(l), levels))
-            level_tuples = list(map(lambda l_name: (self.levels.name, l_name), level_names))
-            for t in level_tuples:
-                self.apply_to_backend_request(block, t, backend_request)
-
-        # Should be a Tuple containing the factor name, and the level name.
-        elif isinstance(self.levels, tuple) and len(self.levels) == 2:
-            self.apply_to_backend_request(block, cast(Tuple[str, str], self.levels), backend_request)
-
+        # By this point, level should be a Tuple containing the factor name, and the level name.
+        # Block construction is expected to flatten out constraints applied to whole factors so
+        # that the constraint is applied to each level of the factor.
+        if isinstance(self.level, tuple) and len(self.level) == 2:
+            self.apply_to_backend_request(block, cast(Tuple[str, str], self.level), backend_request)
         else:
-            raise("Unrecognized levels specification in AtMostKInARow constraint: " + self.levels)
+            raise ValueError("Unrecognized levels specification in AtMostKInARow constraint: " + str(self.level))
 
     def _build_variable_list(self, block: Block, level: Tuple[str, str]) -> List[int]:
         if block.get_factor(level[0]).has_complex_window():

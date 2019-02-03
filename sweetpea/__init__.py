@@ -167,10 +167,18 @@ def fully_cross_block(design: List[Factor],
                       crossing: List[Factor],
                       constraints: List[Constraint],
                       cnf_fn=to_cnf_tseitin) -> Block:
-    all_constraints = cast(List[Constraint], [FullyCross, Consistency]) + constraints
+    all_constraints = cast(List[Constraint], [FullyCross(), Consistency()]) + constraints
+    all_constraints = __desugar_constraints(all_constraints)
     block = FullyCrossBlock(design, crossing, all_constraints, cnf_fn)
     block.constraints += DerivationProcessor.generate_derivations(block)
     return block
+
+
+def __desugar_constraints(constraints: List[Constraint]) -> List[Constraint]:
+    desugared_constraints = []
+    for c in constraints:
+        desugared_constraints.extend(c.desugar())
+    return desugared_constraints
 
 
 """
