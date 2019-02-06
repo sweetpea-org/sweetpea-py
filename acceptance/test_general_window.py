@@ -3,7 +3,7 @@ import pytest
 from itertools import permutations
 
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
-from sweetpea.constraints import AtMostKInARow
+from sweetpea.constraints import AtMostKInARow, Exclude
 from sweetpea.encoding_diagram import print_encoding_diagram
 from sweetpea.primitives import Factor, DerivedLevel, Window
 
@@ -36,7 +36,7 @@ def test_correct_solution_count_when_bookends_must_be_congruent(design):
     crossing = [color, text]
 
     # Require both bookends to be congruent.
-    constraints = [AtMostKInARow(0, ("congruent bookend?", "no"))]
+    constraints = [Exclude(("congruent bookend?", "no"))]
 
     block  = fully_cross_block(design, crossing, constraints)
     experiments  = synthesize_trials_non_uniform(block, 100)
@@ -49,7 +49,7 @@ def test_correct_solution_count_when_bookends_must_not_be_congruent(design):
     crossing = [color, text]
 
     # Require both bookends to not be congruent.
-    constraints = [AtMostKInARow(0, ("congruent bookend?", "yes"))]
+    constraints = [Exclude(("congruent bookend?", "yes"))]
 
     block  = fully_cross_block(design, crossing, constraints)
     experiments  = synthesize_trials_non_uniform(block, 100)

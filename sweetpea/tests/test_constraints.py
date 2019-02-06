@@ -489,13 +489,10 @@ def test_atmostkinarow():
         LowLevelRequest("LT", 4, [5, 11, 17, 23])
     ]
 
-    backend_request = __run_kinarow(AtMostKInARow(0, ("congruent?", "con")))
-    assert backend_request.ll_requests == [
-        LowLevelRequest("LT", 1, [5]),
-        LowLevelRequest("LT", 1, [11]),
-        LowLevelRequest("LT", 1, [17]),
-        LowLevelRequest("LT", 1, [23])
-    ]
+
+def test_atmostkinarow_disallows_k_of_zero():
+    with pytest.raises(ValueError):
+        AtMostKInARow(0, ("congruent?", "con"))
 
 
 def test_nomorethankinarow_sugar():
@@ -576,6 +573,11 @@ def test_exactlykinarow():
     assert backend_request.cnfs == [expected_cnf]
 
 
+def test_exactlykinarow_disallows_k_of_zero():
+    with pytest.raises(ValueError):
+        ExactlyKInARow(0, ("a", "b"))
+
+
 def test_exclude():
     f = Exclude(("color", "red"))
     backend_request = BackendRequest(0)
@@ -586,3 +588,25 @@ def test_exclude():
     backend_request = BackendRequest(0)
     f.apply(block, backend_request)
     assert backend_request.cnfs == [And([-5, -11, -17, -23])]
+
+
+def test_exclude_with_transition():
+    block = fully_cross_block([color, text, color_repeats_factor],
+                              [color, text],
+                              [])
+
+    c = Exclude(("color repeats?", "yes"))
+    backend_request = BackendRequest(0)
+    c.apply(block, backend_request)
+    assert backend_request.cnfs == [And([-17, -19, -21])]
+
+
+def test_exclude_with_general_window():
+    block = fully_cross_block([color, text, congruent_bookend],
+                              [color, text],
+                              [])
+
+    c = Exclude(("congruent bookend?", "yes"))
+    backend_request = BackendRequest(0)
+    c.apply(block, backend_request)
+    assert backend_request.cnfs == [And([-17, -19])]

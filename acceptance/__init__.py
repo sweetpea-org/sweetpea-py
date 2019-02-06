@@ -20,3 +20,4 @@ def assert_atmostkinarow(c: AtMostKInARow, experiments: List[dict]) -> None:
             __assert_atmostkinarow_pair(c.k, t, experiments)
     else:
         __assert_atmostkinarow_pair(c.k, c.level, experiments)
+        

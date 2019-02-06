@@ -4,7 +4,7 @@ import pytest
 from itertools import permutations
 
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
-from sweetpea.constraints import AtMostKInARow, ExactlyKInARow
+from sweetpea.constraints import AtMostKInARow, ExactlyKInARow, Exclude
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform
 
 
@@ -127,7 +127,7 @@ def test_correct_solution_count_with_repeated_color_and_text_factors_and_constra
 @pytest.mark.parametrize('design', permutations([color, text, repeated_color_factor]))
 def test_correct_solution_count_with_repeated_color_factor_and_no_repetition_allowed(design):
     crossing = [color, text]
-    constraints = [AtMostKInARow(0, ("repeated color?", "yes"))]
+    constraints = [Exclude(("repeated color?", "yes"))]
 
     block  = fully_cross_block(design, crossing, constraints)
     experiments  = synthesize_trials_non_uniform(block, 100)

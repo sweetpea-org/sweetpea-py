@@ -237,6 +237,9 @@ class _KInARow(Constraint):
         if not isinstance(self.k, int):
             raise ValueError("k must be an integer.")
 
+        if self.k <= 0:
+            raise ValueError("k must be greater than 0. If you're trying to exclude a particular level, please use the 'Exclude' constraint.")
+
         if not (isinstance(self.level, Factor) or \
                 (isinstance(self.level, tuple) and \
                  len(self.level) == 2 and \
@@ -270,28 +273,10 @@ class _KInARow(Constraint):
         else:
             raise ValueError("Unrecognized levels specification in AtMostKInARow constraint: " + str(self.level))
 
-    def _build_variable_list(self, block: Block, level: Tuple[str, str]) -> List[int]:
-        if block.get_factor(level[0]).has_complex_window():
-            return self.__build_complex_variable_list(block, level)
-        else:
-            return self.__build_variable_list(block, level)
-
     def _build_variable_sublists(self, block: Block, level: Tuple[str, str], sublist_length: int) -> List[List[int]]:
-        var_list = self._build_variable_list(block, level)
+        var_list = block.build_variable_list(level)
         raw_sublists = [var_list[i:i+sublist_length] for i in range(0, len(var_list))]
         return list(filter(lambda l: len(l) == sublist_length, raw_sublists))
-
-    def __build_variable_list(self, block: Block, level: Tuple[str, str]) -> List[int]:
-        first_variable = block.first_variable_for_level(level[0], level[1]) + 1
-        design_var_count = block.variables_per_trial()
-        num_trials = block.trials_per_sample()
-        return list(accumulate(repeat(first_variable, num_trials), lambda acc, _: acc + design_var_count))
-
-    def __build_complex_variable_list(self, block: Block, level: Tuple[str, str]) -> List[int]:
-        factor = block.get_factor(level[0])
-        n = int(block.variables_for_factor(factor) / 2)
-        start = block.first_variable_for_level(level[0], level[1]) + 1
-        return reduce(lambda l, v: l + [start + (v * 2)], range(n), [])
 
     @abstractmethod
     def apply_to_backend_request(self, block: Block, level: Tuple[str, str], backend_request: BackendRequest) -> None:
@@ -398,17 +383,7 @@ class Exclude(Constraint):
         # TODO: validation
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
-        # Generate a list of (factor name, level name) tuples from the block
-        level_tuples = get_all_level_names(block.design)
-
-        # Locate the specified level in the list
-        first_variable = level_tuples.index(self.level) + 1
-
-        # Build the variable list
-        design_var_count = block.variables_per_trial()
-        num_trials = block.trials_per_sample()
-        var_list = list(accumulate(repeat(first_variable, num_trials), lambda acc, _: acc + design_var_count))
-
+        var_list = block.build_variable_list(self.level)
         backend_request.cnfs.append(And(list(map(lambda n: n * -1, var_list))))
 
     def __eq__(self, other):

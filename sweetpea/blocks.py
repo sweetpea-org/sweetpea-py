@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from functools import reduce
-from itertools import combinations
+from itertools import combinations, accumulate, repeat
 from networkx import has_path
 from typing import List, Union, Tuple
 
@@ -161,6 +161,28 @@ class Block:
             c.apply(self, backend_request)
 
         return backend_request
+
+    """
+    Given a specific level (factor + level name pair), this method will return the list of variables
+    that correspond to that level in each trial in the encoding.
+    """
+    def build_variable_list(self, level: Tuple[str, str]) -> List[int]:
+        if self.get_factor(level[0]).has_complex_window():
+            return self.__build_complex_variable_list(level)
+        else:
+            return self.__build_simple_variable_list(level)
+
+    def __build_simple_variable_list(self, level: Tuple[str, str]) -> List[int]:
+        first_variable = self.first_variable_for_level(level[0], level[1]) + 1
+        design_var_count = self.variables_per_trial()
+        num_trials = self.trials_per_sample()
+        return list(accumulate(repeat(first_variable, num_trials), lambda acc, _: acc + design_var_count))
+
+    def __build_complex_variable_list(self, level: Tuple[str, str]) -> List[int]:
+        factor = self.get_factor(level[0])
+        n = int(self.variables_for_factor(factor) / 2)
+        start = self.first_variable_for_level(level[0], level[1]) + 1
+        return reduce(lambda l, v: l + [start + (v * 2)], range(n), [])
 
 
 """
