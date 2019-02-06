@@ -6,7 +6,7 @@ from itertools import permutations
 from sweetpea import fully_cross_block
 from sweetpea.blocks import Block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
-from sweetpea.constraints import Constraint, Consistency, FullyCross, Derivation, AtMostKInARow, NoMoreThanKInARow, ExactlyKInARow, Forbid
+from sweetpea.constraints import Constraint, Consistency, FullyCross, Derivation, AtMostKInARow, NoMoreThanKInARow, ExactlyKInARow, Exclude
 from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import And, Or, If, Iff, Not, to_cnf_tseitin
 
@@ -576,13 +576,13 @@ def test_exactlykinarow():
     assert backend_request.cnfs == [expected_cnf]
 
 
-def test_forbid():
-    f = Forbid(("color", "red"))
+def test_exclude():
+    f = Exclude(("color", "red"))
     backend_request = BackendRequest(0)
     f.apply(block, backend_request)
     assert backend_request.cnfs == [And([-1, -7, -13, -19])]
 
-    f = Forbid(("congruent?", "con"))
+    f = Exclude(("congruent?", "con"))
     backend_request = BackendRequest(0)
     f.apply(block, backend_request)
     assert backend_request.cnfs == [And([-5, -11, -17, -23])]

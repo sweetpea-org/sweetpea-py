@@ -392,7 +392,7 @@ class ExactlyKInARow(_KInARow):
         return str(self.__dict__)
 
 
-class Forbid(Constraint):
+class Exclude(Constraint):
     def __init__(self, level):
         self.level = level
         # TODO: validation
