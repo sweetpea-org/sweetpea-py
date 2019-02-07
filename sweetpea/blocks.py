@@ -190,8 +190,11 @@ A fully-crossed block. This block generates as many trials as needed to fully
 cross all levels across all factors in the block's crossing.
 """
 class FullyCrossBlock(Block):
-    def __init__(self, design, crossing, constraints, cnf_fn=to_cnf_tseitin):
+    def __init__(self, design, crossing, constraints, require_complete_crossing=True, cnf_fn=to_cnf_tseitin):
         super().__init__(design, crossing, constraints, cnf_fn)
+        self.require_complete_crossing = require_complete_crossing
+        if not self.require_complete_crossing:
+            print("WARNING: Some combinations have been excluded, this crossing may not be complete!")
         self.__validate()
 
     def __validate(self):
@@ -231,7 +234,7 @@ class FullyCrossBlock(Block):
         return trial
 
     def trials_per_sample(self):
-        crossing_size = reduce(lambda sum, factor: sum * len(factor.levels), self.crossing, 1)
+        crossing_size = self.crossing_size()
         required_trials = list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size), self.crossing))
         return max(required_trials)
 
@@ -244,8 +247,19 @@ class FullyCrossBlock(Block):
     def grid_variables(self):
         return self.trials_per_sample() * self.variables_per_trial()
 
+    def __count_exclusions(self):
+        from sweetpea.constraints import Exclude
+        count = 0
+        for c in filter(lambda c: isinstance(c, Exclude), self.constraints):
+            if not self.get_factor(c.factor_name).has_complex_window():
+                count += 1
+        return count
+
     def crossing_size(self):
-        return reduce(lambda sum, factor: sum * len(factor.levels), self.crossing, 1)
+        crossing_size = reduce(lambda sum, factor: sum * len(factor.levels), self.crossing, 1)
+        if not self.require_complete_crossing:
+            crossing_size -= self.__count_exclusions()
+        return crossing_size
 
     def draw_design_graph(self):
         dg = DesignGraph(self.design)
