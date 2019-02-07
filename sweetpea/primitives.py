@@ -42,6 +42,12 @@ class DerivedLevel(__Primitive):
         if len(set(map(lambda f: f.name, self.window.args))) != len(self.window.args):
             raise ValueError('Factors should not be repeated in the argument list to a derivation function.')
 
+        for f in filter(lambda f: f.is_derived(), self.window.args):
+            w = f.levels[0].window
+            if not (w.width == 1 and w.stride == 1):
+                raise ValueError("Derived levels may only be derived from factors that apply to each trial. '" +
+                    self.name + "' cannot derive from '" + f.name + "'")
+
         # TODO: Windows should be uniform.
 
     def __expand_window_arguments(self) -> None:

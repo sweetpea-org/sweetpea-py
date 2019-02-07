@@ -102,6 +102,10 @@ def test_derived_level_validation():
     with pytest.raises(ValueError):
         DerivedLevel("name", WithinTrial(lambda x: x, [color, color]))
 
+    # Nested derived level
+    with pytest.raises(ValueError):
+        DerivedLevel("name", WithinTrial(op.eq, [color_repeats_factor]))
+
 
 def test_derived_level_argument_list_expansion():
     # We should internally duplicate each factor to match the width of the window.
