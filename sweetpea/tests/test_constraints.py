@@ -579,12 +579,12 @@ def test_exactlykinarow_disallows_k_of_zero():
 
 
 def test_exclude():
-    f = Exclude(("color", "red"))
+    f = Exclude("color", "red")
     backend_request = BackendRequest(0)
     f.apply(block, backend_request)
     assert backend_request.cnfs == [And([-1, -7, -13, -19])]
 
-    f = Exclude(("congruent?", "con"))
+    f = Exclude("congruent?", "con")
     backend_request = BackendRequest(0)
     f.apply(block, backend_request)
     assert backend_request.cnfs == [And([-5, -11, -17, -23])]
@@ -595,7 +595,7 @@ def test_exclude_with_transition():
                               [color, text],
                               [])
 
-    c = Exclude(("color repeats?", "yes"))
+    c = Exclude("color repeats?", "yes")
     backend_request = BackendRequest(0)
     c.apply(block, backend_request)
     assert backend_request.cnfs == [And([-17, -19, -21])]
@@ -606,7 +606,7 @@ def test_exclude_with_general_window():
                               [color, text],
                               [])
 
-    c = Exclude(("congruent bookend?", "yes"))
+    c = Exclude("congruent bookend?", "yes")
     backend_request = BackendRequest(0)
     c.apply(block, backend_request)
     assert backend_request.cnfs == [And([-17, -19])]

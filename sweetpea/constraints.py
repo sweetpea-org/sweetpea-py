@@ -378,12 +378,13 @@ class ExactlyKInARow(_KInARow):
 
 
 class Exclude(Constraint):
-    def __init__(self, level):
-        self.level = level
+    def __init__(self, factor_name, level_name):
+        self.factor_name = factor_name
+        self.level_name = level_name
         # TODO: validation
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
-        var_list = block.build_variable_list(self.level)
+        var_list = block.build_variable_list((self.factor_name, self.level_name))
         backend_request.cnfs.append(And(list(map(lambda n: n * -1, var_list))))
 
     def __eq__(self, other):

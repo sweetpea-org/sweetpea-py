@@ -127,7 +127,7 @@ def test_correct_solution_count_with_repeated_color_and_text_factors_and_constra
 @pytest.mark.parametrize('design', permutations([color, text, repeated_color_factor]))
 def test_correct_solution_count_with_repeated_color_factor_and_no_repetition_allowed(design):
     crossing = [color, text]
-    constraints = [Exclude(("repeated color?", "yes"))]
+    constraints = [Exclude("repeated color?", "yes")]
 
     block  = fully_cross_block(design, crossing, constraints)
     experiments  = synthesize_trials_non_uniform(block, 100)
