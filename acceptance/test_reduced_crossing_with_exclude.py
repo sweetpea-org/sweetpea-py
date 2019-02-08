@@ -1,3 +1,4 @@
+from acceptance import assert_no_repetition
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.constraints import Exclude
 from sweetpea.encoding_diagram import print_encoding_diagram
@@ -30,6 +31,7 @@ def test_no_solutions_without_override_flag():
 
     assert block.crossing_size() == 6
     assert len(experiments) == 0
+    assert_no_repetition(experiments)
 
 
 def test_correct_solution_count_with_override_flag():
@@ -38,3 +40,4 @@ def test_correct_solution_count_with_override_flag():
 
     assert block.crossing_size() == 5
     assert len(experiments) == 120
+    assert_no_repetition(experiments)

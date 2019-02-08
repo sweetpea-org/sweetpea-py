@@ -20,4 +20,11 @@ def assert_atmostkinarow(c: AtMostKInARow, experiments: List[dict]) -> None:
             __assert_atmostkinarow_pair(c.k, t, experiments)
     else:
         __assert_atmostkinarow_pair(c.k, c.level, experiments)
-        
+
+
+def assert_no_repetition(experiments: List[dict]) -> None:
+    for seq in experiments:
+        levels_lists = [levels for f, levels in seq.items()]
+        transposed = list(map(list, zip(*levels_lists)))
+        for t in transposed:
+            assert transposed.count(t) == 1, "{} repeats in this trial sequence!".format(t)

@@ -87,7 +87,6 @@ class FullyCross(Constraint):
     @staticmethod
     def apply(block: FullyCrossBlock, backend_request: BackendRequest) -> None:
         fresh = backend_request.fresh
-        num_states = block.crossing_size() # Number of trials needed to do a full crossing.
 
         # Step 1: Get a list of the trials that are involved in the crossing.
         crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t), block.crossing)), range(1, block.trials_per_sample() + 1)))
@@ -106,9 +105,12 @@ class FullyCross(Constraint):
         iffs = [Iff(state_vars[n], And(list(crossings[n]))) for n in range(len(state_vars))]
 
         # Step 5: Constrain each crossing to occur in only one trial.
-        states = list(chunk(state_vars, num_states))
+        states = list(chunk(state_vars, block.crossing_size_without_exclusions()))
         transposed = cast(List[List[int]], list(map(list, zip(*states))))
-        backend_request.ll_requests += list(map(lambda l: LowLevelRequest("EQ", 1, l), transposed))
+
+        # We Use n < 2 rather than n = 1 here because they may exclude some levels from the crossing.
+        # This ensures that there won't be duplicates, while still allowing some to be missing.
+        backend_request.ll_requests += list(map(lambda l: LowLevelRequest("LT", 2, l), transposed))
 
         (cnf, new_fresh) = block.cnf_fn(And(iffs), fresh)
 

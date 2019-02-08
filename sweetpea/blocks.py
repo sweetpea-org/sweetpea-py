@@ -256,10 +256,13 @@ class FullyCrossBlock(Block):
         return count
 
     def crossing_size(self):
-        crossing_size = reduce(lambda sum, factor: sum * len(factor.levels), self.crossing, 1)
+        crossing_size = self.crossing_size_without_exclusions()
         if not self.require_complete_crossing:
             crossing_size -= self.__count_exclusions()
         return crossing_size
+
+    def crossing_size_without_exclusions(self):
+        return reduce(lambda sum, factor: sum * len(factor.levels), self.crossing, 1)
 
     def draw_design_graph(self):
         dg = DesignGraph(self.design)
