@@ -12,6 +12,17 @@ from sweetpea.logic import If, Iff, And, Or, Not, FormulaWithIff
 from sweetpea.primitives import Factor, get_level_name
 
 
+def validate_factor_and_level(block: Block, factor_name: str, level_name: str) -> None:
+    if not block.get_factor(factor_name):
+        raise ValueError(("A factor with name '{}' wasn't found in the design. " +\
+            "Are you sure the factor was included, and that the name is spelled " +\
+            "correctly?").format(factor_name))
+
+    if not block.get_factor(factor_name).get_level(level_name):
+        raise ValueError(("A level with name '{}' wasn't found in the '{}' factor, " +\
+            "Are you sure the level name is spelled correctly?").format(level_name, factor_name))
+
+
 """
 This constraint ensures that only one level of each factor is 'on' at a time.
 So for instance in the experiment:
@@ -38,6 +49,9 @@ the fourth by [13-16]. So this desugaring applies the following constraints:
     sum(15, 16) EQ 1
 """
 class Consistency(Constraint):
+    def validate(self, block: Block) -> None:
+        pass
+
     @staticmethod
     def apply(block: Block, backend_request: BackendRequest) -> None:
         next_var = 1
@@ -84,6 +98,9 @@ Continuing with example from __desugar_consistency we will represent the states:
       (and 3 more of these for each of the other states).
 """
 class FullyCross(Constraint):
+    def validate(self, block: Block) -> None:
+        pass
+
     @staticmethod
     def apply(block: FullyCrossBlock, backend_request: BackendRequest) -> None:
         fresh = backend_request.fresh
@@ -173,6 +190,9 @@ class Derivation(Constraint):
         self.factor = factor
         # TODO: validation
 
+    def validate(self, block: Block) -> None:
+        pass
+
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
         if self.is_complex(block):
             self.__apply_derivation(block, backend_request)
@@ -248,6 +268,9 @@ class _KInARow(Constraint):
                  isinstance(self.level[0], str) and \
                  isinstance(self.level[1], str))):
             raise ValueError("level must be either a Factor or a Tuple[str, str].")
+
+    def validate(self, block: Block) -> None:
+        validate_factor_and_level(block, self.level[0], self.level[1])
 
     def desugar(self) -> List[Constraint]:
         constraints = cast(List[Constraint], [self])
@@ -384,6 +407,9 @@ class Exclude(Constraint):
         self.factor_name = factor_name
         self.level_name = level_name
         # TODO: validation
+
+    def validate(self, block: Block) -> None:
+        validate_factor_and_level(block, self.factor_name, self.level_name)
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
         var_list = block.build_variable_list((self.factor_name, self.level_name))

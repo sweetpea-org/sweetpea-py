@@ -2,7 +2,7 @@ from abc import abstractmethod
 from functools import reduce
 from itertools import combinations, accumulate, repeat
 from networkx import has_path
-from typing import List, Union, Tuple
+from typing import List, Union, Tuple, cast
 
 from sweetpea.backend import BackendRequest
 from sweetpea.internal import get_all_level_names
@@ -26,8 +26,12 @@ class Block:
         self.crossing = crossing
         self.constraints = constraints
         self.cnf_fn = cnf_fn
-        # TODO: validation
-        # TOOD: Make sure factor names are unique
+        self.__validate();
+
+    def __validate(self):
+        # TODO: Make sure factor names are unique
+        for c in self.constraints:
+            c.validate(self)
 
     """
     Indicates the number of trials that are generated per sample for this block
@@ -79,7 +83,10 @@ class Block:
     Retrieve a factor by name.
     """
     def get_factor(self, factor_name: str) -> Factor:
-        return next(f for f in self.design if f.name == factor_name)
+        try:
+            return next(f for f in self.design if f.name == factor_name)
+        except StopIteration:
+            return cast(Factor, None)
 
     """
     Returns the first index for this variable in a trial sequence representing the given factor and level.

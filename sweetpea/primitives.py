@@ -1,4 +1,4 @@
-from typing import Any, Type, List, Tuple, Union
+from typing import Any, Type, List, Tuple, Union, cast
 from itertools import product, chain, repeat
 
 
@@ -102,7 +102,13 @@ class Factor(__Primitive):
         return window.width > 1 or window.stride > 1
 
     def get_level(self, level_name: str) -> Union[str, DerivedLevel]:
-        return next(l for l in self.levels if l.name == level_name)
+        for l in self.levels:
+            if isinstance(l, str) and l == level_name:
+                return l
+            elif isinstance(l, DerivedLevel) and l.name == level_name:
+                return l
+
+        return cast(str, None)
 
     """
     Returns true if this factor applies to the given trial number. (1-based)

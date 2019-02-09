@@ -622,6 +622,11 @@ def test_exactlykinarow_disallows_k_of_zero():
         ExactlyKInARow(0, ("a", "b"))
 
 
+def test_kinarow_with_bad_factor():
+    with pytest.raises(ValueError):
+        block = fully_cross_block(design, crossing, [ExactlyKInARow(2, ("bogus_factor", "red"))])
+
+
 def test_exclude():
     f = Exclude("color", "red")
     backend_request = BackendRequest(0)

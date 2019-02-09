@@ -55,6 +55,12 @@ def test_factor_validation():
         ])
 
 
+def test_factor_get_level():
+    assert color.get_level("red") == "red"
+    assert color_repeats_factor.get_level("yes") == color_repeats_level
+    assert color.get_level("bogus") == None
+
+
 def test_factor_is_derived():
     assert color.is_derived() == False
     assert con_factor.is_derived() == True

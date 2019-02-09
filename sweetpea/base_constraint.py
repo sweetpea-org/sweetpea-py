@@ -7,6 +7,15 @@ Generic interface for constraints.
 """
 class Constraint(ABC):
 
+    """
+    Constraints can't be completely validated in isolation. This function will
+    be called on all constraints with the block during the block initialization
+    to ensure all constraints are valid.
+    """
+    @abstractmethod
+    def validate(self, block) -> None:
+        pass
+
     @abstractmethod
     def apply(self, block, backend_request) -> None:
         pass
