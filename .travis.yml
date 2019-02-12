@@ -1,0 +1,24 @@
+language: python
+python:
+- "3.6"
+- "3.7"
+
+env:
+- SWEETPEA_EXTERNAL_DOCKER_MGMT=true
+
+branches:
+  only:
+  - master
+
+services:
+- docker
+
+before_install:
+- docker pull sweetpea/server
+- docker run --rm -d -p 8080:8080 sweetpea/server
+
+install:
+- pip install -r requirements.txt
+
+script:
+- make full
