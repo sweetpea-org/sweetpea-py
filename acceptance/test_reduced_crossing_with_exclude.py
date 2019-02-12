@@ -41,3 +41,14 @@ def test_correct_solution_count_with_override_flag():
     assert block.crossing_size() == 5
     assert len(experiments) == 120
     assert_no_repetition(experiments)
+
+
+def test_correct_solution_count_with_override_flag_and_multiple_trials_excluded():
+    # With this constraint, there should only be ONE allowed crossing, and therefore one solution.
+    constraints = [Exclude("stimulus configuration", "legal")]
+    block       = fully_cross_block(design, crossing, constraints, require_complete_crossing=False)
+    experiments = synthesize_trials_non_uniform(block, 500)
+
+    assert block.crossing_size() == 1
+    assert len(experiments) == 1
+    assert_no_repetition(experiments)

@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from functools import reduce
-from itertools import combinations, accumulate, repeat
+from itertools import combinations, accumulate, repeat, product
 from networkx import has_path
 from typing import List, Union, Tuple, cast
 
@@ -254,13 +254,46 @@ class FullyCrossBlock(Block):
     def grid_variables(self):
         return self.trials_per_sample() * self.variables_per_trial()
 
+    """
+    This method is responsible for determining the number of trials that should be excluded from the full
+    crossing, based on any `Exclude` constraints that the user provides.
+    A single `Exclude` constraint may prevent multiple crossings, depending on the derivation function used.
+    """
     def __count_exclusions(self):
         from sweetpea.constraints import Exclude
-        count = 0
-        for c in filter(lambda c: isinstance(c, Exclude), self.constraints):
-            if not self.get_factor(c.factor_name).has_complex_window():
-                count += 1
-        return count
+
+        excluded_crossings = set()
+
+        # Get the exclude constraints.
+        exclusions = list(filter(lambda c: isinstance(c, Exclude), self.constraints))
+        if not exclusions:
+            return 0
+
+        # If there are any, generate the full crossing as a list of tuples.
+        levels_lists = [list(map(get_level_name, f.levels)) for f in self.crossing]
+        all_crossings = list(product(*levels_lists))
+
+        for constraint in exclusions:
+            f = self.get_factor(constraint.factor_name)
+            if f.has_complex_window():
+                # If the excluded factor has a complex window, then we don't need
+                # to reduce the sequence length. What if the transition being excluded
+                # is in the crossing? If it is, then they shouldn't be excluding it.
+                # We should give an error if we detect that.
+                continue
+
+            # Retrieve the derivation function that defines this exclusion.
+            excluded_level = f.get_level(constraint.level_name)
+
+            # For each crossing, extract the levels for this derviation function, and execute it.
+            for c in all_crossings:
+                args = [c[i] for i in map(lambda f: self.crossing.index(f), excluded_level.window.args)]
+                # Invoking the fn this way is only ok because we only do this for WithinTrial windows.
+                # With complex windows, it wouldn't work due to the list aspect for each argument.
+                if excluded_level.window.fn(*args):
+                    excluded_crossings.add(c)
+
+        return len(excluded_crossings)
 
     def crossing_size(self):
         crossing_size = self.crossing_size_without_exclusions()

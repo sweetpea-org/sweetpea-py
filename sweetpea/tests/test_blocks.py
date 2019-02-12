@@ -6,6 +6,7 @@ from itertools import permutations
 from sweetpea import fully_cross_block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
 from sweetpea.blocks import FullyCrossBlock
+from sweetpea.constraints import Exclude
 
 color = Factor("color", ["red", "blue"])
 text  = Factor("text",  ["red", "blue"])
@@ -269,3 +270,43 @@ def test_fully_cross_block_variables_for_factor():
     assert FullyCrossBlock([color, text, congruent_bookend],
                            [color, text],
                            []).variables_for_factor(congruent_bookend) == 4
+
+
+def test_fully_cross_block_crossing_size_with_exclude():
+    # No congruent excludes 2 trials, 4 - 2 = 2
+    assert FullyCrossBlock([color, text, con_factor],
+                           [color, text],
+                           [Exclude("congruent?", "con")],
+                           require_complete_crossing=False).crossing_size() == 2
+
+
+def test_fully_cross_block_crossing_size_with_overlapping_exclude():
+    # How about with two overlapping exclude constraints? Initial crossing size
+    # should be 3 x 3 = 9.
+    # Excluding congruent pairs will reduce that to 9 - 3 = 6
+    # Then excluding red and green on top of that should make it 5.
+    color = Factor("color", ["red", "blue", "green"])
+    text  = Factor("text",  ["red", "blue", "green"])
+
+    congruent_factor = Factor("congruent?", [
+        DerivedLevel("congruent", WithinTrial(op.eq, [color, text])),
+        DerivedLevel("incongruent", WithinTrial(op.ne, [color, text])),
+    ])
+
+    def illegal(color, text):
+        return (color == "red" and text == "green") or color == text
+
+    def legal(color, text):
+        return not illegal(color, text)
+
+    legal_factor = Factor("legal", [
+        DerivedLevel("yes", WithinTrial(legal, [color, text])),
+        DerivedLevel("no",  WithinTrial(illegal, [color, text]))
+    ])
+
+    assert FullyCrossBlock([color, text, congruent_factor, legal_factor],
+                           [color, text],
+                           [Exclude("congruent?", "congruent"), # Excludes 3
+                            Exclude("legal", "no")], # Exludes 4, but 3 were already excluded
+                           require_complete_crossing=False).crossing_size() == 5
+
