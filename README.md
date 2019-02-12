@@ -1,6 +1,8 @@
 SweetPea
 ========
 
+[![Build Status](https://travis-ci.org/sweetpea-org/sweetpea-py.svg?branch=master)](https://travis-ci.org/sweetpea-org/sweetpea-py)
+
 SweetPea is a language for declaratively specifying randomized experimental designs, and a runtime for synthesizing trial sequences generated from the design specification; this prototype that is targeted at psychology and neuroscience experiments. 
 
 An experimental design is a description of experimental factors, relationships between factors, sequential constraints, and how to map those factors onto a sequence of trials. The reliability and validity of experimental results heavily relies on rigorous experimental design.
