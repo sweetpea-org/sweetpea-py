@@ -20,6 +20,7 @@ before_install:
 
 install:
 - pip install -e .
+- pip install mypy
 
 script:
 - make full
