@@ -18,7 +18,7 @@ before_install:
 - docker run --rm -d -p 8080:8080 sweetpea/server
 
 install:
-- pip install -r requirements.txt
+- pip install -e .
 
 script:
 - make full
