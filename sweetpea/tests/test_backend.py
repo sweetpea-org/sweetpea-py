@@ -29,11 +29,12 @@ def test_backend_request_to_json():
         LowLevelRequest("LT", 3, [1, 2, 3, 4])]
 
     backend_request = BackendRequest(fresh, cnfs, requests)
-    result = json.loads(backend_request.to_json(24, 24))
+    result = json.loads(backend_request.to_json(24, 100, 24))
 
     assert result['fresh'] == 34
     assert result['unigen']['support'] == 24
     assert len(result['unigen']['arguments']) > 0
+    assert "--samples=100" in result['unigen']['arguments']
 
     assert result['cnfs'] == [[1, 2, 3], [-4, 5, -6]]
     assert result['requests'] == [

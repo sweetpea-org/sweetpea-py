@@ -57,7 +57,7 @@ class BackendRequest:
         self.support = -1
         self.solution_count = -1
 
-    def to_json(self, support: int, solution_count: int):
+    def to_json(self, support: int, sequence_count: int, solution_count: int):
 
         # Taken from the unigen2.py script: https://bitbucket.org/kuldeepmeel/unigen/src/4677b2ec4553b2a44a31910db0037820abdc1394/UniGen2.py?at=master&fileviewer=file-view-default
         kappa = 0.638
@@ -72,7 +72,7 @@ class BackendRequest:
                                 "support" : support,
                                 "arguments" : [
                                     "--verbosity=0",
-                                    "--samples=100",
+                                    "--samples=" + str(sequence_count),
                                     "--kappa=" + str(kappa),
                                     "--pivotUniGen=" + str(pivot_unigen),
                                     "--startIteration=" + str(start_iteration),

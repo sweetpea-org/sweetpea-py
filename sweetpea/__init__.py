@@ -77,17 +77,17 @@ def __decode(block: Block, solution: List[int]) -> dict:
     return experiment
 
 
-def __generate_json_data(block: Block) -> str:
+def __generate_json_data(block: Block, sequence_count: int) -> str:
     backend_request = block.build_backend_request()
     support = block.variables_per_sample()
     solution_count = __count_solutions(block)
-    return backend_request.to_json(support, solution_count)
+    return backend_request.to_json(support, sequence_count, solution_count)
 
 
-def __generate_json_request(block: Block) -> str:
+def __generate_json_request(block: Block, sequence_count: int) -> str:
     print("Generating design formula... ", end='', flush=True)
     t_start = datetime.now()
-    json_data = __generate_json_data(block)
+    json_data = __generate_json_data(block, sequence_count)
     t_end = datetime.now()
     print(str((t_end - t_start).seconds) + "s")
     return json_data
@@ -109,7 +109,7 @@ def save_cnf(block: Block, filename: str) -> None:
 Invokes the backend to build the final CNF formula in DIMACS format, returning it as a string.
 """
 def __generate_cnf(block: Block) -> str:
-    json_data = __generate_json_request(block)
+    json_data = __generate_json_request(block, 0)
 
     update_docker_image("sweetpea/server")
     container = start_docker_container("sweetpea/server", 8080)
@@ -203,8 +203,8 @@ endpoint on the server that repeatedly computes individual solutions while updat
 each solution once it has been found. It's intended to give users something somewhat useful, while
 we work through issues with unigen.
 """
-def synthesize_trials_non_uniform(block: Block, trial_count: int) -> List[dict]:
-    json_data = __generate_json_request(block)
+def synthesize_trials_non_uniform(block: Block, sequence_count: int) -> List[dict]:
+    json_data = __generate_json_request(block, sequence_count)
 
     solutions = cast(List[dict], [])
 
@@ -219,7 +219,7 @@ def synthesize_trials_non_uniform(block: Block, trial_count: int) -> List[dict]:
     try:
         __check_server_health()
 
-        url = 'http://localhost:8080/experiments/generate/non-uniform/' + str(trial_count)
+        url = 'http://localhost:8080/experiments/generate/non-uniform/' + str(sequence_count)
         experiments_request = requests.post(url, data = json_data)
         if experiments_request.status_code != 200 or not experiments_request.json()['ok']:
             tmp_filename = ""
@@ -247,9 +247,9 @@ def synthesize_trials_non_uniform(block: Block, trial_count: int) -> List[dict]:
 """
 This is where the magic happens. Desugars the constraints from fully_cross_block (which results in some direct cnfs being produced and some requests to the backend being produced). Then calls unigen on the full cnf file. Then decodes that cnf file into (1) something human readable & (2) psyNeuLink readable.
 """
-def synthesize_trials(block: Block) -> List[dict]:
+def synthesize_trials(block: Block, sequence_count: int=10) -> List[dict]:
     # TODO: Do this in separate thread, and output some kind of progress indicator.
-    json_data = __generate_json_request(block)
+    json_data = __generate_json_request(block, sequence_count)
 
     solutions = cast(List[dict], [])
 
