@@ -65,7 +65,7 @@ class BackendRequest:
         log_count = math.log(solution_count, 2)
         start_iteration = int(round(log_count + math.log(1.8, 2) - math.log(pivot_unigen, 2))) - 2
 
-        return json.dumps({ "fresh" : self.fresh,
+        return json.dumps({ "fresh" : self.fresh - 1,
                             "cnfs" : cnf_to_json(self.cnfs),
                             "requests" : list(map(lambda r: r.to_dict(), self.ll_requests)),
                             "unigen" : {

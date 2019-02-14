@@ -31,7 +31,9 @@ def test_backend_request_to_json():
     backend_request = BackendRequest(fresh, cnfs, requests)
     result = json.loads(backend_request.to_json(24, 100, 24))
 
-    assert result['fresh'] == 34
+    # The backend assumes fresh was the last allocated variable, not the next available variable,
+    # so we need to subtract 1 before handing it off.
+    assert result['fresh'] == 33
     assert result['unigen']['support'] == 24
     assert len(result['unigen']['arguments']) > 0
     assert "--samples=100" in result['unigen']['arguments']
