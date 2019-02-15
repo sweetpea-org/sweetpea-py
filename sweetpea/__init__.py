@@ -105,6 +105,12 @@ def save_cnf(block: Block, filename: str) -> None:
         f.write(cnf_str)
 
 
+def save_json_request(block: Block, sequence_count: int, filename: str) -> None:
+    json_request = __generate_json_request(block, sequence_count)
+    with open(filename, 'w') as f:
+        f.write(json_request)
+
+
 """
 Invokes the backend to build the final CNF formula in DIMACS format, returning it as a string.
 """
