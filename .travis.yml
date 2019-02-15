@@ -16,9 +16,10 @@ services:
 
 before_install:
 - docker pull sweetpea/server
+- docker images
 - docker run --rm -d -p 8080:8080 -p 6379:6379 sweetpea/server
 - docker ps -a
-- docker images
+- docker logs $(docker ps -q)
 - nc -z -vvv localhost 8080
 - nc -z -vvv localhost 6379
 
