@@ -115,50 +115,45 @@ def save_json_request(block: Block, sequence_count: int, filename: str) -> None:
 Invokes the backend to build the final CNF formula in DIMACS format, returning it as a string.
 """
 def __generate_cnf(block: Block) -> str:
-    json_data = __generate_json_request(block, 0)
+    json_data = json.loads(__generate_json_request(block, 0))
+    json_data['action'] = {
+        'actionType': 'BuildCNF',
+        'parameters': {}
+    }
+    json_data = json.dumps(json_data)
 
     update_docker_image("sweetpea/server")
     container = start_docker_container("sweetpea/server", 8080)
 
-    cnf_str = ""
+    cnf_job = None
     try:
         __check_server_health()
 
-        cnf_request = requests.post('http://localhost:8080/experiments/build-cnf', data = json_data)
-        if cnf_request.status_code != 200:
-            raise RuntimeError("Received non-200 response from CNF generation! response=" + str(cnf_request.status_code) + " body=" + cnf_request.text)
+        cnf_job_response = requests.post('http://localhost:8080/experiments/jobs', data = json_data)
+        if cnf_job_response.status_code != 200:
+            raise RuntimeError("Received non-200 response from CNF job submission! response=" + str(cnf_job_response.status_code) + " body=" + cnf_job_response.text)
         else:
-            cnf_str = cnf_request.text
+            cnf_job = cnf_job_response.json()
+
+        print("Waiting for CNF generation", end='', flush=True)
+        t_start = datetime.now()
+        while cnf_job['status'] == 'InProgress':
+            print('.', end='', flush=True)
+            time.sleep(3)
+            url = 'http://localhost:8080/experiments/jobs/' + cnf_job['id']
+            cnf_job_response = requests.get(url)
+            if cnf_job_response.status_code != 200:
+                raise RuntimeError("Received non-200 response from CNF job status query! url=" + url + " response=" + str(cnf_job_response.status_code) + " body=" + cnf_job_response.text)
+            else:
+                cnf_job = cnf_job_response.json()
+
+        t_end = datetime.now()
+        print("\nCNF generation complete. " + str((t_end - t_start).seconds) + "s")
 
     finally:
         stop_docker_container(container)
 
-    return cnf_str
-
-
-"""
-Approximates the number of solutions to the CNF formula generated for this experiment.
-Expects the sharpSAT binary to be present on the PATH
-"""
-def __approximate_solution_count(block: Block, timeout_in_seconds: int = 60, cache_size_mb: int = 4096) -> int:
-    approx_sol_cnt = -1
-
-    cnf_str = __generate_cnf(block)
-
-    # Write the CNF to a tmp file
-    tmp_filename = ""
-    with tempfile.NamedTemporaryFile(delete=False) as f:
-        f.write(str.encode(cnf_str))
-        tmp_filename = f.name
-
-    print("Approximating solution count with sharpSAT...", end='', flush=True)
-    t_start = datetime.now()
-    output = subprocess.check_output(["sharpSAT", "-q", "-t", str(timeout_in_seconds), "-cs", str(cache_size_mb), tmp_filename])
-    approx_sol_cnt = int(output.decode().split('\n')[0])
-    t_end = datetime.now()
-    print(str((t_end - t_start).seconds) + "s")
-
-    return approx_sol_cnt
+    return cnf_job['result']
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -210,7 +205,14 @@ each solution once it has been found. It's intended to give users something some
 we work through issues with unigen.
 """
 def synthesize_trials_non_uniform(block: Block, sequence_count: int) -> List[dict]:
-    json_data = __generate_json_request(block, sequence_count)
+    json_data = json.loads(__generate_json_request(block, sequence_count))
+    json_data['action'] = {
+        'actionType': 'SampleNonUniform',
+        'parameters': {
+            'count': str(sequence_count)
+        }
+    }
+    json_data = json.dumps(json_data)
 
     solutions = cast(List[dict], [])
 
@@ -222,21 +224,36 @@ def synthesize_trials_non_uniform(block: Block, sequence_count: int) -> List[dic
 
     print("Sending formula to backend... ", end='', flush=True)
     t_start = datetime.now()
+
+    job = None
     try:
         __check_server_health()
 
-        url = 'http://localhost:8080/experiments/generate/non-uniform/' + str(sequence_count)
-        experiments_request = requests.post(url, data = json_data)
-        if experiments_request.status_code != 200 or not experiments_request.json()['ok']:
+        url = 'http://localhost:8080/experiments/jobs'
+        job_response = requests.post(url, data = json_data)
+        if job_response.status_code != 200:
             tmp_filename = ""
             with tempfile.NamedTemporaryFile(delete=False) as f:
                 f.write(str.encode(json_data))
                 tmp_filename = f.name
 
-            raise RuntimeError("Received non-200 response from non-uniform experiment generation! Request body saved to temp file '" +
-                tmp_filename + "' status_code=" + str(experiments_request.status_code) + " response_body=" + str(experiments_request.text))
+            raise RuntimeError("Received non-200 response from non-uniform experiment generation job submission! Request body saved to temp file '" +
+                tmp_filename + "' status_code=" + str(job_response.status_code) + " response_body=" + str(job_response.text))
 
-        solutions = experiments_request.json()['solutions']
+        job = job_response.json()
+        delay = 0.2
+        while job['status'] == 'InProgress':
+            print('.', end='', flush=True)
+            time.sleep(delay)
+            delay = min(delay * 2, 30)
+            url = 'http://localhost:8080/experiments/jobs/' + job['id']
+            job_response = requests.get(url)
+            if job_response.status_code != 200:
+                raise RuntimeError("Received non-200 response from non-uniform job status query! url=" + url + " response=" + str(job_response.status_code) + " body=" + job_response.text)
+            else:
+                job = job_response.json()
+
+        solutions = json.loads(job['result'])['solutions']
         t_end = datetime.now()
         print(str((t_end - t_start).seconds) + "s")
 
