@@ -77,14 +77,14 @@ def __decode(block: Block, solution: List[int]) -> dict:
     return experiment
 
 
-def __generate_json_data(block: Block, sequence_count: int) -> str:
+def __generate_json_data(block: Block, sequence_count: int) -> dict:
     backend_request = block.build_backend_request()
     support = block.variables_per_sample()
     solution_count = __count_solutions(block)
-    return backend_request.to_json(support, sequence_count, solution_count)
+    return backend_request.to_request_data(support, sequence_count, solution_count)
 
 
-def __generate_json_request(block: Block, sequence_count: int) -> str:
+def __generate_json_request(block: Block, sequence_count: int) -> dict:
     print("Generating design formula... ", end='', flush=True)
     t_start = datetime.now()
     json_data = __generate_json_data(block, sequence_count)
@@ -106,7 +106,7 @@ def save_cnf(block: Block, filename: str) -> None:
 
 
 def save_json_request(block: Block, sequence_count: int, filename: str) -> None:
-    json_request = __generate_json_request(block, sequence_count)
+    json_request = json.dumps(__generate_json_request(block, sequence_count))
     with open(filename, 'w') as f:
         f.write(json_request)
 
@@ -115,12 +115,11 @@ def save_json_request(block: Block, sequence_count: int, filename: str) -> None:
 Invokes the backend to build the final CNF formula in DIMACS format, returning it as a string.
 """
 def __generate_cnf(block: Block) -> str:
-    json_data = json.loads(__generate_json_request(block, 0))
+    json_data = __generate_json_request(block, 0)
     json_data['action'] = {
         'actionType': 'BuildCNF',
         'parameters': {}
     }
-    json_data = json.dumps(json_data)
 
     update_docker_image("sweetpea/server")
     container = start_docker_container("sweetpea/server", 8080)
@@ -129,7 +128,7 @@ def __generate_cnf(block: Block) -> str:
     try:
         __check_server_health()
 
-        cnf_job_response = requests.post('http://localhost:8080/experiments/jobs', data = json_data)
+        cnf_job_response = requests.post('http://localhost:8080/experiments/jobs', data = json.dumps(json_data))
         if cnf_job_response.status_code != 200:
             raise RuntimeError("Received non-200 response from CNF job submission! response=" + str(cnf_job_response.status_code) + " body=" + cnf_job_response.text)
         else:
@@ -205,14 +204,13 @@ each solution once it has been found. It's intended to give users something some
 we work through issues with unigen.
 """
 def synthesize_trials_non_uniform(block: Block, sequence_count: int) -> List[dict]:
-    json_data = json.loads(__generate_json_request(block, sequence_count))
+    json_data = __generate_json_request(block, sequence_count)
     json_data['action'] = {
         'actionType': 'SampleNonUniform',
         'parameters': {
             'count': str(sequence_count)
         }
     }
-    json_data = json.dumps(json_data)
 
     solutions = cast(List[dict], [])
 
@@ -230,11 +228,11 @@ def synthesize_trials_non_uniform(block: Block, sequence_count: int) -> List[dic
         __check_server_health()
 
         url = 'http://localhost:8080/experiments/jobs'
-        job_response = requests.post(url, data = json_data)
+        job_response = requests.post(url, data = json.dumps(json_data))
         if job_response.status_code != 200:
             tmp_filename = ""
             with tempfile.NamedTemporaryFile(delete=False) as f:
-                f.write(str.encode(json_data))
+                json.dump(json.dumps(json_data), f)
                 tmp_filename = f.name
 
             raise RuntimeError("Received non-200 response from non-uniform experiment generation job submission! Request body saved to temp file '" +
@@ -293,7 +291,7 @@ def synthesize_trials(block: Block, sequence_count: int=10) -> List[dict]:
         if experiments_request.status_code != 200 or not experiments_request.json()['ok']:
             tmp_filename = ""
             with tempfile.NamedTemporaryFile(delete=False) as f:
-                f.write(str.encode(json_data))
+                json.dump(json_data, f)
                 tmp_filename = f.name
 
             raise RuntimeError("Received non-200 response from experiment generation! LowLevelRequest body saved to temp file '" +

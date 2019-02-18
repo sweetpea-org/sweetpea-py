@@ -20,7 +20,7 @@ def test_low_level_request_validation():
         LowLevelRequest('EQ', '5', [1, 2, 3])
 
 
-def test_backend_request_to_json():
+def test_backend_request_to_request_data():
     fresh = 34
     cnfs = [And([Or([1, 2, 3])]),
             And([Or([-4, 5, -6])])]
@@ -29,7 +29,7 @@ def test_backend_request_to_json():
         LowLevelRequest("LT", 3, [1, 2, 3, 4])]
 
     backend_request = BackendRequest(fresh, cnfs, requests)
-    result = json.loads(backend_request.to_json(24, 100, 24))
+    result = backend_request.to_request_data(24, 100, 24)
 
     # The backend assumes fresh was the last allocated variable, not the next available variable,
     # so we need to subtract 1 before handing it off.

@@ -57,7 +57,7 @@ class BackendRequest:
         self.support = -1
         self.solution_count = -1
 
-    def to_json(self, support: int, sequence_count: int, solution_count: int):
+    def to_request_data(self, support: int, sequence_count: int, solution_count: int):
 
         # Taken from the unigen2.py script: https://bitbucket.org/kuldeepmeel/unigen/src/4677b2ec4553b2a44a31910db0037820abdc1394/UniGen2.py?at=master&fileviewer=file-view-default
         kappa = 0.638
@@ -65,24 +65,25 @@ class BackendRequest:
         log_count = math.log(solution_count, 2)
         start_iteration = int(round(log_count + math.log(1.8, 2) - math.log(pivot_unigen, 2))) - 2
 
-        return json.dumps({ "fresh" : self.fresh - 1,
-                            "cnfs" : cnf_to_json(self.cnfs),
-                            "requests" : list(map(lambda r: r.to_dict(), self.ll_requests)),
-                            "unigen" : {
-                                "support" : support,
-                                "arguments" : [
-                                    "--verbosity=0",
-                                    "--samples=" + str(sequence_count),
-                                    "--kappa=" + str(kappa),
-                                    "--pivotUniGen=" + str(pivot_unigen),
-                                    "--startIteration=" + str(start_iteration),
-                                    "--maxLoopTime=3000",
-                                    "--maxTotalTime=72000",
-                                    "--tApproxMC=1",
-                                    "--pivotAC=60",
-                                    "--gaussuntil=400"
-                                ]
-                            }})
+        return {
+            "fresh" : self.fresh - 1,
+            "cnfs" : cnf_to_json(self.cnfs),
+            "requests" : list(map(lambda r: r.to_dict(), self.ll_requests)),
+            "unigen" : {
+                "support" : support,
+                "arguments" : [
+                    "--verbosity=0",
+                    "--samples=" + str(sequence_count),
+                    "--kappa=" + str(kappa),
+                    "--pivotUniGen=" + str(pivot_unigen),
+                    "--startIteration=" + str(start_iteration),
+                    "--maxLoopTime=3000",
+                    "--maxTotalTime=72000",
+                    "--tApproxMC=1",
+                    "--pivotAC=60",
+                    "--gaussuntil=400"
+                ]
+            }}
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
