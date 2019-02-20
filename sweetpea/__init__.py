@@ -136,9 +136,12 @@ def __generate_cnf(block: Block) -> str:
 
         print("Waiting for CNF generation", end='', flush=True)
         t_start = datetime.now()
+
+        delay = 0.2
         while cnf_job['status'] == 'InProgress':
             print('.', end='', flush=True)
-            time.sleep(3)
+            time.sleep(delay)
+            delay = min(delay * 2, 30)
             url = 'http://localhost:8080/experiments/jobs/' + cnf_job['id']
             cnf_job_response = requests.get(url)
             if cnf_job_response.status_code != 200:
