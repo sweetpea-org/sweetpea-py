@@ -1,5 +1,6 @@
 import docker
 import os
+import requests
 import time
 
 from datetime import datetime
@@ -34,6 +35,12 @@ def start_docker_container(image_name, port):
     print(str((t_end - t_start).seconds) + "s")
     time.sleep(1) # Give the server time to finish starting to avoid connection reset errors.
     return container
+
+
+def check_server_health():
+    health_check = requests.get('http://localhost:8080/')
+    if health_check.status_code != 200:
+        raise RuntimeError("SweetPea server healthcheck returned non-200 reponse! " + str(health_check.status_code))
 
 
 def stop_docker_container(container):

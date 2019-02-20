@@ -18,7 +18,7 @@ from sweetpea.derivation_processor import DerivationProcessor
 from sweetpea.internal import chunk, get_all_level_names, intersperse
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.blocks import Block, FullyCrossBlock
-from sweetpea.docker import update_docker_image, start_docker_container, stop_docker_container
+from sweetpea.docker import update_docker_image, start_docker_container, stop_docker_container, check_server_health
 from sweetpea.backend import BackendRequest
 from sweetpea.primitives import *
 from sweetpea.constraints import *
@@ -93,12 +93,6 @@ def __generate_json_request(block: Block, sequence_count: int) -> dict:
     return json_data
 
 
-def __check_server_health():
-    health_check = requests.get('http://localhost:8080/')
-    if health_check.status_code != 200:
-        raise RuntimeError("SweetPea server healthcheck returned non-200 reponse! " + str(health_check.status_code))
-
-
 def save_cnf(block: Block, filename: str) -> None:
     cnf_str = __generate_cnf(block)
     with open(filename, 'w') as f:
@@ -126,7 +120,7 @@ def __generate_cnf(block: Block) -> str:
 
     cnf_job = None
     try:
-        __check_server_health()
+        check_server_health()
 
         cnf_job_response = requests.post('http://localhost:8080/experiments/jobs', data = json.dumps(json_data))
         if cnf_job_response.status_code != 200:
@@ -228,7 +222,7 @@ def synthesize_trials_non_uniform(block: Block, sequence_count: int) -> List[dic
 
     job = None
     try:
-        __check_server_health()
+        check_server_health()
 
         url = 'http://localhost:8080/experiments/jobs'
         job_response = requests.post(url, data = json.dumps(json_data))
@@ -295,7 +289,7 @@ def __synthesize_trials_unigen(block: Block, sequence_count: int) -> List[dict]:
     print("Sending formula to backend... ", end='', flush=True)
     t_start = datetime.now()
     try:
-        __check_server_health()
+        check_server_health()
 
         experiments_request = requests.post('http://localhost:8080/experiments/generate', data = json_data)
         if experiments_request.status_code != 200 or not experiments_request.json()['ok']:
