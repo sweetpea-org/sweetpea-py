@@ -269,9 +269,16 @@ def synthesize_trials_non_uniform(block: Block, sequence_count: int) -> List[dic
 
 
 """
-This is where the magic happens. Desugars the constraints from fully_cross_block (which results in some direct cnfs being produced and some requests to the backend being produced). Then calls unigen on the full cnf file. Then decodes that cnf file into (1) something human readable & (2) psyNeuLink readable.
+This is where the magic happens. Desugars the constraints from fully_cross_block (which results
+in some direct cnfs being produced and some requests to the backend being produced). Then
+calls unigen on the full cnf file. Then decodes that cnf file into (1) something human readable
+& (2) psyNeuLink readable.
 """
 def synthesize_trials(block: Block, sequence_count: int=10) -> List[dict]:
+    return __synthesize_trials_unigen(block, sequence_count)
+
+
+def __synthesize_trials_unigen(block: Block, sequence_count: int) -> List[dict]:
     # TODO: Do this in separate thread, and output some kind of progress indicator.
     json_data = __generate_json_request(block, sequence_count)
 
@@ -323,3 +330,8 @@ def synthesize_trials(block: Block, sequence_count: int=10) -> List[dict]:
         print(line)
 
     return result
+
+
+def __synthesize_trials_guided(block: Block, sequence_count: int) -> List[dict]:
+    # TODO - implement new idea
+    return []
