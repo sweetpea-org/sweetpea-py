@@ -19,15 +19,18 @@ before_install:
 - docker pull sweetpea/server
 - docker run -d -p 8080:8080 -p 6379:6379 sweetpea/server
 - docker logs $(docker ps -aq) || docker inspect $(docker ps -aq)
+- nc -z -vvv localhost 8080
+- nc -z -vvv localhost 6379
 
 install:
 - pip install -e .
 - pip install mypy
 
 script:
-- nc -z -vvv localhost 8080
-- nc -z -vvv localhost 6379
 - make full
+
+after_failure:
+- docker logs $(docker ps -aq) || docker inspect $(docker ps -aq)
 
 notifications:
   email: false
