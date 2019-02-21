@@ -3,11 +3,16 @@ import requests
 import tempfile
 import time
 
+from typing import List
+
 from sweetpea.blocks import Block
+from sweetpea.logic import And, cnf_to_json
 
 
 """
 Contains helper functions for interacting with the server.
+
+All functions expect that the server has already been started.
 """
 
 BASE_URL = 'http://localhost:8080/'
@@ -85,3 +90,14 @@ def build_cnf(block: Block) -> dict:
         'id': job_id,
         'cnf_str': job_result_str
     }
+
+
+def is_cnf_still_sat(cnf_id: str, additional_clauses: List[And]) -> bool:
+    request_data = {
+        'action': 'IsSAT',
+        'cnfId': cnf_id,
+        'cnfs': cnf_to_json(additional_clauses)
+    }
+
+    sat_job_id = submit_job(request_data)
+    return get_job_result(sat_job_id) == "True"
