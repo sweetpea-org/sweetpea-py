@@ -29,7 +29,7 @@ def submit_job(request_data: dict) -> str:
     if job_response.status_code != 200:
         tmp_filename = ""
         with tempfile.NamedTemporaryFile(delete=False) as f:
-            json.dump(data_str, f)
+            f.write(data_str)
             tmp_filename = f.name
 
         raise RuntimeError("Received non-200 response from job submission! Request body saved to temp file '" +
