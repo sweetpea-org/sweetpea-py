@@ -24,6 +24,7 @@ from sweetpea.primitives import *
 from sweetpea.constraints import *
 from sweetpea.sampling_strategies.base_strategy import BaseStrategy
 from sweetpea.sampling_strategies.non_uniform import NonUniform
+from sweetpea.server import submit_job, get_job_result
 
 # ~~~~~~~~~~ Helper functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -48,38 +49,14 @@ def __generate_cnf(block: Block) -> str:
     update_docker_image("sweetpea/server")
     container = start_docker_container("sweetpea/server", 8080)
 
-    cnf_job = None
     try:
-        check_server_health()
-
-        cnf_job_response = requests.post('http://localhost:8080/experiments/jobs', data = json.dumps(json_data))
-        if cnf_job_response.status_code != 200:
-            raise RuntimeError("Received non-200 response from CNF job submission! response=" + str(cnf_job_response.status_code) + " body=" + cnf_job_response.text)
-        else:
-            cnf_job = cnf_job_response.json()
-
-        print("Waiting for CNF generation", end='', flush=True)
-        t_start = datetime.now()
-
-        delay = 0.2
-        while cnf_job['status'] == 'InProgress':
-            print('.', end='', flush=True)
-            time.sleep(delay)
-            delay = min(delay * 2, 30)
-            url = 'http://localhost:8080/experiments/jobs/' + cnf_job['id']
-            cnf_job_response = requests.get(url)
-            if cnf_job_response.status_code != 200:
-                raise RuntimeError("Received non-200 response from CNF job status query! url=" + url + " response=" + str(cnf_job_response.status_code) + " body=" + cnf_job_response.text)
-            else:
-                cnf_job = cnf_job_response.json()
-
-        t_end = datetime.now()
-        print("\nCNF generation complete. " + str((t_end - t_start).seconds) + "s")
+        job_id = submit_job(json_data)
+        job_result_str = get_job_result(job_id)
 
     finally:
         stop_docker_container(container)
 
-    return cnf_job['result']
+    return job_result_str
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

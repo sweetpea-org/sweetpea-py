@@ -34,6 +34,9 @@ def start_docker_container(image_name, port):
     t_end = datetime.now()
     print(str((t_end - t_start).seconds) + "s")
     time.sleep(1) # Give the server time to finish starting to avoid connection reset errors.
+
+    check_server_health()
+
     return container
 
 
