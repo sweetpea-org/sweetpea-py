@@ -101,6 +101,25 @@ def test_factor_variables_for_trial_with_expanded_crossing():
     assert block.factor_variables_for_trial(color_repeats_factor, 5) == [27, 28]
 
 
+def test_variable_list_for_trial():
+
+    # ---------------------------------------------------
+    # |   Trial |  color   |   text   | repeated color? |
+    # |       # | red blue | red blue |   yes      no   |
+    # ---------------------------------------------------
+    # |       1 |  1   2   |  3   4   |                 |
+    # |       2 |  5   6   |  7   8   |    17      18   |
+    # |       3 |  9   10  | 11   12  |    19      20   |
+    # |       4 | 13   14  | 15   16  |    21      22   |
+    # ---------------------------------------------------
+    block = fully_cross_block([color, text, color_repeats_factor], [color, text], [])
+
+    assert block.variable_list_for_trial(1) == [[ 1, 2 ], [ 3, 4 ], []]
+    assert block.variable_list_for_trial(2) == [[ 5, 6 ], [ 7, 8 ], [17, 18]]
+    assert block.variable_list_for_trial(3) == [[ 9, 10], [11, 12], [19, 20]]
+    assert block.variable_list_for_trial(4) == [[13, 14], [15, 16], [21, 22]]
+
+
 def test_fully_cross_block_decode_variable():
     block = fully_cross_block([color, text, color_repeats_factor, text_repeats_factor],
                               [color, text],

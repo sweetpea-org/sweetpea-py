@@ -132,6 +132,31 @@ class Block:
 
         return list(map(lambda n: n + offset + 1, initial_sequence))
 
+    """
+    Given a trial number (1-based) this function will return a list of lists of the variables
+    that pertain to that trial.
+
+    For example, for stroop-2 with a congruency level, this method would return the following
+    for trial #1:
+
+        [[1, 2], [3, 4], [5, 6]]
+
+    If a transition were involved, and it didn't apply to level one, then the factor would
+    have an empty list:
+
+        [[1, 2], [3, 4], []]
+    """
+    def variable_list_for_trial(self, t: int) -> List[List[int]]:
+        variables = cast(List[List[int]], [])
+        for f in self.design:
+            # Skip factors that don't apply.
+            if not f.applies_to_trial(t):
+                variables.append([])
+                continue
+
+            variables.append(self.factor_variables_for_trial(f, t))
+
+        return variables;
 
     """
     Given a variable number from the SAT formula, this method will return
