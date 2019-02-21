@@ -16,14 +16,10 @@ services:
 
 before_install:
 - docker events &
-- docker -v
 - docker pull sweetpea/server
-- docker run -d -p 8080:8080 sweetpea/server
-- sleep 6
-- docker ps -a
+- docker run -d -p 8080:8080 -p 6379:6379 sweetpea/server
 - docker logs $(docker ps -aq)
 - docker inspect $(docker ps -aq)
-- nc -z -vvv localhost 8080
 
 install:
 - pip install -e .
@@ -31,6 +27,7 @@ install:
 
 script:
 - nc -z -vvv localhost 8080
+- nc -z -vvv localhost 6379
 - make full
 
 notifications:
