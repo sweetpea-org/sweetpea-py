@@ -3,6 +3,9 @@ import requests
 import tempfile
 import time
 
+from sweetpea.blocks import Block
+
+
 """
 Contains helper functions for interacting with the server.
 """
@@ -56,3 +59,29 @@ def get_job_result(job_id: str) -> str:
         job = get_job_status(job_id)
 
     return job['result']
+
+
+"""
+Sends a job to the server to build the CNF for a design, returning a dict like so:
+{
+    'id': '<job id>',
+    'cnf_str': '<CNF String>'
+}
+"""
+def build_cnf(block: Block) -> dict:
+    backend_request = block.build_backend_request()
+    json_data = {
+        'action': 'BuildCNF',
+        'cnfs': backend_request.get_cnfs_as_json(),
+        'requests': backend_request.get_requests_as_json(),
+        'support': block.variables_per_sample(),
+        'fresh': backend_request.fresh,
+    }
+
+    job_id = submit_job(json_data)
+    job_result_str = get_job_result(job_id)
+
+    return {
+        'id': job_id,
+        'cnf_str': job_result_str
+    }

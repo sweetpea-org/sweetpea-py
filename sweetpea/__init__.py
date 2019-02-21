@@ -24,7 +24,7 @@ from sweetpea.primitives import *
 from sweetpea.constraints import *
 from sweetpea.sampling_strategies.base_strategy import BaseStrategy
 from sweetpea.sampling_strategies.non_uniform import NonUniform
-from sweetpea.server import submit_job, get_job_result
+from sweetpea.server import submit_job, get_job_result, build_cnf
 
 # ~~~~~~~~~~ Helper functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -37,26 +37,15 @@ def save_cnf(block: Block, filename: str) -> None:
 Invokes the backend to build the final CNF formula in DIMACS format, returning it as a string.
 """
 def __generate_cnf(block: Block) -> str:
-    backend_request = block.build_backend_request()
-    json_data = {
-        'action': 'BuildCNF',
-        'cnfs': backend_request.get_cnfs_as_json(),
-        'requests': backend_request.get_requests_as_json(),
-        'support': block.variables_per_sample(),
-        'fresh': backend_request.fresh,
-    }
-
     update_docker_image("sweetpea/server")
     container = start_docker_container("sweetpea/server", 8080)
 
     try:
-        job_id = submit_job(json_data)
-        job_result_str = get_job_result(job_id)
-
+        cnf_result = build_cnf(block)
     finally:
         stop_docker_container(container)
 
-    return job_result_str
+    return cnf_result['cnf_str']
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
