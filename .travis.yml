@@ -30,6 +30,7 @@ script:
 - make full
 
 after_failure:
+- nc -z -vvv localhost 6379
 - docker logs $(docker ps -aq) || docker inspect $(docker ps -aq)
 
 notifications:
