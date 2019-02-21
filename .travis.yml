@@ -15,11 +15,11 @@ services:
 - docker
 
 before_install:
+- docker events &
 - docker -v
 - docker pull sweetpea/server
-- docker images
-- docker events &
 - docker run --rm -d -p 8080:8080 sweetpea/server
+- sleep 6
 - docker ps -a
 - docker logs $(docker ps -q)
 - nc -z -vvv localhost 8080
@@ -29,6 +29,7 @@ install:
 - pip install mypy
 
 script:
+- nc -z -vvv localhost 8080
 - make full
 
 notifications:
