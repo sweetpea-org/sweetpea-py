@@ -18,10 +18,11 @@ before_install:
 - docker events &
 - docker -v
 - docker pull sweetpea/server
-- docker run --rm -d -p 8080:8080 sweetpea/server
+- docker run -d -p 8080:8080 sweetpea/server
 - sleep 6
 - docker ps -a
-- docker logs $(docker ps -q)
+- docker logs $(docker ps -aq)
+- docker inspect $(docker ps -aq)
 - nc -z -vvv localhost 8080
 
 install:
