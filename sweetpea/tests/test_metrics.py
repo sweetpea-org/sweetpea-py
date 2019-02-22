@@ -66,11 +66,11 @@ def test_correct_solution_count_with_uncrossed_factor(color_count, direction_cou
 
 @pytest.mark.skip
 @pytest.mark.parametrize('color_count,solution_count', [
-    (2, 12)
+    (2, 12),
+    (3, 151200)
 ])
 def test_correct_solution_count_with_single_constraint(color_count, solution_count):
     design = __build_stroop_design(color_count)
     blk = fully_cross_block(design, design, [AtMostKInARow(1, ("color", "red"))])
 
     assert __count_solutions(blk) == solution_count
-

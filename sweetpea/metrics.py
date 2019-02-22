@@ -27,7 +27,11 @@ def collect_design_metrics(block: Block) -> Dict:
 
         'low_level_request_count': len(backend_request.ll_requests),
         'cnf_total_variables': int(dimacs_header[2]),
-        'cnf_total_clauses': int(dimacs_header[3])
+        'cnf_total_clauses': int(dimacs_header[3]),
+
+        # Solution Counting Related Variables:
+        'full_set_count': __count_unconstrained_sequences(block),
+        'prohibited_sequences': __count_prohibited_sequences(block),
     }
 
 
