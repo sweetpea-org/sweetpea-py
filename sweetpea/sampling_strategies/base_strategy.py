@@ -32,9 +32,13 @@ class BaseStrategy(ABC):
     """
     @staticmethod
     def decode(block: Block, solution: List[int]) -> dict:
-        gt0 = lambda n: n > 0
-        simple_variables = list(filter(gt0, solution[:block.grid_variables()]))
-        complex_variables = list(filter(gt0, solution[block.grid_variables():block.variables_per_sample()]))
+        # Sort the list and remove any negative (false) variables
+        solution.sort()
+        solution = list(filter(lambda v: v > 0, solution))
+
+        # Separate into simple/complex variables.
+        simple_variables = list(filter(lambda v: v <= block.grid_variables(), solution))
+        complex_variables = list(filter(lambda v: v > block.grid_variables(), solution))
 
         experiment = cast(dict, {})
 
