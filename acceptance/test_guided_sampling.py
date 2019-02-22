@@ -1,0 +1,31 @@
+import operator as op
+import pytest
+
+from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
+from sweetpea.constraints import AtMostKInARow, ExactlyKInARow
+from sweetpea.sampling_strategies.guided import Guided
+from sweetpea import fully_cross_block, synthesize_trials
+
+
+# Basic setup
+color_list = ["red", "blue"]
+color = Factor("color", color_list)
+text  = Factor("text",  color_list)
+
+# Congruent factor
+con_level  = DerivedLevel("con", WithinTrial(op.eq, [color, text]))
+inc_level  = DerivedLevel("inc", WithinTrial(op.ne, [color, text]))
+con_factor = Factor("congruent?", [con_level, inc_level])
+
+design      = [color, text, con_factor]
+crossing    = [color, text]
+constraints = []
+
+block = fully_cross_block(design, crossing, constraints)
+
+
+def test_guided_sampling_works():
+    trials = synthesize_trials(block, 5, sampling_strategy=Guided)
+
+    assert len(trials) == 5
+

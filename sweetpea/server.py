@@ -91,7 +91,8 @@ def build_cnf(block: Block) -> dict:
         'cnf_str': job_result_str
     }
 
-
+# TODO: Make a 'local' version of this for better performance?
+# (Invoke solver directly, rather than through docker)
 def is_cnf_still_sat(cnf_id: str, additional_clauses: List[And]) -> bool:
     request_data = {
         'action': 'IsSAT',

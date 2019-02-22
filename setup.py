@@ -18,7 +18,8 @@ setuptools.setup(
       'requests',
       'ascii-graph',
       'networkx',
-      'matplotlib'
+      'matplotlib',
+      'numpy'
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
