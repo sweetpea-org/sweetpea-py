@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import List, cast
 from ascii_graph import Pyasciigraph
 
-from sweetpea.sampling_strategies.base_strategy import BaseStrategy
+from sweetpea.sampling_strategies.base_strategy import BaseStrategy, SamplingResult
 from sweetpea.blocks import Block
 from sweetpea.docker import update_docker_image, start_docker_container, check_server_health, stop_docker_container
 
@@ -17,7 +17,7 @@ This strategy relies fully on Unigen to produce the desired number of samples.
 class Unigen(BaseStrategy):
 
     @staticmethod
-    def sample(block: Block, sample_count: int) -> List[dict]:
+    def sample(block: Block, sample_count: int) -> SamplingResult:
         # TODO: Do this in separate thread, and output some kind of progress indicator.
         backend_request = block.build_backend_request()
 
@@ -95,5 +95,5 @@ class Unigen(BaseStrategy):
         for line in  graph.graph('Most Frequently Sampled Solutions', hist_data[:15]):
             print(line)
 
-        return result
+        return SamplingResult(result, {})
 

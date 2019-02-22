@@ -107,4 +107,5 @@ calls unigen on the full cnf file. Then decodes that cnf file into (1) something
 & (2) psyNeuLink readable.
 """
 def synthesize_trials(block: Block, sequence_count: int=10, sampling_strategy=NonUniform) -> List[dict]:
-    return sampling_strategy.sample(block, sequence_count)
+    sampling_result = sampling_strategy.sample(block, sequence_count)
+    return sampling_result.samples

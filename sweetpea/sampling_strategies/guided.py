@@ -9,7 +9,7 @@ from typing import List, cast
 from sweetpea.blocks import Block
 from sweetpea.docker import update_docker_image, start_docker_container, stop_docker_container
 from sweetpea.logic import And
-from sweetpea.sampling_strategies.base_strategy import BaseStrategy
+from sweetpea.sampling_strategies.base_strategy import BaseStrategy, SamplingResult
 from sweetpea.server import build_cnf, is_cnf_still_sat
 
 
@@ -20,37 +20,50 @@ guide the choices it makes.
 class Guided(BaseStrategy):
 
     @staticmethod
-    def sample(block: Block, sample_count: int) -> List[dict]:
+    def sample(block: Block, sample_count: int) -> SamplingResult:
 
         update_docker_image("sweetpea/server")
         container = start_docker_container("sweetpea/server", 8080)
 
         samples = cast(List[dict], [])
+        metrics = cast(dict, {})
         try:
             # Build the full CNF for this block
             cnf_result = build_cnf(block)
             cnf_id = cnf_result['id']
 
             for _ in range(sample_count):
-                samples.append(Guided.__generate_sample(block, cnf_id))
+                sample_metrics = cast(dict, {})
+                t_start = time()
+                samples.append(Guided.__generate_sample(block, cnf_id, sample_metrics))
+                sample_metrics['time'] = time() - t_start
 
         finally:
             stop_docker_container(container)
 
-        return samples
+        return SamplingResult(samples, metrics)
 
 
     @staticmethod
-    def __generate_sample(block: Block, cnf_id: str) -> dict:
+    def __generate_sample(block: Block, cnf_id: str, sample_metrics: dict) -> dict:
+        sample_metrics['trials'] = []
+
         # Start a 'committed' list of CNFs
         committed = cast(List[And], [])
 
         for trial_number in range(block.trials_per_sample()):
+            trial_metrics = {
+                't': trial_number + 1,
+                'solver_calls': []
+            }
+            solver_calls = cast(List[dict], trial_metrics['solver_calls'])
 
             #  Get the variable list for this trial.
             variables = block.variable_list_for_trial(trial_number + 1)
             variables = list(filter(lambda i: i != [], variables))
             potential_trials = list(map(list, product(*variables)))
+
+            trial_metrics['potential_trials'] = len(potential_trials)
 
             # Use env var to switch between filtering and not
             if Guided.__prefilter_enabled():
@@ -68,10 +81,12 @@ class Guided(BaseStrategy):
                 allowed = is_cnf_still_sat(cnf_id, committed + [And(potential_trial)])
                 duration_seconds = time() - start_time
 
-                # TODO: Record stats
+                solver_calls.append({'time': duration_seconds, 'SAT': allowed})
 
                 if allowed:
                     allowed_trials.append(potential_trial)
+
+            trial_metrics['allowed_trials'] = len(allowed_trials)
 
             # Randomly sample a single trial from the uniform distribution of the allowed trials,
             # and commit that trial to the committed sequence.

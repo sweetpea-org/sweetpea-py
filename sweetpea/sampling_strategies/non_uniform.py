@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 from typing import List, cast
 
-from sweetpea.sampling_strategies.base_strategy import BaseStrategy
+from sweetpea.sampling_strategies.base_strategy import BaseStrategy, SamplingResult
 from sweetpea.blocks import Block
 from sweetpea.docker import update_docker_image, start_docker_container, check_server_health, stop_docker_container
 from sweetpea.server import submit_job, get_job_result
@@ -18,7 +18,7 @@ solver repeatedly to produce unique (but not uniform) samples.
 class NonUniform(BaseStrategy):
 
     @staticmethod
-    def sample(block: Block, sample_count: int) -> List[dict]:
+    def sample(block: Block, sample_count: int) -> SamplingResult:
         backend_request = block.build_backend_request()
         json_data = {
             'action': 'SampleNonUniform',
@@ -49,5 +49,5 @@ class NonUniform(BaseStrategy):
             stop_docker_container(container)
 
         result = list(map(lambda s: BaseStrategy.decode(block, s['assignment']), solutions))
-        return result
+        return SamplingResult(result, {})
 

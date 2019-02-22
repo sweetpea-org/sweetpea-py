@@ -7,6 +7,15 @@ from sweetpea.internal import intersperse
 
 
 """
+Data object for sampling result.
+"""
+class SamplingResult:
+    def __init__(self, samples: List[dict], metrics: dict) -> None:
+        self.samples = samples
+        self.metrics = metrics
+
+
+"""
 Generic interface for sampling strategies.
 """
 class BaseStrategy(ABC):
@@ -16,7 +25,7 @@ class BaseStrategy(ABC):
     """
     @staticmethod
     @abstractmethod
-    def sample(block: Block, sample_count: int) -> List[dict]:
+    def sample(block: Block, sample_count: int) -> SamplingResult:
         pass
 
     """
