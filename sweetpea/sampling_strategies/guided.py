@@ -26,7 +26,12 @@ class Guided(BaseStrategy):
         container = start_docker_container("sweetpea/server", 8080)
 
         samples = cast(List[dict], [])
-        metrics = cast(dict, {})
+        metrics = cast(dict, {
+            'sample_metrics': []
+        })
+
+        overall_start = time()
+
         try:
             # Build the full CNF for this block
             cnf_result = build_cnf(block)
@@ -37,6 +42,9 @@ class Guided(BaseStrategy):
                 t_start = time()
                 samples.append(Guided.__generate_sample(block, cnf_id, sample_metrics))
                 sample_metrics['time'] = time() - t_start
+                metrics['sample_metrics'].append(sample_metrics)
+
+            metrics['time'] = time() - overall_start
 
         finally:
             stop_docker_container(container)
@@ -52,6 +60,8 @@ class Guided(BaseStrategy):
         committed = cast(List[And], [])
 
         for trial_number in range(block.trials_per_sample()):
+            trial_start_time = time()
+
             trial_metrics = {
                 't': trial_number + 1,
                 'solver_calls': []
@@ -87,11 +97,27 @@ class Guided(BaseStrategy):
                     allowed_trials.append(potential_trial)
 
             trial_metrics['allowed_trials'] = len(allowed_trials)
+            trial_metrics['solver_call_count'] = len(solver_calls)
+            sample_metrics['trials'].append(trial_metrics)
 
             # Randomly sample a single trial from the uniform distribution of the allowed trials,
             # and commit that trial to the committed sequence.
             trial_idx = np.random.randint(0, len(allowed_trials))
             committed.append(And(allowed_trials[trial_idx]))
+
+            trial_metrics['time'] = time() - trial_start_time
+
+            # TODO:
+            # Mean solver time for SAT
+            # Mean solver time for UNSAT
+            # Median trial time
+            # Mean trial time?
+            # D3 dashboard? - Heatmap for execution time? (Flame graph?) Can we generate this?
+
+        # Aggregate the total solver calls
+        sample_metrics['solver_call_count'] = 0
+        for tm in sample_metrics['trials']:
+            sample_metrics['solver_call_count'] += tm['solver_call_count']
 
         # Flatten the committed trials into a list of integers and decode it.
         solution = Guided.__committed_to_solution(committed)
@@ -104,3 +130,69 @@ class Guided(BaseStrategy):
     @staticmethod
     def __prefilter_enabled():
         return os.environ.get('SWEETPEA_GUIDED_PREFILTER_TRIALS') is not None
+
+
+class Flamegraph():
+    GRAPH_FILE_TEMPLATE = '''
+<head>
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/spiermar/d3-flame-graph@2.0.6/dist/d3-flamegraph.css">
+</head>
+<body>
+  <div id="chart"></div>
+  <script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3-tip/0.9.1/d3-tip.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/spiermar/d3-flame-graph@2.0.6/dist/d3-flamegraph.min.js"></script>
+  <script type="text/javascript">
+  graph_data = {}
+  var flamegraph = d3.flamegraph().width(960);
+  d3.select("#chart").datum(graph_data).call(flamegraph);
+  </script>
+</body>
+'''
+
+    @staticmethod
+    def generate(filename: str, sampling_result: SamplingResult) -> None:
+        graph_data = Flamegraph.__convert_metrics_to_graph_data(sampling_result.metrics)
+        with open(filename, 'w') as f:
+            f.write(Flamegraph.GRAPH_FILE_TEMPLATE.format(graph_data))
+
+    @staticmethod
+    def __convert_metrics_to_graph_data(metrics: dict) -> dict:
+        children = []
+        for sample_number in range(len(metrics['sample_metrics'])):
+            children.append(Flamegraph.__convert_sample_to_graph_data(sample_number, metrics['sample_metrics'][sample_number]))
+
+        return {
+            'name': 'All Samples',
+            'value': metrics['time'],
+            'children': children
+        }
+
+    @staticmethod
+    def __convert_sample_to_graph_data(sample_number: int, sample_metrics: dict) -> dict:
+        children = []
+        for trial_number in range(len(sample_metrics['trials'])):
+            children.append(Flamegraph.__convert_trial_to_graph_data(trial_number, sample_metrics['trials'][trial_number]))
+
+        return {
+            'name': 'Sample #{}'.format(sample_number + 1),
+            'value': sample_metrics['time'],
+            'children': children
+        }
+
+    @staticmethod
+    def __convert_trial_to_graph_data(trial_number: int, trial_metrics: dict) -> dict:
+        children = []
+        for solver_number in range(len(trial_metrics['solver_calls'])):
+            solver_call = trial_metrics['solver_calls'][solver_number]
+            children.append({
+                'name': 'Solver Call #{}'.format(solver_number + 1),
+                'value': solver_call['time'],
+                'SAT': str(solver_call['SAT']).lower()
+            })
+
+        return {
+            'name': 'Trial #{}'.format(trial_number + 1),
+            'value': trial_metrics['time'],
+            'children': children
+        }
