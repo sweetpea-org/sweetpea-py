@@ -37,14 +37,17 @@ class Guided(BaseStrategy):
             cnf_result = build_cnf(block)
             cnf_id = cnf_result['id']
 
+            metrics['solver_call_count'] = 0
             for _ in range(sample_count):
                 sample_metrics = cast(dict, {})
                 t_start = time()
                 samples.append(Guided.__generate_sample(block, cnf_id, sample_metrics))
                 sample_metrics['time'] = time() - t_start
                 metrics['sample_metrics'].append(sample_metrics)
+                metrics['solver_call_count'] += sample_metrics['solver_call_count']
 
             metrics['time'] = time() - overall_start
+            Guided.__compute_additional_metrics(metrics)
 
         finally:
             stop_docker_container(container)
@@ -107,13 +110,6 @@ class Guided(BaseStrategy):
 
             trial_metrics['time'] = time() - trial_start_time
 
-            # TODO:
-            # Mean solver time for SAT
-            # Mean solver time for UNSAT
-            # Median trial time
-            # Mean trial time?
-            # D3 dashboard? - Heatmap for execution time? (Flame graph?) Can we generate this?
-
         # Aggregate the total solver calls
         sample_metrics['solver_call_count'] = 0
         for tm in sample_metrics['trials']:
@@ -131,7 +127,38 @@ class Guided(BaseStrategy):
     def __prefilter_enabled():
         return os.environ.get('SWEETPEA_GUIDED_PREFILTER_TRIALS') is not None
 
+    @staticmethod
+    def print_summary(result: SamplingResult) -> None:
+        metrics = result.metrics
+        print("Total Time: {} seconds".format(metrics['time']))
+        print("Total SAT Solver Calls: {}".format(metrics['solver_call_count']))
+        print("Mean SAT Time: {}".format(metrics['mean_sat_time']))
+        print("Mean UNSAT Time: {}".format(metrics['mean_unsat_time']))
 
+    @staticmethod
+    def __compute_additional_metrics(metrics: dict) -> None:
+        total_sat = 0
+        total_sat_time = 0
+        total_unsat = 0
+        total_unsat_time = 0
+
+        for sample in metrics['sample_metrics']:
+            for trial in sample['trials']:
+                for sc in trial['solver_calls']:
+                    if sc['SAT'] == True:
+                        total_sat += 1
+                        total_sat_time += sc['time']
+                    elif sc['SAT'] == False:
+                        total_unsat += 1
+                        total_unsat_time += sc['time']
+
+        metrics['mean_sat_time'] = total_sat_time / total_sat
+        metrics['mean_unsat_time'] = total_unsat_time / total_unsat
+
+
+"""
+Generates a static HTML file that will render a flamegraph showing the time breakdown for a given sampling.
+"""
 class Flamegraph():
     GRAPH_FILE_TEMPLATE = '''
 <head>
@@ -146,6 +173,8 @@ class Flamegraph():
   graph_data = {}
   var flamegraph = d3.flamegraph().width(960);
   d3.select("#chart").datum(graph_data).call(flamegraph);
+  <!-- TODO: Render SAT/UNSAT calls as Green/Red -->
+  <!-- TODO: Replace 'samples' with 'seconds' in tooltip -->
   </script>
 </body>
 '''

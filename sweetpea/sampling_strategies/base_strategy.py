@@ -22,6 +22,9 @@ class BaseStrategy(ABC):
 
     """
     Sample some number of trial sequences for the given block.
+
+    TODO: This should accept some kind of options structure. What if we want
+    to disable metrics? Or use some other feature flag?
     """
     @staticmethod
     @abstractmethod
