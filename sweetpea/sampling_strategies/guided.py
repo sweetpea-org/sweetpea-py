@@ -2,7 +2,7 @@ import os
 import numpy as np
 
 from functools import reduce
-from itertools import product
+from itertools import product, chain
 from time import time
 from typing import List, cast
 
@@ -80,13 +80,32 @@ class Guided(BaseStrategy):
 
             # Use env var to switch between filtering and not
             if Guided.__prefilter_enabled():
-                pass
-                # TODO:
                 # Flatten the list
+                flat_vars = list(chain(*variables))
+
                 # Check SAT for each one
-                # Record each var that is auto-unsat
+                unsat = []
+                for v in flat_vars:
+                    t_start = time()
+                    allowed = is_cnf_still_sat(cnf_id, committed + [And([v])])
+                    duration_seconds = time() - t_start
+                    solver_calls.append({'time': duration_seconds, 'SAT': allowed})
+                    if not allowed:
+                        unsat.append(v)
+
+                # TODO: Count filtering SAT calls separately?
+
                 # Filter out any potential trials with those vars set
+                filtered_pts = []
+                for pt in potential_trials:
+                    if any(uv in pt for uv in unsat):
+                        continue
+                    else:
+                        filtered_pts.append(pt)
+
                 # Record the number filterd out for metrics
+                trial_metrics['prefiltered_out'] = len(potential_trials) - len(filtered_pts)
+                potential_trials = filtered_pts
 
             allowed_trials = []
             for potential_trial in potential_trials:
@@ -135,6 +154,9 @@ class Guided(BaseStrategy):
         print("Mean SAT Time: {}".format(metrics['mean_sat_time']))
         print("Mean UNSAT Time: {}".format(metrics['mean_unsat_time']))
 
+        if 'total_prefiltered_out' in metrics:
+            print("Total Prefiltered Out: {}".format(metrics['total_prefiltered_out']))
+
     @staticmethod
     def __compute_additional_metrics(metrics: dict) -> None:
         total_sat = 0
@@ -154,6 +176,13 @@ class Guided(BaseStrategy):
 
         metrics['mean_sat_time'] = total_sat_time / total_sat
         metrics['mean_unsat_time'] = total_unsat_time / total_unsat
+
+        if Guided.__prefilter_enabled():
+            total_prefiltered_out = 0
+            for sample in metrics['sample_metrics']:
+                for trial in sample['trials']:
+                    total_prefiltered_out += trial['prefiltered_out']
+            metrics['total_prefiltered_out'] = total_prefiltered_out
 
 
 """
