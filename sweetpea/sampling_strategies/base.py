@@ -18,7 +18,7 @@ class SamplingResult:
 """
 Generic interface for sampling strategies.
 """
-class BaseStrategy(ABC):
+class SamplingStrategy(ABC):
 
     """
     Sample some number of trial sequences for the given block.

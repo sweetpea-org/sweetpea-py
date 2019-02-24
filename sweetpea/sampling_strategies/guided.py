@@ -9,7 +9,7 @@ from typing import List, cast
 from sweetpea.blocks import Block
 from sweetpea.docker import update_docker_image, start_docker_container, stop_docker_container
 from sweetpea.logic import And
-from sweetpea.sampling_strategies.base_strategy import BaseStrategy, SamplingResult
+from sweetpea.sampling_strategies.base import SamplingStrategy, SamplingResult
 from sweetpea.server import build_cnf, is_cnf_still_sat
 
 
@@ -17,7 +17,7 @@ from sweetpea.server import build_cnf, is_cnf_still_sat
 This strategy gradually constructs samples in memory, with the aid of a SAT solver to
 guide the choices it makes.
 """
-class Guided(BaseStrategy):
+class GuidedSamplingStrategy(SamplingStrategy):
 
     @staticmethod
     def sample(block: Block, sample_count: int) -> SamplingResult:
@@ -41,13 +41,13 @@ class Guided(BaseStrategy):
             for _ in range(sample_count):
                 sample_metrics = cast(dict, {})
                 t_start = time()
-                samples.append(Guided.__generate_sample(block, cnf_id, sample_metrics))
+                samples.append(GuidedSamplingStrategy.__generate_sample(block, cnf_id, sample_metrics))
                 sample_metrics['time'] = time() - t_start
                 metrics['sample_metrics'].append(sample_metrics)
                 metrics['solver_call_count'] += sample_metrics['solver_call_count']
 
             metrics['time'] = time() - overall_start
-            Guided.__compute_additional_metrics(metrics)
+            GuidedSamplingStrategy.__compute_additional_metrics(metrics)
 
         finally:
             stop_docker_container(container)
@@ -79,7 +79,7 @@ class Guided(BaseStrategy):
             trial_metrics['potential_trials'] = len(potential_trials)
 
             # Use env var to switch between filtering and not
-            if Guided.__prefilter_enabled():
+            if GuidedSamplingStrategy.__prefilter_enabled():
                 # Flatten the list
                 flat_vars = list(chain(*variables))
 
@@ -135,8 +135,8 @@ class Guided(BaseStrategy):
             sample_metrics['solver_call_count'] += tm['solver_call_count']
 
         # Flatten the committed trials into a list of integers and decode it.
-        solution = Guided.__committed_to_solution(committed)
-        return BaseStrategy.decode(block, solution)
+        solution = GuidedSamplingStrategy.__committed_to_solution(committed)
+        return SamplingStrategy.decode(block, solution)
 
     @staticmethod
     def __committed_to_solution(committed: List[And]) -> List[int]:
@@ -177,7 +177,7 @@ class Guided(BaseStrategy):
         metrics['mean_sat_time'] = total_sat_time / total_sat
         metrics['mean_unsat_time'] = total_unsat_time / total_unsat
 
-        if Guided.__prefilter_enabled():
+        if GuidedSamplingStrategy.__prefilter_enabled():
             total_prefiltered_out = 0
             for sample in metrics['sample_metrics']:
                 for trial in sample['trials']:

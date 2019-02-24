@@ -3,7 +3,7 @@ import pytest
 
 from random import shuffle
 
-from sweetpea.sampling_strategies.base_strategy import BaseStrategy
+from sweetpea.sampling_strategies.base import SamplingStrategy
 from sweetpea import fully_cross_block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
 
@@ -43,7 +43,7 @@ def test_decode():
                 19, -20,  21, -22,  23, -24]
     shuffle(solution)
 
-    assert BaseStrategy.decode(blk, solution) == {
+    assert SamplingStrategy.decode(blk, solution) == {
         'color':      ['blue', 'blue', 'red',  'red'],
         'text':       ['blue', 'red',  'blue', 'red'],
         'congruent?': ['con',  'inc',  'inc',  'con']
@@ -55,7 +55,7 @@ def test_decode():
                 -19,  20, 21, -22, -23,  24]
     shuffle(solution)
 
-    assert BaseStrategy.decode(blk, solution) == {
+    assert SamplingStrategy.decode(blk, solution) == {
         'color':      ['blue', 'red',  'red', 'blue'],
         'text':       ['blue', 'blue', 'red', 'red'],
         'congruent?': ['con',  'inc',  'con', 'inc']
@@ -67,7 +67,7 @@ def test_decode():
                 19, -20, -21,  22, -23,  24]
     shuffle(solution)
 
-    assert BaseStrategy.decode(blk, solution) == {
+    assert SamplingStrategy.decode(blk, solution) == {
         'color':      ['blue', 'blue', 'red', 'red'],
         'text':       ['red',  'blue', 'red', 'blue'],
         'congruent?': ['inc',  'con',  'con', 'inc']
@@ -81,7 +81,7 @@ def test_decode():
                  9, -10  -11, 12]
     shuffle(solution)
 
-    assert BaseStrategy.decode(f_blk, solution) == {
+    assert SamplingStrategy.decode(f_blk, solution) == {
         'a': ['c', 'd', 'b'],
         'e': ['f', 'f', 'f']
     }
@@ -99,7 +99,7 @@ def test_decode_with_transition():
                 17, -18, -19, 20, 21, -22] # color_repeats_factor
     shuffle(solution)
 
-    decoded = BaseStrategy.decode(block, solution)
+    decoded = SamplingStrategy.decode(block, solution)
     assert decoded['color'] ==          ['red', 'red',  'blue', 'blue']
     assert decoded['text']  ==          ['red', 'blue', 'red',  'blue']
     assert decoded['color repeats?'] == ['',    'yes',  'no',   'yes' ]
@@ -112,7 +112,7 @@ def test_decode_with_transition():
                 -17,  18,  19, -20, -21, 22]
     shuffle(solution)
 
-    decoded = BaseStrategy.decode(block, solution)
+    decoded = SamplingStrategy.decode(block, solution)
     assert decoded['color'] ==          ['red',  'blue', 'blue', 'red']
     assert decoded['text']  ==          ['blue', 'red',  'blue', 'red']
     assert decoded['color repeats?'] == ['',     'no',   'yes',  'no' ]
@@ -130,7 +130,7 @@ def test_decode_with_general_window():
                 -17,  18,  19, -20]
     shuffle(solution)
 
-    decoded = BaseStrategy.decode(block, solution)
+    decoded = SamplingStrategy.decode(block, solution)
     assert decoded['color'] ==              ['red',  'blue', 'blue', 'red']
     assert decoded['text']  ==              ['blue', 'red',  'blue', 'red']
     assert decoded['congruent bookend?'] == ['no',   '',     '',     'yes']
@@ -143,7 +143,7 @@ def test_decode_with_transition_and_only_positive_variables():
 
     solution = [2, 3, 5, 8, 18, 9, 11, 19, 14, 16, 22]
 
-    decoded = BaseStrategy.decode(block, solution)
+    decoded = SamplingStrategy.decode(block, solution)
     assert decoded['color'] ==          ['blue', 'red',  'red', 'blue']
     assert decoded['text']  ==          ['red',  'blue', 'red', 'blue']
     assert decoded['color repeats?'] == ['',     'no',   'yes', 'no'  ]

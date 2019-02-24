@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 from typing import List, cast
 
-from sweetpea.sampling_strategies.base_strategy import BaseStrategy, SamplingResult
+from sweetpea.sampling_strategies.base import SamplingStrategy, SamplingResult
 from sweetpea.blocks import Block
 from sweetpea.docker import update_docker_image, start_docker_container, check_server_health, stop_docker_container
 from sweetpea.server import submit_job, get_job_result
@@ -15,7 +15,7 @@ from sweetpea.server import submit_job, get_job_result
 This represents the non-uniform sampling strategy, in which we 'sample' just by using a SAT
 solver repeatedly to produce unique (but not uniform) samples.
 """
-class NonUniform(BaseStrategy):
+class NonUniformSamplingStrategy(SamplingStrategy):
 
     @staticmethod
     def sample(block: Block, sample_count: int) -> SamplingResult:
@@ -48,6 +48,6 @@ class NonUniform(BaseStrategy):
         finally:
             stop_docker_container(container)
 
-        result = list(map(lambda s: BaseStrategy.decode(block, s['assignment']), solutions))
+        result = list(map(lambda s: SamplingStrategy.decode(block, s['assignment']), solutions))
         return SamplingResult(result, {})
 

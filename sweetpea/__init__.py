@@ -22,8 +22,8 @@ from sweetpea.docker import update_docker_image, start_docker_container, stop_do
 from sweetpea.backend import BackendRequest
 from sweetpea.primitives import *
 from sweetpea.constraints import *
-from sweetpea.sampling_strategies.base_strategy import BaseStrategy
-from sweetpea.sampling_strategies.non_uniform import NonUniform
+from sweetpea.sampling_strategies.base import SamplingStrategy
+from sweetpea.sampling_strategies.non_uniform import NonUniformSamplingStrategy
 from sweetpea.server import submit_job, get_job_result, build_cnf
 
 # ~~~~~~~~~~ Helper functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -97,7 +97,7 @@ each solution once it has been found. It's intended to give users something some
 we work through issues with unigen.
 """
 def synthesize_trials_non_uniform(block: Block, sequence_count: int) -> List[dict]:
-    return synthesize_trials(block, sequence_count, sampling_strategy=NonUniform)
+    return synthesize_trials(block, sequence_count, sampling_strategy=NonUniformSamplingStrategy)
 
 
 """
@@ -106,6 +106,6 @@ in some direct cnfs being produced and some requests to the backend being produc
 calls unigen on the full cnf file. Then decodes that cnf file into (1) something human readable
 & (2) psyNeuLink readable.
 """
-def synthesize_trials(block: Block, sequence_count: int=10, sampling_strategy=NonUniform) -> List[dict]:
+def synthesize_trials(block: Block, sequence_count: int=10, sampling_strategy=NonUniformSamplingStrategy) -> List[dict]:
     sampling_result = sampling_strategy.sample(block, sequence_count)
     return sampling_result.samples

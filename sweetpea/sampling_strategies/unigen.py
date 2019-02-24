@@ -7,14 +7,14 @@ from datetime import datetime
 from typing import List, cast
 from ascii_graph import Pyasciigraph
 
-from sweetpea.sampling_strategies.base_strategy import BaseStrategy, SamplingResult
+from sweetpea.sampling_strategies.base import SamplingStrategy, SamplingResult
 from sweetpea.blocks import Block
 from sweetpea.docker import update_docker_image, start_docker_container, check_server_health, stop_docker_container
 
 """
 This strategy relies fully on Unigen to produce the desired number of samples.
 """
-class Unigen(BaseStrategy):
+class UnigenSamplingStrategy(SamplingStrategy):
 
     @staticmethod
     def sample(block: Block, sample_count: int) -> SamplingResult:
@@ -82,7 +82,7 @@ class Unigen(BaseStrategy):
             stop_docker_container(container)
 
         # 4. Decode the results
-        result = list(map(lambda s: BaseStrategy.decode(block, s['assignment']), solutions))
+        result = list(map(lambda s: SamplingStrategy.decode(block, s['assignment']), solutions))
 
         # Dump histogram of frequency distribution, just to make sure it's somewhat even.
         print()
