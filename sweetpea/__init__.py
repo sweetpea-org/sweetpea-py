@@ -96,8 +96,8 @@ endpoint on the server that repeatedly computes individual solutions while updat
 each solution once it has been found. It's intended to give users something somewhat useful, while
 we work through issues with unigen.
 """
-def synthesize_trials_non_uniform(block: Block, sequence_count: int) -> List[dict]:
-    return synthesize_trials(block, sequence_count, sampling_strategy=NonUniformSamplingStrategy)
+def synthesize_trials_non_uniform(block: Block, samples: int) -> List[dict]:
+    return synthesize_trials(block, samples, sampling_strategy=NonUniformSamplingStrategy)
 
 
 """
@@ -106,6 +106,7 @@ in some direct cnfs being produced and some requests to the backend being produc
 calls unigen on the full cnf file. Then decodes that cnf file into (1) something human readable
 & (2) psyNeuLink readable.
 """
-def synthesize_trials(block: Block, sequence_count: int=10, sampling_strategy=NonUniformSamplingStrategy) -> List[dict]:
-    sampling_result = sampling_strategy.sample(block, sequence_count)
+def synthesize_trials(block: Block, samples: int=10, sampling_strategy=NonUniformSamplingStrategy) -> List[dict]:
+    print("Sampling {} trial sequences using the {}".format(samples, sampling_strategy))
+    sampling_result = sampling_strategy.sample(block, samples)
     return sampling_result.samples
