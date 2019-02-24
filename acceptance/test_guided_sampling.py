@@ -3,7 +3,7 @@ import pytest
 
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.constraints import AtMostKInARow, ExactlyKInARow
-from sweetpea.sampling_strategies.guided import Guided
+from sweetpea.sampling_strategies.guided import GuidedSamplingStrategy
 from sweetpea import fully_cross_block, synthesize_trials
 
 
@@ -25,7 +25,7 @@ block = fully_cross_block(design, crossing, constraints)
 
 
 def test_guided_sampling_works():
-    trials = synthesize_trials(block, 5, sampling_strategy=Guided)
+    trials = synthesize_trials(block, 5, sampling_strategy=GuidedSamplingStrategy)
 
     assert len(trials) == 5
 
