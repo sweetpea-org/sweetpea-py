@@ -31,7 +31,7 @@ class UnigenSamplingStrategy(SamplingStrategy):
         json_data = {
             'sampleCount': sample_count,
             'support': block.variables_per_sample(),
-            'fresh': backend_request.fresh,
+            'fresh': backend_request.fresh - 1,
             'cnfs': backend_request.get_cnfs_as_json(),
             'requests': backend_request.get_requests_as_json(),
             'unigenOptions': [

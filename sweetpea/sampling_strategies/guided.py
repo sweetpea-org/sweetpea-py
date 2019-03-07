@@ -16,6 +16,9 @@ from sweetpea.server import build_cnf, is_cnf_still_sat
 """
 This strategy gradually constructs samples in memory, with the aid of a SAT solver to
 guide the choices it makes.
+
+While sufficient in some cases, this strategy isn't guaranteed to produce uniform results
+because trial selections early on can prune the remaining search space unevenly.
 """
 class GuidedSamplingStrategy(SamplingStrategy):
 
