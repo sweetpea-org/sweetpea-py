@@ -120,6 +120,20 @@ def test_variable_list_for_trial():
     assert block.variable_list_for_trial(4) == [[13, 14], [15, 16], [21, 22]]
 
 
+def test_block_get_variable():
+    block = fully_cross_block([color, text, color_repeats_factor], [color, text], [])
+
+    assert block.get_variable(1, ("color", "red")) == 1
+    assert block.get_variable(1, ("color", "blue")) == 2
+    assert block.get_variable(3, ("color", "red")) == 9
+    assert block.get_variable(3, ("color", "blue")) == 10
+
+    assert block.get_variable(2, ("text", "red")) == 7
+    assert block.get_variable(2, ("text", "blue")) == 8
+    assert block.get_variable(3, ("text", "red")) == 11
+    assert block.get_variable(3, ("text", "blue")) == 12
+
+
 def test_fully_cross_block_decode_variable():
     block = fully_cross_block([color, text, color_repeats_factor, text_repeats_factor],
                               [color, text],
@@ -328,4 +342,3 @@ def test_fully_cross_block_crossing_size_with_overlapping_exclude():
                            [Exclude("congruent?", "congruent"), # Excludes 3
                             Exclude("legal", "no")], # Exludes 4, but 3 were already excluded
                            require_complete_crossing=False).crossing_size() == 5
-

@@ -195,6 +195,18 @@ class Block:
         return backend_request
 
     """
+    Given a trial number (1 based), factor name, and level name, this method will return the SAT
+    variable that represents that selection. Only works for factors without complex windows at the
+    moment.
+    """
+    def get_variable(self, trial_number: int, level: Tuple[str, str]) -> int:
+        f = self.get_factor(level[0])
+        if f.has_complex_window():
+            raise ValueError("get_variable doens't handle complex windows yet! factor={}".format(f))
+
+        return self.build_variable_list(level)[trial_number - 1]
+
+    """
     Given a specific level (factor + level name pair), this method will return the list of variables
     that correspond to that level in each trial in the encoding.
     """
