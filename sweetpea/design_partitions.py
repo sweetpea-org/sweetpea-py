@@ -39,3 +39,6 @@ class DesignPartitions():
     def get_uncrossed_basic_independent_factors(self):
         source_factors = self.get_source_factors()
         return list(filter(lambda f: f not in source_factors, self.get_uncrossed_basic_factors()))
+
+    def get_uncrossed_derived_factors(self):
+        return list(filter(lambda f: f.is_derived(), self.get_uncrossed_factors()))

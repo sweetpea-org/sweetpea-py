@@ -12,8 +12,12 @@ congruency = Factor("congruency", [
     DerivedLevel("congruent",   WithinTrial(op.eq, [color, text])),
     DerivedLevel("incongruent", WithinTrial(op.ne, [color, text]))
 ])
+color_red  = Factor("color red", [
+    DerivedLevel("yes", WithinTrial(lambda c: c == "red", [color])),
+    DerivedLevel("no",  WithinTrial(lambda c: c != "red", [color]))
+])
 
-design   = [color, text, congruency]
+design   = [color, text, congruency, color_red]
 crossing = [color, congruency]
 block    = fully_cross_block(design, crossing, [])
 
@@ -41,5 +45,10 @@ def test_get_uncrossed_basic_source_factors():
 def test_get_uncrossed_basic_independent_factors():
     partitions = DesignPartitions(block)
     assert partitions.get_uncrossed_basic_independent_factors() == []
+
+
+def test_get_uncrossed_derived_factors():
+    partitions = DesignPartitions(block)
+    assert partitions.get_uncrossed_derived_factors() == [color_red]
 
 
