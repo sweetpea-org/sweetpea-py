@@ -1,3 +1,5 @@
+import operator as op
+
 from sweetpea import fully_cross_block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial
 

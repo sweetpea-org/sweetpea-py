@@ -80,7 +80,7 @@ class UCSolutionEnumerator():
     def generate_sample(self, sequence_number: int) -> List[int]:
         # 1. Extract the component pieces (permutation, each combination setting, etc)
         #    The 0th component is always the permutation index.
-        #    The 1st-nth components are always the source combination indices.
+        #    The 1st-nth components are always the source combination indices for each trial in the sequence
         #    Any following components are the combination indices for independent basic factors.
         components = extract_components(self._segment_lengths, sequence_number)
 
@@ -94,7 +94,7 @@ class UCSolutionEnumerator():
         # 3. Generate the source combinations for the selected sequence.
         source_combinations = cast(List[dict], [])
         for i, p in enumerate(permutation_indices):
-            source_combinations.append(self._source_combinations[self._valid_source_combinations[p][components[i + 1]]])
+            source_combinations.append(self._source_combinations[self._valid_source_combinations[p][components[p + 1]]])
 
         # 4. Generate the combinations for independent basic factors
         independent_factor_combinations = cast(List[List[dict]], [[{}]] * l)
@@ -126,6 +126,7 @@ class UCSolutionEnumerator():
             for factor_name, level_name in trial_value.items():
                 solution.append(self._block.get_variable(trial_number + 1, (factor_name, level_name)))
 
+        solution.sort()
         return solution
 
     """
