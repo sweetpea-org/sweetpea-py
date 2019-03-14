@@ -37,6 +37,9 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
         samples = []
         for _ in range(sample_count):
             solution_variables = enumerator.generate_random_sample()
+
+            # TODO: Rejection sampling: Make sure that the design is still SAT (we're not handling constraints in the construction)
+
             sample = SamplingStrategy.decode(block, solution_variables)
             samples.append(sample)
 
