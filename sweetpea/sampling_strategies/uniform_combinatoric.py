@@ -1,5 +1,5 @@
-import numpy as np
 import operator as op
+import random
 
 from functools import reduce
 from itertools import product
@@ -64,7 +64,7 @@ class UCSolutionEnumerator():
         # Maintains a lookup for valid source combinations for a permutation.
         # Example [[2, 3], ...] means that for permutation 0, indices 2 and 3 in the source combinations
         # list are allowed.
-        self._valid_source_combinations = cast(List[List[int]], []) # Will be populated by solution counting
+        self._valid_source_combinations_indices = cast(List[List[int]], []) # Will be populated by solution counting
 
         # Needs to be called last.
         self._solution_count = self.__count_solutions()
@@ -74,7 +74,8 @@ class UCSolutionEnumerator():
 
     def generate_random_sample(self) -> List[int]:
         # Select a random number from the range of solutions.
-        sequence_number = np.random.randint(0, self._solution_count)
+        # sequence_number = np.random.randint(0, self._solution_count, dtype=np.long)
+        sequence_number = random.randrange(0, self._solution_count)
         return self.generate_sample(sequence_number)
 
     def generate_sample(self, sequence_number: int) -> List[int]:
@@ -94,7 +95,9 @@ class UCSolutionEnumerator():
         # 3. Generate the source combinations for the selected sequence.
         source_combinations = cast(List[dict], [])
         for i, p in enumerate(permutation_indices):
-            source_combinations.append(self._source_combinations[self._valid_source_combinations[p][components[p + 1]]])
+            component_for_p = components[p + 1]
+            source_combination_index_for_component = self._valid_source_combinations_indices[p][component_for_p]
+            source_combinations.append(self._source_combinations[source_combination_index_for_component])
 
         # 4. Generate the combinations for independent basic factors
         independent_factor_combinations = cast(List[List[dict]], [[{}]] * l)
@@ -171,7 +174,7 @@ class UCSolutionEnumerator():
                         sc_indices.remove(sc_idx)
 
             self._segment_lengths.append(len(sc_indices))
-            self._valid_source_combinations.append(sc_indices)
+            self._valid_source_combinations_indices.append(sc_indices)
 
         ##############################################################
         # Uncrossed Independent Factors
