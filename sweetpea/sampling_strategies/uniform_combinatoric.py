@@ -30,11 +30,17 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
         # 1. Validate the block. Only FullyCrossBlock, No complex windows allowed.
         UniformCombinatoricSamplingStrategy.__validate(block)
 
-        # 2. Count the number of solutions and prepare the data structures for sample construction.
+        # 2. Count how many solutions there are.
+        enumerator = UCSolutionEnumerator(cast(FullyCrossBlock, block))
 
         # 3. Generate samples.
+        samples = []
+        for _ in range(sample_count):
+            solution_variables = enumerator.generate_random_sample()
+            sample = SamplingStrategy.decode(block, solution_variables)
+            samples.append(sample)
 
-        return SamplingResult([], {})
+        return SamplingResult(samples, {})
 
     @staticmethod
     def __validate(block: Block) -> None:

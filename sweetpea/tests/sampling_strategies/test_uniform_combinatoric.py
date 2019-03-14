@@ -84,8 +84,3 @@ def test_example_counts():
 
     if failures:
         pytest.fail('{} failures occurred in counting tests: {}'.format(len(failures), failures))
-
-
-@pytest.mark.skip("TODO: Generate 1000 samples for several designs, make sure that they're all SAT.")
-def test_samples():
-    pass
