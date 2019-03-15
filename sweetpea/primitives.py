@@ -84,6 +84,14 @@ class Factor(__Primitive):
                 raise ValueError('Expected all levels to be ' + str(level_type) +
                     ', but found ' + str(type(l)) + '.')
 
+        seen = []
+        level_names = [get_level_name(l) for l in self.levels]
+        for level_name in level_names:
+            if level_name in seen:
+                raise ValueError('Level names must be unique within each Factor, ' +
+                    'but "' + str(level_name) + '" was repeated!')
+            seen.append(level_name)
+
         if level_type == DerivedLevel:
             window_type = type(self.levels[0].window)
             for dl in self.levels:

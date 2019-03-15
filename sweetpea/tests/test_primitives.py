@@ -54,6 +54,16 @@ def test_factor_validation():
             DerivedLevel("other", Transition(lambda colors: colors[0] == colors[1], [color]))
         ])
 
+    # Duplicate level names are not allowed
+    with pytest.raises(ValueError):
+        Factor("name", ["a", "b", "a"])
+
+    with pytest.raises(ValueError):
+        Factor("name", [
+            DerivedLevel("a", WithinTrial(op.eq, [color, text])),
+            DerivedLevel("a", WithinTrial(op.ne, [color, text]))
+        ])
+
 
 def test_factor_get_level():
     assert color.get_level("red") == "red"
