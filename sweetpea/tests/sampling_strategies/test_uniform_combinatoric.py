@@ -32,19 +32,19 @@ def test_validate_accepts_basic_factors():
     block = fully_cross_block([color, text],
                               [color, text],
                               [])
-    UniformCombinatoricSamplingStrategy.sample(block, 1)
+    UniformCombinatoricSamplingStrategy._UniformCombinatoricSamplingStrategy__validate(block)
 
 
 def test_validate_accepts_derived_factors_with_simple_windows():
     block = fully_cross_block([color, text, con_factor_within_trial],
                               [color, text],
                               [])
-    UniformCombinatoricSamplingStrategy.sample(block, 1)
+    UniformCombinatoricSamplingStrategy._UniformCombinatoricSamplingStrategy__validate(block)
 
     block = fully_cross_block([color, text, con_factor_window],
                               [color, text],
                               [])
-    UniformCombinatoricSamplingStrategy.sample(block, 1)
+    UniformCombinatoricSamplingStrategy._UniformCombinatoricSamplingStrategy__validate(block)
 
 
 def test_validate_rejects_derived_factors_with_complex_windows():
@@ -52,7 +52,7 @@ def test_validate_rejects_derived_factors_with_complex_windows():
                               [color, text],
                               [])
     with pytest.raises(ValueError):
-        UniformCombinatoricSamplingStrategy.sample(block, 1)
+        UniformCombinatoricSamplingStrategy._UniformCombinatoricSamplingStrategy__validate(block)
 
 
 def test_example_counts():

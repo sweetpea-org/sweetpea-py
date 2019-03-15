@@ -9,8 +9,10 @@ from typing import List, cast
 from sweetpea.blocks import Block, FullyCrossBlock
 from sweetpea.combinatorics import extract_components, compute_jth_inversion_sequence, construct_permutation, compute_jth_combination
 from sweetpea.design_partitions import DesignPartitions
+from sweetpea.logic import And
 from sweetpea.primitives import get_level_name
 from sweetpea.sampling_strategies.base import SamplingStrategy, SamplingResult
+from sweetpea.server import build_cnf, is_cnf_still_sat
 
 
 """
@@ -19,6 +21,13 @@ numbers to valid trial sequences.
 
 Right now, the intent is that this will only work for designs without complex windows. Once we get that
 far, we can think about what steps are needed to support complex windows. (Transition, etc.)
+
+This also doesn't quite work yet for _KInARow constraints, which represent a similar obstacle as
+the complex windows. However, it will still accept designs with constraints. When such designs
+are given, it will do rejection sampling to ensure that only valid sequences are returned.
+The metrics dictionary will include data pertaining to the number of samples rejected for each
+final sample, as well as an average. (On average, how many samples need to be generated before
+one is found that is satisfactory?)
 """
 class UniformCombinatoricSamplingStrategy(SamplingStrategy):
 
@@ -29,21 +38,41 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
     def sample(block: Block, sample_count: int) -> SamplingResult:
         # 1. Validate the block. Only FullyCrossBlock, No complex windows allowed.
         UniformCombinatoricSamplingStrategy.__validate(block)
+        metrics = {}
 
         # 2. Count how many solutions there are.
         enumerator = UCSolutionEnumerator(cast(FullyCrossBlock, block))
+        metrics['solution_count'] = enumerator.solution_count()
+
+        # Build the CNF for rejection sampling
+        cnf_id = build_cnf(block)['id']
 
         # 3. Generate samples.
+        metrics['rejections'] = []
+        sampled = 0
+        rejected = 0
+        total_rejected = 0
         samples = []
-        for _ in range(sample_count):
+        while sampled < sample_count:
             solution_variables = enumerator.generate_random_sample()
 
-            # TODO: Rejection sampling: Make sure that the design is still SAT (we're not handling constraints in the construction)
+            if not is_cnf_still_sat(cnf_id, [And(solution_variables)]):
+                rejected += 1
+                continue
+
+            metrics['rejections'].append(rejected)
+            total_rejected += rejected
+            rejected = 0
+            sampled += 1
 
             sample = SamplingStrategy.decode(block, solution_variables)
             samples.append(sample)
 
-        return SamplingResult(samples, {})
+        metrics['sample_count'] = sample_count
+        metrics['total_rejected'] = total_rejected
+        metrics['avg_rejected'] = total_rejected / sample_count
+
+        return SamplingResult(samples, metrics)
 
     @staticmethod
     def __validate(block: Block) -> None:
