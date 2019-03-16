@@ -147,6 +147,7 @@ class __BaseWindow():
     def __init__(self, fn, args, width: int, stride: int) -> None:
         self.fn = fn
         self.args = args
+        self.argc = len(args)
         self.width = width
         self.stride = stride
         # TODO: validation

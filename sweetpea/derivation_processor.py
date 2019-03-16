@@ -1,4 +1,6 @@
-from typing import List, Tuple, Union, Any
+import operator as op
+
+from typing import List, Tuple, Union, Any, cast
 from functools import reduce
 from itertools import product
 
@@ -92,5 +94,14 @@ class DerivationProcessor:
                      trial_size:int) -> List[List[int]]:
         if window.width == 1:
             return idxs
-        else:
-            return [reduce(lambda l, idx: l + [idx + len(l) * trial_size], idx_list, []) for idx_list in idxs]
+
+        shifted_idxs = cast(List[List[int]], [])
+        shifted_sublists = cast(List[List[int]], [])
+        argc = 1 if window.argc == None else window.argc
+        for idx_list in idxs:
+            sublist_size = len(idx_list) // argc
+            sublists = chunk_list(idx_list, sublist_size)
+            shifted_sublists = [reduce(lambda l, idx: l + [idx + len(l) * trial_size], idx_list, []) for idx_list in sublists]
+            shifted_idxs.append(list(reduce(op.add, shifted_sublists, [])))
+
+        return shifted_idxs
