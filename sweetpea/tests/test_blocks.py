@@ -342,3 +342,22 @@ def test_fully_cross_block_crossing_size_with_overlapping_exclude():
                            [Exclude("congruent?", "congruent"), # Excludes 3
                             Exclude("legal", "no")], # Exludes 4, but 3 were already excluded
                            require_complete_crossing=False).crossing_size() == 5
+
+
+def test_fully_cross_block_should_copy_input_lists():
+    # FullyCrossBlock should copy the input lists, so as not to break if the
+    # user modifies the original list.
+    design = [color, text, con_factor]
+    crossing = [color, text]
+    constraints = [Exclude("congruent?", "con")]
+
+    block = FullyCrossBlock(design, crossing, constraints)
+
+    design.clear()
+    assert len(block.design) == 3
+
+    crossing.clear()
+    assert len(block.crossing) == 2
+
+    constraints.clear()
+    assert len(block.constraints) == 1

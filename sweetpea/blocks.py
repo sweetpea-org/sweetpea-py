@@ -22,9 +22,9 @@ class Block:
                  crossing: List[Factor],
                  constraints: List[Constraint],
                  cnf_fn) -> None:
-        self.design = design
-        self.crossing = crossing
-        self.constraints = constraints
+        self.design = list(design).copy()
+        self.crossing = list(crossing).copy()
+        self.constraints = list(constraints).copy()
         self.cnf_fn = cnf_fn
         self.__validate();
 
