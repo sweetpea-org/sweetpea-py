@@ -48,7 +48,20 @@ class DerivationProcessor:
                 x_product = level.get_dependent_cross_product()
 
                 # filter to valid tuples, and get their idxs
-                valid_tuples = [tup for tup in x_product if level.window.fn(*DerivationProcessor.generate_argument_list(level, tup))]
+                valid_tuples = []
+                for tup in x_product:
+                    args = DerivationProcessor.generate_argument_list(level, tup)
+                    fn_result = level.window.fn(*args)
+
+                    # Make sure the fn returned a boolean
+                    if not isinstance(fn_result, bool):
+                        raise ValueError('Derivation function did not return a boolean! factor={} level={} fn={} return={} args={} '
+                            .format(fact.name, level.name, level.window.fn, fn_result, args))
+
+                    # If the result was true, add the tuple to the list
+                    if fn_result:
+                        valid_tuples.append(tup)
+
                 valid_idxs = [[block.first_variable_for_level(pair[0], pair[1]) for pair in tup_list] for tup_list in valid_tuples]
                 shifted_idxs = DerivationProcessor.shift_window(valid_idxs, level.window, block.variables_per_trial())
                 accum.append(Derivation(level_index, shifted_idxs, fact))

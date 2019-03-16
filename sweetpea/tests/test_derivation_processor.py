@@ -48,6 +48,22 @@ def two_con(i, n, t):
 def two_not_con(i, n, t):
     return not two_con(i, n, t)
 
+
+def test_generate_derivations_should_raise_error_if_fn_doesnt_return_a_boolean():
+    def local_eq(color, text):
+            color == text # Notice the missing return stmt
+
+    local_con_factor = Factor("congruent?", [
+        DerivedLevel("con", WithinTrial(local_eq, [color, text])),
+        DerivedLevel("inc", WithinTrial(lambda c, t: not local_eq(c, t), [color, text]))
+    ])
+
+    with pytest.raises(ValueError):
+        fully_cross_block([color, text, local_con_factor],
+                          [color, text],
+                          [])
+
+
 def test_generate_derivations_within_trial():
     assert DerivationProcessor.generate_derivations(blk) == [
         Derivation(4, [[0, 2], [1, 3]], con_factor),
