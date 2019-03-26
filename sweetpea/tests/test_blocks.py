@@ -361,3 +361,40 @@ def test_fully_cross_block_should_copy_input_lists():
 
     constraints.clear()
     assert len(block.constraints) == 1
+
+
+def test_build_variable_list_for_simple_factors():
+    block = fully_cross_block([color, text, con_factor], [color, text], [])
+
+    assert block.build_variable_list(("color", "red")) == [1, 7, 13, 19]
+    assert block.build_variable_list(("congruent?", "con")) == [5, 11, 17, 23]
+
+
+def test_build_variable_list_for_complex_factors():
+    block = fully_cross_block([color, text, color_repeats_factor], [color, text], [])
+
+    assert block.build_variable_list(("repeated color?", "yes")) == [17, 19, 21]
+    assert block.build_variable_list(("repeated color?", "no"))  == [18, 20, 22]
+
+
+def test_build_variable_list_for_three_derived_levels():
+    def count_diff(colors, texts):
+        changes = 0
+        if (colors[0] != colors[1]): changes += 1
+        if (texts[0] != texts[1]): changes += 1
+        return changes
+
+    def make_k_diff_level(k):
+        def k_diff(colors, texts):
+            return count_diff(colors, texts) == k
+        return DerivedLevel(str(k), Transition(k_diff, [color, text]))
+
+    changed = Factor("changed", [make_k_diff_level(0),
+                                 make_k_diff_level(1),
+                                 make_k_diff_level(2)]);
+
+    block = fully_cross_block([color, text, changed], [color, text], [])
+
+    assert block.build_variable_list(("changed", "0")) == [17, 20, 23]
+    assert block.build_variable_list(("changed", "1")) == [18, 21, 24]
+    assert block.build_variable_list(("changed", "2")) == [19, 22, 25]

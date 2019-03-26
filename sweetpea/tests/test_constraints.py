@@ -685,3 +685,34 @@ def test_exclude_with_reduced_crossing():
     backend_request = BackendRequest(0)
     c.apply(block, backend_request)
     assert backend_request.cnfs == [And([-7, -14, -21, -28, -35])]
+
+
+def test_exclude_with_three_derived_levels():
+    color_list = ["red", "green", "blue"]
+    color = Factor("color", color_list)
+    text  = Factor("text",  color_list)
+
+    def count_diff(colors, texts):
+        changes = 0
+        if (colors[0] != colors[1]): changes += 1
+        if (texts[0] != texts[1]): changes += 1
+        return changes
+
+    def make_k_diff_level(k):
+        def k_diff(colors, texts):
+            return count_diff(colors, texts) == k
+        return DerivedLevel(str(k), Transition(k_diff, [color, text]))
+
+    changed = Factor("changed", [make_k_diff_level(0),
+                                 make_k_diff_level(1),
+                                 make_k_diff_level(2)]);
+
+    exclude_constraint = Exclude("changed", "2")
+
+    design       = [color, text, changed]
+    crossing     = [color, text]
+    block        = fully_cross_block(design, crossing, [exclude_constraint])
+
+    backend_request = BackendRequest(0)
+    exclude_constraint.apply(block, backend_request)
+    assert backend_request.cnfs == [And([-57, -60, -63, -66, -69, -72, -75, -78])]

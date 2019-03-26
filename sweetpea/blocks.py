@@ -224,9 +224,10 @@ class Block:
 
     def __build_complex_variable_list(self, level: Tuple[str, str]) -> List[int]:
         factor = self.get_factor(level[0])
-        n = int(self.variables_for_factor(factor) / 2)
+        level_count = len(factor.levels)
+        n = int(self.variables_for_factor(factor) / level_count)
         start = self.first_variable_for_level(level[0], level[1]) + 1
-        return reduce(lambda l, v: l + [start + (v * 2)], range(n), [])
+        return reduce(lambda l, v: l + [start + (v * level_count)], range(n), [])
 
 
 """
