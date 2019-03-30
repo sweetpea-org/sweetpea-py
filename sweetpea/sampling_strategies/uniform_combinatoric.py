@@ -12,8 +12,7 @@ from sweetpea.design_partitions import DesignPartitions
 from sweetpea.logic import And
 from sweetpea.primitives import get_level_name
 from sweetpea.sampling_strategies.base import SamplingStrategy, SamplingResult
-from sweetpea.server import build_cnf, is_cnf_still_sat
-from sweetpea.constraints import Exclude
+from sweetpea.constraints import Exclude, _KInARow, ExactlyKInARow, AtMostKInARow
 
 
 """
@@ -45,8 +44,8 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
         enumerator = UCSolutionEnumerator(cast(FullyCrossBlock, block))
         metrics['solution_count'] = enumerator.solution_count()
 
-        # Build the CNF for rejection sampling
-        cnf_id = build_cnf(block)['id']
+        # Select KInARow constraints to check for rejection sampling.
+        constraints = list(filter(lambda c: isinstance(c, _KInARow), block.constraints))
 
         # 3. Generate samples.
         metrics['rejections'] = []
@@ -56,8 +55,9 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
         samples = []
         while sampled < sample_count:
             solution_variables = enumerator.generate_random_sample()
+            sample = SamplingStrategy.decode(block, solution_variables)
 
-            if not is_cnf_still_sat(cnf_id, [And(solution_variables)]):
+            if UniformCombinatoricSamplingStrategy.__are_constraints_violated(block, sample):
                 rejected += 1
                 continue
 
@@ -66,7 +66,6 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
             rejected = 0
             sampled += 1
 
-            sample = SamplingStrategy.decode(block, solution_variables)
             samples.append(sample)
 
         metrics['sample_count'] = sample_count
@@ -74,6 +73,39 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
         metrics['avg_rejected'] = total_rejected / sample_count
 
         return SamplingResult(samples, metrics)
+
+    @staticmethod
+    def __are_constraints_violated(block: Block, sample: dict) -> bool:
+        constraints = cast(List[_KInARow], filter(lambda c: isinstance(c, _KInARow), block.constraints))
+        for c in constraints:
+            factor_name = c.level[0]
+            level_name = c.level[1]
+
+            level_list = sample[factor_name]
+            counts = []
+            count = 0
+            for l in level_list:
+                if count > 0 and l != level_name:
+                    counts.append(count)
+                    count = 0
+                elif l == level_name:
+                    count += 1
+
+            if count > 0:
+                counts.append(count)
+
+            fn = op.eq
+            if isinstance(c, ExactlyKInARow):
+                fn = op.eq
+            elif isinstance(c, AtMostKInARow):
+                fn = op.le
+            else:
+                raise ValueError("Unexpected constraint found! {}".format(c))
+
+            if not all(map(lambda n: fn(n, c.k), counts)):
+                return True
+
+        return False
 
     @staticmethod
     def __validate(block: Block) -> None:

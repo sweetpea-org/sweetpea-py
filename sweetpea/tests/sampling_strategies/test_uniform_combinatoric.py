@@ -6,7 +6,7 @@ import re
 
 from sweetpea import fully_cross_block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
-from sweetpea.constraints import Exclude
+from sweetpea.constraints import Exclude, ExactlyKInARow, NoMoreThanKInARow
 from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy, UCSolutionEnumerator
 
 
@@ -94,3 +94,24 @@ def test_example_counts():
 
     if failures:
         pytest.fail('{} failures occurred in counting tests: {}'.format(len(failures), failures))
+
+
+def test_constraint_violation():
+    are_constraints_violated = UniformCombinatoricSamplingStrategy._UniformCombinatoricSamplingStrategy__are_constraints_violated
+
+    block = fully_cross_block([color, text, con_factor_within_trial],
+                              [color, text],
+                              [ExactlyKInARow(2, ("color", "red"))])
+
+    assert are_constraints_violated(block, {"color": ["red", "red", "blue", "blue"]}) == False
+    assert are_constraints_violated(block, {"color": ["red", "blue", "red", "blue"]}) == True
+
+    block = fully_cross_block([color, text, con_factor_within_trial],
+                              [color, text],
+                              [NoMoreThanKInARow(2, ("color", "red"))])
+
+    assert are_constraints_violated(block, {"color": ["red", "blue", "blue", "blue"]}) == False
+    assert are_constraints_violated(block, {"color": ["red", "red", "blue", "blue"]}) == False
+    assert are_constraints_violated(block, {"color": ["red", "red", "red", "blue"]}) == True
+    assert are_constraints_violated(block, {"color": ["blue", "red", "red", "red"]}) == True
+
