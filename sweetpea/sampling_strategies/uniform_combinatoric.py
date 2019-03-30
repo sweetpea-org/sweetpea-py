@@ -13,6 +13,7 @@ from sweetpea.logic import And
 from sweetpea.primitives import get_level_name
 from sweetpea.sampling_strategies.base import SamplingStrategy, SamplingResult
 from sweetpea.server import build_cnf, is_cnf_still_sat
+from sweetpea.constraints import Exclude
 
 
 """
@@ -78,6 +79,10 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
     def __validate(block: Block) -> None:
         if not isinstance(block, FullyCrossBlock):
             raise ValueError('The uniform combinatoric sampling strategy currently only supports FullyCrossBlock.')
+
+        for c in block.constraints:
+            if isinstance(c, Exclude):
+                raise ValueError('The uniform combinatoric sampling strategy currently does not support Exclude constraints.')
 
         for f in block.design:
             if f.has_complex_window():

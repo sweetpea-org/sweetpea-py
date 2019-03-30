@@ -6,6 +6,7 @@ import re
 
 from sweetpea import fully_cross_block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
+from sweetpea.constraints import Exclude
 from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy, UCSolutionEnumerator
 
 
@@ -45,6 +46,15 @@ def test_validate_accepts_derived_factors_with_simple_windows():
                               [color, text],
                               [])
     UniformCombinatoricSamplingStrategy._UniformCombinatoricSamplingStrategy__validate(block)
+
+
+def test_validate_rejects_exclude_constraints():
+    block = fully_cross_block([color, text, con_factor_within_trial],
+                              [color, text],
+                              [Exclude("color", "red")])
+
+    with pytest.raises(ValueError):
+        UniformCombinatoricSamplingStrategy._UniformCombinatoricSamplingStrategy__validate(block)
 
 
 def test_validate_rejects_derived_factors_with_complex_windows():
