@@ -26,3 +26,4 @@ ex.cnf
 build
 sweetpea.egg-info
 .vscode
+.DS_Store
