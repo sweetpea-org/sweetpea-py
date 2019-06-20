@@ -9,15 +9,13 @@ An experimental design is a description of experimental factors, relationships b
 
 SweetPea provides a high-level interface to declaratively describe an experimental design, and a low-level synthesizer to generate unbiased sequences of trials given satisfiable constraints. SweetPea samples sequences of trials by compiling experimental designs into Boolean logic, which are then passed to a SAT-sampler. The SAT-sampler [Unigen](https://bitbucket.org/kuldeepmeel/unigen) provides statistical guarantees that the solutions it finds are approximately uniformly probable in the space of all valid solutions. This means that while producing sequences of trials that are perfectly unbiased is intractable, we do the next best thing-- produce sequences that are approximately unbiased.
 
-
 ## Disclaimer!
 
 This project is at an early stage, and likely to change: it isn't yet ready for real-world useage. Please don't rely on any of this code!
 
-
 ## Usage
 
-SweetPea also depends on [Docker][1] being installed and running on your machine.
+SweetPea requires Python 3.5 or later. It also depends on [docker][1] being installed and running on your machine so that it can start a docker container for the backend server.
 
 Intstall with `pip`:
 
@@ -52,5 +50,71 @@ experiments  = synthesize_trials(block)
 print_experiments(block, experiments)
 ```
 
+Additional examples can be found in the `example_programs` directory. 
+
+
+## Contributing
+
+### Setup
+
+It is recommended to prepare a [virtual environment][venv] for SweetPea development. From within the `sweetpea-py` directory, create a new venv:
+
+```
+$ python3 -m venv sweetpea-py-env
+```
+
+Active the virtual environment:
+
+```
+$ source sweetpea-py-env/bin/activate
+```
+
+Once the virtual environment has been activated, pip install all dependencies and `sweetpea-py` itself:
+
+```
+# Dependencies
+$ pip install -r requirements.txt
+
+# SweetPea
+$ pip install -e <path>/<to>/sweetpea-py
+```
+
+### Tests
+
+Run unit tests with `make`. These should only take a few seconds to finish.
+
+```
+$ make test
+```
+
+SweetPea also has a set of end to end or 'acceptance' tests to test the full integration of all components. These are also run with `make`:
+
+```
+$ make acceptance
+```
+
+Or:
+
+```
+$ make full
+```
+
+The acceptance tests depend on the SweetPea server. By default, the tests will start and stop the server for each test. This is incredibly slow, and would make the acceptance tests take hours to complete.
+
+To run the acceptance tests, it's recommended that you start the server container yourself:
+
+```
+$ docker run --rm -d -p 8080:8080 -p 6379:6379 sweetpea/server
+```
+
+Then set an environment variable to tell SweetPea that you are managing the server yourself:
+
+```
+$ export SWEETPEA_EXTERNAL_DOCKER_MGMT=true
+```
+
+When that environment variable is set, SweetPea will never try to start/stop the server container. Once that is done, the acceptance tests typically complete in 5-7 minutes.
+
 [1]: https://www.docker.com/
+[2]: https://docs.python.org/3/tutorial/venv.html
 
