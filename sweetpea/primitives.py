@@ -7,9 +7,7 @@ Helper function which grabs names from derived levels;
     if the level is non-derived the level *is* the name
 """
 def get_level_name(level: Any) -> Any:
-    if isinstance(level, DerivedLevel):
-        return level.name
-    return level
+    return level.name
 
 
 class __Primitive:
@@ -22,6 +20,16 @@ class __Primitive:
         self.require_type(label, List, value)
         if len(value) == 0:
             raise ValueError(label + ' must not be empty.')
+
+class SimpleLevel(__Primitive):
+    def __init__(self, name):
+        self.name = name
+        self.__validate()
+
+    def __validate(self):
+        if not (hasattr(self.name, "__eq__")):
+            raise ValueError("Level names must be comparable, but received "
+                             + str(self.name))
 
 
 class DerivedLevel(__Primitive):
@@ -69,15 +77,24 @@ class DerivedLevel(__Primitive):
 class Factor(__Primitive):
     def __init__(self, name: str, levels) -> None:
         self.name = name
-        self.levels = levels
+        self.levels = self.__make_levels(levels)
         self.__validate()
+
+    def __make_levels(self, levels):
+        out_levels = []
+        for level in levels:
+            if isinstance(level, DerivedLevel):
+                out_levels.append(level)
+            else:
+                out_levels.append(SimpleLevel(level))
+        return out_levels
 
     def __validate(self):
         self.require_type('Factor.name', str, self.name)
         self.require_non_empty_list('Factor.levels', self.levels)
         level_type = type(self.levels[0])
-        if level_type not in [str, DerivedLevel]:
-            raise ValueError('Factor.levels must be either string or DerivedLevel')
+        if level_type not in [SimpleLevel, DerivedLevel]:
+            raise ValueError('Factor.levels must be either SimpleLevel or DerivedLevel')
 
         for l in self.levels:
             if type(l) != level_type:
