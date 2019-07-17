@@ -6,7 +6,7 @@ from typing import List, Union, Tuple, cast
 
 from sweetpea.backend import BackendRequest
 from sweetpea.internal import get_all_level_names
-from sweetpea.primitives import Factor, Transition, Window, get_level_name
+from sweetpea.primitives import Factor, Transition, Window, get_internal_level_name
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.base_constraint import Constraint
 from sweetpea.design_graph import DesignGraph
@@ -84,7 +84,7 @@ class Block:
     """
     def get_factor(self, factor_name: str) -> Factor:
         try:
-            return next(f for f in self.design if f.name == factor_name)
+            return next(f for f in self.design if f.fact_name == factor_name)
         except StopIteration:
             return cast(Factor, None)
 
@@ -99,7 +99,7 @@ class Block:
             offset = 0
             complex_factors = filter(lambda f: f.has_complex_window(), self.design)
             for f in complex_factors:
-                if f.name == factor_name:
+                if f.fact_name == factor_name:
                     offset += f.levels.index(f.get_level(level_name))
                     break
                 else:
@@ -121,8 +121,8 @@ class Block:
             raise ValueError('Factor does not apply to trial #' + str(t) + ' f=' + str(f))
 
         previous_trials = sum(map(lambda trial: 1 if f.applies_to_trial(trial + 1) else 0, range(t))) - 1
-        levels = map(get_level_name, f.levels)
-        initial_sequence = list(map(lambda l: self.first_variable_for_level(f.name, l), levels))
+        levels = map(get_internal_level_name, f.levels)
+        initial_sequence = list(map(lambda l: self.first_variable_for_level(f.fact_name, l), levels))
 
         offset = 0
         if f.has_complex_window():
@@ -174,7 +174,7 @@ class Block:
         else:
             complex_factors = list(filter(lambda f: f.has_complex_window(), self.design))
             for f in complex_factors:
-                start = self.first_variable_for_level(f.name, f.levels[0].name)
+                start = self.first_variable_for_level(f.fact_name, f.levels[0].unique_name)
                 end = start + self.variables_for_factor(f)
                 if variable in range(start, end):
                     tuples = get_all_level_names([f])
@@ -252,10 +252,10 @@ class FullyCrossBlock(Block):
         warnings = []
         template = "'{}' depends on '{}'"
         for c in combos:
-            if has_path(dg, c[0].name, c[1].name):
-                warnings.append(template.format(c[0].name, c[1].name))
-            elif has_path(dg, c[1].name, c[0].name):
-                warnings.append(template.format(c[1].name, c[0].name))
+            if has_path(dg, c[0].fact_name, c[1].fact_name):
+                warnings.append(template.format(c[0].fact_name, c[1].fact_name))
+            elif has_path(dg, c[1].fact_name, c[0].fact_name):
+                warnings.append(template.format(c[1].fact_name, c[0].fact_name))
 
         if warnings:
             print("WARNING: There are dependencies between factors in the crossing. This may lead to unsatisfiable designs.\n" + reduce(lambda accum, s: accum + s + "\n", warnings, ""))
@@ -308,7 +308,7 @@ class FullyCrossBlock(Block):
             return 0
 
         # If there are any, generate the full crossing as a list of tuples.
-        levels_lists = [list(map(get_level_name, f.levels)) for f in self.crossing]
+        levels_lists = [list(map(get_internal_level_name, f.levels)) for f in self.crossing]
         all_crossings = list(product(*levels_lists))
 
         for constraint in exclusions:

@@ -66,7 +66,7 @@ class SamplingStrategy(ABC):
         complex_factors = list(filter(lambda f: f.has_complex_window(), block.design))
         for f in complex_factors:
             # Get variables for this factor
-            start = block.first_variable_for_level(f.name, f.levels[0].name) + 1
+            start = block.first_variable_for_level(f.fact_name, f.levels[0].unique_name) + 1
             end = start + block.variables_for_factor(f)
             variables = list(filter(lambda n: n in range(start, end), complex_variables))
 
@@ -77,7 +77,7 @@ class SamplingStrategy(ABC):
             level_names = list(intersperse('', level_names, f.levels[0].window.stride - 1))
             level_names = list(repeat('', f.levels[0].window.width - 1)) + level_names
 
-            experiment[f.name] = level_names
+            experiment[f.fact_name] = level_names
 
         return experiment
 

@@ -25,12 +25,13 @@ Submit an async job to the server for processing. Returns the job id. (String)
 """
 def submit_job(request_data: dict) -> str:
     data_str = json.dumps(request_data)
+    print(data_str)
     job_response = requests.post(SUBMIT_JOB_URL, data = data_str)
     if job_response.status_code != 200:
         tmp_filename = ""
         with tempfile.NamedTemporaryFile(delete=False) as f:
             f.write(str.encode(data_str))
-            tmp_filename = f.name
+            tmp_filename = f.fact_name
 
         raise RuntimeError("Received non-200 response from job submission! Request body saved to temp file '" +
             tmp_filename + "' status_code=" + str(job_response.status_code) + " response_body=" + str(job_response.text))

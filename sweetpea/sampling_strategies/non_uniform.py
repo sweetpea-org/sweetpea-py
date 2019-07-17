@@ -40,6 +40,7 @@ class NonUniformSamplingStrategy(SamplingStrategy):
         try:
             job_id = submit_job(json_data)
             job_result_str = get_job_result(job_id)
+            print(job_result_str)
 
             solutions = json.loads(job_result_str)['solutions']
             t_end = datetime.now()

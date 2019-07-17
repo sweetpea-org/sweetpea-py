@@ -1,7 +1,7 @@
 from itertools import islice, tee, chain, repeat
 from typing import Any, Tuple, List, Iterator, Iterable
 
-from sweetpea.primitives import Factor, DerivedLevel, get_level_name
+from sweetpea.primitives import Factor, DerivedLevel, get_internal_level_name
 
 
 """
@@ -15,7 +15,7 @@ Usage:
 
 """
 def get_all_level_names(design: List[Factor]) -> List[Tuple[Any, Any]]:
-    return [(factor.name, get_level_name(level)) for factor in design for level in factor.levels]
+    return [(factor.fact_name, get_internal_level_name(level)) for factor in design for level in factor.levels]
 
 
 """

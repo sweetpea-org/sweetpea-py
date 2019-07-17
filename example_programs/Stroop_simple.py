@@ -26,8 +26,8 @@ design:
 
 # DEFINE COLOR AND WORD FACTORS
 
-color      = Factor("color",  ["red", "blue", "green", "brown", "brown"])
-word       = Factor("motion", ["red", "blue", "green", "brown", "brown"])
+color      = Factor("color",  ["red", "blue", "green", "brown"])
+word       = Factor("motion", ["red", "blue", "green", "brown"])
 
 # DEFINE CONGRUENCY FACTOR
 

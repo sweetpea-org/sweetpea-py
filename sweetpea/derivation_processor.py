@@ -46,7 +46,7 @@ class DerivationProcessor:
 
         for fact in derived_factors:
             for level in fact.levels:
-                level_index = block.first_variable_for_level(fact.name, level.name)
+                level_index = block.first_variable_for_level(fact.fact_name, level.unique_name)
                 x_product = level.get_dependent_cross_product()
 
                 # filter to valid tuples, and get their idxs
@@ -58,7 +58,7 @@ class DerivationProcessor:
                     # Make sure the fn returned a boolean
                     if not isinstance(fn_result, bool):
                         raise ValueError('Derivation function did not return a boolean! factor={} level={} fn={} return={} args={} '
-                            .format(fact.name, level.name, level.window.fn, fn_result, args))
+                            .format(fact.fact_name, level.unique_name, level.window.fn, fn_result, args))
 
                     # If the result was true, add the tuple to the list
                     if fn_result:

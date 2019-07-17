@@ -9,7 +9,7 @@ from sweetpea.internal import chunk, chunk_list, pairwise, get_all_level_names
 from sweetpea.blocks import Block, FullyCrossBlock
 from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import If, Iff, And, Or, Not, FormulaWithIff
-from sweetpea.primitives import Factor, get_level_name
+from sweetpea.primitives import Factor, get_internal_level_name
 
 
 def validate_factor_and_level(block: Block, factor_name: str, level_name: str) -> None:
@@ -278,8 +278,8 @@ class _KInARow(Constraint):
         # Generate the constraint for each level in the factor.
         if isinstance(self.level, Factor):
             levels = self.level.levels  # Get the actual levels out of the factor.
-            level_names = list(map(lambda l: get_level_name(l), levels))
-            level_tuples = list(map(lambda l_name: (self.level.name, l_name), level_names))
+            level_names = list(map(lambda l: get_internal_level_name(l), levels))
+            level_tuples = list(map(lambda l_name: (self.level.fact_name, l_name), level_names))
 
             constraints = []
             for t in level_tuples:
