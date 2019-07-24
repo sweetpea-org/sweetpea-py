@@ -24,6 +24,9 @@ class __Primitive:
         if len(value) == 0:
             raise ValueError(label + ' must not be empty.')
 
+    def __str__(self):
+        raise Exception("Attempted implicit string cast of primitive")
+
 class SimpleLevel(__Primitive):
     def __init__(self, name):
         self.input_name = name
@@ -34,6 +37,8 @@ class SimpleLevel(__Primitive):
         if not (hasattr(self.input_name, "__eq__")):
             raise ValueError("Level names must be comparable, but received "
                              + str(self.input_name))
+    def __str__(self):
+        raise ValueError("Attempt to string a primitive level")
 
 
 class DerivedLevel(__Primitive):

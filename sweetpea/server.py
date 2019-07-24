@@ -25,7 +25,6 @@ Submit an async job to the server for processing. Returns the job id. (String)
 """
 def submit_job(request_data: dict) -> str:
     data_str = json.dumps(request_data)
-    print(data_str)
     job_response = requests.post(SUBMIT_JOB_URL, data = data_str)
     if job_response.status_code != 200:
         tmp_filename = ""
