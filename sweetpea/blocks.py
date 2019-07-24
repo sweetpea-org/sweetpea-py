@@ -189,8 +189,12 @@ class Block:
         fresh = 1 + self.variables_per_sample()
         backend_request = BackendRequest(fresh)
 
+        open("backend_before_application", "w+").write(str(backend_request))
+
         for c in self.constraints:
             c.apply(self, backend_request)
+
+        open("backend_after_application", "w+").write(str(backend_request))
 
         return backend_request
 
