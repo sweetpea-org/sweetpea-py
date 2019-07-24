@@ -20,6 +20,15 @@ class NonUniformSamplingStrategy(SamplingStrategy):
     @staticmethod
     def sample(block: Block, sample_count: int) -> SamplingResult:
         backend_request = block.build_backend_request()
+        print("Sample count: " + str(sample_count))
+        print("Variables per sample: " + str(block.variables_per_sample()))
+
+        cnfs_out = open("cnfs_out", "w+")
+        cnfs_out.write(str(backend_request.get_cnfs_as_json()))
+
+        requests_out = open("requests_out", "w+")
+        requests_out.write(str(backend_request.get_requests_as_json()))
+
         json_data = {
             'action': 'SampleNonUniform',
             'sampleCount': sample_count,
