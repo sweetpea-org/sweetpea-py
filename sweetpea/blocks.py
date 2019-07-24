@@ -189,13 +189,10 @@ class Block:
         fresh = 1 + self.variables_per_sample()
         backend_request = BackendRequest(fresh)
 
+        open("constraints", "w").write(str(self.constraints))
+
         for c in self.constraints:
             c.apply(self, backend_request)
-
-        file = open("backend_after_application", "w")
-        for item in backend_request.cnfs:
-            for thing in item:
-                file.write(str(thing) + "\n")
 
         return backend_request
 

@@ -335,7 +335,6 @@ class AtMostKInARow(_KInARow):
     def apply_to_backend_request(self, block: Block, level: Tuple[str, str], backend_request: BackendRequest) -> None:
         sublists = self._build_variable_sublists(block, level, self.k + 1)
 
-        open("sublists", "w+").write(str(sublists))
         # Build the requests
         backend_request.ll_requests += list(map(lambda l: LowLevelRequest("LT", self.k + 1, l), sublists))
 
