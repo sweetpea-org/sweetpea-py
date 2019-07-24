@@ -65,6 +65,8 @@ class DerivationProcessor:
                         valid_tuples.append(tup)
 
                 valid_idxs = [[block.first_variable_for_level(pair[0], pair[1]) for pair in tup_list] for tup_list in valid_tuples]
+                if (len(valid_idxs) == 0):
+                    print("O Shit")
                 shifted_idxs = DerivationProcessor.shift_window(valid_idxs, level.window, block.variables_per_trial())
                 accum.append(Derivation(level_index, shifted_idxs, fact))
 
