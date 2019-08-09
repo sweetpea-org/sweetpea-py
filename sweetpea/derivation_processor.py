@@ -51,9 +51,13 @@ class DerivationProcessor:
 
                 # filter to valid tuples, and get their idxs
                 valid_tuples = []
+                if (len(x_product) == 0):
+                    print("O Boi")
                 for tup in x_product:
                     args = DerivationProcessor.generate_argument_list(level, tup)
                     fn_result = level.window.fn(*args)
+                    if (fn_result == True):
+                        print("We out here")
 
                     # Make sure the fn returned a boolean
                     if not isinstance(fn_result, bool):
@@ -64,6 +68,8 @@ class DerivationProcessor:
                     if fn_result:
                         valid_tuples.append(tup)
 
+                if (len(valid_tuples) == 0):
+                    print("O Fuck")
                 valid_idxs = [[block.first_variable_for_level(pair[0], pair[1]) for pair in tup_list] for tup_list in valid_tuples]
                 if (len(valid_idxs) == 0):
                     print("O Shit")

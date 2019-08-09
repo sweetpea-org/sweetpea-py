@@ -39,6 +39,10 @@ class SimpleLevel(__Primitive):
                              + str(self.input_name))
     def __str__(self):
         raise ValueError("Attempt to string a primitive level")
+    def __eq__(self, other):
+        print("Comparing Simple " + str(self.unique_name) + " " + str(other.unique_name)
+              + " " + str(self.input_name) + " " + str(other.input_name))
+        return other.input_name == self.input_name
 
 
 class DerivedLevel(__Primitive):
@@ -75,7 +79,9 @@ class DerivedLevel(__Primitive):
         return list(product(*[[(dependent_factor.fact_name, get_internal_level_name(x)) for x in dependent_factor.levels] for dependent_factor in self.window.args]))
 
     def __eq__(self, other):
-        return type(self) == type(other) and self.__dict__ == other.__dict__
+        print("Comparing Derived " + str(self.unique_name) + " " + str(other.unique_name)
+              + " " + str(self.input_name) + " " + str(other.input_name))
+        return type(self) == type(other) and self.input_name == other.input_name
 
     def __repr__(self):
         return str(self.__dict__)
