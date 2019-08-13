@@ -55,6 +55,7 @@ class DerivationProcessor:
                     print("O Boi")
                 for tup in x_product:
                     args = DerivationProcessor.generate_argument_list(level, tup)
+                    print(args)
                     fn_result = level.window.fn(*args)
                     if (fn_result == True):
                         print("We out here")
