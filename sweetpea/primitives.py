@@ -37,8 +37,10 @@ class SimpleLevel(__Primitive):
         if not (hasattr(self.input_name, "__eq__")):
             raise ValueError("Level names must be comparable, but received "
                              + str(self.input_name))
+
     def __str__(self):
-        raise ValueError("Attempt to string a primitive level")
+        raise Exception("Attempted implicit string cast of simple level")
+
     def __eq__(self, other):
         print("Comparing Simple " + str(self.unique_name) + " " + str(other.unique_name)
               + " " + str(self.input_name) + " " + str(other.input_name))
