@@ -66,13 +66,15 @@ def __desugar_constraints(constraints: List[Constraint]) -> List[Constraint]:
 Display the generated experiments in human-friendly form.
 """
 def print_experiments(block: Block, experiments: List[dict]):
-    nested_assignment_strs = [list(map(lambda l: f.fact_name + " " + get_internal_level_name(l), f.levels)) for f in block.design]
+    nested_assignment_strs = [list(map(lambda l: f.fact_name + " " + get_external_level_name(l), f.levels)) for f in block.design]
     column_widths = list(map(lambda l: max(list(map(len, l))), nested_assignment_strs))
 
     format_str = reduce(lambda a, b: a + '{{:<{}}} | '.format(b), column_widths, '')[:-3] + '\n'
 
     for e in experiments:
-        strs = [list(map(lambda v: name + " " + v, values)) for (name,values) in e.items()]
+        for (name, values) in e.items():
+            e[name] = [v.input_name if type(v) == DerivedLevel else v for v in values]
+        strs = [list(map(lambda v: name + " " + v, values)) for (npame,values) in e.items()]
         transposed = list(map(list, zip(*strs)))
         print(reduce(lambda a, b: a + format_str.format(*b), transposed, ''))
 

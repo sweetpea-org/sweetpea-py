@@ -5,7 +5,7 @@ from networkx import has_path
 from typing import List, Union, Tuple, cast
 
 from sweetpea.backend import BackendRequest
-from sweetpea.internal import get_all_level_names
+from sweetpea.internal import get_all_level_names, get_all_levels
 from sweetpea.primitives import Factor, Transition, Window, get_internal_level_name
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.base_constraint import Constraint
@@ -93,6 +93,8 @@ class Block:
     (0 based)
     """
     def first_variable_for_level(self, factor_name: str, level_name: str) -> int:
+        if (type(level_name) != str):
+            print("incorrect, level name must be str")
         f = self.get_factor(factor_name)
 
         if f.has_complex_window():
@@ -177,7 +179,7 @@ class Block:
                 start = self.first_variable_for_level(f.fact_name, f.levels[0].unique_name)
                 end = start + self.variables_for_factor(f)
                 if variable in range(start, end):
-                    tuples = get_all_level_names([f])
+                    tuples = get_all_levels([f])
                     return tuples[(variable - start) % len(f.levels)]
 
         raise RuntimeError('Unable to find factor/level for variable!')

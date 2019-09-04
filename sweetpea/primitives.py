@@ -42,6 +42,8 @@ class SimpleLevel(__Primitive):
         raise Exception("Attempted implicit string cast of simple level")
 
     def __eq__(self, other):
+        if (type(other) != SimpleLevel):
+            print("Attempted to compare a simple level to another type.")
         print("Comparing Simple " + str(self.unique_name) + " " + str(other.unique_name)
               + " " + str(self.input_name) + " " + str(other.input_name))
         return other.input_name == self.input_name
@@ -78,9 +80,11 @@ class DerivedLevel(__Primitive):
         self.window.args = list(chain(*[list(repeat(arg, self.window.width)) for arg in self.window.args]))
 
     def get_dependent_cross_product(self) -> List[Tuple[Any, ...]]:
-        return list(product(*[[(dependent_factor.fact_name, get_internal_level_name(x)) for x in dependent_factor.levels] for dependent_factor in self.window.args]))
+        return list(product(*[[(dependent_factor.fact_name, x) for x in dependent_factor.levels] for dependent_factor in self.window.args]))
 
     def __eq__(self, other):
+        if (type(other) != DerivedLevel):
+            print("Attempted to compare a derived level to another type.")
         print("Comparing Derived " + str(self.unique_name) + " " + str(other.unique_name)
               + " " + str(self.input_name) + " " + str(other.input_name))
         return type(self) == type(other) and self.input_name == other.input_name

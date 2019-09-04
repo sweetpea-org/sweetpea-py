@@ -4,7 +4,7 @@ from typing import List, Tuple, Union, Any, cast
 from functools import reduce
 from itertools import product
 
-from sweetpea.primitives import DerivedLevel, WithinTrial, Transition, Window
+from sweetpea.primitives import DerivedLevel, WithinTrial, Transition, Window, get_internal_level_name, SimpleLevel
 from sweetpea.blocks import Block
 from sweetpea.constraints import Derivation
 from sweetpea.internal import chunk_list, get_all_level_names
@@ -55,10 +55,7 @@ class DerivationProcessor:
                     print("O Boi")
                 for tup in x_product:
                     args = DerivationProcessor.generate_argument_list(level, tup)
-                    print(args)
                     fn_result = level.window.fn(*args)
-                    if (fn_result == True):
-                        print("We out here")
 
                     # Make sure the fn returned a boolean
                     if not isinstance(fn_result, bool):
@@ -67,13 +64,13 @@ class DerivationProcessor:
 
                     # If the result was true, add the tuple to the list
                     if fn_result:
-                        valid_tuples.append(tup)
+                        n_tup = []
+                        for pair in tup:
+                            n_pair = (pair[0], get_internal_level_name(pair[1]))
+                            n_tup.append(n_pair)
+                        valid_tuples.append(n_tup)
 
-                if (len(valid_tuples) == 0):
-                    print("O Fuck")
                 valid_idxs = [[block.first_variable_for_level(pair[0], pair[1]) for pair in tup_list] for tup_list in valid_tuples]
-                if (len(valid_idxs) == 0):
-                    print("O Shit")
                 shifted_idxs = DerivationProcessor.shift_window(valid_idxs, level.window, block.variables_per_trial())
                 accum.append(Derivation(level_index, shifted_idxs, fact))
 
