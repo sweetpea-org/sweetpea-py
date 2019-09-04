@@ -2,11 +2,11 @@ from abc import abstractmethod
 from functools import reduce
 from itertools import combinations, accumulate, repeat, product
 from networkx import has_path
-from typing import List, Union, Tuple, cast
+from typing import List, Union, Tuple, cast, Any
 
 from sweetpea.backend import BackendRequest
-from sweetpea.internal import get_all_level_names, get_all_levels
-from sweetpea.primitives import Factor, Transition, Window, get_internal_level_name
+from sweetpea.internal import get_all_levels
+from sweetpea.primitives import Factor, Transition, Window, SimpleLevel, DerivedLevel
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.base_constraint import Constraint
 from sweetpea.design_graph import DesignGraph
@@ -80,29 +80,32 @@ class Block:
         return reduce(lambda sum, t: sum + len(f.levels) if f.applies_to_trial(t) else sum, trial_list, 0)
 
     """
-    Retrieve a factor by name.
+    Determines whether a given factor is in this block.
     """
-    def get_factor(self, factor_name: str) -> Factor:
-        try:
-            return next(f for f in self.design if f.fact_name == factor_name)
-        except StopIteration:
-            return cast(Factor, None)
+    def has_factor(self, factor: Factor) -> Factor:
+        if (type(factor) is not Factor):
+            raise ValueError('Non-factor argument to has_factor.')
+        if factor in self.design:
+            return factor
+        return None
+        # try:
+        #     return next(f for f in self.design if f.fact_name == factor_name)
+        # except StopIteration:
+        #     return cast(Factor, None)
 
     """
     Returns the first index for this variable in a trial sequence representing the given factor and level.
     (0 based)
     """
-    def first_variable_for_level(self, factor_name: str, level_name: str) -> int:
-        if (type(level_name) != str):
-            print("incorrect, level name must be str")
-        f = self.get_factor(factor_name)
-
-        if f.has_complex_window():
+    def first_variable_for_level(self, factor: Factor, level: Any ) -> int:
+        if (type(level) is not SimpleLevel and type(level) is not DerivedLevel):
+            print("Attempt to find first variable for a non-level object " + str(level))
+        if factor.has_complex_window():
             offset = 0
             complex_factors = filter(lambda f: f.has_complex_window(), self.design)
             for f in complex_factors:
-                if f.fact_name == factor_name:
-                    offset += f.levels.index(f.get_level(level_name))
+                if f == factor:
+                    offset += f.levels.index(level)
                     break
                 else:
                     offset += self.variables_for_factor(f)
@@ -111,8 +114,8 @@ class Block:
 
         else:
             simple_factors = list(filter(lambda f: not f.has_complex_window(), self.design))
-            simple_levels = get_all_level_names(simple_factors)
-            return simple_levels.index((factor_name, level_name))
+            simple_levels = get_all_levels(simple_factors)
+            return simple_levels.index((factor, level))
 
     """
     Given a factor and a trial number (1-based) this function will return a list of the variables
@@ -123,8 +126,7 @@ class Block:
             raise ValueError('Factor does not apply to trial #' + str(t) + ' f=' + str(f))
 
         previous_trials = sum(map(lambda trial: 1 if f.applies_to_trial(trial + 1) else 0, range(t))) - 1
-        levels = map(get_internal_level_name, f.levels)
-        initial_sequence = list(map(lambda l: self.first_variable_for_level(f.fact_name, l), levels))
+        initial_sequence = list(map(lambda l: self.first_variable_for_level(f, l), f.levels))
 
         offset = 0
         if f.has_complex_window():
@@ -171,12 +173,12 @@ class Block:
         if variable < self.grid_variables():
             variable = variable % self.variables_per_trial()
             simple_factors = list(filter(lambda f: not f.has_complex_window(), self.design))
-            simple_tuples = get_all_level_names(simple_factors)
+            simple_tuples = get_all_levels(simple_factors)
             return simple_tuples[variable]
         else:
             complex_factors = list(filter(lambda f: f.has_complex_window(), self.design))
             for f in complex_factors:
-                start = self.first_variable_for_level(f.fact_name, f.levels[0].unique_name)
+                start = self.first_variable_for_level(f, f.levels[0])
                 end = start + self.variables_for_factor(f)
                 if variable in range(start, end):
                     tuples = get_all_levels([f])
@@ -199,23 +201,27 @@ class Block:
         return backend_request
 
     """
-    Given a trial number (1 based), factor name, and level name, this method will return the SAT
+    Given a trial number (1 based), factor, and level, this method will return the SAT
     variable that represents that selection. Only works for factors without complex windows at the
     moment.
     """
-    def get_variable(self, trial_number: int, level: Tuple[str, str]) -> int:
-        f = self.get_factor(level[0])
+    def get_variable(self, trial_number: int, level: Tuple[Factor, Any]) -> int:
+        f = level[0]
         if f.has_complex_window():
             raise ValueError("get_variable doens't handle complex windows yet! factor={}".format(f))
 
         return self.build_variable_list(level)[trial_number - 1]
 
     """
-    Given a specific level (factor + level name pair), this method will return the list of variables
+    Given a specific level (factor + level pair), this method will return the list of variables
     that correspond to that level in each trial in the encoding.
     """
-    def build_variable_list(self, level: Tuple[str, str]) -> List[int]:
-        if self.get_factor(level[0]).has_complex_window():
+    def build_variable_list(self, level: Tuple[Factor, Any]) -> List[int]:
+        if (type(level[0]) is not Factor):
+            raise ValueError('First element in level argument to variable list builder must be a FACTOR.')
+        if (type(level[1]) is not SimpleLevel and type(level[1]) is not DerivedLevel):
+            raise ValueError('Second element in level argument to variable list builder must be a SIMPLE LEVEL or a DERIVED LEVEL.')
+        if level[0].has_complex_window():
             return self.__build_complex_variable_list(level)
         else:
             return self.__build_simple_variable_list(level)
@@ -227,7 +233,7 @@ class Block:
         return list(accumulate(repeat(first_variable, num_trials), lambda acc, _: acc + design_var_count))
 
     def __build_complex_variable_list(self, level: Tuple[str, str]) -> List[int]:
-        factor = self.get_factor(level[0])
+        factor = level[0]
         level_count = len(factor.levels)
         n = int(self.variables_for_factor(factor) / level_count)
         start = self.first_variable_for_level(level[0], level[1]) + 1
@@ -312,12 +318,11 @@ class FullyCrossBlock(Block):
             return 0
 
         # If there are any, generate the full crossing as a list of tuples.
-        levels_lists = [list(map(get_internal_level_name, f.levels)) for f in self.crossing]
+        levels_lists = [list(f.levels) for f in self.crossing]
         all_crossings = list(product(*levels_lists))
 
         for constraint in exclusions:
-            f = self.get_factor(constraint.factor_name)
-            if f.has_complex_window():
+            if constraint.has_complex_window():
                 # If the excluded factor has a complex window, then we don't need
                 # to reduce the sequence length. What if the transition being excluded
                 # is in the crossing? If it is, then they shouldn't be excluding it.
@@ -325,13 +330,14 @@ class FullyCrossBlock(Block):
                 continue
 
             # Retrieve the derivation function that defines this exclusion.
-            excluded_level = f.get_level(constraint.level_name)
+            excluded_level = constraint.level
 
             # For each crossing, extract the levels for this derviation function, and execute it.
             for c in all_crossings:
-                args = [c[i] for i in map(lambda f: self.crossing.index(f), excluded_level.window.args)]
+                args = [c[i].input_name for i in map(lambda f: self.crossing.index(f), excluded_level.window.args)]
                 # Invoking the fn this way is only ok because we only do this for WithinTrial windows.
                 # With complex windows, it wouldn't work due to the list aspect for each argument.
+
                 if excluded_level.window.fn(*args):
                     excluded_crossings.add(c)
 

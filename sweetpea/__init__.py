@@ -2,7 +2,7 @@ from functools import reduce
 from typing import Any, List, Union, Tuple, cast
 
 from sweetpea.derivation_processor import DerivationProcessor
-from sweetpea.internal import chunk, get_all_level_names, intersperse
+from sweetpea.internal import chunk, get_all_levels, intersperse
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.blocks import Block, FullyCrossBlock
 from sweetpea.docker import update_docker_image, start_docker_container, stop_docker_container, check_server_health

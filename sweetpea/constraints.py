@@ -5,22 +5,22 @@ from itertools import product, chain, accumulate, repeat
 from functools import reduce
 
 from sweetpea.base_constraint import Constraint
-from sweetpea.internal import chunk, chunk_list, pairwise, get_all_level_names
+from sweetpea.internal import chunk, chunk_list, pairwise
 from sweetpea.blocks import Block, FullyCrossBlock
 from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import If, Iff, And, Or, Not, FormulaWithIff
-from sweetpea.primitives import Factor, get_internal_level_name
+from sweetpea.primitives import Factor
 
 
-def validate_factor_and_level(block: Block, factor_name: str, level_name: str) -> None:
-    if not block.get_factor(factor_name):
+def validate_factor_and_level(block: Block, factor: Factor, level: Any) -> None:
+    if not block.has_factor(factor):
         raise ValueError(("A factor with name '{}' wasn't found in the design. " +\
             "Are you sure the factor was included, and that the name is spelled " +\
-            "correctly?").format(factor_name))
+            "correctly?").format(factor.factor_name))
 
-    if not block.get_factor(factor_name).get_level(level_name):
+    if not factor.has_level(level):
         raise ValueError(("A level with name '{}' wasn't found in the '{}' factor, " +\
-            "Are you sure the level name is spelled correctly?").format(level_name, factor_name))
+            "Are you sure the level name is spelled correctly?").format(level.input_name, factor.factor_name))
 
 
 """
@@ -265,9 +265,10 @@ class _KInARow(Constraint):
         if not (isinstance(self.level, Factor) or \
                 (isinstance(self.level, tuple) and \
                  len(self.level) == 2 and \
-                 isinstance(self.level[0], str) and \
-                 isinstance(self.level[1], str))):
-            raise ValueError("level must be either a Factor or a Tuple[str, str].")
+                 isinstance(self.level[0], Factor) and \
+                 (isinstance(self.level[1], SimpleLevel
+                 or isinstance(self.level[1], DerivedLevel))))):
+            raise ValueError("level must be either a Factor or a Tuple[Factor, DerivedLevel or SimpleLevel].")
 
     def validate(self, block: Block) -> None:
         validate_factor_and_level(block, self.level[0], self.level[1])
@@ -278,8 +279,7 @@ class _KInARow(Constraint):
         # Generate the constraint for each level in the factor.
         if isinstance(self.level, Factor):
             levels = self.level.levels  # Get the actual levels out of the factor.
-            level_names = list(map(lambda l: get_internal_level_name(l), levels))
-            level_tuples = list(map(lambda l_name: (self.level.fact_name, l_name), level_names))
+            level_tuples = list(map(lambda level: (self.level, level), levels))
 
             constraints = []
             for t in level_tuples:
@@ -291,15 +291,15 @@ class _KInARow(Constraint):
         return constraints
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
-        # By this point, level should be a Tuple containing the factor name, and the level name.
+        # By this point, level should be a Tuple containing the factor and the level.
         # Block construction is expected to flatten out constraints applied to whole factors so
         # that the constraint is applied to each level of the factor.
         if isinstance(self.level, tuple) and len(self.level) == 2:
-            self.apply_to_backend_request(block, cast(Tuple[str, str], self.level), backend_request)
+            self.apply_to_backend_request(block, self.level, backend_request)
         else:
             raise ValueError("Unrecognized levels specification in AtMostKInARow constraint: " + str(self.level))
 
-    def _build_variable_sublists(self, block: Block, level: Tuple[str, str], sublist_length: int) -> List[List[int]]:
+    def _build_variable_sublists(self, block: Block, level: Tuple[Factor, Any], sublist_length: int) -> List[List[int]]:
         var_list = block.build_variable_list(level)
         raw_sublists = [var_list[i:i+sublist_length] for i in range(0, len(var_list))]
         return list(filter(lambda l: len(l) == sublist_length, raw_sublists))
@@ -332,7 +332,7 @@ If it had been AtMostKInARow 2 ("color", "red"), the reqs would have been:
     sum(7, 13, 19) LT 3
 """
 class AtMostKInARow(_KInARow):
-    def apply_to_backend_request(self, block: Block, level: Tuple[str, str], backend_request: BackendRequest) -> None:
+    def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Any], backend_request: BackendRequest) -> None:
         sublists = self._build_variable_sublists(block, level, self.k + 1)
 
         # Build the requests
@@ -360,7 +360,7 @@ class NoMoreThanKInARow(Constraint):
 Requires that if the given level exists at all, it must exist in a sequence of exactly K.
 """
 class ExactlyKInARow(_KInARow):
-    def apply_to_backend_request(self, block: Block, level: Tuple[str, str], backend_request: BackendRequest) -> None:
+    def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Any], backend_request: BackendRequest) -> None:
         sublists = self._build_variable_sublists(block, level, self.k)
         implications = []
 
@@ -404,16 +404,16 @@ class ExactlyKInARow(_KInARow):
 
 
 class Exclude(Constraint):
-    def __init__(self, factor_name, level_name):
-        self.factor_name = factor_name
-        self.level_name = level_name
+    def __init__(self, factor, level):
+        self.factor = factor
+        self.level = level
         # TODO: validation
 
     def validate(self, block: Block) -> None:
-        validate_factor_and_level(block, self.factor_name, self.level_name)
+        validate_factor_and_level(block, self.factor, self.level)
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
-        var_list = block.build_variable_list((self.factor_name, self.level_name))
+        var_list = block.build_variable_list(self.factor, self.level)
         backend_request.cnfs.append(And(list(map(lambda n: n * -1, var_list))))
 
     def __eq__(self, other):

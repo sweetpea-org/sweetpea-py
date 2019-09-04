@@ -196,13 +196,13 @@ class UCSolutionEnumerator():
                 # For each level in the factor, see if the derivation function is true.
                 for level in f.levels:
                     if level.window.fn(*[trial_values[t][f.fact_name] for f in level.window.args]):
-                        trial_values[t][f.fact_name] = level.unique_name
+                        trial_values[t][f] = level
 
         # 7. Convert to variable encoding for SAT checking
         solution = cast(List[int], [])
         for trial_number, trial_value in enumerate(trial_values):
-            for factor_name, level_name in trial_value.items():
-                solution.append(self._block.get_variable(trial_number + 1, (factor_name, level_name)))
+            for factor, level in trial_value.items():
+                solution.append(self._block.get_variable(trial_number + 1, (factor, level)))
 
         solution.sort()
         return solution

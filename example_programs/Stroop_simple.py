@@ -53,9 +53,9 @@ def response_up(color):
 def response_down(color):
     return color == "blue"
 def response_left(color):
-    return color.input_name == "green"
+    return color == "green"
 def response_right(color):
-    return color.input_name == "brown"
+    return color == "brown"
 
 response = Factor("response", [
     DerivedLevel("up", WithinTrial(response_up,   [color])),

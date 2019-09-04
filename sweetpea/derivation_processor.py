@@ -4,10 +4,10 @@ from typing import List, Tuple, Union, Any, cast
 from functools import reduce
 from itertools import product
 
-from sweetpea.primitives import DerivedLevel, WithinTrial, Transition, Window, get_internal_level_name, SimpleLevel
+from sweetpea.primitives import DerivedLevel, WithinTrial, Transition, Window, get_external_level_name, SimpleLevel
 from sweetpea.blocks import Block
 from sweetpea.constraints import Derivation
-from sweetpea.internal import chunk_list, get_all_level_names
+from sweetpea.internal import chunk_list, get_all_levels
 
 
 class DerivationProcessor:
@@ -46,13 +46,11 @@ class DerivationProcessor:
 
         for fact in derived_factors:
             for level in fact.levels:
-                level_index = block.first_variable_for_level(fact.fact_name, level.unique_name)
+                level_index = block.first_variable_for_level(fact, level)
                 x_product = level.get_dependent_cross_product()
 
                 # filter to valid tuples, and get their idxs
                 valid_tuples = []
-                if (len(x_product) == 0):
-                    print("O Boi")
                 for tup in x_product:
                     args = DerivationProcessor.generate_argument_list(level, tup)
                     fn_result = level.window.fn(*args)
@@ -64,11 +62,7 @@ class DerivationProcessor:
 
                     # If the result was true, add the tuple to the list
                     if fn_result:
-                        n_tup = []
-                        for pair in tup:
-                            n_pair = (pair[0], get_internal_level_name(pair[1]))
-                            n_tup.append(n_pair)
-                        valid_tuples.append(n_tup)
+                        valid_tuples.append(tup)
 
                 valid_idxs = [[block.first_variable_for_level(pair[0], pair[1]) for pair in tup_list] for tup_list in valid_tuples]
                 shifted_idxs = DerivationProcessor.shift_window(valid_idxs, level.window, block.variables_per_trial())
@@ -78,12 +72,14 @@ class DerivationProcessor:
 
     @staticmethod
     def generate_argument_list(level: DerivedLevel, tup: Tuple) -> List:
-        level_values = list(map(lambda t: t[1], tup))
+        # Uses input names for the user-supplied function
+        level_strings = list(map(lambda t: get_external_level_name(t[1]), tup))
+        # level_values = list(map(lambda t: t[1], tup))
         # For windows with a width of 1, we just pass the arguments directly, rather than putting them in lists.
         if level.window.width == 1:
-            return level_values
+            return level_strings
         else:
-            return list(chunk_list(level_values, level.window.width))
+            return list(chunk_list(level_strings, level.window.width))
 
 
     """

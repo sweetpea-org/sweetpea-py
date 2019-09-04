@@ -44,8 +44,7 @@ class SimpleLevel(__Primitive):
     def __eq__(self, other):
         if (type(other) != SimpleLevel):
             print("Attempted to compare a simple level to another type.")
-        print("Comparing Simple " + str(self.unique_name) + " " + str(other.unique_name)
-              + " " + str(self.input_name) + " " + str(other.input_name))
+        # print("Comparing Simple " + str(self.unique_name) + " " + str(other.unique_name) + " " + str(self.input_name) + " " + str(other.input_name))
         return other.input_name == self.input_name
 
 
@@ -80,13 +79,12 @@ class DerivedLevel(__Primitive):
         self.window.args = list(chain(*[list(repeat(arg, self.window.width)) for arg in self.window.args]))
 
     def get_dependent_cross_product(self) -> List[Tuple[Any, ...]]:
-        return list(product(*[[(dependent_factor.fact_name, x) for x in dependent_factor.levels] for dependent_factor in self.window.args]))
+        return list(product(*[[(dependent_factor, x) for x in dependent_factor.levels] for dependent_factor in self.window.args]))
 
     def __eq__(self, other):
         if (type(other) != DerivedLevel):
             print("Attempted to compare a derived level to another type.")
-        print("Comparing Derived " + str(self.unique_name) + " " + str(other.unique_name)
-              + " " + str(self.input_name) + " " + str(other.input_name))
+        # print("Comparing Derived " + str(self.unique_name) + " " + str(other.unique_name) + " " + str(self.input_name) + " " + str(other.input_name))
         return type(self) == type(other) and self.input_name == other.input_name
 
     def __repr__(self):
@@ -140,12 +138,14 @@ class Factor(__Primitive):
         window = self.levels[0].window
         return window.width > 1 or window.stride > 1
 
-    def get_level(self, level_name: str) -> Union[str, DerivedLevel]:
+    def get_level(self, level_name: str) -> Union[SimpleLevel, DerivedLevel]:
         for l in self.levels:
             if l.unique_name == level_name:
                 return l
-
         return cast(str, None)
+
+    def has_level(self, level: Any) -> bool:
+        return (level in self.levels)
 
     """
     Returns true if this factor applies to the given trial number. (1-based)

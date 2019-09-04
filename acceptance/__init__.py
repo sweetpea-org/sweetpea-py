@@ -4,7 +4,7 @@ from itertools import repeat
 
 from sweetpea.primitives import Factor
 from sweetpea.constraints import AtMostKInARow
-from sweetpea.internal import get_all_level_names
+from sweetpea.internal import get_all_levels
 
 
 def __assert_atmostkinarow_pair(k: int, level: Tuple[str, str], experiments: List[dict]) -> None:
@@ -15,7 +15,7 @@ def __assert_atmostkinarow_pair(k: int, level: Tuple[str, str], experiments: Lis
 
 def assert_atmostkinarow(c: AtMostKInARow, experiments: List[dict]) -> None:
     if isinstance(c.level, Factor):
-        level_tuples = get_all_level_names([c.level])
+        level_tuples = get_all_levels([c.level])
         for t in level_tuples:
             __assert_atmostkinarow_pair(c.k, t, experiments)
     else:
