@@ -41,6 +41,11 @@ color3_repeats_factor = Factor("color3 repeats?", [
     DerivedLevel("no",  Window(no_fn, [color3], 3, 1))
 ])
 
+def get_internal_level_from_name(factor, name):
+    for level in factor.levels:
+        if input_name == name:
+            return level
+    return None
 
 def test_has_factor():
     block = fully_cross_block([color, text], [color, text], [])
@@ -57,14 +62,14 @@ def test_has_factor():
 def test_fully_cross_block_first_variable_for_factor(design, expected):
     block = fully_cross_block(design, [color, text], [])
 
-    assert block.first_variable_for_level("color", "red") == expected[0]
-    assert block.first_variable_for_level("color", "blue") == expected[0] + 1
-    assert block.first_variable_for_level("text", "red") == expected[1]
-    assert block.first_variable_for_level("text", "blue") == expected[1] + 1
-    assert block.first_variable_for_level("repeated color?", "yes") == expected[2]
-    assert block.first_variable_for_level("repeated color?", "no") == expected[2] + 1
-    assert block.first_variable_for_level("repeated text?", "yes") == expected[3]
-    assert block.first_variable_for_level("repeated text?", "no") == expected[3] + 1
+    assert block.first_variable_for_level(color, get_level_from_name("red")) == expected[0]
+    assert block.first_variable_for_level(color, get_level_from_name("blue")) == expected[0] + 1
+    assert block.first_variable_for_level(text, get_level_from_name("red")) == expected[1]
+    assert block.first_variable_for_level(text, get_level_from_name("blue")) == expected[1] + 1
+    assert block.first_variable_for_level(color_repeats_factor, get_level_from_name("yes")) == expected[2]
+    assert block.first_variable_for_level(color_repeats_factor, get_level_from_name("no")) == expected[2] + 1
+    assert block.first_variable_for_level(text_repeats_factor, "yes") == expected[3]
+    assert block.first_variable_for_level(text_repeats_factor, "no") == expected[3] + 1
 
 
 def test_fully_cross_block_first_variable_for_factor_with_color3():
