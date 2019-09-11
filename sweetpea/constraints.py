@@ -9,10 +9,10 @@ from sweetpea.internal import chunk, chunk_list, pairwise
 from sweetpea.blocks import Block, FullyCrossBlock
 from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import If, Iff, And, Or, Not, FormulaWithIff
-from sweetpea.primitives import Factor, get_internal_level_name
+from sweetpea.primitives import Factor, get_internal_level_name, SimpleLevel, DerivedLevel
 
 
-def validate_factor_and_level(block: Block, factor: Factor, level: Any) -> None:
+def validate_factor_and_level(block: Block, factor: Factor, level: Union[SimpleLevel, DerivedLevel]) -> None:
     if not block.has_factor(factor):
         raise ValueError(("A factor with name '{}' wasn't found in the design. " +\
             "Are you sure the factor was included, and that the name is spelled " +\
@@ -250,7 +250,7 @@ class Derivation(Constraint):
 
 
 class _KInARow(Constraint):
-    def __init__(self, k, level):
+    def __init__(self, k, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]]):
         self.k = k
         self.level = level
         self.__validate()
@@ -266,8 +266,8 @@ class _KInARow(Constraint):
                 (isinstance(self.level, tuple) and \
                  len(self.level) == 2 and \
                  isinstance(self.level[0], Factor) and \
-                 (isinstance(self.level[1], SimpleLevel
-                 or isinstance(self.level[1], DerivedLevel))))):
+                 (isinstance(self.level[1], SimpleLevel)
+                 or isinstance(self.level[1], DerivedLevel)))):
             raise ValueError("level must be either a Factor or a Tuple[Factor, DerivedLevel or SimpleLevel].")
 
     def validate(self, block: Block) -> None:
@@ -298,13 +298,13 @@ class _KInARow(Constraint):
         else:
             raise ValueError("Unrecognized levels specification in AtMostKInARow constraint: " + str(self.level))
 
-    def _build_variable_sublists(self, block: Block, level: Tuple[Factor, Any], sublist_length: int) -> List[List[int]]:
+    def _build_variable_sublists(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], sublist_length: int) -> List[List[int]]:
         var_list = block.build_variable_list(level)
         raw_sublists = [var_list[i:i+sublist_length] for i in range(0, len(var_list))]
         return list(filter(lambda l: len(l) == sublist_length, raw_sublists))
 
     @abstractmethod
-    def apply_to_backend_request(self, block: Block, level: Tuple[str, str], backend_request: BackendRequest) -> None:
+    def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], backend_request: BackendRequest) -> None:
         pass
 
 
@@ -331,7 +331,7 @@ If it had been AtMostKInARow 2 ("color", "red"), the reqs would have been:
     sum(7, 13, 19) LT 3
 """
 class AtMostKInARow(_KInARow):
-    def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Any], backend_request: BackendRequest) -> None:
+    def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], backend_request: BackendRequest) -> None:
         sublists = self._build_variable_sublists(block, level, self.k + 1)
 
         # Build the requests
@@ -359,7 +359,7 @@ class NoMoreThanKInARow(Constraint):
 Requires that if the given level exists at all, it must exist in a sequence of exactly K.
 """
 class ExactlyKInARow(_KInARow):
-    def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Any], backend_request: BackendRequest) -> None:
+    def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], backend_request: BackendRequest) -> None:
         sublists = self._build_variable_sublists(block, level, self.k)
         implications = []
 
@@ -412,7 +412,7 @@ class Exclude(Constraint):
         validate_factor_and_level(block, self.factor, self.level)
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
-        var_list = block.build_variable_list(self.factor, self.level)
+        var_list = block.build_variable_list((self.factor, self.level))
         backend_request.cnfs.append(And(list(map(lambda n: n * -1, var_list))))
 
     def __eq__(self, other):

@@ -68,7 +68,7 @@ class UnigenSamplingStrategy(SamplingStrategy):
                 tmp_filename = ""
                 with tempfile.NamedTemporaryFile(delete=False) as f:
                     json.dump(json_data, f)
-                    tmp_filename = f.factor_name
+                    tmp_filename = f.name
 
                 raise RuntimeError("Received non-200 response from experiment generation! LowLevelRequest body saved to temp file '" +
                     tmp_filename + "' status_code=" + str(experiments_request.status_code) + " response_body=" + str(experiments_request.text))
@@ -96,4 +96,3 @@ class UnigenSamplingStrategy(SamplingStrategy):
             print(line)
 
         return SamplingResult(result, {})
-

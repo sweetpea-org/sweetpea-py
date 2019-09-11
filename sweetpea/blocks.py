@@ -162,7 +162,7 @@ class Block:
     Given a variable number from the SAT formula, this method will return
     the associated factor and level name.
     """
-    def decode_variable(self, variable: int) -> Tuple[str, str]:
+    def decode_variable(self, variable: int) -> Tuple[Factor, Union[SimpleLevel, DerivedLevel]]:
         # Shift to zero-based index
         variable -= 1
 
@@ -212,7 +212,7 @@ class Block:
     Given a specific level (factor + level pair), this method will return the list of variables
     that correspond to that level in each trial in the encoding.
     """
-    def build_variable_list(self, level: Tuple[Factor, Any]) -> List[int]:
+    def build_variable_list(self, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]]) -> List[int]:
         if (type(level[0]) is not Factor):
             raise ValueError('First element in level argument to variable list builder must be a FACTOR.')
         if (type(level[1]) is not SimpleLevel and type(level[1]) is not DerivedLevel):
@@ -222,13 +222,13 @@ class Block:
         else:
             return self.__build_simple_variable_list(level)
 
-    def __build_simple_variable_list(self, level: Tuple[str, str]) -> List[int]:
+    def __build_simple_variable_list(self, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]]) -> List[int]:
         first_variable = self.first_variable_for_level(level[0], level[1]) + 1
         design_var_count = self.variables_per_trial()
         num_trials = self.trials_per_sample()
         return list(accumulate(repeat(first_variable, num_trials), lambda acc, _: acc + design_var_count))
 
-    def __build_complex_variable_list(self, level: Tuple[str, str]) -> List[int]:
+    def __build_complex_variable_list(self, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]]) -> List[int]:
         factor = level[0]
         level_count = len(factor.levels)
         n = int(self.variables_for_factor(factor) / level_count)

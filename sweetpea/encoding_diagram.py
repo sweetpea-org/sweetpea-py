@@ -1,7 +1,8 @@
 from itertools import repeat
 from functools import reduce
 
-from sweetpea import get_internal_level_name, get_all_level_names
+from sweetpea.primitives import get_internal_level_name
+from sweetpea.internal import get_all_level_names
 from sweetpea.blocks import Block
 
 
@@ -80,7 +81,7 @@ def __generate_encoding_diagram(blk: Block) -> str:
         args = [str(t + 1)]
         for f in blk.design:
             if f.applies_to_trial(t + 1):
-                variables = [blk.first_variable_for_level(f, l)) + 1 for l in f.levels]
+                variables = [blk.first_variable_for_level(f, l) + 1 for l in f.levels]
                 if f.has_complex_window():
                     width = f.levels[0].window.width
                     stride = f.levels[0].window.stride

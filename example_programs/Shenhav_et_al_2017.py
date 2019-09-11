@@ -1,8 +1,13 @@
+import sys
+sys.path.append("..")
+print(sys.path)
+
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.constraints import NoMoreThanKInARow
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
 import numpy as np
 from psyneulink import *
+
 
 # GENERATING EXPERIMENT SEQUENCE FOR AN EXPERIMENT BLOCK IN SHENHAV ET AL. 2017
 

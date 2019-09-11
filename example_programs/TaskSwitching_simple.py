@@ -1,3 +1,7 @@
+import sys
+sys.path.append("..")
+print(sys.path)
+
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.constraints import AtMostKInARow
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments

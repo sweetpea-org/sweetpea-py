@@ -140,7 +140,7 @@ class Factor(__Primitive):
         for l in self.levels:
             if l.internal_name == level_name:
                 return l
-        return cast(str, None)
+        return cast(SimpleLevel, None)
 
     def has_level(self, level: Any) -> bool:
         return (level in self.levels)

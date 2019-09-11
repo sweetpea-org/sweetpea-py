@@ -42,11 +42,11 @@ color3_repeats_factor = Factor("color3 repeats?", [
 ])
 
 
-def test_get_factor():
+def test_has_factor():
     block = fully_cross_block([color, text], [color, text], [])
 
-    assert block.get_factor("color") == color
-    assert block.get_factor("bogus") == None
+    assert block.has_factor("color") == True
+    assert block.has_factor("bogus") == False
 
 
 @pytest.mark.parametrize('design,expected',
