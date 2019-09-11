@@ -30,7 +30,7 @@ class __Primitive:
 class SimpleLevel(__Primitive):
     def __init__(self, name):
         self.external_name = name
-        self.internal_name = name + str(random.randint(0, 1000))
+        self.internal_name = name + "{:05d}".format(random.randint(0, 99999))
         self.__validate()
 
     def __validate(self):
@@ -50,7 +50,7 @@ class SimpleLevel(__Primitive):
 class DerivedLevel(__Primitive):
     def __init__(self, name, window):
         self.external_name = name
-        self.internal_name = name + str(random.randint(0, 1000))
+        self.internal_name = name + "{:05d}".format(random.randint(0, 99999))
         self.window = window
         self.__validate()
         self.__expand_window_arguments()
