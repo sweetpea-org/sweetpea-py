@@ -287,7 +287,6 @@ class _KInARow(Constraint):
                 constraint_copy.level = t
                 constraints.append(constraint_copy)
 
-        open("constraints", "w+").write(str(constraints))
         return constraints
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:

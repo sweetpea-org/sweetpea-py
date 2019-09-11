@@ -43,9 +43,8 @@ class SimpleLevel(__Primitive):
 
     def __eq__(self, other):
         if (type(other) != SimpleLevel):
-            print("Attempted to compare a simple level to another type.")
-        # print("Comparing Simple " + str(self.unique_name) + " " + str(other.unique_name) + " " + str(self.input_name) + " " + str(other.input_name))
-        return other.input_name == self.input_name
+            print("Attempted to compare a simple level to another type, " + str(type(other)))
+        return other.unique_name == self.unique_name
 
 
 class DerivedLevel(__Primitive):
@@ -83,9 +82,8 @@ class DerivedLevel(__Primitive):
 
     def __eq__(self, other):
         if (type(other) != DerivedLevel):
-            print("Attempted to compare a derived level to another type.")
-        # print("Comparing Derived " + str(self.unique_name) + " " + str(other.unique_name) + " " + str(self.input_name) + " " + str(other.input_name))
-        return type(self) == type(other) and self.input_name == other.input_name
+            print("Attempted to compare a derived level to another type, " + str(type(other)))
+        return self.unique_name == other.unique_name
 
     def __repr__(self):
         return str(self.__dict__)

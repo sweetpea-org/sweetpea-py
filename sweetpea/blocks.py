@@ -87,11 +87,7 @@ class Block:
             raise ValueError('Non-factor argument to has_factor.')
         if factor in self.design:
             return factor
-        return None
-        # try:
-        #     return next(f for f in self.design if f.fact_name == factor_name)
-        # except StopIteration:
-        #     return cast(Factor, None)
+        return cast(Factor, None)
 
     """
     Returns the first index for this variable in a trial sequence representing the given factor and level.

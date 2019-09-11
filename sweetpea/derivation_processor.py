@@ -57,8 +57,12 @@ class DerivationProcessor:
 
                     # Make sure the fn returned a boolean
                     if not isinstance(fn_result, bool):
-                        raise ValueError('Derivation function did not return a boolean! factor={} level={} fn={} return={} args={} '
-                            .format(fact.fact_name, level.unique_name, level.window.fn, fn_result, args))
+                        raise ValueError('Derivation function did not return a boolean! factor={} level={} fn={} return={} args={} '.format(
+                            fact.fact_name,
+                            get_external_level_name(level),
+                            level.window.fn,
+                            fn_result,
+                            args))
 
                     # If the result was true, add the tuple to the list
                     if fn_result:
@@ -72,9 +76,8 @@ class DerivationProcessor:
 
     @staticmethod
     def generate_argument_list(level: DerivedLevel, tup: Tuple) -> List:
-        # Uses input names for the user-supplied function
+        # User-supplied string level names are the arguments for the user-supplied derivation functions
         level_strings = list(map(lambda t: get_external_level_name(t[1]), tup))
-        # level_values = list(map(lambda t: t[1], tup))
         # For windows with a width of 1, we just pass the arguments directly, rather than putting them in lists.
         if level.window.width == 1:
             return level_strings
