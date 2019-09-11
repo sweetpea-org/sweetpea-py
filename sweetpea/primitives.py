@@ -8,10 +8,10 @@ Helper function which grabs names from derived levels;
     if the level is non-derived the level *is* the name
 """
 def get_internal_level_name(level: Any) -> Any:
-    return level.unique_name
+    return level.internal_name
 
 def get_external_level_name(level: Any) -> Any:
-    return level.input_name
+    return level.external_name
 
 class __Primitive:
     def require_type(self, label: str, type: Type, value: Any):
@@ -29,14 +29,14 @@ class __Primitive:
 
 class SimpleLevel(__Primitive):
     def __init__(self, name):
-        self.input_name = name
-        self.unique_name = name + str(random.randint(0, 1000))
+        self.external_name = name
+        self.internal_name = name + str(random.randint(0, 1000))
         self.__validate()
 
     def __validate(self):
-        if not (hasattr(self.input_name, "__eq__")):
+        if not (hasattr(self.external_name, "__eq__")):
             raise ValueError("Level names must be comparable, but received "
-                             + str(self.input_name))
+                             + str(self.external_name))
 
     def __str__(self):
         raise Exception("Attempted implicit string cast of simple level")
@@ -44,33 +44,33 @@ class SimpleLevel(__Primitive):
     def __eq__(self, other):
         if (type(other) != SimpleLevel):
             print("Attempted to compare a simple level to another type, " + str(type(other)))
-        return other.unique_name == self.unique_name
+        return other.internal_name == self.internal_name
 
 
 class DerivedLevel(__Primitive):
     def __init__(self, name, window):
-        self.input_name = name
-        self.unique_name = name + str(random.randint(0, 1000))
+        self.external_name = name
+        self.internal_name = name + str(random.randint(0, 1000))
         self.window = window
         self.__validate()
         self.__expand_window_arguments()
 
     def __validate(self):
-        self.require_type('DerivedLevel.input_name', str, self.input_name)
+        self.require_type('DerivedLevel.external_name', str, self.external_name)
         window_type = type(self.window)
         allowed_window_types = [WithinTrial, Transition, Window]
         if window_type not in allowed_window_types:
             raise ValueError('DerivedLevel.window must be one of ' +
                 str(allowed_window_types) + ', but was ' + str(window_type) + '.')
 
-        if len(set(map(lambda f: f.fact_name, self.window.args))) != len(self.window.args):
+        if len(set(map(lambda f: f.factor_name, self.window.args))) != len(self.window.args):
             raise ValueError('Factors should not be repeated in the argument list to a derivation function.')
 
         for f in filter(lambda f: f.is_derived(), self.window.args):
             w = f.levels[0].window
             if not (w.width == 1 and w.stride == 1):
                 raise ValueError("Derived levels may only be derived from factors that apply to each trial. '" +
-                    self.fact_name + "' cannot derive from '" + f.fact_name + "'")
+                    self.factor_name + "' cannot derive from '" + f.factor_name + "'")
 
         # TODO: Windows should be uniform.
 
@@ -83,7 +83,7 @@ class DerivedLevel(__Primitive):
     def __eq__(self, other):
         if (type(other) != DerivedLevel):
             print("Attempted to compare a derived level to another type, " + str(type(other)))
-        return self.unique_name == other.unique_name
+        return self.internal_name == other.internal_name
 
     def __repr__(self):
         return str(self.__dict__)
@@ -94,7 +94,7 @@ class DerivedLevel(__Primitive):
 
 class Factor(__Primitive):
     def __init__(self, name: str, levels) -> None:
-        self.fact_name = name
+        self.factor_name = name
         self.levels = self.__make_levels(levels)
         self.__validate()
 
@@ -108,7 +108,7 @@ class Factor(__Primitive):
         return out_levels
 
     def __validate(self):
-        self.require_type('Factor.fact_name', str, self.fact_name)
+        self.require_type('Factor.factor_name', str, self.factor_name)
         self.require_non_empty_list('Factor.levels', self.levels)
         level_type = type(self.levels[0])
         if level_type not in [SimpleLevel, DerivedLevel]:
@@ -138,7 +138,7 @@ class Factor(__Primitive):
 
     def get_level(self, level_name: str) -> Union[SimpleLevel, DerivedLevel]:
         for l in self.levels:
-            if l.unique_name == level_name:
+            if l.internal_name == level_name:
                 return l
         return cast(str, None)
 

@@ -56,7 +56,7 @@ class SamplingStrategy(ABC):
 
         # Simple factors
         tuples = list(map(lambda v: block.decode_variable(v), simple_variables))
-        string_tuples = list(map(lambda t: (t[0].fact_name, t[1].input_name), tuples))
+        string_tuples = list(map(lambda t: (t[0].factor_name, t[1].external_name), tuples))
         for (factor_name, level_name) in string_tuples:
             if factor_name not in experiment:
                 experiment[factor_name] = []
@@ -73,12 +73,12 @@ class SamplingStrategy(ABC):
 
             # Get the level names for the variables in the solution.
             level_tuples = list(map(lambda v: block.decode_variable(v)[1], variables))
-            level_names = list(map(lambda t: (t[1].input_name), tuples))
+            level_names = list(map(lambda t: (t[1].external_name), tuples))
 
             # Intersperse empty strings for the trials to which this factor does not apply.
             level_names = list(intersperse('', level_names, f.levels[0].window.stride - 1))
             level_names = list(repeat('', f.levels[0].window.width - 1)) + level_names
 
-            experiment[f.fact_name] = level_names
+            experiment[f.factor_name] = level_names
 
         return experiment

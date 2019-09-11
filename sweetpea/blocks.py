@@ -6,7 +6,7 @@ from typing import List, Union, Tuple, cast, Any
 
 from sweetpea.backend import BackendRequest
 from sweetpea.internal import get_all_levels
-from sweetpea.primitives import Factor, Transition, Window, SimpleLevel, DerivedLevel
+from sweetpea.primitives import Factor, Transition, Window, SimpleLevel, DerivedLevel, get_external_level_name
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.base_constraint import Constraint
 from sweetpea.design_graph import DesignGraph
@@ -258,10 +258,10 @@ class FullyCrossBlock(Block):
         warnings = []
         template = "'{}' depends on '{}'"
         for c in combos:
-            if has_path(dg, c[0].fact_name, c[1].fact_name):
-                warnings.append(template.format(c[0].fact_name, c[1].fact_name))
-            elif has_path(dg, c[1].fact_name, c[0].fact_name):
-                warnings.append(template.format(c[1].fact_name, c[0].fact_name))
+            if has_path(dg, c[0].factor_name, c[1].factor_name):
+                warnings.append(template.format(c[0].factor_name, c[1].factor_name))
+            elif has_path(dg, c[1].factor_name, c[0].factor_name):
+                warnings.append(template.format(c[1].factor_name, c[0].factor_name))
 
         if warnings:
             print("WARNING: There are dependencies between factors in the crossing. This may lead to unsatisfiable designs.\n" + reduce(lambda accum, s: accum + s + "\n", warnings, ""))
@@ -330,7 +330,7 @@ class FullyCrossBlock(Block):
 
             # For each crossing, extract the levels for this derviation function, and execute it.
             for c in all_crossings:
-                args = [c[i].input_name for i in map(lambda f: self.crossing.index(f), excluded_level.window.args)]
+                args = [get_external_level_name(c[i]) for i in map(lambda f: self.crossing.index(f), excluded_level.window.args)]
                 # Invoking the fn this way is only ok because we only do this for WithinTrial windows.
                 # With complex windows, it wouldn't work due to the list aspect for each argument.
 

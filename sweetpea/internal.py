@@ -15,7 +15,7 @@ Usage:
 
 """
 def get_all_level_names(design: List[Factor]) -> List[Tuple[Any, Any]]:
-    return [(factor.fact_name, get_internal_level_name(level)) for factor in design for level in factor.levels]
+    return [(factor.factor_name, get_internal_level_name(level)) for factor in design for level in factor.levels]
 
 def get_all_levels(design: List[Factor]) -> List[Tuple[Any, Any]]:
     return [(factor, level) for factor in design for level in factor.levels]

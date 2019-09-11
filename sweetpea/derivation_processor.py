@@ -58,7 +58,7 @@ class DerivationProcessor:
                     # Make sure the fn returned a boolean
                     if not isinstance(fn_result, bool):
                         raise ValueError('Derivation function did not return a boolean! factor={} level={} fn={} return={} args={} '.format(
-                            fact.fact_name,
+                            fact.factor_name,
                             get_external_level_name(level),
                             level.window.fn,
                             fn_result,

@@ -9,7 +9,7 @@ from sweetpea.internal import chunk, chunk_list, pairwise
 from sweetpea.blocks import Block, FullyCrossBlock
 from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import If, Iff, And, Or, Not, FormulaWithIff
-from sweetpea.primitives import Factor
+from sweetpea.primitives import Factor, get_internal_level_name
 
 
 def validate_factor_and_level(block: Block, factor: Factor, level: Any) -> None:
@@ -20,7 +20,7 @@ def validate_factor_and_level(block: Block, factor: Factor, level: Any) -> None:
 
     if not factor.has_level(level):
         raise ValueError(("A level with name '{}' wasn't found in the '{}' factor, " +\
-            "Are you sure the level name is spelled correctly?").format(level.input_name, factor.factor_name))
+            "Are you sure the level name is spelled correctly?").format(get_internal_level_name(level), factor.factor_name))
 
 
 """
