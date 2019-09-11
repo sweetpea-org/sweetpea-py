@@ -96,3 +96,4 @@ class UnigenSamplingStrategy(SamplingStrategy):
             print(line)
 
         return SamplingResult(result, {})
+
