@@ -6,7 +6,7 @@ from typing import List, Union, Tuple, cast, Any
 
 from sweetpea.backend import BackendRequest
 from sweetpea.internal import get_all_levels
-from sweetpea.primitives import Factor, Transition, Window, SimpleLevel, DerivedLevel, get_external_level_name
+from sweetpea.primitives import Factor, Transition, Window, SimpleLevel, DerivedLevel, get_external_level_name, get_internal_level_name
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.base_constraint import Constraint
 from sweetpea.design_graph import DesignGraph
@@ -318,7 +318,7 @@ class FullyCrossBlock(Block):
         all_crossings = list(product(*levels_lists))
 
         for constraint in exclusions:
-            if constraint.has_complex_window():
+            if constraint.factor.has_complex_window():
                 # If the excluded factor has a complex window, then we don't need
                 # to reduce the sequence length. What if the transition being excluded
                 # is in the crossing? If it is, then they shouldn't be excluding it.
@@ -335,7 +335,7 @@ class FullyCrossBlock(Block):
                 # With complex windows, it wouldn't work due to the list aspect for each argument.
 
                 if excluded_level.window.fn(*args):
-                    excluded_crossings.add(c)
+                    excluded_crossings.add(get_internal_level_name(c[0]) + ", " + get_internal_level_name(c[1]))
 
         return len(excluded_crossings)
 

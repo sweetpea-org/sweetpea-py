@@ -191,18 +191,21 @@ class UCSolutionEnumerator():
 
         # 6. Generate uncrossed derived level values
         u_d = self._partitions.get_uncrossed_derived_factors()
+        fact_map = {}
+        for f in u_d:
+            fact_map[f.factor_name] = f
         for f in u_d:
             for t in range(l):
                 # For each level in the factor, see if the derivation function is true.
                 for level in f.levels:
                     if level.window.fn(*[trial_values[t][f.factor_name] for f in level.window.args]):
-                        trial_values[t][f] = level
+                        trial_values[t][f.factor_name] = level
 
         # 7. Convert to variable encoding for SAT checking
         solution = cast(List[int], [])
         for trial_number, trial_value in enumerate(trial_values):
             for factor, level in trial_value.items():
-                solution.append(self._block.get_variable(trial_number + 1, (factor, level)))
+                solution.append(self._block.get_variable(trial_number + 1, (fact_map[factor], level)))
 
         solution.sort()
         return solution

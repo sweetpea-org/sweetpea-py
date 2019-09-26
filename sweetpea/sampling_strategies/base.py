@@ -72,8 +72,8 @@ class SamplingStrategy(ABC):
             variables = list(filter(lambda n: n in range(start, end), complex_variables))
 
             # Get the level names for the variables in the solution.
-            level_tuples = list(map(lambda v: block.decode_variable(v)[1], variables))
-            level_names = list(map(lambda t: (t[1].external_name), tuples))
+            level_tuples = list(map(lambda v: block.decode_variable(v), variables))
+            level_names = list(map(lambda t: (t[1].external_name), level_tuples))
 
             # Intersperse empty strings for the trials to which this factor does not apply.
             level_names = list(intersperse('', level_names, f.levels[0].window.stride - 1))

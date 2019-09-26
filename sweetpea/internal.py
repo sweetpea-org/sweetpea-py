@@ -1,7 +1,7 @@
 from itertools import islice, tee, chain, repeat
-from typing import Any, Tuple, List, Iterator, Iterable
+from typing import Any, Tuple, List, Iterator, Iterable, Union
 
-from sweetpea.primitives import Factor, DerivedLevel, get_internal_level_name
+from sweetpea.primitives import Factor, DerivedLevel, get_internal_level_name, SimpleLevel, get_external_level_name
 
 
 """
@@ -9,15 +9,19 @@ Usage:
 
     color = Factor("color", ["red", "blue"])
     text  = Factor("text",  ["red", "blue"])
-    get_all_level_names([color, text])
+    get_all_internal_level_names([color, text])
 
     [('color', 'red'), ('color', 'blue'), ('text', 'red'), ('text', 'blue')]
 
 """
-def get_all_level_names(design: List[Factor]) -> List[Tuple[Any, Any]]:
+def get_all_external_level_names(design: List[Factor]) -> List[Tuple[str, str]]:
+    return [(factor.factor_name, get_external_level_name(level)) for factor in design for level in factor.levels]
+
+
+def get_all_internal_level_names(design: List[Factor]) -> List[Tuple[str, str]]:
     return [(factor.factor_name, get_internal_level_name(level)) for factor in design for level in factor.levels]
 
-def get_all_levels(design: List[Factor]) -> List[Tuple[Any, Any]]:
+def get_all_levels(design: List[Factor]) -> List[Tuple[Factor, Union[SimpleLevel, DerivedLevel]]]:
     return [(factor, level) for factor in design for level in factor.levels]
 
 

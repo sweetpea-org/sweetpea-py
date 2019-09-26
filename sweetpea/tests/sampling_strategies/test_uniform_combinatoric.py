@@ -10,6 +10,12 @@ from sweetpea.constraints import Exclude, ExactlyKInARow, NoMoreThanKInARow
 from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy, UCSolutionEnumerator
 
 
+def get_level_from_name(factor, name):
+    for level in factor.levels:
+        if level.external_name == name:
+            return level
+    return None
+
 color = Factor("color", ["red", "blue"])
 text  = Factor("text",  ["red", "blue"])
 
@@ -51,7 +57,7 @@ def test_validate_accepts_derived_factors_with_simple_windows():
 def test_validate_rejects_exclude_constraints():
     block = fully_cross_block([color, text, con_factor_within_trial],
                               [color, text],
-                              [Exclude("color", "red")])
+                              [Exclude(color, get_level_from_name(color, "red"))])
 
     with pytest.raises(ValueError):
         UniformCombinatoricSamplingStrategy._UniformCombinatoricSamplingStrategy__validate(block)
@@ -101,17 +107,16 @@ def test_constraint_violation():
 
     block = fully_cross_block([color, text, con_factor_within_trial],
                               [color, text],
-                              [ExactlyKInARow(2, ("color", "red"))])
+                              [ExactlyKInARow(2, (color, get_level_from_name(color, "red")))])
 
     assert are_constraints_violated(block, {"color": ["red", "red", "blue", "blue"]}) == False
     assert are_constraints_violated(block, {"color": ["red", "blue", "red", "blue"]}) == True
 
     block = fully_cross_block([color, text, con_factor_within_trial],
                               [color, text],
-                              [NoMoreThanKInARow(2, ("color", "red"))])
+                              [NoMoreThanKInARow(2, (color, get_level_from_name(color, "red")))])
 
     assert are_constraints_violated(block, {"color": ["red", "blue", "blue", "blue"]}) == False
     assert are_constraints_violated(block, {"color": ["red", "red", "blue", "blue"]}) == False
     assert are_constraints_violated(block, {"color": ["red", "red", "red", "blue"]}) == True
     assert are_constraints_violated(block, {"color": ["blue", "red", "red", "red"]}) == True
-

@@ -29,8 +29,8 @@ class __Primitive:
 
 class SimpleLevel(__Primitive):
     def __init__(self, name):
-        self.external_name = name
-        self.internal_name = name + "{:05d}".format(random.randint(0, 99999))
+        self.external_name = str(name)
+        self.internal_name = str(name) + "{:05d}".format(random.randint(0, 99999))
         self.__validate()
 
     def __validate(self):
@@ -49,8 +49,8 @@ class SimpleLevel(__Primitive):
 
 class DerivedLevel(__Primitive):
     def __init__(self, name, window):
-        self.external_name = name
-        self.internal_name = name + "{:05d}".format(random.randint(0, 99999))
+        self.external_name = str(name)
+        self.internal_name = str(name) + "{:05d}".format(random.randint(0, 99999))
         self.window = window
         self.__validate()
         self.__expand_window_arguments()
@@ -63,14 +63,14 @@ class DerivedLevel(__Primitive):
             raise ValueError('DerivedLevel.window must be one of ' +
                 str(allowed_window_types) + ', but was ' + str(window_type) + '.')
 
-        if len(set(map(lambda f: f.factor_name, self.window.args))) != len(self.window.args):
-            raise ValueError('Factors should not be repeated in the argument list to a derivation function.')
+        #if len(set(map(lambda f: f.factor_name, self.window.args))) != len(self.window.args):
+            #raise ValueError('Factors should not be repeated in the argument list to a derivation function.')
 
         for f in filter(lambda f: f.is_derived(), self.window.args):
             w = f.levels[0].window
             if not (w.width == 1 and w.stride == 1):
                 raise ValueError("Derived levels may only be derived from factors that apply to each trial. '" +
-                    self.factor_name + "' cannot derive from '" + f.factor_name + "'")
+                    self.external_name + "' cannot derive from '" + f.factor_name + "'")
 
         # TODO: Windows should be uniform.
 
@@ -100,6 +100,7 @@ class Factor(__Primitive):
 
     def __make_levels(self, levels):
         out_levels = []
+        self.require_non_empty_list('Factor.levels', levels)
         for level in levels:
             if isinstance(level, DerivedLevel):
                 out_levels.append(level)
@@ -109,7 +110,6 @@ class Factor(__Primitive):
 
     def __validate(self):
         self.require_type('Factor.factor_name', str, self.factor_name)
-        self.require_non_empty_list('Factor.levels', self.levels)
         level_type = type(self.levels[0])
         if level_type not in [SimpleLevel, DerivedLevel]:
             raise ValueError('Factor.levels must be either SimpleLevel or DerivedLevel')

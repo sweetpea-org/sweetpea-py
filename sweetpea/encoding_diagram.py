@@ -1,8 +1,8 @@
 from itertools import repeat
 from functools import reduce
 
-from sweetpea.primitives import get_internal_level_name
-from sweetpea.internal import get_all_level_names
+from sweetpea.primitives import get_external_level_name
+from sweetpea.internal import get_all_external_level_names
 from sweetpea.blocks import Block
 
 
@@ -36,7 +36,7 @@ def __generate_encoding_diagram(blk: Block) -> str:
     row_format_str = '| {:>7} |'
     for f in blk.design:
         # length of all levels concatenated for this factor
-        level_names = list(map(get_internal_level_name, f.levels))
+        level_names = list(map(get_external_level_name, f.levels))
         level_name_widths = [max(largest_number_len, l) for l in list(map(len, level_names))]
 
         level_names_width = sum(level_name_widths) + len(level_names) - 1 # Extra length for spaces in between names.
@@ -70,7 +70,7 @@ def __generate_encoding_diagram(blk: Block) -> str:
     diagram_str += header_str + '\n'
 
     # Level names
-    all_level_names = [ln for (fn, ln) in get_all_level_names(blk.design)]
+    all_level_names = [ln for (fn, ln) in get_all_external_level_names(blk.design)]
     diagram_str += row_format_str.format(*['#'] + all_level_names) + '\n'
 
     # Separator

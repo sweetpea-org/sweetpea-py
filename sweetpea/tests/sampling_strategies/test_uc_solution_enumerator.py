@@ -5,6 +5,11 @@ from sweetpea import fully_cross_block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial
 from sweetpea.sampling_strategies.uniform_combinatoric import UCSolutionEnumerator
 
+def get_level_from_name(factor, name):
+    for level in factor.levels:
+        if level.external_name == name:
+            return level
+    return None
 
 color = Factor("color", ["red", "blue"])
 text  = Factor("text",  ["red", "blue"])
@@ -21,7 +26,7 @@ block = fully_cross_block(design, crossing, [])
 def test_generate_crossing_instances():
     enumerator = UCSolutionEnumerator(block)
 
-    assert enumerator._UCSolutionEnumerator__generate_crossing_instances() == [
+    assert [{"color": color.get_level(d_entry["color"]).external_name, "text": text.get_level(d_entry["text"]).external_name} for d_entry in enumerator._UCSolutionEnumerator__generate_crossing_instances()] == [
         {'color': 'red', 'text': 'red'},
         {'color': 'red', 'text': 'blue'},
         {'color': 'blue', 'text': 'red'},
@@ -33,7 +38,7 @@ def test_generate_source_combinations():
     block = fully_cross_block(design, [congruency], [])
     enumerator = UCSolutionEnumerator(block)
 
-    assert enumerator._UCSolutionEnumerator__generate_source_combinations() == [
+    assert [{"color": color.get_level(d_entry["color"]).external_name, "text": text.get_level(d_entry["text"]).external_name} for d_entry in enumerator._UCSolutionEnumerator__generate_source_combinations()] == [
         {'color': 'red', 'text': 'red'},
         {'color': 'red', 'text': 'blue'},
         {'color': 'blue', 'text': 'red'},
