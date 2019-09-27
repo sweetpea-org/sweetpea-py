@@ -1,13 +1,13 @@
-from typing import Tuple, List
+from typing import Tuple, List, Union
 
 from itertools import repeat
 
-from sweetpea.primitives import Factor
+from sweetpea.primitives import Factor, SimpleLevel, DerivedLevel
 from sweetpea.constraints import AtMostKInARow
 from sweetpea.internal import get_all_levels
 
 
-def __assert_atmostkinarow_pair(k: int, level: Tuple[str, str], experiments: List[dict]) -> None:
+def __assert_atmostkinarow_pair(k: int, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], experiments: List[dict]) -> None:
     sublist = list(repeat(level[1], k + 1))
     for e in experiments:
         assert sublist not in [e[level[0]][i:i+k+1] for i in range(len(e[level[0]]) - (k + 1))]

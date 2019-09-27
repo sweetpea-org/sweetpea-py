@@ -7,6 +7,7 @@ from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.constraints import AtMostKInARow
 from sweetpea.encoding_diagram import print_encoding_diagram
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
+from sweetpea.tests.test_utils import get_level_from_name
 
 
 direction = Factor("direction", ["up", "down"])
@@ -64,7 +65,7 @@ def test_correct_solution_count_when_transition_in_crossing_and_unconstrained(de
 @pytest.mark.parametrize('design', permutations([direction, color, repeated_color_factor]))
 def test_correct_solution_count_when_transition_in_crossing_and_constrained(design):
     crossing = [direction, repeated_color_factor]
-    constraints = [AtMostKInARow(1, ("color", "red"))]
+    constraints = [AtMostKInARow(1, (color, get_level_from_name(color, "red")))]
 
     block  = fully_cross_block(design, crossing, constraints)
     experiments  = synthesize_trials_non_uniform(block, 100)
