@@ -4,7 +4,6 @@ from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_exp
 import numpy as np
 from psyneulink import *
 
-
 # GENERATING EXPERIMENT SEQUENCE FOR AN EXPERIMENT BLOCK IN SHENHAV ET AL. 2017
 
 """
