@@ -2,7 +2,7 @@ import operator as op
 import pytest
 
 from sweetpea import fully_cross_block
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial
+from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, get_external_level_name
 from sweetpea.sampling_strategies.uniform_combinatoric import UCSolutionEnumerator
 
 def get_level_from_name(factor, name):

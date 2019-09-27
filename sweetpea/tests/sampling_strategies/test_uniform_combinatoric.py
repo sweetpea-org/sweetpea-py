@@ -19,6 +19,11 @@ def get_level_from_name(factor, name):
 color = Factor("color", ["red", "blue"])
 text  = Factor("text",  ["red", "blue"])
 
+red_color = get_level_from_name(color, "red")
+blue_color = get_level_from_name(color, "blue")
+red_text = get_level_from_name(text, "red")
+blue_text = get_level_from_name(text, "blue")
+
 con_factor_within_trial = Factor("congruent?", [
     DerivedLevel("con", WithinTrial(op.eq, [color, text])),
     DerivedLevel("inc", WithinTrial(op.ne, [color, text]))
@@ -57,7 +62,7 @@ def test_validate_accepts_derived_factors_with_simple_windows():
 def test_validate_rejects_exclude_constraints():
     block = fully_cross_block([color, text, con_factor_within_trial],
                               [color, text],
-                              [Exclude(color, get_level_from_name(color, "red"))])
+                              [Exclude(color, red_color)])
 
     with pytest.raises(ValueError):
         UniformCombinatoricSamplingStrategy._UniformCombinatoricSamplingStrategy__validate(block)
@@ -107,16 +112,16 @@ def test_constraint_violation():
 
     block = fully_cross_block([color, text, con_factor_within_trial],
                               [color, text],
-                              [ExactlyKInARow(2, (color, get_level_from_name(color, "red")))])
+                              [ExactlyKInARow(2, (color, red_color))])
 
-    assert are_constraints_violated(block, {"color": ["red", "red", "blue", "blue"]}) == False
-    assert are_constraints_violated(block, {"color": ["red", "blue", "red", "blue"]}) == True
+    assert are_constraints_violated(block, {color: [red_color, red_color, blue_color, blue_color]}) == False
+    assert are_constraints_violated(block, {color: [red_color, blue_color, red_color, blue_color]}) == True
 
     block = fully_cross_block([color, text, con_factor_within_trial],
                               [color, text],
-                              [NoMoreThanKInARow(2, (color, get_level_from_name(color, "red")))])
+                              [NoMoreThanKInARow(2, (color, red_color))])
 
-    assert are_constraints_violated(block, {"color": ["red", "blue", "blue", "blue"]}) == False
-    assert are_constraints_violated(block, {"color": ["red", "red", "blue", "blue"]}) == False
-    assert are_constraints_violated(block, {"color": ["red", "red", "red", "blue"]}) == True
-    assert are_constraints_violated(block, {"color": ["blue", "red", "red", "red"]}) == True
+    assert are_constraints_violated(block, {color: [red_color, blue_color, blue_color, blue_color]}) == False
+    assert are_constraints_violated(block, {color: [red_color, red_color, blue_color, blue_color]}) == False
+    assert are_constraints_violated(block, {color: [red_color, red_color, red_color, blue_color]}) == True
+    assert are_constraints_violated(block, {color: [blue_color, red_color, red_color, red_color]}) == True

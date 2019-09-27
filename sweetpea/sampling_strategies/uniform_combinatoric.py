@@ -195,14 +195,17 @@ class UCSolutionEnumerator():
             for t in range(l):
                 # For each level in the factor, see if the derivation function is true.
                 for level in f.levels:
-                    if level.window.fn(*[trial_values[t][f] for f in level.window.args]):
+                    if level.window.fn(*[get_external_level_name(trial_values[t][f]) for f in level.window.args]):
                         trial_values[t][f] = level
 
         # 7. Convert to variable encoding for SAT checking
         solution = cast(List[int], [])
         for trial_number, trial_value in enumerate(trial_values):
+            fstring = ""
             for factor, level in trial_value.items():
+                fstring += factor.factor_name + ": " + level.internal_name + ", "
                 solution.append(self._block.get_variable(trial_number + 1, (factor, level)))
+            print(fstring)
 
         solution.sort()
         return solution
@@ -245,7 +248,7 @@ class UCSolutionEnumerator():
                 merged_levels = {**ci, **sc}
                 for df in self._partitions.get_crossed_factors_derived():
                     w = merged_levels[df].window
-                    if not w.fn(*[merged_levels[f] for f in w.args]):
+                    if not w.fn(*[get_external_level_name(merged_levels[f]) for f in w.args]):
                         sc_indices.remove(sc_idx)
 
             self._segment_lengths.append(len(sc_indices))
