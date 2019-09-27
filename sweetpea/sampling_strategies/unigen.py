@@ -67,7 +67,7 @@ class UnigenSamplingStrategy(SamplingStrategy):
             if experiments_request.status_code != 200 or not experiments_request.json()['ok']:
                 tmp_filename = ""
                 with tempfile.NamedTemporaryFile(delete=False) as f:
-                    json.dumps(json_data, f)
+                    json.dump(json_data, f.open())
                     tmp_filename = f.name
 
                 raise RuntimeError("Received non-200 response from experiment generation! LowLevelRequest body saved to temp file '" +
