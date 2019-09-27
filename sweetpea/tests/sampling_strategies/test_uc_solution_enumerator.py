@@ -25,8 +25,15 @@ block = fully_cross_block(design, crossing, [])
 
 def test_generate_crossing_instances():
     enumerator = UCSolutionEnumerator(block)
+    crossing_instances = enumerator._UCSolutionEnumerator__generate_crossing_instances()
+    simplified_names = []
+    for d in crossing_instances:
+        d_simple = {}
+        for (f, l) in d.items():
+            d_simple[f.factor_name] = get_external_level_name(l)
+        simplified_names.append(d_simple)
 
-    assert [{"color": color.get_level(d_entry["color"]).external_name, "text": text.get_level(d_entry["text"]).external_name} for d_entry in enumerator._UCSolutionEnumerator__generate_crossing_instances()] == [
+    assert simplified_names == [
         {'color': 'red', 'text': 'red'},
         {'color': 'red', 'text': 'blue'},
         {'color': 'blue', 'text': 'red'},
@@ -37,8 +44,15 @@ def test_generate_crossing_instances():
 def test_generate_source_combinations():
     block = fully_cross_block(design, [congruency], [])
     enumerator = UCSolutionEnumerator(block)
+    crossing_source_combos = enumerator._UCSolutionEnumerator__generate_source_combinations()
+    simplified_names = []
+    for d in crossing_source_combos:
+        d_simple = {}
+        for (f, l) in d.items():
+            d_simple[f.factor_name] = get_external_level_name(l)
+        simplified_names.append(d_simple)
 
-    assert [{"color": color.get_level(d_entry["color"]).external_name, "text": text.get_level(d_entry["text"]).external_name} for d_entry in enumerator._UCSolutionEnumerator__generate_source_combinations()] == [
+    assert simplified_names == [
         {'color': 'red', 'text': 'red'},
         {'color': 'red', 'text': 'blue'},
         {'color': 'blue', 'text': 'red'},

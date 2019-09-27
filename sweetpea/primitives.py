@@ -145,6 +145,9 @@ class Factor(__Primitive):
     def has_level(self, level: Any) -> bool:
         return (level in self.levels)
 
+    def __hash__(self):
+        return(hash(self.factor_name))
+
     """
     Returns true if this factor applies to the given trial number. (1-based)
     For example, Factors with Transition windows in the derived level don't apply

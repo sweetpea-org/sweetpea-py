@@ -10,7 +10,7 @@ from sweetpea.blocks import Block, FullyCrossBlock
 from sweetpea.combinatorics import extract_components, compute_jth_inversion_sequence, construct_permutation, compute_jth_combination
 from sweetpea.design_partitions import DesignPartitions
 from sweetpea.logic import And
-from sweetpea.primitives import get_internal_level_name
+from sweetpea.primitives import get_internal_level_name, get_external_level_name
 from sweetpea.sampling_strategies.base import SamplingStrategy, SamplingResult
 from sweetpea.constraints import Exclude, _KInARow, ExactlyKInARow, AtMostKInARow
 
@@ -180,7 +180,7 @@ class UCSolutionEnumerator():
         for f_idx, independent_combination_idx in enumerate(components[l + 1:]):
             f = u_b_i[f_idx]
             combo = compute_jth_combination(l, len(f.levels), independent_combination_idx)
-            combo_dicts = [{f.factor_name: f.levels[level_idx] for level_idx in combo}]
+            combo_dicts = [{f: f.levels[level_idx] for level_idx in combo}]
             independent_factor_combinations[f_idx] = combo_dicts
 
         # 5. Merge the selected levels gathered so far to facilitate computing the uncrossed derived factor levels.
@@ -191,21 +191,18 @@ class UCSolutionEnumerator():
 
         # 6. Generate uncrossed derived level values
         u_d = self._partitions.get_uncrossed_derived_factors()
-        fact_map = {}
-        for f in u_d:
-            fact_map[f.factor_name] = f
         for f in u_d:
             for t in range(l):
                 # For each level in the factor, see if the derivation function is true.
                 for level in f.levels:
-                    if level.window.fn(*[trial_values[t][f.factor_name] for f in level.window.args]):
-                        trial_values[t][f.factor_name] = level
+                    if level.window.fn(*[trial_values[t][f] for f in level.window.args]):
+                        trial_values[t][f] = level
 
         # 7. Convert to variable encoding for SAT checking
         solution = cast(List[int], [])
         for trial_number, trial_value in enumerate(trial_values):
             for factor, level in trial_value.items():
-                solution.append(self._block.get_variable(trial_number + 1, (fact_map[factor], level)))
+                solution.append(self._block.get_variable(trial_number + 1, (factor, level)))
 
         solution.sort()
         return solution
@@ -219,13 +216,13 @@ class UCSolutionEnumerator():
     """
     def __generate_crossing_instances(self) -> List[dict]:
         crossing = self._partitions.get_crossed_factors()
-        level_lists = [list(map(get_internal_level_name, f.levels)) for f in crossing]
-        return [{crossing[i].factor_name: level for i,level in enumerate(levels)} for levels in product(*level_lists)]
+        level_lists = [list(f.levels) for f in crossing]
+        return [{crossing[i]: level for i,level in enumerate(levels)} for levels in product(*level_lists)]
 
     def __generate_source_combinations(self) -> List[dict]:
         ubs = self._partitions.get_uncrossed_basic_source_factors()
-        level_lists = [list(map(get_internal_level_name, f.levels)) for f in ubs]
-        return [{ubs[i].factor_name: level for i,level in enumerate(levels)} for levels in product(*level_lists)]
+        level_lists = [list(f.levels) for f in ubs]
+        return [{ubs[i]: level for i,level in enumerate(levels)} for levels in product(*level_lists)]
 
     def __count_solutions(self):
         self._segment_lengths = []
@@ -247,8 +244,8 @@ class UCSolutionEnumerator():
                 # true for this level combination. If it doesn't, then remove this combination.
                 merged_levels = {**ci, **sc}
                 for df in self._partitions.get_crossed_factors_derived():
-                    w = df.get_level(merged_levels[df.factor_name]).window
-                    if not w.fn(*[merged_levels[f.factor_name] for f in w.args]):
+                    w = merged_levels[df].window
+                    if not w.fn(*[merged_levels[f] for f in w.args]):
                         sc_indices.remove(sc_idx)
 
             self._segment_lengths.append(len(sc_indices))
