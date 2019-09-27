@@ -8,12 +8,7 @@ from sweetpea import fully_cross_block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
 from sweetpea.blocks import FullyCrossBlock
 from sweetpea.constraints import Exclude
-
-def get_level_from_name(factor, name):
-    for level in factor.levels:
-        if level.external_name == name:
-            return level
-    return None
+from sweetpea.tests.test_utils import get_level_from_name
 
 color = Factor("color", ["red", "blue"])
 text  = Factor("text",  ["red", "blue"])

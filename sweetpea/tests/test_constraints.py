@@ -9,12 +9,7 @@ from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, W
 from sweetpea.constraints import Constraint, Consistency, FullyCross, Derivation, AtMostKInARow, NoMoreThanKInARow, ExactlyKInARow, Exclude
 from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import And, Or, If, Iff, Not, to_cnf_tseitin
-
-def get_level_from_name(factor, name):
-    for level in factor.levels:
-        if level.external_name == name:
-            return level
-    return None
+from sweetpea.tests.test_utils import get_level_from_name
 
 color = Factor("color", ["red", "blue"])
 text  = Factor("text",  ["red", "blue"])

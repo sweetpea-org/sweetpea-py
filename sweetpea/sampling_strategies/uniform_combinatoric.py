@@ -201,11 +201,8 @@ class UCSolutionEnumerator():
         # 7. Convert to variable encoding for SAT checking
         solution = cast(List[int], [])
         for trial_number, trial_value in enumerate(trial_values):
-            fstring = ""
             for factor, level in trial_value.items():
-                fstring += factor.factor_name + ": " + level.internal_name + ", "
                 solution.append(self._block.get_variable(trial_number + 1, (factor, level)))
-            print(fstring)
 
         solution.sort()
         return solution

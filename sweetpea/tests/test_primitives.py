@@ -2,12 +2,7 @@ import operator as op
 import pytest
 
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window, get_external_level_name, SimpleLevel
-
-def get_level_from_name(factor, name):
-    for level in factor.levels:
-        if level.external_name == name:
-            return level
-    return None
+from sweetpea.tests.test_utils import get_level_from_name
 
 color = Factor("color", ["red", "blue"])
 text = Factor("text", ["red", "blue"])
