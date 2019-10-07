@@ -32,12 +32,12 @@ repeated_text_factor = Factor("repeated text?", [
 def test_basic_graph():
     dg = DesignGraph([color, text, congruent])
 
-    assert len(dg.graph.nodes) == 3
+    assert len(dg.graph.nodes()) == 3
     assert dg.graph.has_node("color")
     assert dg.graph.has_node("text")
     assert dg.graph.has_node("congruent?")
 
-    assert len(dg.graph.edges) == 2
+    assert len(dg.graph.edges()) == 2
     assert dg.graph.has_edge("congruent?", "color")
     assert dg.graph.has_edge("congruent?", "text")
 

@@ -3,7 +3,7 @@ from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.constraints import Exclude
 from sweetpea.encoding_diagram import print_encoding_diagram
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
-
+from sweetpea.tests.test_utils import get_level_from_name
 
 color      = Factor("color",  ["red", "blue", "green"])
 word       = Factor("motion", ["red", "blue"])
@@ -19,7 +19,7 @@ stimulus_configuration = Factor("stimulus configuration", [
     DerivedLevel("illegal", WithinTrial(illegal_stimulus, [color, word]))
 ])
 
-constraints = [Exclude("stimulus configuration", "illegal")]
+constraints = [Exclude(stimulus_configuration, get_level_from_name(stimulus_configuration, "illegal"))]
 
 design       = [color, word, stimulus_configuration]
 crossing     = [color, word]
@@ -45,7 +45,7 @@ def test_correct_solution_count_with_override_flag():
 
 def test_correct_solution_count_with_override_flag_and_multiple_trials_excluded():
     # With this constraint, there should only be ONE allowed crossing, and therefore one solution.
-    constraints = [Exclude("stimulus configuration", "legal")]
+    constraints = [Exclude(stimulus_configuration, get_level_from_name(stimulus_configuration, "legal"))]
     block       = fully_cross_block(design, crossing, constraints, require_complete_crossing=False)
     experiments = synthesize_trials_non_uniform(block, 500)
 

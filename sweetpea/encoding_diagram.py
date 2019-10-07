@@ -1,7 +1,8 @@
 from itertools import repeat
 from functools import reduce
 
-from sweetpea import get_level_name, get_all_level_names
+from sweetpea.primitives import get_external_level_name
+from sweetpea.internal import get_all_external_level_names
 from sweetpea.blocks import Block
 
 
@@ -35,11 +36,11 @@ def __generate_encoding_diagram(blk: Block) -> str:
     row_format_str = '| {:>7} |'
     for f in blk.design:
         # length of all levels concatenated for this factor
-        level_names = list(map(get_level_name, f.levels))
+        level_names = list(map(get_external_level_name, f.levels))
         level_name_widths = [max(largest_number_len, l) for l in list(map(len, level_names))]
 
         level_names_width = sum(level_name_widths) + len(level_names) - 1 # Extra length for spaces in between names.
-        factor_header_width = max(len(f.name), level_names_width)
+        factor_header_width = max(len(f.factor_name), level_names_width)
         header_widths.append(factor_header_width)
 
         # If the header is longer than the level widths combined, then they need to be lengthened.
@@ -58,7 +59,7 @@ def __generate_encoding_diagram(blk: Block) -> str:
         row_format_str += ' |'
 
     header_format_str = reduce(lambda a, b: a + ' {{:^{}}} |'.format(b), header_widths, '| {:>7} |')
-    factor_names = list(map(lambda f: f.name, blk.design))
+    factor_names = list(map(lambda f: f.factor_name, blk.design))
     header_str = header_format_str.format(*["Trial"] + factor_names)
     row_width = len(header_str)
 
@@ -69,7 +70,7 @@ def __generate_encoding_diagram(blk: Block) -> str:
     diagram_str += header_str + '\n'
 
     # Level names
-    all_level_names = [ln for (fn, ln) in get_all_level_names(blk.design)]
+    all_level_names = [ln for (fn, ln) in get_all_external_level_names(blk.design)]
     diagram_str += row_format_str.format(*['#'] + all_level_names) + '\n'
 
     # Separator
@@ -80,7 +81,7 @@ def __generate_encoding_diagram(blk: Block) -> str:
         args = [str(t + 1)]
         for f in blk.design:
             if f.applies_to_trial(t + 1):
-                variables = [blk.first_variable_for_level(f.name, get_level_name(l)) + 1 for l in f.levels]
+                variables = [blk.first_variable_for_level(f, l) + 1 for l in f.levels]
                 if f.has_complex_window():
                     width = f.levels[0].window.width
                     stride = f.levels[0].window.stride
