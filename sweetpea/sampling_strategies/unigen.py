@@ -66,7 +66,7 @@ class UnigenSamplingStrategy(SamplingStrategy):
             experiments_request = requests.post('http://localhost:8080/experiments/generate', data = json_data)
             if experiments_request.status_code != 200 or not experiments_request.json()['ok']:
                 tmp_filename = ""
-                with tempfile.NamedTemporaryFile(delete=False) as f:
+                with tempfile.NamedTemporaryFile(delete=False, mode="w+") as f:
                     json.dump(json_data, f)
                     tmp_filename = f.name
 
@@ -96,4 +96,3 @@ class UnigenSamplingStrategy(SamplingStrategy):
             print(line)
 
         return SamplingResult(result, {})
-

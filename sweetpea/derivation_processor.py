@@ -4,10 +4,10 @@ from typing import List, Tuple, Union, Any, cast
 from functools import reduce
 from itertools import product
 
-from sweetpea.primitives import DerivedLevel, WithinTrial, Transition, Window
+from sweetpea.primitives import DerivedLevel, WithinTrial, Transition, Window, get_external_level_name, SimpleLevel
 from sweetpea.blocks import Block
 from sweetpea.constraints import Derivation
-from sweetpea.internal import chunk_list, get_all_level_names
+from sweetpea.internal import chunk_list, get_all_levels
 
 
 class DerivationProcessor:
@@ -46,7 +46,7 @@ class DerivationProcessor:
 
         for fact in derived_factors:
             for level in fact.levels:
-                level_index = block.first_variable_for_level(fact.name, level.name)
+                level_index = block.first_variable_for_level(fact, level)
                 x_product = level.get_dependent_cross_product()
 
                 # filter to valid tuples, and get their idxs
@@ -57,8 +57,12 @@ class DerivationProcessor:
 
                     # Make sure the fn returned a boolean
                     if not isinstance(fn_result, bool):
-                        raise ValueError('Derivation function did not return a boolean! factor={} level={} fn={} return={} args={} '
-                            .format(fact.name, level.name, level.window.fn, fn_result, args))
+                        raise ValueError('Derivation function did not return a boolean! factor={} level={} fn={} return={} args={} '.format(
+                            fact.factor_name,
+                            get_external_level_name(level),
+                            level.window.fn,
+                            fn_result,
+                            args))
 
                     # If the result was true, add the tuple to the list
                     if fn_result:
@@ -72,12 +76,13 @@ class DerivationProcessor:
 
     @staticmethod
     def generate_argument_list(level: DerivedLevel, tup: Tuple) -> List:
-        level_values = list(map(lambda t: t[1], tup))
+        # User-supplied string level names are the arguments for the user-supplied derivation functions
+        level_strings = list(map(lambda t: get_external_level_name(t[1]), tup))
         # For windows with a width of 1, we just pass the arguments directly, rather than putting them in lists.
         if level.window.width == 1:
-            return level_values
+            return level_strings
         else:
-            return list(chunk_list(level_values, level.window.width))
+            return list(chunk_list(level_strings, level.window.width))
 
 
     """

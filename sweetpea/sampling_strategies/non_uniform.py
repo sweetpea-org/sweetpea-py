@@ -50,4 +50,3 @@ class NonUniformSamplingStrategy(SamplingStrategy):
 
         result = list(map(lambda s: SamplingStrategy.decode(block, s['assignment']), solutions))
         return SamplingResult(result, {})
-

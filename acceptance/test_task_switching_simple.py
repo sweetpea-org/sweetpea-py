@@ -74,4 +74,3 @@ def test_that_design_is_correctly_constrained(design):
     assert len(experiments) == 100, "Design: %s" % str(list(map(lambda f: f.name, design)))
     for c in constraints:
         assert_atmostkinarow(c, experiments)
-

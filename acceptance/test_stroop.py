@@ -7,7 +7,7 @@ from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.constraints import AtMostKInARow, ExactlyKInARow, Exclude
 from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, synthesize_trials
-
+from sweetpea.tests.test_utils import get_level_from_name
 
 # Basic setup
 color_list = ["red", "blue"]
@@ -57,7 +57,7 @@ def test_correct_solution_count_with_congruence_factor_but_unconstrained(design)
 @pytest.mark.parametrize('design', permutations([color, text, con_factor]))
 def test_correct_solution_count_with_congruence_factor_and_constrained(design):
     crossing = [color, text]
-    constraints = [AtMostKInARow(1, ("congruent?", "con"))]
+    constraints = [AtMostKInARow(1, (con_factor, get_level_from_name(con_factor, "con")))]
 
     block  = fully_cross_block(design, crossing, constraints)
     experiments  = synthesize_trials_non_uniform(block, 100)
@@ -90,7 +90,7 @@ def test_correct_solution_count_with_repeated_color_factor_but_unconstrained(des
 @pytest.mark.parametrize('design', permutations([color, text, repeated_color_factor]))
 def test_correct_solution_count_with_repeated_color_factor_and_constrained(design):
     crossing = [color, text]
-    constraints = [AtMostKInARow(1, ("repeated color?", "yes"))]
+    constraints = [AtMostKInARow(1, (repeated_color_factor, get_level_from_name(repeated_color_factor, "yes")))]
 
     block  = fully_cross_block(design, crossing, constraints)
     experiments  = synthesize_trials_non_uniform(block, 100)
@@ -115,8 +115,8 @@ def test_correct_solution_count_with_repeated_color_and_text_factors_but_unconst
 def test_correct_solution_count_with_repeated_color_and_text_factors_and_constrained(design):
     crossing = [color, text]
     constraints = [
-        AtMostKInARow(1, ("repeated color?", "yes")),
-        AtMostKInARow(1, ("repeated text?", "yes"))
+        AtMostKInARow(1, (repeated_color_factor, get_level_from_name(repeated_color_factor, "yes"))),
+        AtMostKInARow(1, (repeated_text_factor, get_level_from_name(repeated_text_factor, "yes")))
     ]
 
     block  = fully_cross_block(design, crossing, constraints)
@@ -128,7 +128,7 @@ def test_correct_solution_count_with_repeated_color_and_text_factors_and_constra
 @pytest.mark.parametrize('design', permutations([color, text, repeated_color_factor]))
 def test_correct_solution_count_with_repeated_color_factor_and_no_repetition_allowed(design):
     crossing = [color, text]
-    constraints = [Exclude("repeated color?", "yes")]
+    constraints = [Exclude(repeated_color_factor, get_level_from_name(repeated_color_factor, "yes"))]
 
     block  = fully_cross_block(design, crossing, constraints)
     experiments  = synthesize_trials_non_uniform(block, 100)
