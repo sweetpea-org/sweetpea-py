@@ -9,7 +9,7 @@ from sweetpea.logic import And, cnf_to_json
 Represents an individual low-level request to the backend.
 """
 class LowLevelRequest:
-    comparisons = ['EQ', 'LT', 'GT']
+    comparisons = ['EQ', 'LT', 'GT'] # will we want more comparisons in the future?
 
     def __init__(self, comparison: str, k: int, variables: List[int]) -> None:
         self.comparison = comparison

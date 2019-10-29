@@ -2,7 +2,7 @@ from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.constraints import NoMoreThanKInARow
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
 import numpy as np
-from psyneulink import *
+import psyneulink as pnl
 
 # GENERATING EXPERIMENT SEQUENCE FOR AN EXPERIMENT BLOCK IN SHENHAV ET AL. 2017
 
@@ -104,20 +104,29 @@ print("SIMULATING EXPERIMENT WITH PSYNEULINK MODEL...")
 optimal_color_control = 0.69
 optimal_motion_control = 0.18
 
-color_input = ProcessingMechanism(name='Color',
-                                  function=Linear(slope=optimal_color_control))
-motion_input = ProcessingMechanism(name='Motion',
-                                  function=Linear(slope=optimal_motion_control))
-decision = DDM(name='Decision',
-               function=DriftDiffusionAnalytical(
-                       starting_point=0,
-                       noise=0.5,
-                       t0=0.2,
-                       threshold=0.45),
-               output_states=[DDM_OUTPUT.PROBABILITY_UPPER_THRESHOLD, DDM_OUTPUT.RESPONSE_TIME],
-               )
+color_input = pnl.ProcessingMechanism(name='Color',
+                                  function=pnl.Linear(slope=optimal_color_control))
+motion_input = pnl.ProcessingMechanism(name='Motion',
+                                  function=pnl.Linear(slope=optimal_motion_control))
+# decision = pnl.DDM(name='Decision',
+#                function= pnl.DriftDiffusionAnalytical(
+#                        starting_point=0,
+#                        noise=0.5,
+#                        t0=0.2,
+#                        threshold=0.45),
+#                output_states=[pnl.DDM_OUTPUT.PROBABILITY_UPPER_THRESHOLD, pnl.DDM_OUTPUT.RESPONSE_TIME], this seems to have been removed.
+#               )
+decision = pnl.DDM(
+    function=pnl.DriftDiffusionAnalytical(
+        starting_point=0,
+        noise=0.5,
+        t0=0.2,
+        threshold=0.45
+    ),
+    name='Decision'
+)
 
-c = Composition(name='ColorMotion Task')
+c = pnl.Composition(name='ColorMotion Task')
 c.add_linear_processing_pathway([color_input, decision])
 c.add_linear_processing_pathway([motion_input, decision])
 

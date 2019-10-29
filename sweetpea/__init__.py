@@ -15,6 +15,11 @@ from sweetpea.server import submit_job, get_job_result, build_cnf
 
 # ~~~~~~~~~~ Helper functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+"""
+
+Takes the block of the provided trial and writes its preferences out to a configuration file.
+
+"""
 def save_cnf(block: Block, filename: str) -> None:
     cnf_str = __generate_cnf(block)
     with open(filename, 'w') as f:
@@ -22,6 +27,13 @@ def save_cnf(block: Block, filename: str) -> None:
 
 """
 Invokes the backend to build the final CNF formula in DIMACS format, returning it as a string.
+
+DIMACS format: Starting lines are marked by a c to denote a comment
+    after comments, there is a problem line denoted by a p. ex: (p cnf 3 4) means the problem is a cnf with 3 variables and 4 clauses.
+        variables: items that may change values
+        clauses: phrase containing both subject and a verb, but is not necessarily a full sentence. Longer than a phrase.
+    after the problem statement, the individual clauses are listed as numbers, and 0 marks the end of each claues.
+    for example, (x(9) AND y(2)) => 9 2 0, while (NOT x(9) OR y(2)) => -9 2 0.
 """
 def __generate_cnf(block: Block) -> str:
     update_docker_image("sweetpea/server")
@@ -49,7 +61,7 @@ def fully_cross_block(design: List[Factor],
                       require_complete_crossing=True,
                       cnf_fn=to_cnf_tseitin) -> Block:
     all_constraints = cast(List[Constraint], [FullyCross(), Consistency()]) + constraints
-    all_constraints = __desugar_constraints(all_constraints)
+    all_constraints = __desugar_constraints(all_constraints) #expand the constraints into a form we can process.
     block = FullyCrossBlock(design, crossing, all_constraints, require_complete_crossing, cnf_fn)
     block.constraints += DerivationProcessor.generate_derivations(block)
     return block
@@ -82,6 +94,9 @@ This is a helper function for getting some number of unique non-uniform solution
 endpoint on the server that repeatedly computes individual solutions while updating the formula to exclude
 each solution once it has been found. It's intended to give users something somewhat useful, while
 we work through issues with unigen.
+
+TODO this seems to be a bandaid for the issues unigen presents. Perhaps there is a better way?
+    Currently, we have the block and the samples, and want a dictionary output. (Haskell like notation).
 """
 def synthesize_trials_non_uniform(block: Block, samples: int) -> List[dict]:
     return synthesize_trials(block, samples, sampling_strategy=NonUniformSamplingStrategy)
@@ -92,6 +107,8 @@ This is where the magic happens. Desugars the constraints from fully_cross_block
 in some direct cnfs being produced and some requests to the backend being produced). Then
 calls unigen on the full cnf file. Then decodes that cnf file into (1) something human readable
 & (2) psyNeuLink readable.
+
+PsyNeuLink is a software from Princeton that assists in creating block diagrams for these experiments.
 """
 def synthesize_trials(block: Block, samples: int=10, sampling_strategy=NonUniformSamplingStrategy) -> List[dict]:
     print("Sampling {} trial sequences using the {}".format(samples, sampling_strategy))
