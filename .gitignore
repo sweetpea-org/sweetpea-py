@@ -27,3 +27,5 @@ build
 sweetpea.egg-info
 .vscode
 .DS_Store
+__pycache__
+.mypy_cache
