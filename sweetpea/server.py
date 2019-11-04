@@ -2,7 +2,7 @@ import json
 import requests
 import tempfile
 import time
-
+import os
 from typing import List
 
 from sweetpea.blocks import Block
@@ -15,7 +15,10 @@ Contains helper functions for interacting with the server.
 All functions expect that the server has already been started.
 """
 
-BASE_URL = 'http://localhost:8080/'
+port = '8080'
+if "SWEETPEA_DOCKER_PORT" in os.environ:
+    port = os.environ["SWEETPEA_DOCKER_PORT"]
+BASE_URL = 'http://localhost:' + port + '/'
 SUBMIT_JOB_URL = BASE_URL + 'experiments/jobs'
 JOB_STATUS_URL_TEMPLATE = SUBMIT_JOB_URL + '/{}'
 

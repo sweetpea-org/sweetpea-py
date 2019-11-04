@@ -118,3 +118,9 @@ When that environment variable is set, SweetPea will never try to start/stop the
 [1]: https://www.docker.com/
 [2]: https://docs.python.org/3/tutorial/venv.html
 
+# Specify a Port
+By default, SweetPea attempts to run its docker server using port 8080 on the host machine. If this port is not available, it can be changed by setting the SWEETPEA_DOCKER_PORT environment variable. For example, if SweetPea should instead run on port 5050, 
+```
+$ export SWEETPEA_DOCKER_PORT=5050
+```
+will then change the running port to 5050.
