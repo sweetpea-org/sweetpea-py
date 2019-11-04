@@ -3,15 +3,15 @@ import pytest
 from itertools import repeat, permutations
 from random import shuffle
 
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
-from sweetpea.constraints import AtMostKInARow
+from sweetpea.primitives import factor, derived_level, within_trial, transition
+from sweetpea.constraints import at_most_k_in_a_row
 from sweetpea import fully_cross_block, print_experiments, synthesize_trials_non_uniform, __generate_cnf
 from acceptance import assert_atmostkinarow
 
 # Simple Factors
-color  = Factor("color",  ["red", "blue"])
-motion = Factor("motion", ["up", "down"])
-task   = Factor("task",   ["color", "motion"])
+color  = factor("color",  ["red", "blue"])
+motion = factor("motion", ["up", "down"])
+task   = factor("task",   ["color", "motion"])
 
 # Response Definition
 def response_left(task, color, motion):
@@ -21,9 +21,9 @@ def response_left(task, color, motion):
 def response_right(task, color, motion):
     return not response_left(task, color, motion)
 
-response = Factor("response", [
-    DerivedLevel("left",  WithinTrial(response_left,  [task, color, motion])),
-    DerivedLevel("right", WithinTrial(response_right, [task, color, motion]))
+response = factor("response", [
+    derived_level("left",  within_trial(response_left,  [task, color, motion])),
+    derived_level("right", within_trial(response_right, [task, color, motion]))
 ])
 
 # Congruency Definition
@@ -34,21 +34,21 @@ def color_motion_congruent(color, motion):
 def color_motion_incongruent(color, motion):
     return not color_motion_congruent(color, motion)
 
-congruency = Factor("congruency", [
-    DerivedLevel("con", WithinTrial(color_motion_congruent,   [color, motion])),
-    DerivedLevel("inc", WithinTrial(color_motion_incongruent, [color, motion]))
+congruency = factor("congruency", [
+    derived_level("con", within_trial(color_motion_congruent,   [color, motion])),
+    derived_level("inc", within_trial(color_motion_incongruent, [color, motion]))
 ])
 
-# Task Transition
-task_transition = Factor("task transition", [
-    DerivedLevel("repeat", Transition(lambda tasks: tasks[0] == tasks[1], [task])),
-    DerivedLevel("switch", Transition(lambda tasks: tasks[0] != tasks[1], [task]))
+# Task transition
+task_transition = factor("task transition", [
+    derived_level("repeat", transition(lambda tasks: tasks[0] == tasks[1], [task])),
+    derived_level("switch", transition(lambda tasks: tasks[0] != tasks[1], [task]))
 ])
 
-# Response Transition
-response_transition = Factor("response transition", [
-    DerivedLevel("repeat", Transition(lambda responses: responses[0] == responses[1], [response])),
-    DerivedLevel("switch", Transition(lambda responses: responses[0] != responses[1], [response]))
+# Response transition
+response_transition = factor("response transition", [
+    derived_level("repeat", transition(lambda responses: responses[0] == responses[1], [response])),
+    derived_level("switch", transition(lambda responses: responses[0] != responses[1], [response]))
 ])
 
 
@@ -64,8 +64,8 @@ def test_that_design_is_correctly_constrained(design):
 
     k = 2
     constraints = [
-        AtMostKInARow(k, task_transition),
-        AtMostKInARow(k, response_transition)
+        at_most_k_in_a_row(k, task_transition),
+        at_most_k_in_a_row(k, response_transition)
     ]
 
     block = fully_cross_block(design, crossing, constraints)

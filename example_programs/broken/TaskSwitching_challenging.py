@@ -1,5 +1,5 @@
 from sweetpea.constraints import *
-from sweetpea.primitives import DerivedLevel, WithinTrial, Transition
+from sweetpea.primitives import derived_level, within_trial, transition
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
 """
 Task Switching Design (challenging)
@@ -54,8 +54,8 @@ def response_left(task, color, motion, size):
 def response_right(task, color, motion, size):
     return not response_left(task, color, motion, size)
 
-response = Factor("response", [DerivedLevel("left",  WithinTrial(response_left,  [task, color, motion, size])),
-                              DerivedLevel("right", WithinTrial(response_right, [task, color, motion, size]))])
+response = Factor("response", [derived_level("left",  within_trial(response_left,  [task, color, motion, size])),
+                              derived_level("right", within_trial(response_right, [task, color, motion, size]))])
 
 
 """
@@ -72,8 +72,8 @@ def incongruent(color, motion):
     return not congruent(color, motion)
 
 congruency = Factor("congruency", 
-    [DerivedLevel("con", WithinTrial(congruent,   [color, motion])),
-    DerivedLevel("inc", WithinTrial(incongruent, [color, motion]))])
+    [derived_level("con", within_trial(congruent,   [color, motion])),
+    derived_level("inc", within_trial(incongruent, [color, motion]))])
 
 
 """
@@ -91,8 +91,8 @@ def task_switch(color0, color1, motion0, motion1):
     return not task_repeat(color0, color1, motion0, motion1)
 
 task_transition = Factor("task_transition", [
-    DerivedLevel("repeat", Transition(task_repeat,   [task])),
-    DerivedLevel("switch", Transition(task_switch, [task]))
+    derived_level("repeat", transition(task_repeat,   [task])),
+    derived_level("switch", transition(task_switch, [task]))
 ])
 
 """
@@ -122,8 +122,8 @@ def response_switch(response0, response1):
     return not response_repeat(response0, response1)
 
 resp_transition = Factor("resp_transition", [
-    DerivedLevel("repeat", Transition(response_repeat, [response])),
-    DerivedLevel("switch", Transition(response_switch, [response]))
+    derived_level("repeat", transition(response_repeat, [response])),
+    derived_level("switch", transition(response_switch, [response]))
 ])
 
 k = 7

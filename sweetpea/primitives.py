@@ -27,6 +27,9 @@ class __Primitive:
     def __str__(self):
         raise Exception("Attempted implicit string cast of primitive")
 
+def simple_level(name):
+    return SimpleLevel(name)
+
 class SimpleLevel(__Primitive):
     def __init__(self, name):
         self.external_name = str(name)
@@ -46,6 +49,9 @@ class SimpleLevel(__Primitive):
             print("Attempted to compare a simple level to another type, " + str(type(other)))
         return other.internal_name == self.internal_name
 
+
+def derived_level(name, window):
+    return DerivedLevel(name, window)
 
 class DerivedLevel(__Primitive):
     def __init__(self, name, window):
@@ -91,6 +97,9 @@ class DerivedLevel(__Primitive):
     def __str__(self):
         return str(self.__dict__)
 
+
+def factor(name, levels):
+    return Factor(name, levels)
 
 class Factor(__Primitive):
     def __init__(self, name: str, levels) -> None:
@@ -187,6 +196,9 @@ class __BaseWindow():
 """
 TODO: Docs
 """
+def within_trial(fn, args):
+    return WithinTrial(fn, args)
+
 class WithinTrial(__Primitive, __BaseWindow):
     def __init__(self, fn, args):
         super().__init__(fn, args, 1, 1)
@@ -205,6 +217,9 @@ class WithinTrial(__Primitive, __BaseWindow):
 """
 TODO: Docs
 """
+def transition(fn, args):
+    return Transition(fn, args)
+
 class Transition(__Primitive, __BaseWindow):
     def __init__(self, fn, args):
         super().__init__(fn, args, 2, 1)
@@ -219,6 +234,9 @@ class Transition(__Primitive, __BaseWindow):
     def __str__(self):
         return str(self.__dict__)
 
+
+def window(fn, args, width, stride):
+    return Window(fn, args, width, stride)
 
 class Window(__Primitive, __BaseWindow):
     def __init__(self, fn, args, width, stride):

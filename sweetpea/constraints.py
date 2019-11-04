@@ -330,6 +330,9 @@ If it had been AtMostKInARow 2 ("color", "red"), the reqs would have been:
     sum(1, 7, 13)  LT 3
     sum(7, 13, 19) LT 3
 """
+def at_most_k_in_a_row(k, levels):
+    return AtMostKInARow(k, levels)
+
 class AtMostKInARow(_KInARow):
     def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], backend_request: BackendRequest) -> None:
         sublists = self._build_variable_sublists(block, level, self.k + 1)
@@ -350,6 +353,9 @@ class AtMostKInARow(_KInARow):
 """
 Equivalent to AtMostKInARow.
 """
+def no_more_than_k_in_a_row(k, levels):
+    return NoMoreThanKInARow(k, levels)
+
 class NoMoreThanKInARow(Constraint):
     def __new__(self, k, levels):
         return AtMostKInARow(k, levels)
@@ -358,6 +364,9 @@ class NoMoreThanKInARow(Constraint):
 """
 Requires that if the given level exists at all, it must exist in a sequence of exactly K.
 """
+def exactly_k_in_a_row(k, levels):
+    return ExactlyKInARow(k, levels)
+
 class ExactlyKInARow(_KInARow):
     def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], backend_request: BackendRequest) -> None:
         sublists = self._build_variable_sublists(block, level, self.k)
@@ -401,6 +410,9 @@ class ExactlyKInARow(_KInARow):
     def __str__(self):
         return str(self.__dict__)
 
+
+def exclude(factor, levels):
+    return Exclude(factor, levels)
 
 class Exclude(Constraint):
     def __init__(self, factor, level):

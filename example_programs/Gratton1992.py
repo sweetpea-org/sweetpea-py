@@ -1,5 +1,4 @@
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
-from sweetpea.constraints import NoMoreThanKInARow
+from sweetpea.primitives import factor, derived_level, within_trial, transition
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
 import numpy as np
 
@@ -21,8 +20,8 @@ design:
 
 # DEFINE REWARD, RESPONSE and CONGRUENCY FACTORS
 
-target_direction    = Factor("target direction",   ["1", "-1"])
-congruency  = Factor("congruency",  ["congruent", "incongruent"])
+target_direction    = factor("target direction",   ["1", "-1"])
+congruency  = factor("congruency",  ["congruent", "incongruent"])
 
 
 # DEFINE CONGRUENCY TRANSITION FACTOR
@@ -37,11 +36,11 @@ def inc_inc(congruency):
     return congruency[0] == "incongruent" and congruency[1] == "incongruent"
 
 
-congruency_transition = Factor("congruency transition", [
-    DerivedLevel("congruent-congruent", Transition(con_con, [congruency])),
-    DerivedLevel("congruent-incongruent", Transition(con_inc, [congruency])),
-    DerivedLevel("incongruent-congruent", Transition(inc_con, [congruency])),
-    DerivedLevel("incongruent-incongruent", Transition(inc_inc, [congruency])),
+congruency_transition = factor("congruency transition", [
+    derived_level("congruent-congruent", transition(con_con, [congruency])),
+    derived_level("congruent-incongruent", transition(con_inc, [congruency])),
+    derived_level("incongruent-congruent", transition(inc_con, [congruency])),
+    derived_level("incongruent-incongruent", transition(inc_inc, [congruency])),
 ])
 
 # DEFINE FLANKER RESPONSE FACTOR
@@ -51,9 +50,9 @@ def flanker_left(target_direction, congruency):
 def flanker_right(target_direction, congruency):
     return not flanker_left(target_direction, congruency)
 
-flanker_direction = Factor("flanker direction", [
-    DerivedLevel("1", WithinTrial(flanker_left,   [target_direction, congruency])),
-    DerivedLevel("-1", WithinTrial(flanker_right,   [target_direction, congruency]))
+flanker_direction = factor("flanker direction", [
+    derived_level("1", within_trial(flanker_left,   [target_direction, congruency])),
+    derived_level("-1", within_trial(flanker_right,   [target_direction, congruency]))
 ])
 
 # DEFINE CORRECT RESPONSE
@@ -63,9 +62,9 @@ def response_left(target_direction):
 def response_right(target_direction):
     return not response_left((target_direction))
 
-correct_response = Factor("correct response", [
-    DerivedLevel("left", WithinTrial(response_left,   [target_direction])),
-    DerivedLevel("right", WithinTrial(response_right,   [target_direction]))
+correct_response = factor("correct response", [
+    derived_level("left", within_trial(response_left,   [target_direction])),
+    derived_level("right", within_trial(response_right,   [target_direction]))
 ])
 
 # DEFINE RESPONSE TRANSITION FACTOR
@@ -76,9 +75,9 @@ def response_repeat(responses):
 def response_switch(responses):
     return not response_repeat(responses)
 
-response_transition = Factor("resp_transition", [
-    DerivedLevel("repeat", Transition(response_repeat, [correct_response])),
-    DerivedLevel("switch", Transition(response_switch, [correct_response]))
+response_transition = factor("resp_transition", [
+    derived_level("repeat", transition(response_repeat, [correct_response])),
+    derived_level("switch", transition(response_switch, [correct_response]))
 ])
 
 # DEFINE SEQUENCE CONSTRAINTS

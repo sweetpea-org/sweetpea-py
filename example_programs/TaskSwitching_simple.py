@@ -1,5 +1,5 @@
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
-from sweetpea.constraints import AtMostKInARow
+from sweetpea.primitives import factor, derived_level, within_trial, transition
+from sweetpea.constraints import at_most_k_in_a_row
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
 
 
@@ -26,9 +26,9 @@ vv --> does that come from the counterbalancing above?
 Total number of trials: we want to have at least 20 instances of each combination of task-transition x congruency
 """
 
-color  = Factor("color",  ["red", "blue", "green"])
-motion = Factor("motion", ["up", "down"])
-task   = Factor("task",   ["color", "motion"])
+color  = factor("color",  ["red", "blue", "green"])
+motion = factor("motion", ["up", "down"])
+task   = factor("task",   ["color", "motion"])
 
 """
           correct response (left, right): dependent factor.
@@ -54,9 +54,9 @@ def response_left(task, color, motion):
 def response_right(task, color, motion):
     return not response_left(task, color, motion)
 
-response = Factor("response", [
-    DerivedLevel("left",  WithinTrial(response_left,  [task, color, motion])),
-    DerivedLevel("right", WithinTrial(response_right, [task, color, motion]))
+response = factor("response", [
+    derived_level("left",  within_trial(response_left,  [task, color, motion])),
+    derived_level("right", within_trial(response_right, [task, color, motion]))
 ])
 
 
@@ -75,9 +75,9 @@ def congruent(color, motion):
 def incongruent(color, motion):
     return not congruent(color, motion)
 
-congruency = Factor("congruency", [
-    DerivedLevel("con", WithinTrial(congruent,   [color, motion])),
-    DerivedLevel("inc", WithinTrial(incongruent, [color, motion]))
+congruency = factor("congruency", [
+    derived_level("con", within_trial(congruent,   [color, motion])),
+    derived_level("inc", within_trial(incongruent, [color, motion]))
 ])
 
 
@@ -96,9 +96,9 @@ def task_repeat(tasks):
 def task_switch(tasks):
     return not task_repeat(tasks)
 
-task_transition = Factor("task_transition", [
-    DerivedLevel("repeat", Transition(task_repeat, [task])),
-    DerivedLevel("switch", Transition(task_switch, [task]))
+task_transition = factor("task_transition", [
+    derived_level("repeat", transition(task_repeat, [task])),
+    derived_level("switch", transition(task_switch, [task]))
 ])
 
 """
@@ -116,14 +116,14 @@ def response_repeat(responses):
 def response_switch(responses):
     return not response_repeat(responses)
 
-resp_transition = Factor("resp_transition", [
-    DerivedLevel("repeat", Transition(response_repeat, [response])),
-    DerivedLevel("switch", Transition(response_switch, [response]))
+resp_transition = factor("resp_transition", [
+    derived_level("repeat", transition(response_repeat, [response])),
+    derived_level("switch", transition(response_switch, [response]))
 ])
 
 k = 7
-constraints = [AtMostKInARow(k, task_transition),
-               AtMostKInARow(k, resp_transition)]
+constraints = [at_most_k_in_a_row(k, task_transition),
+               at_most_k_in_a_row(k, resp_transition)]
 
 design       = [color, motion, task, congruency, response, task_transition, resp_transition]
 crossing     = [color, motion, task]

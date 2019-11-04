@@ -1,12 +1,12 @@
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
-from sweetpea.constraints import NoMoreThanKInARow, AtMostKInARow
+from sweetpea.primitives import factor, derived_level, within_trial, transition, window
+from sweetpea.constraints import no_more_than_k_in_a_row, at_most_k_in_a_row
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
 import operator as op
 
-text    = Factor("text",    ["red", "blue"])
-color    = Factor("color",    ["28",    "45"])
-motion   = Factor("motion", ["up", "down"])
-response = Factor("response", ["👈",  "👉"])
+text    = factor("text",    ["red", "blue"])
+color    = factor("color",    ["28",    "45"])
+motion   = factor("motion", ["up", "down"])
+response = factor("response", ["👈",  "👉"])
 
 def congruent(color, motion):
     return ((color == "red") and (motion == "up")) or ((color == "blue") and (motion == "down"))
@@ -14,12 +14,12 @@ def congruent(color, motion):
 def some_func(color0, text0, color1, text1, color2):
     return None
 
-DerivedLevel("con", WithinTrial(op.eq,          [color, text]))
-DerivedLevel("con", Transition(congruent,       [color, motion]))
-#DerivedLevel("con", Window(some_func, [[color, text], [color, text], [color]], 2, stride=2))
+derived_level("con", within_trial(op.eq,          [color, text]))
+derived_level("con", transition(congruent,       [color, motion]))
+#derived_level("con", window(some_func, [[color, text], [color, text], [color]], 2, stride=2))
 
 k=1 #TODO this value should change to the intended value from the writing of the original code
-AtMostKInARow(k, conLevel)
+at_most_k_in_a_row(k, conLevel)
 Balance(congruentFactor)
 
 

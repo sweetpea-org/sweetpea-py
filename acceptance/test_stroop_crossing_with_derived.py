@@ -3,27 +3,27 @@ import operator as op
 
 from itertools import permutations
 
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
-from sweetpea.constraints import AtMostKInARow
+from sweetpea.primitives import factor, derived_level, within_trial, transition
+from sweetpea.constraints import at_most_k_in_a_row
 from sweetpea.encoding_diagram import print_encoding_diagram
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
 from sweetpea.tests.test_utils import get_level_from_name
 
 
-direction = Factor("direction", ["up", "down"])
+direction = factor("direction", ["up", "down"])
 
 color_list = ["red", "blue"]
-color = Factor("color", color_list)
-text  = Factor("text",  color_list)
+color = factor("color", color_list)
+text  = factor("text",  color_list)
 
-congruent_factor = Factor("congruent?", [
-    DerivedLevel("con", WithinTrial(op.eq, [color, text])),
-    DerivedLevel("inc", WithinTrial(op.ne, [color, text]))
+congruent_factor = factor("congruent?", [
+    derived_level("con", within_trial(op.eq, [color, text])),
+    derived_level("inc", within_trial(op.ne, [color, text]))
 ])
 
-repeated_color_factor = Factor("repeated color?", [
-    DerivedLevel("yes", Transition(lambda colors: colors[0] == colors[1], [color])),
-    DerivedLevel("no",  Transition(lambda colors: colors[0] != colors[1], [color]))
+repeated_color_factor = factor("repeated color?", [
+    derived_level("yes", transition(lambda colors: colors[0] == colors[1], [color])),
+    derived_level("no",  transition(lambda colors: colors[0] != colors[1], [color]))
 ])
 
 
@@ -43,7 +43,7 @@ def test_correct_solution_count_when_unconstrained(design):
 @pytest.mark.parametrize('design', permutations([direction, color, text, congruent_factor]))
 def test_correct_solution_count_when_constrained(design):
     crossing = [direction, congruent_factor]
-    constraints = [AtMostKInARow(1, congruent_factor)]
+    constraints = [at_most_k_in_a_row(1, congruent_factor)]
 
     block  = fully_cross_block(design, crossing, constraints)
     experiments  = synthesize_trials_non_uniform(block, 500)
@@ -65,7 +65,7 @@ def test_correct_solution_count_when_transition_in_crossing_and_unconstrained(de
 @pytest.mark.parametrize('design', permutations([direction, color, repeated_color_factor]))
 def test_correct_solution_count_when_transition_in_crossing_and_constrained(design):
     crossing = [direction, repeated_color_factor]
-    constraints = [AtMostKInARow(1, (color, get_level_from_name(color, "red")))]
+    constraints = [at_most_k_in_a_row(1, (color, get_level_from_name(color, "red")))]
 
     block  = fully_cross_block(design, crossing, constraints)
     experiments  = synthesize_trials_non_uniform(block, 100)
