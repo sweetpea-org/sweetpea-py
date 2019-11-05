@@ -84,9 +84,7 @@ def print_experiments(block: Block, experiments: List[dict]):
     format_str = reduce(lambda a, b: a + '{{:<{}}} | '.format(b), column_widths, '')[:-3] + '\n'
 
     for e in experiments:
-        for (name, values) in e.items():
-            e[name] = [v.external_name for v in values]
-        strs = [list(map(lambda v: name + " " + v, values)) for (npame,values) in e.items()]
+        strs = [list(map(lambda v: name + " " + v, values)) for (name,values) in e.items()]
         transposed = list(map(list, zip(*strs)))
         print(reduce(lambda a, b: a + format_str.format(*b), transposed, ''))
 
