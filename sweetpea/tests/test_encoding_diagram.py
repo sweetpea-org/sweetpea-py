@@ -121,7 +121,7 @@ def test_generate_encoding_diagram_with_windows():
 def test_generate_encoding_diagram_with_window_with_stride():
     congruent_bookend = Factor("congruent bookend?", [
         DerivedLevel("yes", Window(lambda colors, texts: colors[0] == texts[0], [color, text], 1, 3)),
-        DerivedLevel("no",  Window(lambda colors, texts: colors[0] == texts[0], [color, text], 1, 3))
+        DerivedLevel("no",  Window(lambda colors, texts: colors[0] != texts[0], [color, text], 1, 3))
     ])
 
     block = fully_cross_block([color, text, congruent_bookend], [color, text], [])
@@ -139,7 +139,7 @@ def test_generate_encoding_diagram_with_window_with_stride():
 
     congruent_bookend = Factor("congruent bookend?", [
         DerivedLevel("yes", Window(lambda colors, texts: colors[0] == texts[0], [color, text], 2, 2)),
-        DerivedLevel("no",  Window(lambda colors, texts: colors[0] == texts[0], [color, text], 2, 2))
+        DerivedLevel("no",  Window(lambda colors, texts: colors[0] != texts[0], [color, text], 2, 2))
     ])
 
     block = fully_cross_block([color, text, congruent_bookend], [color, text], [])

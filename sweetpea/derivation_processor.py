@@ -45,6 +45,7 @@ class DerivationProcessor:
         accum = []
 
         for fact in derived_factors:
+            according_level = {}
             for level in fact.levels:
                 level_index = block.first_variable_for_level(fact, level)
                 x_product = level.get_dependent_cross_product()
@@ -67,6 +68,17 @@ class DerivationProcessor:
                     # If the result was true, add the tuple to the list
                     if fn_result:
                         valid_tuples.append(tup)
+                        if tup in according_level.keys():
+                            raise ValueError('Factor={} matches both level={} and level={} with assignment={}'.format(
+                                fact.factor_name,
+                                according_level[tup],
+                                get_external_level_name(level),
+                                args))
+                        else:
+                            according_level[tup] = get_external_level_name(level)
+
+                if not valid_tuples:
+                    print('WARNING: There is no assignment that matches factor={} level={}'.format(fact.factor_name, get_external_level_name(level)))
 
                 valid_idxs = [[block.first_variable_for_level(pair[0], pair[1]) for pair in tup_list] for tup_list in valid_tuples]
                 shifted_idxs = DerivationProcessor.shift_window(valid_idxs, level.window, block.variables_per_trial())

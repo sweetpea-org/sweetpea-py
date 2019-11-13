@@ -63,6 +63,27 @@ def test_generate_derivations_should_raise_error_if_fn_doesnt_return_a_boolean()
                           [color, text],
                           [])
 
+def test_generate_derivations_should_raise_error_if_some_factor_matches_multiple_levels():
+    local_con_factor = Factor("congruent?", [
+        DerivedLevel("con", WithinTrial(op.eq, [color, text])),
+        DerivedLevel("inc", WithinTrial(op.eq, [color, text]))
+    ])
+
+    with pytest.raises(ValueError):
+        fully_cross_block([color, text, local_con_factor],
+                          [color, text],
+                          [])
+
+def test_generate_derivations_should_produce_warning_if_some_level_is_unreachable(capsys):
+    local_con_factor = Factor("congruent?", [
+        DerivedLevel("con", WithinTrial(op.eq, [color, text])),
+        DerivedLevel("inc", WithinTrial(op.ne, [color, text])),
+        DerivedLevel("dum", WithinTrial(lambda c: c=='green', [color]))
+    ])
+    fully_cross_block([color, text, local_con_factor],
+                      [color, text],
+                      [])
+    assert capsys.readouterr().out == "WARNING: There is no assignment that matches factor=congruent? level=dum\n"
 
 def test_generate_derivations_within_trial():
     assert DerivationProcessor.generate_derivations(blk) == [

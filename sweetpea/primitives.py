@@ -49,6 +49,9 @@ class SimpleLevel(__Primitive):
             print("Attempted to compare a simple level to another type, " + str(type(other)))
         return other.internal_name == self.internal_name
 
+    def __hash__(self):
+        return hash(self.internal_name)
+
 
 def derived_level(name, window):
     return DerivedLevel(name, window)
@@ -90,6 +93,9 @@ class DerivedLevel(__Primitive):
         if (type(other) != DerivedLevel):
             print("Attempted to compare a derived level to another type, " + str(type(other)))
         return self.internal_name == other.internal_name
+
+    def __hash__(self):
+        return hash(self.internal_name)
 
     def __repr__(self):
         return str(self.__dict__)
