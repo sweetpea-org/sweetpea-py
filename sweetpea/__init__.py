@@ -83,6 +83,7 @@ def print_experiments(block: Block, experiments: List[dict]):
 
     format_str = reduce(lambda a, b: a + '{{:<{}}} | '.format(b), column_widths, '')[:-3] + '\n'
 
+    print('{} trial sequences found.'.format(len(experiments)))
     for e in experiments:
         strs = [list(map(lambda v: name + " " + v, values)) for (name,values) in e.items()]
         transposed = list(map(list, zip(*strs)))

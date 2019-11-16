@@ -1,6 +1,6 @@
 import operator as op
 
-from typing import List, Tuple, Union, Any, cast
+from typing import Dict, List, Tuple, Union, Any, cast
 from functools import reduce
 from itertools import product
 
@@ -45,7 +45,7 @@ class DerivationProcessor:
         accum = []
 
         for fact in derived_factors:
-            according_level = {}
+            according_level : Dict[Tuple[Any, ...], DerivedLevel] = {}
             for level in fact.levels:
                 level_index = block.first_variable_for_level(fact, level)
                 x_product = level.get_dependent_cross_product()

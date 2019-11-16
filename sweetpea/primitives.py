@@ -72,16 +72,11 @@ class DerivedLevel(__Primitive):
             raise ValueError('DerivedLevel.window must be one of ' +
                 str(allowed_window_types) + ', but was ' + str(window_type) + '.')
 
-        #if len(set(map(lambda f: f.factor_name, self.window.args))) != len(self.window.args):
-            #raise ValueError('Factors should not be repeated in the argument list to a derivation function.')
-
         for f in filter(lambda f: f.is_derived(), self.window.args):
             w = f.levels[0].window
             if not (w.width == 1 and w.stride == 1):
                 raise ValueError("Derived levels may only be derived from factors that apply to each trial. '" +
                     self.external_name + "' cannot derive from '" + f.factor_name + "'")
-
-        # TODO: Windows should be uniform.
 
     def __expand_window_arguments(self) -> None:
         self.window.args = list(chain(*[list(repeat(arg, self.window.width)) for arg in self.window.args]))
@@ -140,6 +135,16 @@ class Factor(__Primitive):
                 if type(dl.window) != window_type:
                     raise ValueError('Expected all DerivedLevel.window types to be ' +
                         str(window_type) + ', but found ' + str(type(dl)) + '.')
+            window_size = self.levels[0].window.size()
+            for dl in self.levels:
+                if dl.window.size() != window_size:
+                    raise ValueError('Expected all DerivedLevel.window sizes to be ' +
+                        str(window_size) + ', but found ' + str(dl.window.size()) + '.')
+            window_args = set(self.levels[0].window.args)
+            for dl in self.levels:
+                if set(dl.window.args) != window_args:
+                    raise ValueError('Expected all DerivedLevel.window args to be ' +
+                            str(list(map(lambda x: x.factor_name, window_args))) + ', but found ' + str(list(map(lambda x:x.factor_name, set(dl.window.args)))) + '.')
 
     def is_derived(self) -> bool:
         return isinstance(self.levels[0], DerivedLevel)
@@ -195,8 +200,18 @@ class __BaseWindow():
         self.argc = len(args)
         self.width = width
         self.stride = stride
-        # TODO: validation
-        # TODO: args should all be factors
+        self.__validate()
+
+    def __validate(self):
+        if not callable(self.fn):
+            raise ValueError('Derivation function should be callable, but found ' + str(fn) + '.')
+        for f in self.args:
+            if not isinstance(f, Factor):
+                raise ValueError('Derivation level should be derived from factors, but found ' + str(f) + '.')
+
+        if len(set(map(lambda f: f.factor_name, self.args))) != self.argc:
+            raise ValueError('Factors should not be repeated in the argument list to a derivation function.')
+        # TODO: width >= stride?
 
 
 """
@@ -208,7 +223,9 @@ def within_trial(fn, args):
 class WithinTrial(__Primitive, __BaseWindow):
     def __init__(self, fn, args):
         super().__init__(fn, args, 1, 1)
-        # TODO: validation
+
+    def size(self):
+        return (1, 1)
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
@@ -229,7 +246,9 @@ def transition(fn, args):
 class Transition(__Primitive, __BaseWindow):
     def __init__(self, fn, args):
         super().__init__(fn, args, 2, 1)
-        # TODO: validation
+
+    def size(self):
+        return (2, 1)
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
@@ -248,6 +267,9 @@ class Window(__Primitive, __BaseWindow):
     def __init__(self, fn, args, width, stride):
         super().__init__(fn, args, width, stride)
         # TODO: validation
+
+    def size(self):
+        return (self.width, self.stride)
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__

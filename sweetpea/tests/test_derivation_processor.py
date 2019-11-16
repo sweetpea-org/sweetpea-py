@@ -78,7 +78,7 @@ def test_generate_derivations_should_produce_warning_if_some_level_is_unreachabl
     local_con_factor = Factor("congruent?", [
         DerivedLevel("con", WithinTrial(op.eq, [color, text])),
         DerivedLevel("inc", WithinTrial(op.ne, [color, text])),
-        DerivedLevel("dum", WithinTrial(lambda c: c=='green', [color]))
+        DerivedLevel("dum", WithinTrial(lambda c, t: c=='green', [color, text]))
     ])
     fully_cross_block([color, text, local_con_factor],
                       [color, text],
@@ -177,8 +177,8 @@ def test_generate_argument_list_with_transition():
 
 
 def test_shift_window():
-    assert DerivationProcessor.shift_window([[0, 0], [1, 1]], WithinTrial(lambda x: x, [None]), 0) == [[0, 0], [1, 1]]
-    assert DerivationProcessor.shift_window([[0, 0], [1, 1]], Transition(lambda x: x, [None]), 4) == [[0, 4], [1, 5]]
-    assert DerivationProcessor.shift_window([[0, 2, 4], [1, 3, 5]], Window(lambda x: x, [None], 2, 3), 6) == [[0, 8, 16], [1, 9, 17]]
-    assert DerivationProcessor.shift_window([[1, 1, 1, 1], [2, 2, 2, 2]], Window(lambda x: x, [None], 2, 4), 10) == \
+    assert DerivationProcessor.shift_window([[0, 0], [1, 1]], WithinTrial(lambda x: x, [color]), 0) == [[0, 0], [1, 1]]
+    assert DerivationProcessor.shift_window([[0, 0], [1, 1]], Transition(lambda x: x, [color]), 4) == [[0, 4], [1, 5]]
+    assert DerivationProcessor.shift_window([[0, 2, 4], [1, 3, 5]], Window(lambda x: x, [color], 2, 3), 6) == [[0, 8, 16], [1, 9, 17]]
+    assert DerivationProcessor.shift_window([[1, 1, 1, 1], [2, 2, 2, 2]], Window(lambda x: x, [color], 2, 4), 10) == \
         [[1, 11, 21, 31], [2, 12, 22, 32]]

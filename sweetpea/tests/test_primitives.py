@@ -31,7 +31,7 @@ def test_factor_validation():
     Factor("name", ["a", "b", "a"])
     Factor("name", [
         DerivedLevel("a", WithinTrial(op.eq, [color, text])),
-        DerivedLevel("a", WithinTrial(op.ne, [color, text]))
+        DerivedLevel("a", WithinTrial(op.ne, [text, color]))
     ])
 
     # Non-string name
@@ -51,6 +51,13 @@ def test_factor_validation():
         Factor("name", ["level1", con_level])
 
     # Derived levels with non-uniform window types
+    with pytest.raises(ValueError):
+        Factor("name", [
+            con_level,
+            DerivedLevel("other", WithinTrial(lambda color: color, [color]))
+        ])
+
+    # Derived levels with different window arguments
     with pytest.raises(ValueError):
         Factor("name", [
             con_level,
@@ -100,8 +107,7 @@ def test_factor_applies_to_trial():
 
 def test_derived_level_validation():
     DerivedLevel(42, WithinTrial(op.eq, [color, text]))
-    DerivedLevel("name", WithinTrial(lambda x: x, [color, color]))
-
+    DerivedLevel("name", WithinTrial(lambda x: x, [color]))
 
     # Invalid Window
     with pytest.raises(ValueError):
@@ -110,7 +116,6 @@ def test_derived_level_validation():
     # Nested derived level
     with pytest.raises(ValueError):
         DerivedLevel("name", WithinTrial(op.eq, [color_repeats_factor]))
-
 
 def test_derived_level_argument_list_expansion():
     # We should internally duplicate each factor to match the width of the window.
@@ -195,3 +200,12 @@ def test_derived_level_get_dependent_cross_product_with_nesting():
         (('response', 'right'), ('response', 'left' )),
         (('response', 'right'), ('response', 'right'))
     ]
+
+def test_base_window_validation():
+    # Nonfactor argument
+    with pytest.raises(ValueError):
+        WithinTrial(op.eq, [42])
+
+    # Duplicated factors
+    with pytest.raises(ValueError):
+        DerivedLevel("name", WithinTrial(lambda x, y: x, [color, color]))
