@@ -98,6 +98,16 @@ class DerivedLevel(__Primitive):
     def __str__(self):
         return str(self.__dict__)
 
+def else_level(name):
+    return ElseLevel(name)
+
+class ElseLevel():
+    def __init__(self, name):
+        self.name = name
+    def __call__(self, fns, args, width: int, stride: int) -> DerivedLevel:
+        window = Window(lambda *args: not any(map(lambda fn: fn(*args), fns)), args, width, stride)
+        return DerivedLevel(self.name, window)
+
 
 def factor(name, levels):
     return Factor(name, levels)
@@ -112,7 +122,16 @@ class Factor(__Primitive):
         out_levels = []
         self.require_non_empty_list('Factor.levels', levels)
         for level in levels:
-            if isinstance(level, DerivedLevel):
+            if isinstance(level, ElseLevel):
+                other_levels = list(filter(lambda l: isinstance(l, DerivedLevel), levels))
+                if other_levels is None:
+                    out_levels.append(level([],[],0,0))
+                else:
+                    some_level = other_levels[0]
+                    other_functions = list(map(lambda dl: dl.window.fn, other_levels))
+                    args = some_level.window.args[::some_level.window.width]
+                    out_levels.append(level(other_functions, args, *some_level.window.size()))
+            elif isinstance(level, DerivedLevel):
                 out_levels.append(level)
             else:
                 out_levels.append(SimpleLevel(level))
@@ -130,21 +149,16 @@ class Factor(__Primitive):
                     ', but found ' + str(type(l)) + '.')
 
         if level_type == DerivedLevel:
-            window_type = type(self.levels[0].window)
-            for dl in self.levels:
-                if type(dl.window) != window_type:
-                    raise ValueError('Expected all DerivedLevel.window types to be ' +
-                        str(window_type) + ', but found ' + str(type(dl)) + '.')
             window_size = self.levels[0].window.size()
             for dl in self.levels:
                 if dl.window.size() != window_size:
                     raise ValueError('Expected all DerivedLevel.window sizes to be ' +
                         str(window_size) + ', but found ' + str(dl.window.size()) + '.')
-            window_args = set(self.levels[0].window.args)
+            window_args = self.levels[0].window.args
             for dl in self.levels:
-                if set(dl.window.args) != window_args:
+                if dl.window.args != window_args:
                     raise ValueError('Expected all DerivedLevel.window args to be ' +
-                            str(list(map(lambda x: x.factor_name, window_args))) + ', but found ' + str(list(map(lambda x:x.factor_name, set(dl.window.args)))) + '.')
+                            str(list(map(lambda x: x.factor_name, window_args))) + ', but found ' + str(list(map(lambda x:x.factor_name, dl.window.args))) + '.')
 
     def is_derived(self) -> bool:
         return isinstance(self.levels[0], DerivedLevel)
