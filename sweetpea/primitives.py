@@ -69,14 +69,10 @@ class DerivedLevel(__Primitive):
         window_type = type(self.window)
         allowed_window_types = [WithinTrial, Transition, Window]
         if window_type not in allowed_window_types:
-            raise ValueError('DerivedLevel.window must be one of ' +
-                str(allowed_window_types) + ', but was ' + str(window_type) + '.')
-
-        for f in filter(lambda f: f.is_derived(), self.window.args):
-            w = f.levels[0].window
-            if not (w.width == 1 and w.stride == 1):
-                raise ValueError("Derived levels may only be derived from factors that apply to each trial. '" +
-                    self.external_name + "' cannot derive from '" + f.factor_name + "'")
+            raise ValueError('DerivedLevel.window must be one of ' + str(allowed_window_types) + ', but was ' + str(window_type) + '.')
+        for f in self.window.args:
+            if f.has_complex_window() and f.levels[0].window.stride > 1:
+                raise ValueError('DerivedLevel can not take factors with stride > 1, found factor with stride = ' + str(f.levels[0].window.stride) + '.')
 
     def __expand_window_arguments(self) -> None:
         self.window.args = list(chain(*[list(repeat(arg, self.window.width)) for arg in self.window.args]))
@@ -104,8 +100,13 @@ def else_level(name):
 class ElseLevel():
     def __init__(self, name):
         self.name = name
-    def __call__(self, fns, args, width: int, stride: int) -> DerivedLevel:
-        window = Window(lambda *args: not any(map(lambda fn: fn(*args), fns)), args, width, stride)
+    def __call__(self, other_levels: List[DerivedLevel]) -> DerivedLevel:
+        if other_levels is None:
+            return DerivedLevel(self.name, WithinTrial(lambda: False, []))
+        some_level = other_levels[0]
+        other_functions = list(map(lambda dl: dl.window.fn, other_levels))
+        args = some_level.window.args[::some_level.window.width]
+        window = Window(lambda *args: not any(map(lambda l: l.window.fn(*args), other_levels)), args, *some_level.window.size())
         return DerivedLevel(self.name, window)
 
 
@@ -123,14 +124,7 @@ class Factor(__Primitive):
         self.require_non_empty_list('Factor.levels', levels)
         for level in levels:
             if isinstance(level, ElseLevel):
-                other_levels = list(filter(lambda l: isinstance(l, DerivedLevel), levels))
-                if other_levels is None:
-                    out_levels.append(level([],[],0,0))
-                else:
-                    some_level = other_levels[0]
-                    other_functions = list(map(lambda dl: dl.window.fn, other_levels))
-                    args = some_level.window.args[::some_level.window.width]
-                    out_levels.append(level(other_functions, args, *some_level.window.size()))
+                out_levels.append(level(list(filter(lambda l: isinstance(l, DerivedLevel), levels))))
             elif isinstance(level, DerivedLevel):
                 out_levels.append(level)
             else:
@@ -168,7 +162,7 @@ class Factor(__Primitive):
             return False
 
         window = self.levels[0].window
-        return window.width > 1 or window.stride > 1
+        return window.width > 1 or window.stride > 1 or window.args[0].has_complex_window()
 
     def get_level(self, level_name: str) -> Union[SimpleLevel, DerivedLevel]:
         for l in self.levels:
@@ -194,8 +188,12 @@ class Factor(__Primitive):
         if not self.is_derived():
             return True
 
+        def acc_width(w) -> int:
+            return w.width + (acc_width(w.args[0].levels[0].window)-1 if w.args[0].has_complex_window() else 0)
+
         window = self.levels[0].window
-        return trial_number >= window.width and (trial_number - window.width) % window.stride == 0
+
+        return trial_number >= acc_width(window) and (trial_number - window.width) % window.stride == 0
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
@@ -222,10 +220,14 @@ class __BaseWindow():
         for f in self.args:
             if not isinstance(f, Factor):
                 raise ValueError('Derivation level should be derived from factors, but found ' + str(f) + '.')
+        if self.width < 1:
+            raise ValueError('Window width must be at least 1, but found ' + str(self.width) + '.')
+        if self.stride < 1:
+            raise ValueError('Window width must be at least 1, but found ' + str(self.stride) + '.')
+
 
         if len(set(map(lambda f: f.factor_name, self.args))) != self.argc:
             raise ValueError('Factors should not be repeated in the argument list to a derivation function.')
-        # TODO: width >= stride?
 
 
 """

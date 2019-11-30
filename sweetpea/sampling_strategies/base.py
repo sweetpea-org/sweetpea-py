@@ -76,9 +76,11 @@ class SamplingStrategy(ABC):
             level_names = list(map(lambda t: (t[1].external_name), level_tuples))
 
             # Intersperse empty strings for the trials to which this factor does not apply.
-            level_names = list(intersperse('', level_names, f.levels[0].window.stride - 1))
-            level_names = list(repeat('', f.levels[0].window.width - 1)) + level_names
-
-            experiment[f.factor_name] = level_names
+            #level_names = list(intersperse('', level_names, f.levels[0].window.stride - 1))
+            #level_names = list(repeat('', f.levels[0].window.width - 1)) + level_names
+            level_names_fill = []
+            for n in range(block.trials_per_sample()):
+                level_names_fill.append(level_names.pop(0) if f.applies_to_trial(n+1) else '')
+            experiment[f.factor_name] = level_names_fill
 
         return experiment
