@@ -67,6 +67,22 @@ def fully_cross_block(design: List[Factor],
     return block
 
 
+"""
+Returns a block with multiple crossings that we'll process with synthesize! Carries with it the function that
+should be used for all CNF conversions.
+"""
+def multiple_cross_block(design: List[Factor],
+                      crossing: List[List[Factor]],
+                      constraints: List[Constraint],
+                      require_complete_crossing=True,
+                      cnf_fn=to_cnf_tseitin) -> Block:
+    all_constraints = cast(List[Constraint], [MultipleCross(), Consistency()]) + constraints
+    all_constraints = __desugar_constraints(all_constraints) #expand the constraints into a form we can process.
+    block = MultipleCrossBlock(design, crossing, all_constraints, require_complete_crossing, cnf_fn)
+    block.constraints += DerivationProcessor.generate_derivations(block)
+    return block
+
+
 def __desugar_constraints(constraints: List[Constraint]) -> List[Constraint]:
     desugared_constraints = []
     for c in constraints:
