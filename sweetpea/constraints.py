@@ -125,6 +125,7 @@ class FullyCross(Constraint):
         # Step 5: Constrain each crossing to occur in only one trial.
         states = list(chunk(state_vars, block.crossing_size_without_exclusions()))
         transposed = cast(List[List[int]], list(map(list, zip(*states))))
+
         # We Use n < 2 rather than n = 1 here because they may exclude some levels from the crossing.
         # This ensures that there won't be duplicates, while still allowing some to be missing.
         backend_request.ll_requests += list(map(lambda l: LowLevelRequest("LT", 2, l), transposed))

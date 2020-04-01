@@ -45,7 +45,8 @@ class DerivationProcessor:
         accum = []
 
         for fact in derived_factors:
-            according_level = {}
+            according_level : Dict[Tuple[Any, ...], DerivedLevel] = {} 
+            # according_level = {}
             for level in fact.levels:
                 level_index = block.first_variable_for_level(fact, level)
                 x_product = level.get_dependent_cross_product()

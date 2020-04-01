@@ -1,8 +1,7 @@
 import sys
 sys.path.append("..")
-from sweetpea.primitives import factor, derived_level, within_trial, transition
-from sweetpea.constraints import exactly_k, exactly_k_in_a_row, exclude
-from sweetpea import fully_cross_block, multiple_cross_block, synthesize_trials_non_uniform, print_experiments
+from sweetpea.primitives import factor, derived_level, within_trial
+from sweetpea import multiple_cross_block, synthesize_trials_non_uniform, print_experiments
 
 
 """
@@ -82,7 +81,6 @@ four_case = factor("four_case", [
 
 # DEFINE SEQUENCE CONSTRAINTS
 
-# constraints = [exactly_k(4, four_case)]
 constraints = []
 
 # DEFINE EXPERIMENT

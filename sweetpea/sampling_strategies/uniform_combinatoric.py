@@ -55,18 +55,18 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
         samples = []
         while sampled < sample_count:
             solution_variables = enumerator.generate_random_sample()
-            sample = SamplingStrategy.decode(block, solution_variables)
+            # sample = SamplingStrategy.decode(block, solution_variables)
 
-            if UniformCombinatoricSamplingStrategy.__are_constraints_violated(block, sample):
-                rejected += 1
-                continue
+            # if UniformCombinatoricSamplingStrategy.__are_constraints_violated(block, sample):
+            #     rejected += 1
+            #     continue
 
             metrics['rejections'].append(rejected)
             total_rejected += rejected
             rejected = 0
             sampled += 1
 
-            samples.append(sample)
+            samples.append(solution_variables)
 
         metrics['sample_count'] = sample_count
         metrics['total_rejected'] = total_rejected
@@ -197,13 +197,17 @@ class UCSolutionEnumerator():
                         trial_values[t][f] = level
 
         # 7. Convert to variable encoding for SAT checking
-        solution = cast(List[int], [])
+        # solution = cast(List[int], [])
+        experiment = cast(dict, {})
         for trial_number, trial_value in enumerate(trial_values):
             for factor, level in trial_value.items():
-                solution.append(self._block.get_variable(trial_number + 1, (factor, level)))
+                # solution.append(self._block.get_variable(trial_number + 1, (factor, level)))
+                if factor.factor_name not in experiment:
+                    experiment[factor.factor_name] = []
+                experiment[factor.factor_name].append(get_external_level_name(level))
 
-        solution.sort()
-        return solution
+        # solution.sort()
+        return experiment
 
     """
     Generates all the crossings, indexed by factor name for easy lookup later.

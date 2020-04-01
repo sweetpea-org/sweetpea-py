@@ -74,9 +74,9 @@ class DerivedLevel(__Primitive):
 
         for f in filter(lambda f: f.is_derived(), self.window.args):
             w = f.levels[0].window
-            # if not (w.width == 1 and w.stride == 1):
-            #     raise ValueError("Derived levels may only be derived from factors that apply to each trial. '" +
-            #         self.external_name + "' cannot derive from '" + f.factor_name + "'")
+            if not (w.width == 1 and w.stride == 1):
+                raise ValueError("Derived levels may only be derived from factors that apply to each trial. '" +
+                    self.external_name + "' cannot derive from '" + f.factor_name + "'")
 
     def __expand_window_arguments(self) -> None:
         self.window.args = list(chain(*[list(repeat(arg, self.window.width)) for arg in self.window.args]))
