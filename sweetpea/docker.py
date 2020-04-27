@@ -57,7 +57,7 @@ def stop_docker_container(container):
 
     print("Stopping docker container... ", end='', flush=True)
     t_start = datetime.now()
-    container.stop()
+    container.stop(timeout = 0)
     container.remove()
     t_end = datetime.now()
     print(str((t_end - t_start).seconds) + "s")
