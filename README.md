@@ -3,21 +3,21 @@ SweetPea
 
 [![Build Status](https://travis-ci.org/sweetpea-org/sweetpea-py.svg?branch=master)](https://travis-ci.org/sweetpea-org/sweetpea-py)
 
-SweetPea is a language for declaratively specifying randomized experimental designs, and a runtime for synthesizing trial sequences generated from the design specification; this prototype that is targeted at psychology and neuroscience experiments.
+SweetPea is a language for declaratively specifying randomized experimental designs and synthesizing trial sequences generated from the design specification. SweetPea is currently targeted at psychology and neuroscience experiments.
 
-An experimental design is a description of experimental factors, relationships between factors, sequential constraints, and how to map those factors onto a sequence of trials. The reliability and validity of experimental results heavily relies on rigorous experimental design.
+An experimental design is a description of experimental factors, relationships between factors, sequential constraints, and how to map those factors onto a sequence of trials. Such a design is constructed by calling SweetPea functions such as `factor`, `derived_factor`, or `at_most_k_in_a_row`.
 
-SweetPea provides a high-level interface to declaratively describe an experimental design, and a low-level synthesizer to generate unbiased sequences of trials given satisfiable constraints. SweetPea samples sequences of trials by compiling experimental designs into Boolean logic, which are then passed to a SAT-sampler. The SAT-sampler [Unigen](https://bitbucket.org/kuldeepmeel/unigen) provides statistical guarantees that the solutions it finds are approximately uniformly probable in the space of all valid solutions. This means that while producing sequences of trials that are perfectly unbiased is intractable, we do the next best thing-- produce sequences that are approximately unbiased.
+SweetPea includes a synthesizer to generate unbiased sequences of trials that satisfy the design's constraints. In the most general case, SweetPea compiles an experimental design into a boolean formula that is passed to a SAT sampler; the SAT sampler [Unigen](https://bitbucket.org/kuldeepmeel/unigen) provides statistical guarantees that the solutions it finds are approximately uniformly probable in the space of all valid solutions. Unfortunately, sampling this way is not tractable for all designs that can be expressed with SweetPea, and improving sampling strategies is a primary direction for ongoing work.
 
-## Disclaimer!
+## Disclaimer
 
-This project is at an early stage, and likely to change: it isn't yet ready for real-world useage. Please don't rely on any of this code!
+While the SweetPea language (as an API) is relatively stable, its interface is still likely to evolve for now. Use with caution.
 
 ## Usage
 
-SweetPea requires Python 3.5 or later. It also depends on [docker][1] being installed and running on your machine so that it can start a docker container for the backend server.
+SweetPea requires Python 3.5 or later. It also depends on [Docker][1] being installed and running on your machine so that it can start a container for the backend server.
 
-Intstall with `pip`:
+Intstall SweetPea with `pip`:
 
 ```
 pip install sweetpea
@@ -30,18 +30,18 @@ import operator as op
 
 from sweetpea import *
 
-color = Factor("color", ["red", "blue"])
-text  = Factor("text",  ["red", "blue"])
+color = factor("color", ["red", "blue"])
+text  = factor("text",  ["red", "blue"])
 
-conLevel  = DerivedLevel("con", WithinTrial(op.eq, [color, text]))
-incLevel  = DerivedLevel("inc", WithinTrial(op.ne, [color, text]))
-conFactor = Factor("congruent?", [conLevel, incLevel])
+con_level  = derived_level("con", within_trial(op.eq, [color, text]))
+inc_level  = derived_level("inc", within_trial(op.ne, [color, text]))
+con_factor = factor("congruent?", [con_level, inc_level])
 
-design       = [color, text, conFactor]
+design       = [color, text, con_factor]
 crossing     = [color, text]
 
 k = 1
-constraints = [AtMostKInARow(k, ("congruent?", "con"))]
+constraints = [at_most_k_in_a_row(k, (con_factor, con_level))]
 
 block        = fully_cross_block(design, crossing, constraints)
 
