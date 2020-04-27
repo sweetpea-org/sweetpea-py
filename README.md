@@ -57,7 +57,7 @@ Additional examples can be found in the `example_programs` directory.
 
 ### Setup
 
-It is recommended to prepare a [virtual environment][venv] for SweetPea development. From within the `sweetpea-py` directory, create a new venv:
+It is recommended to prepare a [virtual environment][2] for SweetPea development. From within the `sweetpea-py` directory, create a new venv:
 
 ```
 $ python3 -m venv sweetpea-py-env
@@ -99,27 +99,25 @@ Or:
 $ make full
 ```
 
-The acceptance tests depend on the SweetPea server. By default, the tests will start and stop the server for each test. This is incredibly slow, and would make the acceptance tests take hours to complete.
-
-To run the acceptance tests, it's recommended that you start the server container yourself:
+The acceptance tests depend on the SweetPea server. By default, the tests will start and stop the server for each test. It can be 2-3 times faster to start the server container yourself:
 
 ```
 $ docker run --rm -d -p 8080:8080 -p 6379:6379 sweetpea/server
 ```
 
-Then set an environment variable to tell SweetPea that you are managing the server yourself:
+and then set an environment variable to tell SweetPea that you are managing the server yourself:
 
 ```
 $ export SWEETPEA_EXTERNAL_DOCKER_MGMT=true
 ```
 
-When that environment variable is set, SweetPea will never try to start/stop the server container. Once that is done, the acceptance tests typically complete in 5-7 minutes.
+When that environment variable is set, SweetPea will never try to start/stop the server container, and the acceptance tests typically complete in 5-7 minutes.
 
 [1]: https://www.docker.com/
 [2]: https://docs.python.org/3/tutorial/venv.html
 
 # Specify a Port
-By default, SweetPea attempts to run its docker server using port 8080 on the host machine. If this port is not available, it can be changed by setting the SWEETPEA_DOCKER_PORT environment variable. For example, if SweetPea should instead run on port 5050, 
+By default, SweetPea attempts to run its docker server using port 8080 on the host machine. If this port is not available, it can be changed by setting the `SWEETPEA_DOCKER_PORT` environment variable. For example, if SweetPea should instead run on port 5050, 
 ```
 $ export SWEETPEA_DOCKER_PORT=5050
 ```
