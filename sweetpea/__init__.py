@@ -11,41 +11,8 @@ from sweetpea.primitives import *
 from sweetpea.constraints import *
 from sweetpea.sampling_strategies.base import SamplingStrategy
 from sweetpea.sampling_strategies.non_uniform import NonUniformSamplingStrategy
+from sweetpea.sampling_strategies.unigen import UnigenSamplingStrategy
 from sweetpea.server import submit_job, get_job_result, build_cnf
-
-# ~~~~~~~~~~ Helper functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-"""
-
-Takes the block of the provided trial and writes its preferences out to a configuration file.
-
-"""
-def save_cnf(block: Block, filename: str) -> None:
-    cnf_str = __generate_cnf(block)
-    with open(filename, 'w') as f:
-        f.write(cnf_str)
-
-"""
-Invokes the backend to build the final CNF formula in DIMACS format, returning it as a string.
-
-DIMACS format: Starting lines are marked by a c to denote a comment
-    after comments, there is a problem line denoted by a p. ex: (p cnf 3 4) means the problem is a cnf with 3 variables and 4 clauses.
-        variables: items that may change values
-        clauses: phrase containing both subject and a verb, but is not necessarily a full sentence. Longer than a phrase.
-    after the problem statement, the individual clauses are listed as numbers, and 0 marks the end of each claues.
-    for example, (x(9) AND y(2)) => 9 2 0, while (NOT x(9) OR y(2)) => -9 2 0.
-"""
-def __generate_cnf(block: Block) -> str:
-    update_docker_image("sweetpea/server")
-    container = start_docker_container("sweetpea/server", 8080)
-
-    try:
-        cnf_result = build_cnf(block)
-    finally:
-        stop_docker_container(container)
-
-    return cnf_result['cnf_str']
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~ Top-Level functions ~~~~~~~~~~~~~~~~~~~~~
@@ -111,7 +78,40 @@ calls unigen on the full cnf file. Then decodes that cnf file into (1) something
 
 PsyNeuLink is a software from Princeton that assists in creating block diagrams for these experiments.
 """
-def synthesize_trials(block: Block, samples: int=10, sampling_strategy=NonUniformSamplingStrategy) -> List[dict]:
+def synthesize_trials(block: Block, samples: int=10, sampling_strategy=UnigenSamplingStrategy) -> List[dict]:
     print("Sampling {} trial sequences using the {}".format(samples, sampling_strategy))
     sampling_result = sampling_strategy.sample(block, samples)
     return sampling_result.samples
+
+"""
+Takes the block of the provided trial and writes its preferences out to a configuration file.
+
+"""
+def save_cnf(block: Block, filename: str) -> None:
+    cnf_str = __generate_cnf(block)
+    with open(filename, 'w') as f:
+        f.write(cnf_str)
+
+# ~~~~~~~~~~ Helper functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+"""
+Invokes the backend to build the final CNF formula in DIMACS format, returning it as a string.
+
+DIMACS format: Starting lines are marked by a c to denote a comment
+    after comments, there is a problem line denoted by a p. ex: (p cnf 3 4) means the problem is a cnf with 3 variables and 4 clauses.
+        variables: items that may change values
+        clauses: phrase containing both subject and a verb, but is not necessarily a full sentence. Longer than a phrase.
+    after the problem statement, the individual clauses are listed as numbers, and 0 marks the end of each claues.
+    for example, (x(9) AND y(2)) => 9 2 0, while (NOT x(9) OR y(2)) => -9 2 0.
+"""
+def __generate_cnf(block: Block) -> str:
+    update_docker_image("sweetpea/server")
+    container = start_docker_container("sweetpea/server", 8080)
+
+    try:
+        cnf_result = build_cnf(block)
+    finally:
+        stop_docker_container(container)
+
+    return cnf_result['cnf_str']

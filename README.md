@@ -3,9 +3,8 @@ SweetPea
 
 [![Build Status](https://travis-ci.org/sweetpea-org/sweetpea-py.svg?branch=master)](https://travis-ci.org/sweetpea-org/sweetpea-py)
 
-SweetPea is a language for declaratively specifying randomized experimental designs and synthesizing trial sequences generated from the design specification. SweetPea is currently targeted at psychology and neuroscience experiments.
-
-An experimental design is a description of experimental factors, relationships between factors, sequential constraints, and how to map those factors onto a sequence of trials. Such a design is constructed by calling SweetPea functions such as `factor`, `derived_factor`, or `at_most_k_in_a_row`.
+SweetPea is a language for declaratively specifying randomized experimental designs and synthesizing trial sequences generated from the design specification.
+An experimental design is a description of experimental factors, relationships between factors, sequential constraints, and how to map those factors onto a sequence of trials. Such a design is constructed by calling SweetPea functions such as `fully_cross_block`, `factor`, `derived_level`, and `at_most_k_in_a_row`.
 
 SweetPea includes a synthesizer to generate unbiased sequences of trials that satisfy the design's constraints. In the most general case, SweetPea compiles an experimental design into a boolean formula that is passed to a SAT sampler; the SAT sampler [Unigen](https://bitbucket.org/kuldeepmeel/unigen) provides statistical guarantees that the solutions it finds are approximately uniformly probable in the space of all valid solutions. Unfortunately, sampling this way is not tractable for all designs that can be expressed with SweetPea, and improving sampling strategies is a primary direction for ongoing work.
 
