@@ -1,0 +1,9 @@
+@import url("pyramid.css");
+
+code {
+    font-size: 130%;
+}
+
+code.descname {
+    font-size: 150%;
+}

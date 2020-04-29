@@ -29,3 +29,8 @@ sweetpea.egg-info
 .DS_Store
 __pycache__
 .mypy_cache
+*~
+\#*
+.#*
+sweetpea-py-env/
+doc/_build

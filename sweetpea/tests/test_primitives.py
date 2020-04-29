@@ -1,7 +1,7 @@
 import operator as op
 import pytest
 
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window, get_external_level_name, SimpleLevel
+from sweetpea.primitives import Factor, DerivedLevel, ElseLevel, WithinTrial, Transition, Window, get_external_level_name, SimpleLevel
 from sweetpea.tests.test_utils import get_level_from_name
 
 color = Factor("color", ["red", "blue"])
@@ -31,7 +31,7 @@ def test_factor_validation():
     Factor("name", ["a", "b", "a"])
     Factor("name", [
         DerivedLevel("a", WithinTrial(op.eq, [color, text])),
-        DerivedLevel("a", WithinTrial(op.ne, [text, color]))
+        ElseLevel("a")
     ])
 
     # Non-string name
@@ -113,10 +113,6 @@ def test_derived_level_validation():
     with pytest.raises(ValueError):
         DerivedLevel("name", 42)
 
-    # Nested derived level
-    with pytest.raises(ValueError):
-        DerivedLevel("name", WithinTrial(op.eq, [color_repeats_factor]))
-
 def test_derived_level_argument_list_expansion():
     # We should internally duplicate each factor to match the width of the window.
     assert color_repeats_level.window.args == [color, color]
@@ -165,6 +161,12 @@ def test_derived_level_get_dependent_cross_product():
 def test_derived_level_equality():
     assert con_level == con_level
 
+def test_else_level():
+    color = Factor("color", ["red", "blue"])
+    text  = Factor("text",  ["red", "blue"])
+
+    conLevel  = DerivedLevel("con", WithinTrial(op.eq, [color, text]))
+    conFactor = Factor("congruent?", [conLevel, ElseLevel("inc")])
 
 def __get_response_transition() -> Factor:
     color  = Factor("color",  ["red", "blue", "green"])
