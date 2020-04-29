@@ -13,10 +13,11 @@ Constraints
                         to allow
               :type k: int
               :param levels: either a factor or a tuple of a factor
-                             and level names within the factor;
+                             and a level name within the factor;
                              specifying just a factor is the same as
-                             listing all of the factor's levels
-              :type levels: Union[Factor, Tuple(Factor, list)]
+                             listing all of the factor's levels as
+                             separate constraints
+              :type levels: Union[Factor, Tuple(Factor, Any)]
               :rtype: Constraint
 
 .. function:: no_more_than_k_in_a_row(k, levels)
@@ -35,17 +36,17 @@ Constraints
               :param levels: either a factor or a tuple of a factor
                              and level names within the factor;
                              specifying just a factor is the same as
-                             listing all of the factor's levels
-              :type levels: Union[Factor, Tuple(Factor, list)]
+                             listing all of the factor's levels as
+                             separate constraints
+              :type levels: Union[Factor, Tuple(Factor, Any)]
               :rtype: Constraint
 
-.. function:: exclude(factor, levels)
+.. function:: exclude(factor, level)
 
               Constrains an experiment to disallow the specified
-              levels.
+              level.
 
               :param factor: the factor whose levels are named by `levels`
               :type factor: Factor
-              :param levels: a list of level names among the levels in `factor`
-              :type levels: list
+              :param levels: a level name among the levels in `factor`
               :rtype: Constraint
