@@ -11,6 +11,8 @@ from sweetpea.primitives import *
 from sweetpea.constraints import *
 from sweetpea.sampling_strategies.base import SamplingStrategy
 from sweetpea.sampling_strategies.non_uniform import NonUniformSamplingStrategy
+from sweetpea.sampling_strategies.unigen import UnigenSamplingStrategy
+from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy
 from sweetpea.server import submit_job, get_job_result, build_cnf
 
 # ~~~~~~~~~~ Helper functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -64,6 +66,8 @@ def fully_cross_block(design: List[Factor],
     all_constraints = __desugar_constraints(all_constraints) #expand the constraints into a form we can process.
     block = FullyCrossBlock(design, crossing, all_constraints, require_complete_crossing, cnf_fn)
     block.constraints += DerivationProcessor.generate_derivations(block)
+    if not constraints and not list(filter(lambda f: f.is_derived(), crossing)):
+        block.complex_factors_or_constraints = False
     return block
 
 
@@ -116,8 +120,17 @@ TODO this seems to be a bandaid for the issues unigen presents. Perhaps there is
     Currently, we have the block and the samples, and want a dictionary output. (Haskell like notation).
 """
 def synthesize_trials_non_uniform(block: Block, samples: int) -> List[dict]:
-    return synthesize_trials(block, samples, sampling_strategy=NonUniformSamplingStrategy)
+    if block.complex_factors_or_constraints:
+        return synthesize_trials(block, samples, sampling_strategy=NonUniformSamplingStrategy)
+    else:
+        return synthesize_trials(block, samples, sampling_strategy=UniformCombinatoricSamplingStrategy)
 
+
+def synthesize_trials_uniform(block: Block, samples: int) -> List[dict]:
+    if block.complex_factors_or_constraints:
+        return synthesize_trials(block, samples, sampling_strategy=UnigenSamplingStrategy)
+    else:
+        return synthesize_trials(block, samples, sampling_strategy=UniformCombinatoricSamplingStrategy)
 
 """
 This is where the magic happens. Desugars the constraints from fully_cross_block (which results

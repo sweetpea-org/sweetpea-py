@@ -26,6 +26,7 @@ class Block:
         self.crossing = list(crossing).copy()
         self.constraints = list(constraints).copy()
         self.cnf_fn = cnf_fn
+        self.complex_factors_or_constraints = True
         self.__validate();
 
     def __validate(self):
@@ -377,15 +378,16 @@ class MultipleCrossBlock(Block):
 
     def __validate_crossing(self):
         dg = DesignGraph(self.design).graph
-        combos = combinations(self.crossing, 2)
-
         warnings = []
         template = "'{}' depends on '{}'"
-        for c in combos:
-            if has_path(dg, c[0].factor_name, c[1].factor_name):
-                warnings.append(template.format(c[0].factor_name, c[1].factor_name))
-            elif has_path(dg, c[1].factor_name, c[0].factor_name):
-                warnings.append(template.format(c[1].factor_name, c[0].factor_name))
+        for crossing in self.crossings:
+            combos = combinations(crossing, 2)
+
+            for c in combos:
+                if has_path(dg, c[0].factor_name, c[1].factor_name):
+                    warnings.append(template.format(c[0].factor_name, c[1].factor_name))
+                elif has_path(dg, c[1].factor_name, c[0].factor_name):
+                    warnings.append(template.format(c[1].factor_name, c[0].factor_name))
 
         if warnings:
             print("WARNING: There are dependencies between factors in the crossing. This may lead to unsatisfiable designs.\n" + reduce(lambda accum, s: accum + s + "\n", warnings, ""))

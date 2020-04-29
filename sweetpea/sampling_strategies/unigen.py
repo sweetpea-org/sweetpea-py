@@ -63,7 +63,7 @@ class UnigenSamplingStrategy(SamplingStrategy):
         try:
             check_server_health()
 
-            experiments_request = requests.post('http://localhost:8080/experiments/generate', data = json_data)
+            experiments_request = requests.post('http://localhost:8080/experiments/generate', data = json.dumps(json_data))
             if experiments_request.status_code != 200 or not experiments_request.json()['ok']:
                 tmp_filename = ""
                 with tempfile.NamedTemporaryFile(delete=False, mode="w+") as f:
