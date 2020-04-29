@@ -1,12 +1,13 @@
+from collections import namedtuple
 from abc import abstractmethod
 from copy import deepcopy
 from typing import List, Tuple, Any, Union, cast
-from itertools import product, chain, accumulate, repeat
+from itertools import product, chain, accumulate, repeat, combinations
 from functools import reduce
 
 from sweetpea.base_constraint import Constraint
 from sweetpea.internal import chunk, chunk_list, pairwise
-from sweetpea.blocks import Block, FullyCrossBlock
+from sweetpea.blocks import Block, FullyCrossBlock, MultipleCrossBlock
 from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import If, Iff, And, Or, Not, FormulaWithIff
 from sweetpea.primitives import Factor, get_internal_level_name, SimpleLevel, DerivedLevel
@@ -133,6 +134,48 @@ class FullyCross(Constraint):
 
         backend_request.cnfs.append(cnf)
         backend_request.fresh = new_fresh
+
+
+class MultipleCross(Constraint):
+    def validate(self, block: Block) -> None:
+        pass
+
+    @staticmethod
+    def apply(block: MultipleCrossBlock, backend_request: BackendRequest) -> None:
+        # Treat each crossing seperately, and repeat the same process as fullycross
+        for c in block.crossings:
+            fresh = backend_request.fresh
+
+            # Step 1: Get a list of the trials that are involved in the crossing.
+            crossing_size = reduce(lambda sum, factor: sum * len(factor.levels), c, 1)
+            crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t), c)), range(1, block.trials_per_sample() + 1)))
+            crossing_trials = crossing_trials[:crossing_size]
+
+            # Step 2: For each trial, cross all levels of all factors in the crossing.
+            crossings = []
+            for t in crossing_trials:
+                crossings.extend(list(product(*[block.factor_variables_for_trial(f, t) for f in c])))
+
+            # Step 3: Allocate additional variables to represent each crossing.
+            num_state_vars = len(crossings)
+            state_vars = list(range(fresh, fresh + num_state_vars))
+            fresh += num_state_vars
+
+            # Step 4: Associate each state variable with its crossing.
+            iffs = [Iff(state_vars[n], And(list(crossings[n]))) for n in range(len(state_vars))]
+
+            # Step 5: Constrain each crossing to occur in only one trial.
+            states = list(chunk(state_vars, crossing_size))
+            
+            transposed = cast(List[List[int]], list(map(list, zip(*states))))
+            # We Use n < 2 rather than n = 1 here because they may exclude some levels from the crossing.
+            # This ensures that there won't be duplicates, while still allowing some to be missing.
+            backend_request.ll_requests += list(map(lambda l: LowLevelRequest("LT", 2, l), transposed))
+
+            (cnf, new_fresh) = block.cnf_fn(And(iffs), fresh)
+
+            backend_request.cnfs.append(cnf)
+            backend_request.fresh = new_fresh
 
 
 """
@@ -364,6 +407,24 @@ class NoMoreThanKInARow(Constraint):
 """
 Requires that if the given level exists at all, it must exist in a sequence of exactly K.
 """
+def exactly_k(k ,levels):
+    return ExactlyK(k ,levels)
+
+class ExactlyK(_KInARow):
+    def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], backend_request: BackendRequest) -> None:
+        sublists = block.build_variable_list(level)
+        backend_request.ll_requests.append(LowLevelRequest("EQ", self.k, sublists))
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    def __repr__(self):
+        return str(self.__dict__)
+
+    def __str__(self):
+        return str(self.__dict__)
+
+
 def exactly_k_in_a_row(k, levels):
     return ExactlyKInARow(k, levels)
 
@@ -386,7 +447,6 @@ class ExactlyKInARow(_KInARow):
                 q = And(q_list) if len(q_list) > 1 else q_list[0]
             else:
                 q = And(l[1:]) if len(l[1:]) > 1 else l[self.k - 1]
-
             implications.append(If(p, q))
 
         # Handle the tail

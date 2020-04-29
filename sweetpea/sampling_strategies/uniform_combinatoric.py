@@ -55,18 +55,18 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
         samples = []
         while sampled < sample_count:
             solution_variables = enumerator.generate_random_sample()
-            sample = SamplingStrategy.decode(block, solution_variables)
+            # sample = SamplingStrategy.decode(block, solution_variables)
 
-            if UniformCombinatoricSamplingStrategy.__are_constraints_violated(block, sample):
-                rejected += 1
-                continue
+            # if UniformCombinatoricSamplingStrategy.__are_constraints_violated(block, sample):
+            #     rejected += 1
+            #     continue
 
             metrics['rejections'].append(rejected)
             total_rejected += rejected
             rejected = 0
             sampled += 1
 
-            samples.append(sample)
+            samples.append(solution_variables)
 
         metrics['sample_count'] = sample_count
         metrics['total_rejected'] = total_rejected
@@ -173,19 +173,22 @@ class UCSolutionEnumerator():
             source_combinations.append(self._source_combinations[source_combination_index_for_component])
 
         # 4. Generate the combinations for independent basic factors
-        independent_factor_combinations = cast(List[List[dict]], [[{}]] * l)
+        independent_factor_combinations = cast(List[dict], [{}] *l)
         u_b_i = self._partitions.get_uncrossed_basic_independent_factors()
-        for f_idx, independent_combination_idx in enumerate(components[l + 1:]):
-            f = u_b_i[f_idx]
-            combo = compute_jth_combination(l, len(f.levels), independent_combination_idx)
-            combo_dicts = [{f: f.levels[level_idx] for level_idx in combo}]
-            independent_factor_combinations[f_idx] = combo_dicts
+        if u_b_i:
+            independent_combination_idx = components[l+1]
+            for f in u_b_i:
+                combo = compute_jth_combination(l, len(f.levels), independent_combination_idx)
+                for i in range(l):
+                    if not independent_factor_combinations[i]:
+                        independent_factor_combinations[i] = {f : f.levels[combo[i]]}
+                        continue
+                    independent_factor_combinations[i][f] = f.levels[combo[i]]
 
         # 5. Merge the selected levels gathered so far to facilitate computing the uncrossed derived factor levels.
         trial_values = cast(List[dict], [{}] * l)
         for t in range(l):
-            i_d_f = {k: v for d in independent_factor_combinations[t] for k, v in d.items()}
-            trial_values[t] = {**permutation[t], **source_combinations[t], **i_d_f}
+            trial_values[t] = {**permutation[t], **source_combinations[t], **independent_factor_combinations[t]}
 
         # 6. Generate uncrossed derived level values
         u_d = self._partitions.get_uncrossed_derived_factors()
@@ -197,13 +200,16 @@ class UCSolutionEnumerator():
                         trial_values[t][f] = level
 
         # 7. Convert to variable encoding for SAT checking
-        solution = cast(List[int], [])
+        # solution = cast(List[int], [])
+        experiment = cast(dict, {})
         for trial_number, trial_value in enumerate(trial_values):
             for factor, level in trial_value.items():
-                solution.append(self._block.get_variable(trial_number + 1, (factor, level)))
-
-        solution.sort()
-        return solution
+                # solution.append(self._block.get_variable(trial_number + 1, (factor, level)))
+                if factor.factor_name not in experiment:
+                    experiment[factor.factor_name] = []
+                experiment[factor.factor_name].append(get_external_level_name(level))
+        # solution.sort()
+        return experiment
 
     """
     Generates all the crossings, indexed by factor name for easy lookup later.

@@ -12,6 +12,7 @@ from sweetpea.constraints import *
 from sweetpea.sampling_strategies.base import SamplingStrategy
 from sweetpea.sampling_strategies.non_uniform import NonUniformSamplingStrategy
 from sweetpea.sampling_strategies.unigen import UnigenSamplingStrategy
+from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy
 from sweetpea.server import submit_job, get_job_result, build_cnf
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -30,6 +31,24 @@ def fully_cross_block(design: List[Factor],
     all_constraints = cast(List[Constraint], [FullyCross(), Consistency()]) + constraints
     all_constraints = __desugar_constraints(all_constraints) #expand the constraints into a form we can process.
     block = FullyCrossBlock(design, crossing, all_constraints, require_complete_crossing, cnf_fn)
+    block.constraints += DerivationProcessor.generate_derivations(block)
+    if not constraints and not list(filter(lambda f: f.is_derived(), crossing)):
+        block.complex_factors_or_constraints = False
+    return block
+
+
+"""
+Returns a block with multiple crossings that we'll process with synthesize! Carries with it the function that
+should be used for all CNF conversions.
+"""
+def multiple_cross_block(design: List[Factor],
+                      crossing: List[List[Factor]],
+                      constraints: List[Constraint],
+                      require_complete_crossing=True,
+                      cnf_fn=to_cnf_tseitin) -> Block:
+    all_constraints = cast(List[Constraint], [MultipleCross(), Consistency()]) + constraints
+    all_constraints = __desugar_constraints(all_constraints) #expand the constraints into a form we can process.
+    block = MultipleCrossBlock(design, crossing, all_constraints, require_complete_crossing, cnf_fn)
     block.constraints += DerivationProcessor.generate_derivations(block)
     return block
 
@@ -67,8 +86,17 @@ TODO this seems to be a bandaid for the issues unigen presents. Perhaps there is
     Currently, we have the block and the samples, and want a dictionary output. (Haskell like notation).
 """
 def synthesize_trials_non_uniform(block: Block, samples: int) -> List[dict]:
-    return synthesize_trials(block, samples, sampling_strategy=NonUniformSamplingStrategy)
+    if block.complex_factors_or_constraints:
+        return synthesize_trials(block, samples, sampling_strategy=NonUniformSamplingStrategy)
+    else:
+        return synthesize_trials(block, samples, sampling_strategy=UniformCombinatoricSamplingStrategy)
 
+
+def synthesize_trials_uniform(block: Block, samples: int) -> List[dict]:
+    if block.complex_factors_or_constraints:
+        return synthesize_trials(block, samples, sampling_strategy=UnigenSamplingStrategy)
+    else:
+        return synthesize_trials(block, samples, sampling_strategy=UniformCombinatoricSamplingStrategy)
 
 """
 This is where the magic happens. Desugars the constraints from fully_cross_block (which results

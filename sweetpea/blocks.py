@@ -26,6 +26,7 @@ class Block:
         self.crossing = list(crossing).copy()
         self.constraints = list(constraints).copy()
         self.cnf_fn = cnf_fn
+        self.complex_factors_or_constraints = True
         self.__validate();
 
     def __validate(self):
@@ -345,6 +346,134 @@ class FullyCrossBlock(Block):
 
     def crossing_size_without_exclusions(self):
         return reduce(lambda sum, factor: sum * len(factor.levels), self.crossing, 1)
+
+    def draw_design_graph(self):
+        dg = DesignGraph(self.design)
+        dg.draw()
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    def __repr__(self):
+        return str(self.__dict__)
+
+    def __str__(self):
+        return str(self.__dict__)
+
+"""
+A multiple-crossed block. This block generates as many trials as needed to
+cross the levels across factors mentioned as lists in the block's crossing.
+"""
+class MultipleCrossBlock(Block):
+    def __init__(self, design, crossing, constraints, require_complete_crossing=True, cnf_fn=to_cnf_tseitin):
+        super().__init__(design, [], constraints, cnf_fn)
+        self.crossings = crossing
+        self.require_complete_crossing = require_complete_crossing
+        if not self.require_complete_crossing:
+            print("WARNING: Some combinations have been excluded, this crossing may not be complete!")
+        self.__validate()
+
+    def __validate(self):
+        self.__validate_crossing()
+
+    def __validate_crossing(self):
+        dg = DesignGraph(self.design).graph
+        warnings = []
+        template = "'{}' depends on '{}'"
+        for crossing in self.crossings:
+            combos = combinations(crossing, 2)
+
+            for c in combos:
+                if has_path(dg, c[0].factor_name, c[1].factor_name):
+                    warnings.append(template.format(c[0].factor_name, c[1].factor_name))
+                elif has_path(dg, c[1].factor_name, c[0].factor_name):
+                    warnings.append(template.format(c[1].factor_name, c[0].factor_name))
+
+        if warnings:
+            print("WARNING: There are dependencies between factors in the crossing. This may lead to unsatisfiable designs.\n" + reduce(lambda accum, s: accum + s + "\n", warnings, ""))
+
+    """
+    Given a factor f, and a crossing size, this function will compute the number of trials
+    required to fully cross f with the other factors.
+
+    For example, if f is a transition, it doesn't apply to trial 1. So when the crossing_size
+    is 4, we'd actually need 5 trials to fully cross with f.
+
+    This is a helper for trials_per_sample.
+    """
+    def __trials_required_for_crossing(self, f: Factor, crossing_size: int) -> int:
+        trial = 0
+        counter = 0
+        while counter != crossing_size:
+            trial += 1
+            if f.applies_to_trial(trial):
+                counter += 1
+        return trial
+
+    def trials_per_sample(self):
+        crossing_size = self.crossing_size()
+        required_trials = list(map(max, list(map(lambda c: list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size), c)), self.crossings))))
+        # required_trials = list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size), self.crossing))
+        return max(required_trials)
+
+    def variables_per_trial(self):
+        # Factors with complex windows are excluded because we don't want variables allocated
+        # in every trial when the window spans multiple trials.
+        grid_factors = filter(lambda f: not f.has_complex_window(), self.design)
+        return sum([len(factor.levels) for factor in grid_factors])
+
+    def grid_variables(self):
+        return self.trials_per_sample() * self.variables_per_trial()
+
+    """
+    This method is responsible for determining the number of trials that should be excluded from the full
+    crossing, based on any `Exclude` constraints that the user provides.
+    A single `Exclude` constraint may prevent multiple crossings, depending on the derivation function used.
+    """
+    def __count_exclusions(self):
+        from sweetpea.constraints import Exclude
+
+        excluded_crossings = set()
+
+        # Get the exclude constraints.
+        exclusions = list(filter(lambda c: isinstance(c, Exclude), self.constraints))
+        if not exclusions:
+            return 0
+
+        # If there are any, generate the full crossing as a list of tuples.
+        levels_lists = [list(f.levels) for f in self.crossing]
+        all_crossings = list(product(*levels_lists))
+
+        for constraint in exclusions:
+            if constraint.factor.has_complex_window():
+                # If the excluded factor has a complex window, then we don't need
+                # to reduce the sequence length. What if the transition being excluded
+                # is in the crossing? If it is, then they shouldn't be excluding it.
+                # We should give an error if we detect that.
+                continue
+
+            # Retrieve the derivation function that defines this exclusion.
+            excluded_level = constraint.level
+
+            # For each crossing, extract the levels for this derviation function, and execute it.
+            for c in all_crossings:
+                args = [get_external_level_name(c[i]) for i in map(lambda f: self.crossing.index(f), excluded_level.window.args)]
+                # Invoking the fn this way is only ok because we only do this for WithinTrial windows.
+                # With complex windows, it wouldn't work due to the list aspect for each argument.
+
+                if excluded_level.window.fn(*args):
+                    excluded_crossings.add(get_internal_level_name(c[0]) + ", " + get_internal_level_name(c[1]))
+
+        return len(excluded_crossings)
+
+    def crossing_size(self):
+        crossing_size = self.crossing_size_without_exclusions()
+        if not self.require_complete_crossing:
+            crossing_size -= self.__count_exclusions()
+        return crossing_size
+
+    def crossing_size_without_exclusions(self):
+        return max(map(lambda c: reduce(lambda sum, factor: sum * len(factor.levels), c, 1), self.crossings))
 
     def draw_design_graph(self):
         dg = DesignGraph(self.design)
