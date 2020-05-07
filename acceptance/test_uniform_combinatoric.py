@@ -36,7 +36,7 @@ def test_uniform_combinatoric_is_always_valid(filename):
         sample_count = min(enumerator.solution_count(), 200)
         print("Checking that UC samples are SAT for {}, sample count={}".format(filename, sample_count))
         for s in range(sample_count):
-            sample = enumerator.generate_random_sample()
+            sample = enumerator.generate_solution_variables()
             if not is_cnf_still_sat(cnf_id, [And(sample)]):
                 failures.append("Found UNSAT solution! Solution={} File={}".format(sample, filename))
 

@@ -32,7 +32,7 @@ def fully_cross_block(design: List[Factor],
     all_constraints = __desugar_constraints(all_constraints) #expand the constraints into a form we can process.
     block = FullyCrossBlock(design, crossing, all_constraints, require_complete_crossing, cnf_fn)
     block.constraints += DerivationProcessor.generate_derivations(block)
-    if not constraints and not list(filter(lambda f: f.is_derived(), crossing)):
+    if not constraints and not list(filter(lambda f: f.is_derived(), crossing)) and not list(filter(lambda f: f.has_complex_window(), design)):
         block.complex_factors_or_constraints = False
     return block
 

@@ -1,10 +1,11 @@
 import operator as op
 import random
+import numpy as np
 
 from functools import reduce
 from itertools import product
 from math import factorial
-from typing import List, cast
+from typing import List, cast, Tuple
 
 from sweetpea.blocks import Block, FullyCrossBlock
 from sweetpea.combinatorics import extract_components, compute_jth_inversion_sequence, construct_permutation, compute_jth_combination
@@ -52,9 +53,11 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
         sampled = 0
         rejected = 0
         total_rejected = 0
-        samples = []
+        samples = cast(List[dict], [])
+        sequence_numbers = np.arange(enumerator.solution_count())
         while sampled < sample_count:
-            solution_variables = enumerator.generate_random_sample()
+            solution_variables = enumerator.generate_random_sample(sequence_numbers)
+            sequence_numbers = sequence_numbers[sequence_numbers != solution_variables[0]]
             # sample = SamplingStrategy.decode(block, solution_variables)
 
             # if UniformCombinatoricSamplingStrategy.__are_constraints_violated(block, sample):
@@ -66,7 +69,9 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
             rejected = 0
             sampled += 1
 
-            samples.append(solution_variables)
+            samples.append(solution_variables[1])
+            if sequence_numbers.size == 0:
+                break
 
         metrics['sample_count'] = sample_count
         metrics['total_rejected'] = total_rejected
@@ -145,13 +150,36 @@ class UCSolutionEnumerator():
     def solution_count(self):
         return self._solution_count
 
-    def generate_random_sample(self) -> List[int]:
+    def generate_random_sample(self, sample_array: List[int]) -> Tuple[int, dict]:
         # Select a random number from the range of solutions.
-        # sequence_number = np.random.randint(0, self._solution_count, dtype=np.long)
-        sequence_number = random.randrange(0, self._solution_count)
-        return self.generate_sample(sequence_number)
+        sequence_number = np.random.choice(sample_array, 1)[0]
+        return (sequence_number, self.generate_sample(sequence_number))
 
-    def generate_sample(self, sequence_number: int) -> List[int]:
+    def generate_sample(self, sequence_number: int) -> dict:
+        trial_values = self.generate_trail_values(sequence_number)
+
+        experiment = cast(dict, {})
+        for trial_number, trial_value in enumerate(trial_values):
+            for factor, level in trial_value.items():
+                # solution.append(self._block.get_variable(trial_number + 1, (factor, level)))
+                if factor.factor_name not in experiment:
+                    experiment[factor.factor_name] = []
+                experiment[factor.factor_name].append(get_external_level_name(level))
+        # solution.sort()
+        return experiment
+
+    def generate_solution_variables(self) -> List[int]:
+        sequence_number = random.randrange(0, self._solution_count)
+        trial_values = self.generate_trail_values(sequence_number)
+
+        solution = cast(List[int], [])
+        for trial_number, trial_value in enumerate(trial_values):
+            for factor, level in trial_value.items():
+                solution.append(self._block.get_variable(trial_number + 1, (factor, level)))
+        solution.sort()
+        return solution
+
+    def generate_trail_values(self, sequence_number: int) -> List[dict]:
         # 1. Extract the component pieces (permutation, each combination setting, etc)
         #    The 0th component is always the permutation index.
         #    The 1st-nth components are always the source combination indices for each trial in the sequence
@@ -200,16 +228,17 @@ class UCSolutionEnumerator():
                         trial_values[t][f] = level
 
         # 7. Convert to variable encoding for SAT checking
-        # solution = cast(List[int], [])
-        experiment = cast(dict, {})
-        for trial_number, trial_value in enumerate(trial_values):
-            for factor, level in trial_value.items():
-                # solution.append(self._block.get_variable(trial_number + 1, (factor, level)))
-                if factor.factor_name not in experiment:
-                    experiment[factor.factor_name] = []
-                experiment[factor.factor_name].append(get_external_level_name(level))
-        # solution.sort()
-        return experiment
+        return trial_values
+
+        # experiment = cast(dict, {})
+        # for trial_number, trial_value in enumerate(trial_values):
+        #     for factor, level in trial_value.items():
+        #         # solution.append(self._block.get_variable(trial_number + 1, (factor, level)))
+        #         if factor.factor_name not in experiment:
+        #             experiment[factor.factor_name] = []
+        #         experiment[factor.factor_name].append(get_external_level_name(level))
+        # # solution.sort()
+        # return experiment
 
     """
     Generates all the crossings, indexed by factor name for easy lookup later.
