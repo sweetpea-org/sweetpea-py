@@ -51,6 +51,49 @@ generate trials for the experiment using :func:`.synthesize_trials` or
    :return: a block description
    :rtype: Block
 
+.. function:: sweetpea.multiple_cross_block(design, crossing, constraints, require_complete_crossing=True)
+
+   Creates an experiment description as a block of trials.
+
+   The :func:`multiple_cross_block` function is a secondary way of
+   describing an expression. The result is an object that be used with
+   a function like :func:`synthesize_trials`.
+
+   The `design` argument lists all of the factors in the design. When
+   a sequence of trials is generated, each trial will have one level
+   from each factor in `design`.
+
+   The number of trials in each run of the experiment is determined by
+   the maximum of the `crossing` arguments. Specifically, the number of 
+   trials is the product of the maximum number of levels of the factors 
+   in `crossing`.
+
+   Different trial sequences of the experiment will have different
+   combinations of levels in different orders of all the crossings. 
+   The list of lists of factors in `crossing` supply implicit constraints,
+   which is that every combination of levels in the crossings should 
+   appear atleast once. Derive factors impose additional implement 
+   constraints: only combinations of levels that are consistent with 
+   derivations can appear as a trail. Finally, the `constraints` argument 
+   can impose additional constraints on the generated trials.
+
+   :param design: the factors that make up the design
+   :type design: List[Factor]
+   :param cross: factors that are fully crossed in the block's trials,
+                 which must be a subset of the `design` list
+   :type cross: List[List[Factor]]
+   :param constraints: constraints that every sequence of trials must
+                       satify; see :ref:`constraints`
+   :type constraints: List[Constraint]
+   :param require_complete_crossing: dertemines whether every
+                                     combination in `crossing` must
+                                     appear in a block of trials; a
+                                     false value is appropriate if
+                                     combinations are excluded through
+                                     an :func:`exclude` constraint
+   :return: a block description
+   :rtype: Block
+
 .. function:: sweetpea.synthesize_trials(block, samples=10, sampling_strategy=...)
 
    Given an experiment description, randomly generates multiple blocks of trials.
@@ -80,8 +123,24 @@ generate trials for the experiment using :func:`.synthesize_trials` or
            
 .. function:: sweetpea.synthesize_trials_nonuniform(block, samples)
                                
-   A shorthand for :func:`synthesize_trials` with the samepling
-   strategy :class:`.NonUniformSamplingStrategy`.
+   A shorthand for :func:`synthesize_trials` with the sampling
+   strategy :class:`.NonUniformSamplingStrategy` if the block has 
+   contraints and sampling strategy :class:`.UniformCombinatoricSamplingStrategy`
+   if there are no constraints.
+
+   :param block: the experiment description
+   :type block: Block
+   :param samples: see :func:`synthesize_trials`
+   :type samples: int
+   :return: see :func:`synthesize_trials`
+   :rtype: List[Dict[any, list]]
+
+.. function:: sweetpea.synthesize_trials_uniform(block, samples)
+                               
+   A shorthand for :func:`synthesize_trials` with the sampling
+   strategy :class:`.UnigenSamplingStrategy` if the block has 
+   contraints and sampling strategy :class:`.UniformCombinatoricSamplingStrategy`
+   if there are no constraints.
 
    :param block: the experiment description
    :type block: Block

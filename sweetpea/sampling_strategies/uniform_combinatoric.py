@@ -161,11 +161,9 @@ class UCSolutionEnumerator():
         experiment = cast(dict, {})
         for trial_number, trial_value in enumerate(trial_values):
             for factor, level in trial_value.items():
-                # solution.append(self._block.get_variable(trial_number + 1, (factor, level)))
                 if factor.factor_name not in experiment:
                     experiment[factor.factor_name] = []
                 experiment[factor.factor_name].append(get_external_level_name(level))
-        # solution.sort()
         return experiment
 
     def generate_solution_variables(self) -> List[int]:
@@ -173,6 +171,7 @@ class UCSolutionEnumerator():
         trial_values = self.generate_trail_values(sequence_number)
 
         solution = cast(List[int], [])
+        # Convert to variable encoding for SAT checking
         for trial_number, trial_value in enumerate(trial_values):
             for factor, level in trial_value.items():
                 solution.append(self._block.get_variable(trial_number + 1, (factor, level)))
@@ -227,18 +226,7 @@ class UCSolutionEnumerator():
                     if level.window.fn(*[get_external_level_name(trial_values[t][f]) for f in level.window.args]):
                         trial_values[t][f] = level
 
-        # 7. Convert to variable encoding for SAT checking
         return trial_values
-
-        # experiment = cast(dict, {})
-        # for trial_number, trial_value in enumerate(trial_values):
-        #     for factor, level in trial_value.items():
-        #         # solution.append(self._block.get_variable(trial_number + 1, (factor, level)))
-        #         if factor.factor_name not in experiment:
-        #             experiment[factor.factor_name] = []
-        #         experiment[factor.factor_name].append(get_external_level_name(level))
-        # # solution.sort()
-        # return experiment
 
     """
     Generates all the crossings, indexed by factor name for easy lookup later.
