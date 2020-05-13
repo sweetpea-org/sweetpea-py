@@ -8,7 +8,8 @@ generate trials for the experiment using :func:`.synthesize_trials` or
 
 .. function:: sweetpea.fully_cross_block(design, crossing, constraints, require_complete_crossing=True)
 
-   Creates an experiment description as a block of trials.
+   Creates an experiment description as a block of trials based on a
+   single crossing.
 
    The :func:`fully_cross_block` function is the main way of
    describing an expression. The result is an object that be used with
@@ -36,13 +37,13 @@ generate trials for the experiment using :func:`.synthesize_trials` or
 
    :param design: the factors that make up the design
    :type design: List[Factor]
-   :param cross: factors that are fully crossed in the block's trials,
-                 which must be a subset of the `design` list
-   :type cross: List[Factor]
+   :param crossing: factors that are fully crossed in the block's trials,
+                    which must be a subset of the `design` list
+   :type crossing: List[Factor]
    :param constraints: constraints that every sequence of trials must
                        satify; see :ref:`constraints`
    :type constraints: List[Constraint]
-   :param require_complete_crossing: dertemines whether every
+   :param require_complete_crossing: dertermines whether every
                                      combination in `crossing` must
                                      appear in a block of trials; a
                                      false value is appropriate if
@@ -51,46 +52,35 @@ generate trials for the experiment using :func:`.synthesize_trials` or
    :return: a block description
    :rtype: Block
 
-.. function:: sweetpea.multiple_cross_block(design, crossing, constraints, require_complete_crossing=True)
+.. function:: sweetpea.multiple_cross_block(design, crossings, constraints, require_complete_crossing=True)
 
-   Creates an experiment description as a block of trials.
+   Creates an experiment description as a block of trials based on
+   multiple crossings.
 
-   The :func:`multiple_cross_block` function is a secondary way of
-   describing an expression. The result is an object that be used with
-   a function like :func:`synthesize_trials`.
-
-   The `design` argument lists all of the factors in the design. When
-   a sequence of trials is generated, each trial will have one level
-   from each factor in `design`.
+   The :func:`multiple_cross_block` function is like
+   :func:`fully_cross_block`, but it accepts multiple crossings in
+   `crossings`, instead of a single crossing.
 
    The number of trials in each run of the experiment is determined by
-   the maximum of the `crossing` arguments. Specifically, the number of 
-   trials is the product of the maximum number of levels of the factors 
-   in `crossing`.
+   the *maximum* of number that would be determined by an individual
+   crossing in `crossings`.
 
-   Different trial sequences of the experiment will have different
-   combinations of levels in different orders of all the crossings. 
-   The list of lists of factors in `crossing` supply implicit constraints,
-   which is that every combination of levels in the crossings should 
-   appear atleast once. Derive factors impose additional implement 
-   constraints: only combinations of levels that are consistent with 
-   derivations can appear as a trail. Finally, the `constraints` argument 
-   can impose additional constraints on the generated trials.
+   Every combination of levels in each individual crossing in
+   `crossings` appears at least once. Different crossings in
+   `crossings` can refer to the same factors, which creates
+   constraints on how factor levels are chosen across crossings.
 
    :param design: the factors that make up the design
    :type design: List[Factor]
-   :param cross: factors that are fully crossed in the block's trials,
-                 which must be a subset of the `design` list
-   :type cross: List[List[Factor]]
+   :param crossings: a list of crossings, where each crossing is a
+                     list of factors that are fully crossed in the
+                     block's trials; the factors in each crossing must
+                     be a subset of the `design` list
+   :type crossings: List[List[Factor]]
    :param constraints: constraints that every sequence of trials must
                        satify; see :ref:`constraints`
    :type constraints: List[Constraint]
-   :param require_complete_crossing: dertemines whether every
-                                     combination in `crossing` must
-                                     appear in a block of trials; a
-                                     false value is appropriate if
-                                     combinations are excluded through
-                                     an :func:`exclude` constraint
+   :param require_complete_crossing: same as for :func:`multiple_cross_block`
    :return: a block description
    :rtype: Block
 
