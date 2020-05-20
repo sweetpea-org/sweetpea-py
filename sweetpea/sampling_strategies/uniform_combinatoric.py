@@ -54,10 +54,10 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
         rejected = 0
         total_rejected = 0
         samples = cast(List[dict], [])
-        sequence_numbers = np.arange(enumerator.solution_count())
+        sequence_numbers = cast(List[int], [])
         while sampled < sample_count:
             solution_variables = enumerator.generate_random_sample(sequence_numbers)
-            sequence_numbers = sequence_numbers[sequence_numbers != solution_variables[0]]
+            sequence_numbers.append(solution_variables[0])
             # sample = SamplingStrategy.decode(block, solution_variables)
 
             # if UniformCombinatoricSamplingStrategy.__are_constraints_violated(block, sample):
@@ -70,7 +70,7 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
             sampled += 1
 
             samples.append(solution_variables[1])
-            if sequence_numbers.size == 0:
+            if len(sequence_numbers) == enumerator.solution_count():
                 break
 
         metrics['sample_count'] = sample_count
@@ -152,7 +152,9 @@ class UCSolutionEnumerator():
 
     def generate_random_sample(self, sample_array: List[int]) -> Tuple[int, dict]:
         # Select a random number from the range of solutions.
-        sequence_number = np.random.choice(sample_array, 1)[0]
+        sequence_number = random.randrange(0, self._solution_count)
+        while sequence_number in sample_array:
+            sequence_number = random.randrange(0, self._solution_count)
         return (sequence_number, self.generate_sample(sequence_number))
 
     def generate_sample(self, sequence_number: int) -> dict:

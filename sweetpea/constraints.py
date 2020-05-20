@@ -107,7 +107,9 @@ class FullyCross(Constraint):
         fresh = backend_request.fresh
 
         # Step 1: Get a list of the trials that are involved in the crossing.
+        crossing_size = reduce(lambda sum, factor: sum * len(factor.levels), block.crossing, 1)
         crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t), block.crossing)), range(1, block.trials_per_sample() + 1)))
+        crossing_trials = crossing_trials[:crossing_size]
 
         # Step 2: For each trial, cross all levels of all factors in the crossing.
         crossings = []
@@ -486,6 +488,32 @@ class Exclude(Constraint):
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
         var_list = block.build_variable_list((self.factor, self.level))
         backend_request.cnfs.append(And(list(map(lambda n: n * -1, var_list))))
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    def __repr__(self):
+        return str(self.__dict__)
+
+    def __str__(self):
+        return str(self.__dict__)
+
+def minimum_trials(trials):
+    return MinimumTrials(trials)
+
+class MinimumTrials(Constraint):
+    def __init__(self, trials):
+        self.trials = trials
+        # TODO: validation
+
+    def validate(self, block: Block) -> None:
+        if self.trials < 0:
+            raise ValueError("Minimum trials must be positive.")
+        block.min_trials = self.trials
+
+    def apply(self, block: Block, backend_request: BackendRequest) -> None:
+        block.min_trials = self.trials
+        # backend_request.cnfs.append(And(list(map(lambda n: n * -1, var_list))))
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__

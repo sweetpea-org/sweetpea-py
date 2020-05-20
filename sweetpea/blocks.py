@@ -27,12 +27,16 @@ class Block:
         self.constraints = list(constraints).copy()
         self.cnf_fn = cnf_fn
         self.complex_factors_or_constraints = True
+        self.min_trials = 0
         self.__validate();
 
     def __validate(self):
         # TODO: Make sure factor names are unique
+        from sweetpea.constraints import MinimumTrials
         for c in self.constraints:
             c.validate(self)
+            if isinstance(c, MinimumTrials):
+                c.apply(self)
 
     """
     Indicates the number of trials that are generated per sample for this block
@@ -190,7 +194,10 @@ class Block:
         fresh = 1 + self.variables_per_sample()
         backend_request = BackendRequest(fresh)
 
+        from sweetpea.constraints import MinimumTrials
         for c in self.constraints:
+            if isinstance(c, MinimumTrials):
+                continue
             c.apply(self, backend_request)
 
         return backend_request
@@ -286,6 +293,7 @@ class FullyCrossBlock(Block):
     def trials_per_sample(self):
         crossing_size = self.crossing_size()
         required_trials = list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size), self.crossing))
+        required_trials.append(self.min_trials)
         return max(required_trials)
 
     def variables_per_trial(self):
@@ -413,6 +421,7 @@ class MultipleCrossBlock(Block):
     def trials_per_sample(self):
         crossing_size = self.crossing_size()
         required_trials = list(map(max, list(map(lambda c: list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size), c)), self.crossings))))
+        required_trials.append(self.min_trials)
         # required_trials = list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size), self.crossing))
         return max(required_trials)
 
