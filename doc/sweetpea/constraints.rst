@@ -67,3 +67,11 @@ Constraints
               :type factor: Factor
               :param levels: a level name among the levels in `factor`
               :rtype: Constraint
+
+.. function:: minimum_trials(trials)
+
+              Constrains an experiment to set the specified number 
+              of minimum trials.
+
+              :param trials: minimum number of trials
+              :type trials: Integer
