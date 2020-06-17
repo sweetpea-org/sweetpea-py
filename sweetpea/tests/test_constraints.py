@@ -160,10 +160,10 @@ def test_fully_cross_simple():
     assert backend_request.fresh == 66
     assert backend_request.cnfs == [expected_cnf]
     assert backend_request.ll_requests == [
-        LowLevelRequest("LT", 2, [17, 21, 25, 29]),
-        LowLevelRequest("LT", 2, [18, 22, 26, 30]),
-        LowLevelRequest("LT", 2, [19, 23, 27, 31]),
-        LowLevelRequest("LT", 2, [20, 24, 28, 32])
+        LowLevelRequest("GT", 0, [17, 21, 25, 29]),
+        LowLevelRequest("GT", 0, [18, 22, 26, 30]),
+        LowLevelRequest("GT", 0, [19, 23, 27, 31]),
+        LowLevelRequest("GT", 0, [20, 24, 28, 32])
     ]
 
 
@@ -181,10 +181,10 @@ def test_fully_cross_with_constraint():
     assert backend_request.fresh == 74
     assert backend_request.cnfs == [expected_cnf]
     assert backend_request.ll_requests == [
-        LowLevelRequest("LT", 2, [25, 29, 33, 37]),
-        LowLevelRequest("LT", 2, [26, 30, 34, 38]),
-        LowLevelRequest("LT", 2, [27, 31, 35, 39]),
-        LowLevelRequest("LT", 2, [28, 32, 36, 40])
+        LowLevelRequest("GT", 0, [25, 29, 33, 37]),
+        LowLevelRequest("GT", 0, [26, 30, 34, 38]),
+        LowLevelRequest("GT", 0, [27, 31, 35, 39]),
+        LowLevelRequest("GT", 0, [28, 32, 36, 40])
     ]
 
 
@@ -209,10 +209,10 @@ def test_fully_cross_with_transition_in_design(design):
     assert backend_request.fresh == 72
     assert backend_request.cnfs == [expected_cnf]
     assert backend_request.ll_requests == [
-        LowLevelRequest("LT", 2, [23, 27, 31, 35]),
-        LowLevelRequest("LT", 2, [24, 28, 32, 36]),
-        LowLevelRequest("LT", 2, [25, 29, 33, 37]),
-        LowLevelRequest("LT", 2, [26, 30, 34, 38])
+        LowLevelRequest("GT", 0, [23, 27, 31, 35]),
+        LowLevelRequest("GT", 0, [24, 28, 32, 36]),
+        LowLevelRequest("GT", 0, [25, 29, 33, 37]),
+        LowLevelRequest("GT", 0, [26, 30, 34, 38])
     ]
 
 
@@ -235,10 +235,10 @@ def test_fully_cross_with_uncrossed_simple_factors():
     assert backend_request.fresh == 74
     assert backend_request.cnfs == [expected_cnf]
     assert backend_request.ll_requests == [
-        LowLevelRequest("LT", 2, [25, 29, 33, 37]),
-        LowLevelRequest("LT", 2, [26, 30, 34, 38]),
-        LowLevelRequest("LT", 2, [27, 31, 35, 39]),
-        LowLevelRequest("LT", 2, [28, 32, 36, 40])
+        LowLevelRequest("GT", 0, [25, 29, 33, 37]),
+        LowLevelRequest("GT", 0, [26, 30, 34, 38]),
+        LowLevelRequest("GT", 0, [27, 31, 35, 39]),
+        LowLevelRequest("GT", 0, [28, 32, 36, 40])
     ]
 
 
@@ -262,54 +262,54 @@ def test_fully_cross_with_transition_in_crossing():
     assert backend_request.fresh == 78
     assert backend_request.cnfs == [expected_cnf]
     assert backend_request.ll_requests == [
-        LowLevelRequest("LT", 2, [29, 33, 37, 41]),
-        LowLevelRequest("LT", 2, [30, 34, 38, 42]),
-        LowLevelRequest("LT", 2, [31, 35, 39, 43]),
-        LowLevelRequest("LT", 2, [32, 36, 40, 44])
+        LowLevelRequest("GT", 0, [29, 33, 37, 41]),
+        LowLevelRequest("GT", 0, [30, 34, 38, 42]),
+        LowLevelRequest("GT", 0, [31, 35, 39, 43]),
+        LowLevelRequest("GT", 0, [32, 36, 40, 44])
     ]
 
 
-def test_fully_cross_with_exclude():
-    color = Factor("color", ["red", "blue", "green"])
-    text =  Factor("text",  ["red", "blue"])
+# def test_fully_cross_with_exclude():
+#     color = Factor("color", ["red", "blue", "green"])
+#     text =  Factor("text",  ["red", "blue"])
 
-    def illegal_stimulus(color, text):
-        return color == "green" and text == "blue"
+#     def illegal_stimulus(color, text):
+#         return color == "green" and text == "blue"
 
-    def legal_stimulus(color, text):
-        return not illegal_stimulus(color, text)
+#     def legal_stimulus(color, text):
+#         return not illegal_stimulus(color, text)
 
-    stimulus_configuration = Factor("stimulus configuration", [
-        DerivedLevel("legal",   WithinTrial(legal_stimulus, [color, text])),
-        DerivedLevel("illegal", WithinTrial(illegal_stimulus, [color, text]))
-    ])
+#     stimulus_configuration = Factor("stimulus configuration", [
+#         DerivedLevel("legal",   WithinTrial(legal_stimulus, [color, text])),
+#         DerivedLevel("illegal", WithinTrial(illegal_stimulus, [color, text]))
+#     ])
 
-    block = fully_cross_block([color, text, stimulus_configuration],
-                              [color, text],
-                              [Exclude(stimulus_configuration, get_level_from_name(stimulus_configuration, "illegal"))],
-                              require_complete_crossing=False)
+#     block = fully_cross_block([color, text, stimulus_configuration],
+#                               [color, text],
+#                               [Exclude(stimulus_configuration, get_level_from_name(stimulus_configuration, "illegal"))],
+#                               require_complete_crossing=False)
 
-    backend_request = BackendRequest(36)
-    FullyCross.apply(block, backend_request)
+#     backend_request = BackendRequest(36)
+#     FullyCross.apply(block, backend_request)
 
-    (expected_cnf, _) = to_cnf_tseitin(And([
-        Iff(36, And([ 1, 4 ])), Iff(37, And([ 1, 5 ])), Iff(38, And([ 2, 4 ])), Iff(39, And([ 2, 5 ])), Iff(40, And([ 3, 4 ])), Iff(41, And([ 3, 5 ])),
-        Iff(42, And([ 8, 11])), Iff(43, And([ 8, 12])), Iff(44, And([ 9, 11])), Iff(45, And([ 9, 12])), Iff(46, And([10, 11])), Iff(47, And([10, 12])),
-        Iff(48, And([15, 18])), Iff(49, And([15, 19])), Iff(50, And([16, 18])), Iff(51, And([16, 19])), Iff(52, And([17, 18])), Iff(53, And([17, 19])),
-        Iff(54, And([22, 25])), Iff(55, And([22, 26])), Iff(56, And([23, 25])), Iff(57, And([23, 26])), Iff(58, And([24, 25])), Iff(59, And([24, 26])),
-        Iff(60, And([29, 32])), Iff(61, And([29, 33])), Iff(62, And([30, 32])), Iff(63, And([30, 33])), Iff(64, And([31, 32])), Iff(65, And([31, 33]))
-    ]), 66)
+#     (expected_cnf, _) = to_cnf_tseitin(And([
+#         Iff(36, And([ 1, 4 ])), Iff(37, And([ 1, 5 ])), Iff(38, And([ 2, 4 ])), Iff(39, And([ 2, 5 ])), Iff(40, And([ 3, 4 ])), Iff(41, And([ 3, 5 ])),
+#         Iff(42, And([ 8, 11])), Iff(43, And([ 8, 12])), Iff(44, And([ 9, 11])), Iff(45, And([ 9, 12])), Iff(46, And([10, 11])), Iff(47, And([10, 12])),
+#         Iff(48, And([15, 18])), Iff(49, And([15, 19])), Iff(50, And([16, 18])), Iff(51, And([16, 19])), Iff(52, And([17, 18])), Iff(53, And([17, 19])),
+#         Iff(54, And([22, 25])), Iff(55, And([22, 26])), Iff(56, And([23, 25])), Iff(57, And([23, 26])), Iff(58, And([24, 25])), Iff(59, And([24, 26])),
+#         Iff(60, And([29, 32])), Iff(61, And([29, 33])), Iff(62, And([30, 32])), Iff(63, And([30, 33])), Iff(64, And([31, 32])), Iff(65, And([31, 33]))
+#     ]), 66)
 
-    assert backend_request.fresh == 127
-    assert backend_request.cnfs == [expected_cnf]
-    assert backend_request.ll_requests == [
-        LowLevelRequest("LT", 2, [36, 42, 48, 54, 60]),
-        LowLevelRequest("LT", 2, [37, 43, 49, 55, 61]),
-        LowLevelRequest("LT", 2, [38, 44, 50, 56, 62]),
-        LowLevelRequest("LT", 2, [39, 45, 51, 57, 63]),
-        LowLevelRequest("LT", 2, [40, 46, 52, 58, 64]),
-        LowLevelRequest("LT", 2, [41, 47, 53, 59, 65])
-    ]
+#     assert backend_request.fresh == 127
+#     assert backend_request.cnfs == [expected_cnf]
+#     assert backend_request.ll_requests == [
+#         LowLevelRequest("GT", 0, [36, 42, 48, 54, 60]),
+#         LowLevelRequest("GT", 0, [37, 43, 49, 55, 61]),
+#         LowLevelRequest("GT", 0, [38, 44, 50, 56, 62]),
+#         LowLevelRequest("GT", 0, [39, 45, 51, 57, 63]),
+#         LowLevelRequest("GT", 0, [40, 46, 52, 58, 64]),
+#         LowLevelRequest("GT", 0, [41, 47, 53, 59, 65])
+#     ]
 
 
 def test_derivation():

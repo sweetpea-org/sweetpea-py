@@ -107,7 +107,7 @@ class FullyCross(Constraint):
         fresh = backend_request.fresh
 
         # Step 1: Get a list of the trials that are involved in the crossing.
-        crossing_size = reduce(lambda sum, factor: sum * len(factor.levels), block.crossing, 1)
+        crossing_size = max(block.min_trials, block.crossing_size())
         crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t), block.crossing)), range(1, block.trials_per_sample() + 1)))
         crossing_trials = crossing_trials[:crossing_size]
 
@@ -120,17 +120,17 @@ class FullyCross(Constraint):
         num_state_vars = len(crossings)
         state_vars = list(range(fresh, fresh + num_state_vars))
         fresh += num_state_vars
-
         # Step 4: Associate each state variable with its crossing.
         iffs = [Iff(state_vars[n], And(list(crossings[n]))) for n in range(len(state_vars))]
 
         # Step 5: Constrain each crossing to occur in only one trial.
-        states = list(chunk(state_vars, block.crossing_size_without_exclusions()))
+        states = list(chunk(state_vars, block.crossing_size()))
         transposed = cast(List[List[int]], list(map(list, zip(*states))))
 
         # We Use n < 2 rather than n = 1 here because they may exclude some levels from the crossing.
         # This ensures that there won't be duplicates, while still allowing some to be missing.
-        backend_request.ll_requests += list(map(lambda l: LowLevelRequest("LT", 2, l), transposed))
+        # backend_request.ll_requests += list(map(lambda l: LowLevelRequest("LT", 2, l), transposed))
+        backend_request.ll_requests += list(map(lambda l: LowLevelRequest("GT", 0, l), transposed))
 
         (cnf, new_fresh) = block.cnf_fn(And(iffs), fresh)
 
@@ -405,10 +405,10 @@ class NoMoreThanKInARow(Constraint):
     def __new__(self, k, levels):
         return AtMostKInARow(k, levels)
 
+"""
+Requires that if the given level exists at all, it must exist in a trial exactly K times.
+"""
 
-"""
-Requires that if the given level exists at all, it must exist in a sequence of exactly K.
-"""
 def exactly_k(k ,levels):
     return ExactlyK(k ,levels)
 
@@ -426,6 +426,9 @@ class ExactlyK(_KInARow):
     def __str__(self):
         return str(self.__dict__)
 
+"""
+Requires that if the given level exists at all, it must exist in a sequence of exactly K.
+"""
 
 def exactly_k_in_a_row(k, levels):
     return ExactlyKInARow(k, levels)
@@ -513,7 +516,6 @@ class MinimumTrials(Constraint):
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
         block.min_trials = self.trials
-        # backend_request.cnfs.append(And(list(map(lambda n: n * -1, var_list))))
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__

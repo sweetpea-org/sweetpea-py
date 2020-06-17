@@ -28,15 +28,18 @@ class Block:
         self.cnf_fn = cnf_fn
         self.complex_factors_or_constraints = True
         self.min_trials = 0
-        self.__validate();
+        self.exclude = cast(List[Tuple[int]], [])
+        self.__validate()
 
     def __validate(self):
         # TODO: Make sure factor names are unique
-        from sweetpea.constraints import MinimumTrials
+        from sweetpea.constraints import MinimumTrials, Exclude
         for c in self.constraints:
             c.validate(self)
             if isinstance(c, MinimumTrials):
-                c.apply(self)
+                c.apply(self, None)
+            if isinstance(c, Exclude):
+                self.exclude.append((c.factor, c.level))
 
     """
     Indicates the number of trials that are generated per sample for this block
@@ -127,14 +130,12 @@ class Block:
             raise ValueError('Factor does not apply to trial #' + str(t) + ' f=' + str(f))
 
         previous_trials = sum(map(lambda trial: 1 if f.applies_to_trial(trial + 1) else 0, range(t))) - 1
-        initial_sequence = list(map(lambda l: self.first_variable_for_level(f, l), f.levels))
-
+        initial_sequence = list(map(lambda l: self.first_variable_for_level(f, l), list(filter(lambda l: (f, l) not in self.exclude, f.levels))))
         offset = 0
         if f.has_complex_window():
             offset = len(f.levels) * previous_trials
         else:
             offset = self.variables_per_trial() * previous_trials
-
         return list(map(lambda n: n + offset + 1, initial_sequence))
 
     """
@@ -335,15 +336,18 @@ class FullyCrossBlock(Block):
             # Retrieve the derivation function that defines this exclusion.
             excluded_level = constraint.level
 
-            # For each crossing, extract the levels for this derviation function, and execute it.
-            for c in all_crossings:
-                args = [get_external_level_name(c[i]) for i in map(lambda f: self.crossing.index(f), excluded_level.window.args)]
-                # Invoking the fn this way is only ok because we only do this for WithinTrial windows.
-                # With complex windows, it wouldn't work due to the list aspect for each argument.
-
-                if excluded_level.window.fn(*args):
-                    excluded_crossings.add(get_internal_level_name(c[0]) + ", " + get_internal_level_name(c[1]))
-
+            if type(excluded_level) is SimpleLevel:
+                for c in all_crossings:
+                    if excluded_level in c:
+                        excluded_crossings.add(get_internal_level_name(c[0]) + ", " + get_internal_level_name(c[1]))
+            else:
+                # For each crossing, extract the levels for this derviation function, and execute it.
+                for c in all_crossings:
+                    args = [get_external_level_name(c[i]) for i in map(lambda f: self.crossing.index(f), excluded_level.window.args)]
+                    # Invoking the fn this way is only ok because we only do this for WithinTrial windows.
+                    # With complex windows, it wouldn't work due to the list aspect for each argument.
+                    if excluded_level.window.fn(*args):
+                        excluded_crossings.add(get_internal_level_name(c[0]) + ", " + get_internal_level_name(c[1]))
         return len(excluded_crossings)
 
     def crossing_size(self):
