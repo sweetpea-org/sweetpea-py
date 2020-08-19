@@ -2,7 +2,7 @@ from abc import abstractmethod
 from functools import reduce
 from itertools import combinations, accumulate, repeat, product
 from networkx import has_path
-from typing import List, Union, Tuple, cast, Any
+from typing import List, Union, Tuple, cast, Any, Dict, Set
 
 from sweetpea.backend import BackendRequest
 from sweetpea.internal import get_all_levels
@@ -21,6 +21,7 @@ class Block:
                  design: List[Factor],
                  crossing: List[Factor],
                  constraints: List[Constraint],
+                 require_complete_crossing,
                  cnf_fn) -> None:
         self.design = list(design).copy()
         self.crossing = list(crossing).copy()
@@ -28,18 +29,19 @@ class Block:
         self.cnf_fn = cnf_fn
         self.complex_factors_or_constraints = True
         self.min_trials = 0
-        self.exclude = cast(List[Tuple[int]], [])
+        self.exclude = cast(List[Tuple[Factor, Union[SimpleLevel, DerivedLevel]]], [])
+        self.excluded_derived = cast(List[Dict[Factor, SimpleLevel]], [])
+        self.require_complete_crossing = require_complete_crossing
+        self.errors = cast(Set[str], set())
         self.__validate()
 
     def __validate(self):
         # TODO: Make sure factor names are unique
-        from sweetpea.constraints import MinimumTrials, Exclude
+        from sweetpea.constraints import MinimumTrials
         for c in self.constraints:
             c.validate(self)
             if isinstance(c, MinimumTrials):
                 c.apply(self, None)
-            if isinstance(c, Exclude):
-                self.exclude.append((c.factor, c.level))
 
     """
     Indicates the number of trials that are generated per sample for this block
@@ -162,8 +164,7 @@ class Block:
 
             variables.append(self.factor_variables_for_trial(f, t))
 
-        return variables;
-
+        return variables
     """
     Given a variable number from the SAT formula, this method will return
     the associated factor and level name.
@@ -187,6 +188,24 @@ class Block:
                     return tuples[(variable - start) % len(f.levels)]
 
         raise RuntimeError('Unable to find factor/level for variable!')
+
+
+    def is_excluded(self, c: Tuple[int, ...], d: Tuple[int, ...]) -> bool:
+        di = {}
+        for crossed in c:
+            t = self.decode_variable(crossed)
+            di[t[0]] = t[1]
+        for design in d:
+            t = self.decode_variable(design)
+            di[t[0]] = t[1]
+
+        return any(list(map(lambda e: all(list(map(lambda ex_level: e[ex_level] == di[ex_level], e))), self.excluded_derived)))
+    """
+    Given a list of trials, the function filters the trials invalid as per the exclude contraints
+    """
+
+    def filter_excluded_derived_levels(self, l: List[List[List[Tuple[int, ...]]]]) -> List[List[List[Tuple[int, ...]]]]:
+        return list(filter(None, map(lambda j: list(filter(lambda li: len(li) > 1, map(lambda k: [k[0]] + list(filter(lambda c: not self.is_excluded(k[0], c), k[1:])), j))), l)))
 
     """
     Apply all constraints to build a BackendRequest. Formerly known as __desugar in __init.py__
@@ -249,10 +268,9 @@ cross all levels across all factors in the block's crossing.
 """
 class FullyCrossBlock(Block):
     def __init__(self, design, crossing, constraints, require_complete_crossing=True, cnf_fn=to_cnf_tseitin):
-        super().__init__(design, crossing, constraints, cnf_fn)
-        self.require_complete_crossing = require_complete_crossing
+        super().__init__(design, crossing, constraints, require_complete_crossing, cnf_fn)
         if not self.require_complete_crossing:
-            print("WARNING: Some combinations have been excluded, this crossing may not be complete!")
+            self.errors.add("WARNING: Some combinations have been excluded, this crossing may not be complete!")
         self.__validate()
 
     def __validate(self):
@@ -271,7 +289,7 @@ class FullyCrossBlock(Block):
                 warnings.append(template.format(c[1].factor_name, c[0].factor_name))
 
         if warnings:
-            print("WARNING: There are dependencies between factors in the crossing. This may lead to unsatisfiable designs.\n" + reduce(lambda accum, s: accum + s + "\n", warnings, ""))
+            self.errors.add("WARNING: There are dependencies between factors in the crossing. This may lead to unsatisfiable designs.\n" + reduce(lambda accum, s: accum + s + "\n", warnings, ""))
 
     """
     Given a factor f, and a crossing size, this function will compute the number of trials
@@ -315,6 +333,7 @@ class FullyCrossBlock(Block):
         from sweetpea.constraints import Exclude
 
         excluded_crossings = set()
+        excluded_external_names = set()
 
         # Get the exclude constraints.
         exclusions = list(filter(lambda c: isinstance(c, Exclude), self.constraints))
@@ -343,17 +362,34 @@ class FullyCrossBlock(Block):
             else:
                 # For each crossing, extract the levels for this derviation function, and execute it.
                 for c in all_crossings:
-                    args = [get_external_level_name(c[i]) for i in map(lambda f: self.crossing.index(f), excluded_level.window.args)]
-                    # Invoking the fn this way is only ok because we only do this for WithinTrial windows.
-                    # With complex windows, it wouldn't work due to the list aspect for each argument.
-                    if excluded_level.window.fn(*args):
+                    if all(list(map(lambda d: self.__excluded_derived(excluded_level, c+d), list(product(*[list(f.levels) for f in filter(lambda f: f not in self.crossing, self.design)]))))):
                         excluded_crossings.add(get_internal_level_name(c[0]) + ", " + get_internal_level_name(c[1]))
+                        excluded_external_names.add(get_external_level_name(c[0]) + ", " + get_external_level_name(c[1]))
+        if self.require_complete_crossing and len(excluded_crossings) != 0:
+            er = "Complete crossing is not possible beacuse the following combinations have been excluded:"
+            for names in excluded_external_names:
+                er += "\n" + names
+            self.errors.add(er)
         return len(excluded_crossings)
+
+    def __excluded_derived(self, excluded_level, c):
+        ret = []
+
+        for f in filter(lambda f: f.is_derived(), excluded_level.window.args):
+            ret.append(self.__excluded_derived(list(filter(lambda l: l.factor == f, c))[0], c))
+
+        # Invoking the fn this way is only ok because we only do this for WithinTrial windows.
+        # With complex windows, it wouldn't work due to the list aspect for each argument.
+        ret.append(excluded_level.window.fn(*list(map(lambda l: get_external_level_name(l), filter(lambda l: l.factor in excluded_level.window.args, c)))))
+
+        return all(ret)
 
     def crossing_size(self):
         crossing_size = self.crossing_size_without_exclusions()
         if not self.require_complete_crossing:
             crossing_size -= self.__count_exclusions()
+        else:
+            self.__count_exclusions()
         return crossing_size
 
     def crossing_size_without_exclusions(self):
