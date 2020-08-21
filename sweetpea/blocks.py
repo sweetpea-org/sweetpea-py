@@ -189,7 +189,9 @@ class Block:
 
         raise RuntimeError('Unable to find factor/level for variable!')
 
-
+    """
+    Given crossing and design-only variables and returns true if the combination meets any of the exclude contraints
+    """
     def is_excluded(self, c: Tuple[int, ...], d: Tuple[int, ...]) -> bool:
         di = {}
         for crossed in c:
@@ -360,7 +362,7 @@ class FullyCrossBlock(Block):
                     if excluded_level in c:
                         excluded_crossings.add(get_internal_level_name(c[0]) + ", " + get_internal_level_name(c[1]))
             else:
-                # For each crossing, extract the levels for this derviation function, and execute it.
+                # For each crossing, ensure that atleast one combination is possible with the disgn-only factors keeping in mind the exclude contraints.
                 for c in all_crossings:
                     if all(list(map(lambda d: self.__excluded_derived(excluded_level, c+d), list(product(*[list(f.levels) for f in filter(lambda f: f not in self.crossing, self.design)]))))):
                         excluded_crossings.add(get_internal_level_name(c[0]) + ", " + get_internal_level_name(c[1]))
@@ -372,6 +374,9 @@ class FullyCrossBlock(Block):
             self.errors.add(er)
         return len(excluded_crossings)
 
+    """
+    Given the complete crossing and an exclude constraint returns true if that combination results in the exclude level 
+    """
     def __excluded_derived(self, excluded_level, c):
         ret = []
 

@@ -114,6 +114,7 @@ class FullyCross(Constraint):
         # Step 2: For each trial, cross all levels of all factors in the crossing.
         crossing_factors = list(map(lambda t: (list(product(*[block.factor_variables_for_trial(f, t) for f in block.crossing]))), crossing_trials))
 
+        # Step 3: For each trial, cross all levels of all design-only factors in the crossing.    
         design_factors = cast(List[List[List[int]]], [])
         design_factors = list(map(lambda _: [], crossing_trials))
         for f in list(filter(lambda f: f not in block.crossing and not f.has_complex_window(), block.design)):
@@ -122,20 +123,25 @@ class FullyCross(Constraint):
         design_combinations = cast(List[List[Tuple[int, ...]]], [])
         design_combinations = list(map(lambda l: list(product(*l)), design_factors))
 
+        # Step 4: For each trial, combine each of the crossing factors with all of the design-only factors.    
         crossings = cast(List[List[List[Tuple[int, ...]]]], [])
         for i, t in enumerate(crossing_trials):
             crossings.append(list(map(lambda c: [c] + design_combinations[i] ,crossing_factors[i])))
+        
+        # Step 5: Remove crossings that are not possible.
+        # From here on ignore all values other than the first in every list.
         crossings = block.filter_excluded_derived_levels(crossings)
-        # Step 3: Allocate additional variables to represent each crossing.
 
+        # Step 6: Allocate additional variables to represent each crossing.
         num_state_vars = list(map(lambda c: len(c), crossings))
         state_vars = list(range(fresh, fresh + sum(num_state_vars)))
         fresh += sum(num_state_vars)
 
-        # Step 4: Associate each state variable with its crossing.
+        # Step 7: Associate each state variable with its crossing.
         flattened_crossings = list(chain.from_iterable(crossings))
-        iffs = list(map(lambda n: Iff(state_vars[n], And([*flattened_crossings[n][0]] + [Or(list(map(lambda c: And(list(c)), flattened_crossings[n][1:])))])), range(len(state_vars))))
-        # Step 5: Constrain each crossing to occur in only one trial.
+        iffs = list(map(lambda n: Iff(state_vars[n], And([*flattened_crossings[n][0]])), range(len(state_vars))))
+
+        # Step 8: Constrain each crossing to occur in only one trial.
         states = list(chunk(state_vars, block.crossing_size()))
         transposed = cast(List[List[int]], list(map(list, zip(*states))))
 
@@ -501,9 +507,13 @@ class Exclude(Constraint):
         validate_factor_and_level(block, self.factor, self.level)
 
         block.exclude.append((self.factor, self.level))
+        # Store the basic factor-level combnations resulting in the derived excluded factor in the block
         if type(self.level) is DerivedLevel and not self.factor.has_complex_window():
             block.excluded_derived.extend(self.extract_simplelevel(block, self.level))
 
+    """
+        Recusrcively deciphers the excluded level to a list of combinations basic levels.
+    """
     def extract_simplelevel(self, block: Block, level: DerivedLevel) -> List[Dict[Factor, SimpleLevel]]:
         excluded_levels = []
         excluded = list(filter(lambda c: level.window.fn(*list(map(lambda f: get_external_level_name(f[1]), c))), level.get_dependent_cross_product()))
