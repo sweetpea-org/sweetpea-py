@@ -44,6 +44,9 @@ class SimpleLevel(__Primitive):
     def __str__(self):
         raise Exception("Attempted implicit string cast of simple level")
 
+    def set_factor(self, factor):
+        self.factor = factor
+
     def __eq__(self, other):
         if (type(other) != SimpleLevel):
             print("Attempted to compare a simple level to another type, " + str(type(other)))
@@ -80,6 +83,9 @@ class DerivedLevel(__Primitive):
     def get_dependent_cross_product(self) -> List[Tuple[Any, ...]]:
         return list(product(*[[(dependent_factor, x) for x in dependent_factor.levels] for dependent_factor in self.window.args]))
 
+    def set_factor(self, factor):
+        self.factor = factor
+
     def __eq__(self, other):
         if (type(other) != DerivedLevel):
             print("Attempted to compare a derived level to another type, " + str(type(other)))
@@ -100,6 +106,8 @@ def else_level(name):
 class ElseLevel():
     def __init__(self, name):
         self.name = name
+    def set_factor(self, factor):
+        self.factor = factor
     def __call__(self, other_levels: List[DerivedLevel]) -> DerivedLevel:
         if other_levels is None:
             return DerivedLevel(self.name, WithinTrial(lambda: False, []))
@@ -129,6 +137,8 @@ class Factor(__Primitive):
                 out_levels.append(level)
             else:
                 out_levels.append(SimpleLevel(level))
+        for level in out_levels:
+            level.set_factor(self)
         return out_levels
 
     def __validate(self):

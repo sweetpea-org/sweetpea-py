@@ -18,6 +18,8 @@ class UnigenSamplingStrategy(SamplingStrategy):
 
     @staticmethod
     def sample(block: Block, sample_count: int) -> SamplingResult:
+
+        print("Warning: Unigen is currently not working.")
         # TODO: Do this in separate thread, and output some kind of progress indicator.
         backend_request = block.build_backend_request()
 
