@@ -1,3 +1,6 @@
+import sys
+sys.path.append("..")
+
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial
 from sweetpea.constraints import minimum_trials, exclude
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
@@ -43,10 +46,7 @@ response = Factor("response", [
 
 # constraints
 
-min_20_trials = minimum_trials(20)
-exclude_congruent_trials = [exclude(congruency, conLevel)]
-
-constraints = [min_20_trials, exclude_congruent_trials]
+constraints = [minimum_trials(20), exclude(congruency, conLevel)]
 
 # experiment
 

@@ -20,6 +20,11 @@ class NonUniformSamplingStrategy(SamplingStrategy):
     @staticmethod
     def sample(block: Block, sample_count: int) -> SamplingResult:
         backend_request = block.build_backend_request()
+        if block.errors:
+            for e in block.errors:
+                print(e)
+                if "WARNING" not in e:
+                    return SamplingResult([], {})
         json_data = {
             'action': 'SampleNonUniform',
             'sampleCount': sample_count,
