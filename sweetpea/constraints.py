@@ -108,16 +108,16 @@ class FullyCross(Constraint):
 
         # Step 1: Get a list of the trials that are involved in the crossing.
         crossing_size = max(block.min_trials, block.crossing_size())
-        crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t), block.crossing)), range(1, block.trials_per_sample() + 1)))
+        crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t), block.crossing[0])), range(1, block.trials_per_sample() + 1)))
         crossing_trials = crossing_trials[:crossing_size]
 
         # Step 2: For each trial, cross all levels of all factors in the crossing.
-        crossing_factors = list(map(lambda t: (list(product(*[block.factor_variables_for_trial(f, t) for f in block.crossing]))), crossing_trials))
+        crossing_factors = list(map(lambda t: (list(product(*[block.factor_variables_for_trial(f, t) for f in block.crossing[0]]))), crossing_trials))
 
         # Step 3: For each trial, cross all levels of all design-only factors in the crossing.    
         design_factors = cast(List[List[List[int]]], [])
         design_factors = list(map(lambda _: [], crossing_trials))
-        for f in list(filter(lambda f: f not in block.crossing and not f.has_complex_window(), block.design)):
+        for f in list(filter(lambda f: f not in block.crossing[0] and not f.has_complex_window(), block.design)):
             for i, t in enumerate(crossing_trials):
                 design_factors[i].append(block.factor_variables_for_trial(f, t))
         design_combinations = cast(List[List[Tuple[int, ...]]], [])
@@ -163,34 +163,52 @@ class MultipleCross(Constraint):
     @staticmethod
     def apply(block: MultipleCrossBlock, backend_request: BackendRequest) -> None:
         # Treat each crossing seperately, and repeat the same process as fullycross
-        for c in block.crossings:
+        for c in block.crossing:
             fresh = backend_request.fresh
 
             # Step 1: Get a list of the trials that are involved in the crossing.
-            crossing_size = reduce(lambda sum, factor: sum * len(factor.levels), c, 1)
+            crossing_size = max(block.min_trials, block.crossing_size())
             crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t), c)), range(1, block.trials_per_sample() + 1)))
             crossing_trials = crossing_trials[:crossing_size]
 
             # Step 2: For each trial, cross all levels of all factors in the crossing.
-            crossings = []
-            for t in crossing_trials:
-                crossings.extend(list(product(*[block.factor_variables_for_trial(f, t) for f in c])))
+            crossing_factors = list(map(lambda t: (list(product(*[block.factor_variables_for_trial(f, t) for f in c]))), crossing_trials))
 
-            # Step 3: Allocate additional variables to represent each crossing.
-            num_state_vars = len(crossings)
-            state_vars = list(range(fresh, fresh + num_state_vars))
-            fresh += num_state_vars
+            # Step 3: For each trial, cross all levels of all design-only factors in the crossing.    
+            design_factors = cast(List[List[List[int]]], [])
+            design_factors = list(map(lambda _: [], crossing_trials))
+            for f in list(filter(lambda f: f not in c and not f.has_complex_window(), block.design)):
+                for i, t in enumerate(crossing_trials):
+                    design_factors[i].append(block.factor_variables_for_trial(f, t))
+            design_combinations = cast(List[List[Tuple[int, ...]]], [])
+            design_combinations = list(map(lambda l: list(product(*l)), design_factors))
 
-            # Step 4: Associate each state variable with its crossing.
-            iffs = [Iff(state_vars[n], And(list(crossings[n]))) for n in range(len(state_vars))]
-
-            # Step 5: Constrain each crossing to occur in only one trial.
-            states = list(chunk(state_vars, crossing_size))
+            # Step 4: For each trial, combine each of the crossing factors with all of the design-only factors.    
+            crossings = cast(List[List[List[Tuple[int, ...]]]], [])
+            for i, t in enumerate(crossing_trials):
+                crossings.append(list(map(lambda c: [c] + design_combinations[i] ,crossing_factors[i])))
             
+            # Step 5: Remove crossings that are not possible.
+            # From here on ignore all values other than the first in every list.
+            crossings = block.filter_excluded_derived_levels(crossings)
+
+            # Step 6: Allocate additional variables to represent each crossing.
+            num_state_vars = list(map(lambda c: len(c), crossings))
+            state_vars = list(range(fresh, fresh + sum(num_state_vars)))
+            fresh += sum(num_state_vars)
+
+            # Step 7: Associate each state variable with its crossing.
+            flattened_crossings = list(chain.from_iterable(crossings))
+            iffs = list(map(lambda n: Iff(state_vars[n], And([*flattened_crossings[n][0]])), range(len(state_vars))))
+
+            # Step 8: Constrain each crossing to occur in only one trial.
+            states = list(chunk(state_vars, block.crossing_size()))
             transposed = cast(List[List[int]], list(map(list, zip(*states))))
+
             # We Use n < 2 rather than n = 1 here because they may exclude some levels from the crossing.
             # This ensures that there won't be duplicates, while still allowing some to be missing.
-            backend_request.ll_requests += list(map(lambda l: LowLevelRequest("LT", 2, l), transposed))
+            # backend_request.ll_requests += list(map(lambda l: LowLevelRequest("LT", 2, l), transposed))
+            backend_request.ll_requests += list(map(lambda l: LowLevelRequest("GT", 0, l), transposed))
 
             (cnf, new_fresh) = block.cnf_fn(And(iffs), fresh)
 
@@ -535,7 +553,7 @@ class Exclude(Constraint):
                     combos = newcombos
                 else:
                     for c in combos:
-                        if j[0] in block.crossing and block.require_complete_crossing:
+                        if block.factor_in_crossing(j[0]) and block.require_complete_crossing:
                             block.errors.add("WARNING: Some combinations have been excluded, this crossing may not be complete!")
                         c[j[0]] = j[1] 
             excluded_levels.extend(combos)

@@ -229,22 +229,22 @@ def test_fully_cross_block_trials_per_sample():
     text_single  = Factor("text",  ["red"])
 
     assert FullyCrossBlock([color, text],
-                           [color, text],
+                           [[color, text]],
                            []).trials_per_sample() == 4
     assert FullyCrossBlock([color, text, direction],
-                           [color, text, direction],
+                           [[color, text, direction]],
                            []).trials_per_sample() == 8
     assert FullyCrossBlock([size, text_single],
-                           [size, text_single],
+                           [[size, text_single]],
                            []).trials_per_sample() == 3
     assert FullyCrossBlock([size, color],
-                           [size, color],
+                           [[size, color]],
                            []).trials_per_sample() == 6
     assert FullyCrossBlock([text_single],
-                           [text_single],
+                           [[text_single]],
                            []).trials_per_sample() == 1
 
-    assert FullyCrossBlock([color, text, color_repeats_factor], [color, text], []).trials_per_sample() == 4
+    assert FullyCrossBlock([color, text, color_repeats_factor], [[color, text]], []).trials_per_sample() == 4
 
 
 def test_fully_cross_block_trials_per_sample_with_transition_in_crossing():
@@ -267,66 +267,66 @@ def test_fully_cross_block_variables_per_trial():
     # Should exclude Transition and Windows from variables per trial count, as they don't always
     # have a representation in the first few trials. (Depending on the window width)
     assert FullyCrossBlock([color, text, color_repeats_factor],
-                           [color, text],
+                           [[color, text]],
                            []).variables_per_trial() == 4
 
 
 def test_fully_cross_block_grid_variables():
     assert FullyCrossBlock([color, text, con_factor],
-                           [color, text], []).grid_variables() == 24
+                           [[color, text]], []).grid_variables() == 24
 
     # Should include grid variables, as well as additional variables for complex windows.
     assert FullyCrossBlock([color, text, color_repeats_factor],
-                           [color, text],
+                           [[color, text]],
                            []).grid_variables() == 16
 
 
 def test_fully_cross_block_variables_per_sample():
     assert FullyCrossBlock([color, text, con_factor],
-                           [color, text], []).variables_per_sample() == 24
+                           [[color, text]], []).variables_per_sample() == 24
 
     # Should include grid variables, as well as additional variables for complex windows.
     assert FullyCrossBlock([color, text, color_repeats_factor],
-                           [color, text],
+                           [[color, text]],
                            []).variables_per_sample() == 22
 
     assert FullyCrossBlock([color, text, color_repeats_factor, text_repeats_factor],
-                           [color, text],
+                           [[color, text]],
                            []).variables_per_sample() == 28
 
 
 def test_fully_cross_block_variables_for_factor():
-    assert FullyCrossBlock([color, text], [color, text], []).variables_for_factor(color) == 8
-    assert FullyCrossBlock([color, text], [color, text], []).variables_for_factor(text) == 8
+    assert FullyCrossBlock([color, text], [[color, text]], []).variables_for_factor(color) == 8
+    assert FullyCrossBlock([color, text], [[color, text]], []).variables_for_factor(text) == 8
 
     assert FullyCrossBlock([color, text, color_repeats_factor],
-                           [color, text],
+                           [[color, text]],
                            []).variables_for_factor(color_repeats_factor) == 6
     assert FullyCrossBlock([color, text, color_repeats_factor],
-                           [color, text],
+                           [[color, text]],
                            []).variables_for_factor(color_repeats_factor) == 6
 
     assert FullyCrossBlock([color3_repeats_factor, color3, text],
-                           [color3, text],
+                           [[color3, text]],
                            []).variables_for_factor(color3) == 18
 
     assert FullyCrossBlock([color3_repeats_factor, color3, text],
-                           [color3, text],
+                           [[color3, text]],
                            []).variables_for_factor(text) == 12
 
     assert FullyCrossBlock([color3_repeats_factor, color3, text],
-                           [color3, text],
+                           [[color3, text]],
                            []).variables_for_factor(color3_repeats_factor) == 8
 
     assert FullyCrossBlock([color, text, congruent_bookend],
-                           [color, text],
+                           [[color, text]],
                            []).variables_for_factor(congruent_bookend) == 4
 
 
 def test_fully_cross_block_crossing_size_with_exclude():
     # No congruent excludes 2 trials, 4 - 2 = 2
     assert FullyCrossBlock([color, text, con_factor],
-                           [color, text],
+                           [[color, text]],
                            [Exclude(con_factor, con_level)],
                            require_complete_crossing=False).crossing_size() == 2
 
@@ -356,7 +356,7 @@ def test_fully_cross_block_crossing_size_with_overlapping_exclude():
     ])
 
     assert FullyCrossBlock([color, text, congruent_factor, legal_factor],
-                           [color, text],
+                           [[color, text]],
                            [Exclude(congruent_factor, get_level_from_name(congruent_factor, "congruent")), # Excludes 3
                             Exclude(legal_factor, get_level_from_name(legal_factor, "no"))], # Exludes 4, but 3 were already excluded
                            require_complete_crossing=False).crossing_size() == 5
@@ -369,13 +369,13 @@ def test_fully_cross_block_should_copy_input_lists():
     crossing = [color, text]
     constraints = [Exclude(con_factor, get_level_from_name(con_factor, "con"))]
 
-    block = FullyCrossBlock(design, crossing, constraints)
+    block = FullyCrossBlock(design, [crossing], constraints)
 
     design.clear()
     assert len(block.design) == 3
 
     crossing.clear()
-    assert len(block.crossing) == 2
+    assert len(block.crossing[0]) == 2
 
     constraints.clear()
     assert len(block.constraints) == 1
