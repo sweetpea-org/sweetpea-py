@@ -14,6 +14,7 @@ from sweetpea.sampling_strategies.non_uniform import NonUniformSamplingStrategy
 from sweetpea.sampling_strategies.unigen import UnigenSamplingStrategy
 from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy
 from sweetpea.server import submit_job, get_job_result, build_cnf
+import csv
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~ Top-Level functions ~~~~~~~~~~~~~~~~~~~~~
@@ -74,6 +75,30 @@ def print_experiments(block: Block, experiments: List[dict]):
         strs = [list(map(lambda v: name + " " + v, values)) for (name,values) in e.items()]
         transposed = list(map(list, zip(*strs)))
         print(reduce(lambda a, b: a + format_str.format(*b), transposed, ''))
+
+
+"""
+Export the generated experiments to csv files. Each experiment will be exported to a separate csv file. 
+"""
+def experiment_to_csv(experiments: List[dict], file_prefix = "experiment"):
+    for idx, experiment in enumerate(experiments):
+
+        dict = experiment
+        csv_columns = list(dict.keys())
+        num_rows = len(dict[csv_columns[0]])
+
+        csv_file = file_prefix + "_" + str(idx) + ".csv"
+        try:
+            with open(csv_file, 'w') as csvfile:
+                writer = csv.writer(csvfile)
+                writer.writerow(csv_columns)
+                for row_idx in range(num_rows):
+                    row = list()
+                    for column in csv_columns:
+                        row.append(dict[column][row_idx])
+                    writer.writerow(row)
+        except IOError:
+            print("I/O error")
 
 
 """
