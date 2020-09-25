@@ -37,6 +37,24 @@ class Block:
         self.__validate()
 
     def __validate(self):
+        # Ensure basic factors of derived levels in design form complete subset
+        # of all declared basic factors.
+        basic_factor_names = set()
+        included_factor_names = set()
+        for design_factor in self.design:
+            for level in design_factor.levels:
+                if isinstance(level, SimpleLevel):
+                    basic_factor_names.add(level.factor.factor_name)
+                elif isinstance(level, DerivedLevel):
+                    for factor in level.window.args:
+                        included_factor_names.add(factor.factor_name)
+                else:
+                    raise RuntimeError('Expected SimpleLevel or DerivedLevel but found ' + str(type(level)))
+        undefined_factor_names = included_factor_names - basic_factor_names
+        if undefined_factor_names:
+            # The derived levels include factors that are not basic factors.
+            raise RuntimeError('Derived levels in experiment design include factors that are not '
+                               'listed as basic factors: ' + str(undefined_factor_names))
         # TODO: Make sure factor names are unique
         from sweetpea.constraints import MinimumTrials
         for c in self.constraints:
@@ -382,7 +400,7 @@ class FullyCrossBlock(Block):
         return len(excluded_crossings)
 
     """
-    Given the complete crossing and an exclude constraint returns true if that combination results in the exclude level 
+    Given the complete crossing and an exclude constraint returns true if that combination results in the exclude level
     """
     def __excluded_derived(self, excluded_level, c):
         ret = []
