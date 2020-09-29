@@ -11,10 +11,11 @@ __all__ = [
     'Trial',
     'SATResult', 'Correct', 'Unsatisfiable', 'WrongResult', 'ParseError',
     'Logic', 'And', 'Or', 'Not', 'LogicVar', 'If', 'Iff',
-    'empty_state', 'init_state', 'get_fresh', 'get_n_fresh', 'put_fresh',
+    'CountState', 'empty_state', 'init_state',
+    'get_fresh', 'get_n_fresh', 'put_fresh',
     'append_CNF', 'zero_out', 'set_to_one', 'set_to_zero',
     'double_implies', 'a_double_implies_b_and_c', 'a_double_implies_list',
-    'and_CNF', 'n_and_CNF', 'xor_CNF', 'distribute'
+    'and_CNF', 'n_and_CNF', 'xor_CNF', 'xnor_CNF', 'distribute'
 ]
 
 

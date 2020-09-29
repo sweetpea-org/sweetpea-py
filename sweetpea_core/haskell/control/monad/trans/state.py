@@ -2,6 +2,9 @@ from dataclasses import dataclass
 from typing import Generic, TypeVar
 
 
+__all__ = ['State']
+
+
 # A generic type variable for type-checking.
 T = TypeVar('T')
 
