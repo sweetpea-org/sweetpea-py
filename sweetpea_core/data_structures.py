@@ -259,5 +259,9 @@ def xor_CNF(a: Var, b: Var) -> CNF:
     return [[a, b], [Var(-a), Var(-b)]]
 
 
+def xnor_CNF(a: Var, b: Var) -> CNF:
+    return [[a, Var(-b)], [Var(-a), b]]
+
+
 def distribute(input_ID: Var, cnf: CNF) -> CNF:
     return [[input_ID] + or_clause for or_clause in cnf]
