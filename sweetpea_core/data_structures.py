@@ -173,10 +173,10 @@ CountState = State[CountStateState]
 
 # FIXME: Does this need to be made into a function to avoid undesirable
 # container sharing?
-empty_state: Tuple[Count, CNF] = (Count(0), [])
+empty_state: CountStateState = (Count(0), [])
 
 
-def init_state(max_var: int) -> Tuple[Count, CNF]:
+def init_state(max_var: int) -> CountStateState:
     return (Count(max_var), [])
 
 
