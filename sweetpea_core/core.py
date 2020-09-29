@@ -3,9 +3,9 @@ import operator
 
 from typing import cast, List, Tuple
 
-from data_structures import *
-from haskell.control.monad.trans.state import *
-from haskell.data.list import *
+from .data_structures import *
+from .haskell.control.monad.trans.state import *
+from .haskell.data.list import *
 
 
 __all__ = [
@@ -13,7 +13,7 @@ __all__ = [
     'half_adder', 'full_adder', 'ripple_carry', 'pop_count',
     'to_binary', 'to_neg_twos_comp',
     # Re-export from data_structures:
-    'empty_state', 'init_state',
+    'empty_state', 'init_state'
 ]
 
 

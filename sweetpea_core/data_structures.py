@@ -1,8 +1,13 @@
+"""
+.. module:: sweetpea_core.data_structures
+   :synopsis: Basic data structures used throughout sweetpea_core.
+"""
+
 from abc import ABC
 from dataclasses import dataclass
 from typing import cast, List, NewType, Tuple
 
-from haskell.control.monad.trans.state import *
+from .haskell.control.monad.trans.state import *
 
 
 __all__ = [

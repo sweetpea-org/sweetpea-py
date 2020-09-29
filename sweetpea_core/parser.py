@@ -3,12 +3,12 @@ from dataclasses import dataclass
 from enum import auto, Enum
 from typing import List, Optional
 
-from code_gen import *
-from core import *
-from data_structures import *
-from haskell.control.monad.trans.state import *
-from haskell.data.maybe import *
-from haskell.data.ord import *
+from .code_gen import *
+from .core import *
+from .data_structures import *
+from .haskell.control.monad.trans.state import *
+from .haskell.data.maybe import *
+from .haskell.data.ord import *
 
 
 @dataclass
