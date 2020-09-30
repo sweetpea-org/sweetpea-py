@@ -1,8 +1,9 @@
 from abc import abstractmethod
 from functools import reduce
-from itertools import combinations, accumulate, repeat, product
+from itertools import combinations, accumulate, repeat, product, chain
 from networkx import has_path
 from typing import List, Union, Tuple, cast, Any, Dict, Set
+from math import ceil
 
 from sweetpea.backend import BackendRequest
 from sweetpea.internal import get_all_levels
@@ -28,7 +29,7 @@ class Block:
         self.constraints = list(constraints).copy()
         self.cnf_fn = cnf_fn
         self.complex_factors_or_constraints = True
-        self.min_trials = 0
+        self.min_trials = cast(int, None)
         self.exclude = cast(List[Tuple[Factor, Union[SimpleLevel, DerivedLevel]]], [])
         self.excluded_derived = cast(List[Dict[Factor, SimpleLevel]], [])
         self.require_complete_crossing = require_complete_crossing
@@ -339,7 +340,7 @@ class FullyCrossBlock(Block):
     def trials_per_sample(self):
         crossing_size = self.crossing_size()
         required_trials = list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size), self.crossing[0]))
-        required_trials.append(self.min_trials)
+        # required_trials.append(self.min_trials)
         return max(required_trials)
 
     def variables_per_trial(self):
@@ -387,7 +388,7 @@ class FullyCrossBlock(Block):
                     if excluded_level in c:
                         excluded_crossings.add(get_internal_level_name(c[0]) + ", " + get_internal_level_name(c[1]))
             else:
-                # For each crossing, ensure that atleast one combination is possible with the disgn-only factors keeping in mind the exclude contraints.
+                # For each crossing, ensure that atleast one combination is possible with the design-only factors keeping in mind the exclude constraints.
                 for c in all_crossings:
                     if all(list(map(lambda d: self.__excluded_derived(excluded_level, c+d), list(product(*[list(f.levels) for f in filter(lambda f: f not in self.crossing[0], self.design)]))))):
                         excluded_crossings.add(get_internal_level_name(c[0]) + ", " + get_internal_level_name(c[1]))
@@ -399,6 +400,34 @@ class FullyCrossBlock(Block):
             self.errors.add(er)
         return len(excluded_crossings)
 
+    def calculate_samples_required(self, samples):
+        if self.min_trials and self.min_trials > self.crossing_size():
+            return ceil(self.min_trials/self.crossing_size())*samples
+        else:
+            return samples
+
+    def rearrage_samples(self, samples, results):
+        if self.min_trials and self.min_trials > self.crossing_size() and results:
+            res = []
+            num_of_results = len(results)
+            samples_per_experiment = ceil(self.min_trials/self.crossing_size())
+            for i in range(samples):
+                if num_of_results < (i+1)*samples_per_experiment:
+                    break
+                sample_number = i*samples_per_experiment
+                new_dict = results[sample_number]
+                sample_number += 1
+                while sample_number < (i+1)*samples_per_experiment:
+                    for key in new_dict.keys():
+                        new_dict[key].extend(results[sample_number][key])
+                    sample_number += 1
+                for key in new_dict.keys():
+                    new_dict[key] = new_dict[key][:self.min_trials]
+                res.append(new_dict)
+            return res
+        else:
+            return results
+        
     """
     Given the complete crossing and an exclude constraint returns true if that combination results in the exclude level
     """
@@ -499,7 +528,7 @@ class MultipleCrossBlock(Block):
     def trials_per_sample(self):
         crossing_size = self.crossing_size()
         required_trials = list(map(max, list(map(lambda c: list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size), c)), self.crossing))))
-        required_trials.append(self.min_trials)
+        # required_trials.append(self.min_trials)
         # required_trials = list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size), self.crossing))
         return max(required_trials)
 
@@ -574,6 +603,35 @@ class MultipleCrossBlock(Block):
         ret.append(excluded_level.window.fn(*list(map(lambda l: get_external_level_name(l), filter(lambda l: l.factor in excluded_level.window.args, c)))))
 
         return all(ret)
+
+    def calculate_samples_required(self, samples):
+        if self.min_trials and self.min_trials > self.crossing_size():
+            return ceil(self.min_trials/self.crossing_size())*samples
+        else:
+            return samples
+
+    def rearrage_samples(self, samples, results):
+        if self.min_trials and self.min_trials > self.crossing_size() and results:
+            res = []
+            num_of_results = len(results)
+            samples_per_experiment = ceil(self.min_trials/self.crossing_size())
+            for i in range(samples):
+                if num_of_results < (i+1)*samples_per_experiment:
+                    break
+                sample_number = i*samples_per_experiment
+                new_dict = results[sample_number]
+                sample_number += 1
+                while sample_number < (i+1)*samples_per_experiment:
+                    for key in new_dict.keys():
+                        new_dict[key].extend(results[sample_number][key])
+                    sample_number += 1
+                for key in new_dict.keys():
+                    new_dict[key] = new_dict[key][:self.min_trials]
+                res.append(new_dict)
+            return res
+        else:
+            return results
+
 
     def crossing_size(self):
         if self.size:
