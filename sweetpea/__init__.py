@@ -133,8 +133,8 @@ PsyNeuLink is a software from Princeton that assists in creating block diagrams 
 """
 def synthesize_trials(block: Block, samples: int=10, sampling_strategy=UnigenSamplingStrategy) -> List[dict]:
     print("Sampling {} trial sequences using the {}".format(samples, sampling_strategy))
-    sampling_result = sampling_strategy.sample(block, samples)
-    return sampling_result.samples
+    sampling_result = sampling_strategy.sample(block, block.calculate_samples_required(samples))
+    return block.rearrage_samples(samples, sampling_result.samples)
 
 """
 Takes the block of the provided trial and writes its preferences out to a configuration file.

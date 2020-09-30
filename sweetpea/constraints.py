@@ -581,12 +581,14 @@ class MinimumTrials(Constraint):
         # TODO: validation
 
     def validate(self, block: Block) -> None:
-        if self.trials < 0:
-            raise ValueError("Minimum trials must be positive.")
-        block.min_trials = self.trials
+        if self.trials <= 0 and not isinstance(self.trials, int):
+            raise ValueError("Minimum trials must be a positive integer.")
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
-        block.min_trials = self.trials
+        if block.min_trials:
+            block.min_trials = max([block.min_trials, self.trials])
+        else:
+            block.min_trials = self.trials
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
