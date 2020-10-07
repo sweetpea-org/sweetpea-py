@@ -268,6 +268,11 @@ class Block:
         start = self.first_variable_for_level(level[0], level[1]) + 1
         return reduce(lambda l, v: l + [start + (v * level_count)], range(n), [])
 
+    def rearrage_samples(self, samples, results):
+        pass
+
+    def calculate_samples_required(self, samples):
+        pass
 
 """
 A fully-crossed block. This block generates as many trials as needed to fully
