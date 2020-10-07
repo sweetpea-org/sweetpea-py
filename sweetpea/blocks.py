@@ -29,7 +29,7 @@ class Block:
         self.constraints = list(constraints).copy()
         self.cnf_fn = cnf_fn
         self.complex_factors_or_constraints = True
-        self.min_trials = cast(int, None)
+        self.min_trials = cast(int, 0)
         self.exclude = cast(List[Tuple[Factor, Union[SimpleLevel, DerivedLevel]]], [])
         self.excluded_derived = cast(List[Dict[Factor, SimpleLevel]], [])
         self.require_complete_crossing = require_complete_crossing
