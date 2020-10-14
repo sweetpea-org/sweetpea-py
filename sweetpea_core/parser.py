@@ -1,7 +1,8 @@
 from abc import ABC
 from dataclasses import dataclass
 from enum import auto, Enum
-from typing import List, Optional
+from json import JSONDecodeError, loads as str_to_json
+from typing import Any, Dict, List, Optional
 
 from .code_gen import *
 from .core import *
@@ -34,6 +35,18 @@ class JSONSpec:
     requests: Optional[List[Request]]
     unigen_options: Optional[str]
     sample_count: Optional[int]
+
+    @staticmethod
+    def decode(json_str: str) -> Optional[JSONSpec]:
+        def decode(json: Dict[str, Any]):
+            fields: Dict[str, Any] = {}
+            for field_name in JSONSpec.__annotations__.keys():
+                fields[field_name] = json.get(field_name, None)
+            return JSONSpec(**fields)
+        try:
+            return str_to_json(json_str, object_hook=decode)
+        except JSONDecodeError:
+            return None
 
 
 def process_requests(spec: JSONSpec) -> str:
