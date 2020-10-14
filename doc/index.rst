@@ -11,7 +11,7 @@ Such a design is constructed by calling SweetPea functions such as
 :func:`.at_most_k_in_a_row`.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Contents:
 
    sweetpea_core/index
