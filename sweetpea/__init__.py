@@ -131,7 +131,7 @@ calls unigen on the full cnf file. Then decodes that cnf file into (1) something
 
 PsyNeuLink is a software from Princeton that assists in creating block diagrams for these experiments.
 """
-def synthesize_trials(block: Block, samples: int=10, sampling_strategy=UnigenSamplingStrategy) -> List[dict]:
+def synthesize_trials(block: Block, samples: int=10, sampling_strategy=NonUniformSamplingStrategy) -> List[dict]:
     print("Sampling {} trial sequences using the {}".format(samples, sampling_strategy))
     sampling_result = sampling_strategy.sample(block, block.calculate_samples_required(samples))
     return block.rearrage_samples(samples, sampling_result.samples)
