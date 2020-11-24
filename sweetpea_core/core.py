@@ -197,18 +197,14 @@ def ripple_carry(xs: List[Var], ys: List[Var], state: CountState) -> Tuple[List[
     cin = get_fresh(state)
     set_to_zero(Var(cin), state)
 
-    # The lists are iterated over in reverse.
-    index = min(len(xs), len(ys)) - 1
     c_accum: List[Var] = []
     s_accum: List[Var] = []
 
-    while index >= 0:
-        x = xs[index]
-        y = ys[index]
+    for x, y in zip(reversed(xs), reversed(ys)):
         (c, s) = full_adder(x, y, Var(cin), state)
         c_accum.append(c)
         s_accum.append(s)
-        index -= 1
+        cin = Count(c)
 
     return (c_accum, s_accum)
 
