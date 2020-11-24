@@ -9,15 +9,15 @@ __all__ = ['State']
 T = TypeVar('T')
 
 
-"""
-A simple encoding of the Control.Monad.Trans.State monad, implementing only the
-functionality necessary in this library.
-
-This is really just a glorified container for any arbitrary data, but it makes
-the code more readable and makes type checking nicer, so we use it.
-"""
 @dataclass
 class State(Generic[T]):
+    """
+    A simple encoding of the Control.Monad.Trans.State monad, implementing only
+    the functionality necessary in this library.
+
+    This is really just a glorified container for any arbitrary data, but it
+    makes the code more readable and makes type checking nicer, so we use it.
+    """
     # "What's in there?"
     # "Only what you take with you."
     state: T

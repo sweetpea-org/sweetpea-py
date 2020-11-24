@@ -1,8 +1,6 @@
 from pathlib import Path
 
-from ..code_gen import *
-from ..data_structures import *
-from ..parser import *
+from ..parser import JSONSpec, process_requests
 
 
 DEFAULT_LL_CONSTRAINTS_FILE = Path("ll_constraints.json")

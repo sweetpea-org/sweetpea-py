@@ -1,6 +1,5 @@
-from .data_structures import *
-from .haskell.data.list import *
-from .haskell.data.list.split import *
+from .data_structures import CNF
+from .haskell.data.list.split import chunks_of
 
 
 __all__ = ['show_DIMACS', 'show_CNF']

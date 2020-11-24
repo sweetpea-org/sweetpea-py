@@ -1,6 +1,6 @@
 from typing import List
 
-from .data_structures import *
+from .data_structures import Var, CNF
 
 
 __all__ = [
@@ -25,7 +25,7 @@ def cnf_clause_to_line(clause: List[Var]) -> str:
 
 
 def cnf_to_line(cnf: CNF) -> List[str]:
-    return  [cnf_clause_to_line(clause) for clause in cnf]
+    return [cnf_clause_to_line(clause) for clause in cnf]
 
 
 def add_clauses_to_cnf(cnf_string: str, clauses: CNF) -> str:

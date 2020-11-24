@@ -1,15 +1,14 @@
-from abc import ABC
 from dataclasses import dataclass
 from enum import auto, Enum
 from json import JSONDecodeError, loads as str_to_json
 from typing import Any, Dict, List, Optional
 
-from .code_gen import *
-from .core import *
-from .data_structures import *
-from .haskell.control.monad.trans.state import *
-from .haskell.data.maybe import *
-from .haskell.data.ord import *
+from .code_gen import show_DIMACS
+from .core import init_state, assert_k_of_n, k_less_than_n, k_greater_than_n
+from .data_structures import Var, CNF, CountState
+from .haskell.control.monad.trans.state import State
+from .haskell.data.maybe import from_just
+from .haskell.data.ord import Ordering, LT, EQ
 
 
 @dataclass

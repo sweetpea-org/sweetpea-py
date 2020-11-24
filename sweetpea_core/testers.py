@@ -1,13 +1,16 @@
 from functools import reduce
 from typing import cast, Callable, List
 
-from .code_gen import *
-from .core import *
-from .data_structures import *
-from .haskell.control.monad.trans.state import *
-from .haskell.data.list import *
-from .haskell.prelude import *
-from .haskell.text.read import *
+from .code_gen import show_DIMACS
+from .core import assert_k_of_n, k_less_than_n, half_adder, full_adder, ripple_carry, pop_count
+from .data_structures import (
+    Var,
+    SATResult, Unsatisfiable, ParseError, Correct, WrongResult,
+    init_state, and_CNF)
+from .haskell.control.monad.trans.state import State
+from .haskell.data.list import concat_map
+from .haskell.prelude import snd, sequence
+from .haskell.text.read import read_maybe
 
 
 def test_half_adder_DIMACS() -> List[str]:
@@ -50,7 +53,9 @@ def compute_soln_full_adder(incoming: List[int], c_index: int, s_index: int) -> 
 
 def ripple_carry_DIMACS(num_digits: int) -> List[str]:
     state = State(init_state(num_digits))
-    _ = ripple_carry([Var(x) for x in range(1, num_digits + 1)], [Var(x) for x in range(num_digits + 1, num_digits * 2 + 1)], state)
+    _ = ripple_carry([Var(x) for x in range(1, num_digits + 1)],
+                     [Var(x) for x in range(num_digits + 1, (num_digits * 2) + 1)],
+                     state)
     final_n_vars, cnf = state.get()
     all_inputs = exhaust(list(range(1, num_digits + 1)))
     return [show_DIMACS([cast(List[Var], x)] + cnf, final_n_vars, 0) for x in all_inputs]

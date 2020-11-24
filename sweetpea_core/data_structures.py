@@ -5,9 +5,9 @@
 
 from abc import ABC
 from dataclasses import dataclass
-from typing import cast, List, NewType, Tuple
+from typing import List, NewType, Tuple
 
-from .haskell.control.monad.trans.state import *
+from .haskell.control.monad.trans.state import State
 
 
 __all__ = [
@@ -86,7 +86,6 @@ class SATResult(ABC):
         if cls is SATResult:
             raise TypeError(f"Cannot directly instantiate ADT base class {cls.__name__}.")
         return super().__new__(cls)
-
 
 
 @dataclass

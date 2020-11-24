@@ -3,9 +3,12 @@ import operator
 
 from typing import cast, List, Tuple
 
-from .data_structures import *
-from .haskell.control.monad.trans.state import *
-from .haskell.data.list import *
+from .data_structures import (
+    Count, Var, CountState,
+    empty_state, init_state, get_fresh, get_n_fresh, append_CNF, zero_out, set_to_one, set_to_zero,
+    double_implies,
+    and_CNF, n_and_CNF, xor_CNF, xnor_CNF, distribute)
+from .haskell.data.list import concat, zip_with
 
 
 __all__ = [
