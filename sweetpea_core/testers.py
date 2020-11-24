@@ -40,7 +40,7 @@ def test_full_adder_DIMACS() -> List[str]:
 
 def soln_full_adder() -> List[str]:
     all_inputs = sequence([[1, -1], [2, -2], [3, -3]])
-    return ["s SATISFIABLE\nv  " + ' '.join(map(str, compute_soln_full_adder(x, 4, 5))) + " 0\n"
+    return ["s SATISFIABLE\nv " + ' '.join(map(str, compute_soln_full_adder(x, 4, 5))) + " 0\n"
             for x in all_inputs]
 
 
