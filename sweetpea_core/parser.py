@@ -36,7 +36,7 @@ class JSONSpec:
     sample_count: Optional[int]
 
     @staticmethod
-    def decode(json_str: str) -> Optional[JSONSpec]:
+    def decode(json_str: str) -> Optional['JSONSpec']:
         def decode(json: Dict[str, Any]):
             fields: Dict[str, Any] = {}
             for field_name in JSONSpec.__annotations__.keys():
