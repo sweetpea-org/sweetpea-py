@@ -164,7 +164,7 @@ def half_adder(a: Var, b: Var, state: CountState) -> Tuple[Var, Var]:
 
     s_val = xor_CNF(a, b)
     s_neg_val = xnor_CNF(a, b)
-    s_implies_s_val = distribute(Var(s), s_val)
+    s_implies_s_val = distribute(Var(-s), s_val)
     s_val_implies_s = distribute(Var(s), s_neg_val)
     computed_s = s_implies_s_val + s_val_implies_s
     append_CNF(computed_s, state)
