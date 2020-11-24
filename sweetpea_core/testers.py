@@ -58,7 +58,7 @@ def ripple_carry_DIMACS(num_digits: int) -> List[str]:
                      state)
     final_n_vars, cnf = state.get()
     all_inputs = exhaust(list(range(1, num_digits + 1)))
-    return [show_DIMACS([cast(List[Var], x)] + cnf, final_n_vars, 0) for x in all_inputs]
+    return [show_DIMACS([[x] for x in xs] + cnf, final_n_vars, 0) for xs in cast(List[List[Var]], all_inputs)]
 
 
 def pop_count_DIMACS(num_digits: int) -> List[str]:
