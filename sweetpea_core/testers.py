@@ -47,7 +47,7 @@ def soln_full_adder() -> List[str]:
 def compute_soln_full_adder(incoming: List[int], c_index: int, s_index: int) -> List[int]:
     total = sum(map(lambda x: 0 if x < 0 else 1, incoming))
     c = c_index if total > 1 else (- c_index)
-    s = s_index if total % 2 == 0 else (- s_index)
+    s = s_index if total & 1 else (- s_index)
     return incoming + [c] + [s]
 
 
