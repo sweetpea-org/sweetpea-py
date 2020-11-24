@@ -19,8 +19,8 @@ def test_half_adder_DIMACS() -> List[str]:
     state = State(init_state(2))
     _ = half_adder(Var(1), Var(2), state)
     constraints = snd(state.get())
-    all_inputs = sequence([[1, -1], [2, -2]])
-    test_constraints = [constraints + and_CNF(cast(List[Var], x[0])) + and_CNF(cast(List[Var], x[1]))
+    all_inputs: List[List[Var]] = sequence([[Var(1), Var(-1)], [Var(2), Var(-2)]])
+    test_constraints = [constraints + and_CNF([x[0]]) + and_CNF([x[1]])
                         for x in all_inputs]
     return [show_DIMACS(cnf, 4, 0) for cnf in test_constraints]
 
