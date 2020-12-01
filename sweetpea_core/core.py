@@ -8,6 +8,7 @@ from .data_structures import (
     empty_state, init_state, get_fresh, get_n_fresh, append_CNF, zero_out, set_to_one, set_to_zero,
     double_implies,
     and_CNF, n_and_CNF, xor_CNF, xnor_CNF, distribute)
+from .haskell.prelude import even
 from .haskell.data.list import concat, zip_with
 
 
@@ -67,7 +68,7 @@ def to_binary(value: int) -> List[int]:
     """
     accumulator: List[int] = []
     while value != 0:
-        if value & 1:
+        if even(value):
             accumulator.append(-1)
         else:
             accumulator.append(1)
