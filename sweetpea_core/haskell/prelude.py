@@ -1,11 +1,15 @@
 from typing import List, Tuple, TypeVar
 
 
-__all__ = ['fst', 'snd', 'sequence']
+__all__ = ['even', 'fst', 'snd', 'sequence']
 
 
 T = TypeVar('T')
 U = TypeVar('U')
+
+
+def even(x: int) -> bool:
+    return not x & 1
 
 
 def fst(pair: Tuple[T, U]) -> T:
