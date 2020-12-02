@@ -1,7 +1,7 @@
-from typing import Callable, List, TypeVar
+from typing import Callable, Iterable, Iterator, List, TypeVar
 
 
-__all__ = ['concat', 'concat_map', 'zip_with']
+__all__ = ['concat', 'concat_map', 'repeat', 'take', 'zip_with']
 
 
 T = TypeVar('T')
@@ -15,6 +15,16 @@ def concat(xss: List[List[T]]) -> List[T]:
 
 def concat_map(func: Callable[[T], List[U]], xs: List[T]) -> List[U]:
     return [y for ys in (func(x) for x in xs) for y in ys]
+
+
+def repeat(value: T) -> Iterator[T]:
+    while True:
+        yield value
+
+
+def take(amount: int, xs: Iterable[T]) -> List[T]:
+    it = iter(xs)
+    return [next(it) for _ in range(amount)]
 
 
 def zip_with(transformer_function: Callable[[T, U], V], ts: List[T], us: List[U]) -> List[V]:
