@@ -1,6 +1,7 @@
 import math
 import operator
 
+from itertools import chain
 from typing import cast, List, Tuple
 
 from .data_structures import (
@@ -9,7 +10,7 @@ from .data_structures import (
     double_implies,
     and_CNF, n_and_CNF, xor_CNF, xnor_CNF, distribute)
 from .haskell.prelude import even
-from .haskell.data.list import concat, zip_with
+from .haskell.data.list import concat, drop, repeat, take, zip_with
 
 
 __all__ = [
@@ -30,7 +31,7 @@ def assert_k_of_n(k: int, in_list: List[Var], state: CountState):
     sum_bits = pop_count(in_list, state)
     in_binary = to_binary(k)
     in_binary.reverse()
-    left_padded = in_binary[:len(sum_bits)] + ([-1] * (len(sum_bits) - len(in_binary)))
+    left_padded = take(len(sum_bits), chain(in_binary, repeat(-1)))
     left_padded.reverse()
     assertion = zip_with(operator.mul, left_padded, sum_bits)
     append_CNF([[x] for x in assertion], state)
