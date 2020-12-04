@@ -227,24 +227,24 @@ def pop_count_layer(bit_list: List[List[Var]], state: CountState) -> List[Var]:
         return bit_list[0]
     else:
         half_way = len(bit_list) // 2
-        first_half = bit_list[:half_way]
-        second_half = bit_list[half_way:]
+        first_half = take(half_way, bit_list)
+        second_half = drop(half_way, bit_list)
         var_list = pop_count_compute(first_half, second_half, state)
         return pop_count_layer(var_list, state)
 
 
 def pop_count_compute(xs: List[List[Var]], ys: List[List[Var]], state: CountState) -> List[List[Var]]:
-    index = 0
+    if len(xs) != len(ys):
+        raise RuntimeError("Expected two lists of equal length!")
+
     accum: List[List[Var]] = []
 
-    while index < len(xs) and index < len(ys):
-        x = xs[index]
-        y = ys[index]
+    for (x, y) in zip(xs, ys):
         (cs, ss) = ripple_carry(x, y, state)
         formatted_result = format_sum(cs, ss)
         accum.append(formatted_result)
-        index += 1
 
+    accum.reverse()
     return accum
 
 
