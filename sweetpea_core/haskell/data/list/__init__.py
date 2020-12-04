@@ -24,7 +24,12 @@ def repeat(value: T) -> Iterator[T]:
 
 def take(amount: int, xs: Iterable[T]) -> List[T]:
     it = iter(xs)
-    return [next(it) for _ in range(amount)]
+    result = []
+    try:
+        for _ in range(amount):
+            result.append(next(it))
+    finally:
+        return result
 
 
 def zip_with(transformer_function: Callable[[T, U], V], ts: List[T], us: List[U]) -> List[V]:
