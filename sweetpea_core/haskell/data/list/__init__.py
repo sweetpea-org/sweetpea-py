@@ -1,7 +1,7 @@
 from typing import Callable, Iterable, Iterator, List, TypeVar
 
 
-__all__ = ['concat', 'concat_map', 'repeat', 'take', 'zip_with']
+__all__ = ['concat', 'concat_map', 'drop', 'repeat', 'take', 'zip_with']
 
 
 T = TypeVar('T')
@@ -15,6 +15,15 @@ def concat(xss: List[List[T]]) -> List[T]:
 
 def concat_map(func: Callable[[T], List[U]], xs: List[T]) -> List[U]:
     return [y for ys in (func(x) for x in xs) for y in ys]
+
+
+def drop(amount: int, xs: Iterable[T]) -> List[T]:
+    it = iter(xs)
+    try:
+        for _ in range(amount):
+            next(it)
+    finally:
+        return list(it)
 
 
 def repeat(value: T) -> Iterator[T]:
