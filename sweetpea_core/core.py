@@ -80,11 +80,12 @@ def to_binary(value: int) -> List[int]:
 
 def inequality(is_less_than: bool, k: int, in_list: List[Var], state: CountState):
     pop_count_sum = pop_count(in_list, state)
-    k_binary = to_binary(k)
-    k_vars = cast(List[Var], get_n_fresh(len(k_binary), state))
-    append_CNF(zip_with(operator.mul, k_vars, k_binary), state)
+    in_binary = to_binary(k)
+    k_vars = get_n_fresh(len(in_binary), state)
+    assertion = zip_with(operator.mul, k_vars, in_binary)
+    append_CNF([[x] for x in assertion], state)
 
-    (k_vars_, pop_count_sum_) = make_same_length(k_vars, pop_count_sum, state)
+    (k_vars_, pop_count_sum_) = make_same_length(cast(List[Var], k_vars), pop_count_sum, state)
 
     if is_less_than:
         assert_less_than(pop_count_sum_, k_vars_, state)
