@@ -1,7 +1,9 @@
 """The behind-the-scenes stuff that powers SweetPea."""
 
 from enum import Enum, auto
-from typing import List, NamedTuple, NewType
+from typing import List, NamedTuple
+
+from .simple_types import Clause, Count, CNF, Var
 
 
 # NOTE: As of Python 3.9, typing.NamedTuple (and typing.TypedDict) are now
@@ -15,10 +17,6 @@ from typing import List, NamedTuple, NewType
 # pylint: disable=missing-class-docstring
 # pylint: disable=too-few-public-methods
 # pylint: disable=inherit-non-class
-
-
-Var = NewType('Var', int)
-CNF = List[List[Var]]
 
 
 class SolutionSpec(NamedTuple):
