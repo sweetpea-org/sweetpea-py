@@ -4,9 +4,10 @@ lists or return values.
 """
 
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Iterator
 
-from .simple_types import Count, CNF
+from .simple_types import Clause, Count, CNF, Var
 
 
 @dataclass
@@ -16,10 +17,34 @@ class CountState:
     """
 
     count: Count
-    cnf: CNF
+    cnf: CNF = field(default_factor=list)
 
     @classmethod
     @property
     def empty(cls):
         """Creates an empty CountState."""
-        return cls(0, [[]])
+        return cls(0)
+
+    def get_fresh(self) -> Count:
+        """Increments the count by 1 and return the result."""
+        self.count += 1
+        return self.count
+
+    def get_n_fresh(self, n: int) -> Iterator[Count]:
+        """Generates the next n variables in the state."""
+        for _ in range(n):
+            yield self.get_fresh()
+
+    def append_cnf(self, new_entry: CNF):
+        """Appends a CNF formula to the existing CNF formula."""
+        self.cnf += new_entry
+
+    def set_to_zero(self, variable: Var):
+        """Zeroes the specified variable by appending its negation to the
+        existing CNF formula.
+        """
+        self.append_cnf([[Var(-variable)]])
+
+    def zero_out(self, in_list: Clause):
+        """Appends a CNF formula negating the existing CNF formula."""
+        self.append_cnf([[Var(-x)] for x in in_list])
