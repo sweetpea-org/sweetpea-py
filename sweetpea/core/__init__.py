@@ -3,7 +3,7 @@
 from enum import Enum, auto
 from typing import List, NamedTuple
 
-from .simple_types import Clause, Count, CNF, Var
+from .cnf import Clause, Count, CNF, Var
 
 
 # NOTE: As of Python 3.9, typing.NamedTuple (and typing.TypedDict) are now

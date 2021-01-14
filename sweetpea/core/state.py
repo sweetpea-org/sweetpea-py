@@ -7,7 +7,7 @@ lists or return values.
 from dataclasses import dataclass, field
 from typing import Iterator
 
-from .simple_types import Clause, Count, CNF, Var
+from .cnf import Clause, Count, CNF, Var
 
 
 @dataclass
