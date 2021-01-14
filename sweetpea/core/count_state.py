@@ -1,4 +1,4 @@
-"""Provides the CountState class, which is used to easily pass specific state
+"""Provides the CNFState class, which is used to easily pass specific state
 between various functions without over-complicating the functions' parameter
 lists or return values.
 """
@@ -11,27 +11,38 @@ from .simple_types import Clause, Count, CNF, Var
 
 
 @dataclass
-class CountState:
-    """Keeps track of the state of counts during various operations. This class
-    is not strictly necessary, but it makes the code easier to deal with.
+class CNFState:
+    """Keeps track of the number of variables used during various operations on
+    a CNF formula. This class is not strictly necessary, but it makes the code
+    easier to deal with.
+
+    A fresh state with no variables can be instantiated in one of two ways:
+
+        fresh_state_1 = CNFState()
+        fresh_state_2 = CNFState.empty
     """
 
-    count: Count
-    cnf: CNF = field(default_factor=list)
+    var_count: Count = field(default=Count(0))
+    cnf: CNF = field(default_factory=list)
 
     @classmethod
     @property
     def empty(cls):
-        """Creates an empty CountState."""
-        return cls(0)
+        """An empty CNFState."""
+        return cls()
 
     def get_fresh(self) -> Count:
-        """Increments the count by 1 and return the result."""
-        self.count += 1
-        return self.count
+        """Creates a new variable for the formula."""
+        # FIXME: mypy seems to be unhappy with this assignment because it
+        #        appears to believe `self.var_count` is an int and not a Count.
+        #        Executable versions at the time of writing:
+        #            python3 --version :: Python 3.9.1
+        #            mypy --version    :: mypy 0.790
+        self.var_count += 1  # type: ignore
+        return self.var_count
 
     def get_n_fresh(self, n: int) -> Iterator[Count]:
-        """Generates the next n variables in the state."""
+        """Generates the next n variables, numbered sequentially."""
         for _ in range(n):
             yield self.get_fresh()
 
