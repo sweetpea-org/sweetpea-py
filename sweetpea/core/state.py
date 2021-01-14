@@ -10,6 +10,9 @@ from typing import Iterator
 from .cnf import Clause, Count, CNF, Var
 
 
+__all__ = ['CNFState', 'Clause', 'Count', 'CNF', 'Var']
+
+
 @dataclass
 class CNFState:
     """Keeps track of the number of variables used during various operations on
@@ -41,7 +44,7 @@ class CNFState:
         self.var_count += 1  # type: ignore
         return self.var_count
 
-    def get_n_fresh(self, n: int) -> Iterator[Count]:
+    def get_n_fresh(self, n: int) -> Iterator[Count]:  # pylint: disable=invalid-name
         """Generates the next n variables, numbered sequentially."""
         for _ in range(n):
             yield self.get_fresh()
@@ -54,8 +57,15 @@ class CNFState:
         """Zeroes the specified variable by appending its negation to the
         existing CNF formula.
         """
-        self.append_cnf([[Var(-variable)]])
+        self.append_cnf([[~variable]])
 
     def zero_out(self, in_list: Clause):
         """Appends a CNF formula negating the existing CNF formula."""
-        self.append_cnf([[Var(-x)] for x in in_list])
+        for variable in in_list:
+            self.set_to_zero(variable)
+
+    def set_to_one(self, variable: Var):
+        """Sets the specified variable to 1 by appending it to the existing CNF
+        formula.
+        """
+        self.append_cnf([[variable]])
