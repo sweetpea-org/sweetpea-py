@@ -154,12 +154,7 @@ class CNF(SimpleSequence[Clause]):
         super().__init__(*values)
         self._num_vars = 0
 
-    # FIXME: See FIXME for SimpleSequence.__getitem__.
-    def __add__(self, other: Union[CNF, Clause, Var]) -> CNF:  # pylint: disable=unsubscriptable-object
-        # FIXME: As of pylint 2.6.0 with Python 3.9.1, pylint appears to have
-        #        trouble with accessing CNF instances' _vals field for some
-        #        reason.
-        # pylint: disable=no-member
+    def __add__(self, other: Union[CNF, Clause, Var]) -> CNF:
         if isinstance(other, CNF):
             return CNF(*self._vals, *other._vals)
         if isinstance(other, Clause):
@@ -168,12 +163,7 @@ class CNF(SimpleSequence[Clause]):
             return CNF(*self._vals, Clause(other))
         return NotImplemented
 
-    # FIXME: See FIXME for SimpleSequence.__getitem__.
-    def __iadd__(self, other: Union[CNF, Clause, Iterable[Clause], Var]) -> CNF:  # pylint: disable=unsubscriptable-object
-        # FIXME: As of pylint 2.6.0 with Python 3.9.1, pylint appears to have
-        #        trouble with accessing CNF instances' _vals field for some
-        #        reason.
-        # pylint: disable=no-member
+    def __iadd__(self, other: Union[CNF, Clause, Iterable[Clause], Var]) -> CNF:
         if isinstance(other, CNF):
             self._vals += other._vals
             return self
@@ -192,15 +182,12 @@ class CNF(SimpleSequence[Clause]):
         self._num_vars += 1
         return self._num_vars
 
-    def get_n_fresh(self, n: int) -> Iterator[int]:  # pylint: disable=invalid-name
+    def get_n_fresh(self, n: int) -> Iterator[int]:
         """Generates the next n variables, numbered sequentially."""
         for _ in range(n):
             yield self.get_fresh()
 
-    # FIXME: As of pylint 2.6.0 with Python 3.9.1, pylint flags the following
-    #        method for not using `self` even though it does.
-    # FIXME: See FIXME for SimpleSequence.__getitem__.
-    def append(self, other: Union[CNF, Clause, Iterable[Clause], Var]):  # pylint: disable=no-self-use,unsubscriptable-object
+    def append(self, other: Union[CNF, Clause, Iterable[Clause], Var]):
         """Appends a CNF formula to this formula."""
         self += other
 

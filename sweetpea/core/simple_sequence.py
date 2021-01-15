@@ -38,7 +38,7 @@ class SimpleSequence(MutableSequence[_T]):
         """
         raise NotImplementedError()
 
-    def __init__(self, /, first_value: Union[List[Union[_T, int]], _T, int], *rest_values: Union[_T, int]):  # pylint: disable=unsubscriptable-object,line-too-long
+    def __init__(self, /, first_value: Union[List[Union[_T, int]], _T, int], *rest_values: Union[_T, int]):
         if isinstance(first_value, (list, tuple)):
             if rest_values:
                 raise ValueError(f"cannot instantiate {type(self).__name__} with both list and variadic arguments")
@@ -58,11 +58,7 @@ class SimpleSequence(MutableSequence[_T]):
     def __getitem__(self, index: slice) -> SimpleSequence[_T]:
         pass
 
-    # FIXME: As of pylint 2.6.0 with Python 3.9.1, pylint mistakenly labels
-    #        Union (and Optional) as unsubscriptable objects. This will be
-    #        fixed soon, and when it is the pylint pragma on the following line
-    #        should be removed.
-    def __getitem__(self, index: Union[int, slice]) -> Union[_T, SimpleSequence[_T]]:  # pylint: disable=unsubscriptable-object,line-too-long
+    def __getitem__(self, index: Union[int, slice]) -> Union[_T, SimpleSequence[_T]]:
         if isinstance(index, slice):
             return self.__class__(*self._vals[index])
         return self._vals[index]
@@ -75,8 +71,7 @@ class SimpleSequence(MutableSequence[_T]):
     def __setitem__(self, index: slice, item: Iterable[_T]) -> None:
         pass
 
-    # FIXME: See FIXME for SimpleSequence.__getitem__.
-    def __setitem__(self, index: Union[int, slice], item: Union[_T, Iterable[_T]]) -> None:  # pylint: disable=unsubscriptable-object,line-too-long
+    def __setitem__(self, index: Union[int, slice], item: Union[_T, Iterable[_T]]) -> None:
         # FIXME: As of mypy 0.790 with Python 3.9.1, mypy is unable to handle
         #        the separate overloads for this function as documented in:
         #            https://github.com/python/mypy/issues/7858
