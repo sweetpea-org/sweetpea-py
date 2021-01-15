@@ -38,6 +38,12 @@ class SimpleSequence(MutableSequence[_T]):
         """
         raise NotImplementedError()
 
+    @classmethod
+    def _construct_element(cls, value) -> _T:
+        if isinstance(value, cls._element_type):
+            return value
+        return cls._element_type(value)
+
     def __init__(self, /, first_value: Union[List[Union[_T, int]], _T, int], *rest_values: Union[_T, int]):
         if isinstance(first_value, (list, tuple)):
             if rest_values:
@@ -45,7 +51,7 @@ class SimpleSequence(MutableSequence[_T]):
             values = first_value
         else:
             values = first_value, *rest_values
-        self._vals = [self._element_type(value) for value in values]
+        self._vals = [self._construct_element(value) for value in values]
 
     def __repr__(self) -> str:
         return self.__class__.__name__ + str(self._vals)
