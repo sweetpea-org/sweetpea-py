@@ -106,6 +106,11 @@ class Clause(SimpleSequence[Var]):
     the variables, i.e., `Clause(Var(3), Var(7))` encodes (3 ∨ 7).
     """
 
+    @classmethod
+    @property
+    def _element_type(cls):
+        return Var
+
     def __add__(self, other) -> Clause:
         if isinstance(other, Clause):
             return Clause(*self._vals, *other._vals)
@@ -131,6 +136,11 @@ class CNF(SimpleSequence[Clause]):
 
     corresponds to the CNF formula ((3 ∨ 7) ∧ (1 ∨ 13)).
     """
+
+    @classmethod
+    @property
+    def _element_type(cls):
+        return Clause
 
     _num_vars: int
 

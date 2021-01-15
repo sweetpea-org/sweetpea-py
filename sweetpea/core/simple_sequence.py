@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from abc import abstractmethod
 from collections.abc import MutableSequence
-from typing import Iterable, List, TypeVar, Union, overload
+from typing import Callable, Iterable, List, TypeVar, Union, overload
 
 
 __all__ = ['SimpleSequence']
@@ -21,8 +22,30 @@ class SimpleSequence(MutableSequence[_T]):
 
     _vals: List[_T]
 
-    def __init__(self, *values: _T):
-        self._vals = list(values)
+    # TODO: I wasn't able to get this to work with @staticmethod, even though
+    #       it really *is* static. It could probably be done with a custom
+    #       decorator to mash-up the @staticmethod and @property or something.
+    # TODO: Even better would be to replace this with a simple attribute (like
+    #       _vals above) and build a custom class decorator that can manipulate
+    #       this. It'd look a lot cleaner, anyway.
+    @classmethod
+    @property
+    @abstractmethod
+    def _element_type(cls) -> Callable[..., _T]:
+        """Returns a function that can produce instances of the element type.
+        (The simplest option is to just supply the element type's class
+        directly.)
+        """
+        raise NotImplementedError()
+
+    def __init__(self, /, first_value: Union[List[Union[_T, int]], _T, int], *rest_values: Union[_T, int]):  # pylint: disable=unsubscriptable-object,line-too-long
+        if isinstance(first_value, (list, tuple)):
+            if rest_values:
+                raise ValueError(f"cannot instantiate {type(self).__name__} with both list and variadic arguments")
+            values = first_value
+        else:
+            values = first_value, *rest_values
+        self._vals = [self._element_type(value) for value in values]
 
     def __repr__(self) -> str:
         return self.__class__.__name__ + str(self._vals)
