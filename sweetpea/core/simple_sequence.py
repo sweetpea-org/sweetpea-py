@@ -1,5 +1,6 @@
 """Provides a simple custom sequence type for internal use."""
 
+from __future__ import annotations
 
 from collections.abc import MutableSequence
 from typing import Iterable, List, TypeVar, Union, overload
