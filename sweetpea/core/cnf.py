@@ -37,7 +37,7 @@ class Var:
         elif isinstance(value, int):
             self._val = value
         else:
-            raise TypeError(f"expected 'int'; got '{type(value).__name__}")
+            raise TypeError(f"expected 'int'; got '{type(value).__name__}'")
 
     def __repr__(self) -> str:
         return f"Var({self._val})"
