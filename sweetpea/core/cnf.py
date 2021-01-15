@@ -92,11 +92,13 @@ class Var:
     def __ior__(self, other):
         raise NotImplementedError()
 
-    # NOTE: We do not implement __and__ because SweetPea deals only with CNF
-    #       formulas, which means that two variables cannot be conjuncted
-    #       directly. Instead, they must be put into separate clauses and then
-    #       the *clauses* can be conjuncted. Implementing __and__ would make it
-    #       easy to shoot ourselves in the feet by mistake.
+    def __and__(self, other) -> CNF:
+        if isinstance(other, Var):
+            return CNF(Clause(self), Clause(other))
+        return NotImplemented
+
+    def __iand__(self, other):
+        raise NotImplementedError()
 
 
 class Clause(SimpleSequence[Var]):
