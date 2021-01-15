@@ -3,19 +3,15 @@
 # Allow type annotations to refer to not-yet-declared types.
 from __future__ import annotations
 
-from typing import Any, List, NewType
+from typing import Iterable, Iterator, NewType, Union
+
+from .simple_sequence import SimpleSequence
 
 
 __all__ = ['Count', 'Var', 'Clause', 'CNF']
 
 
 Count = NewType('Count', int)
-
-
-def IncompatibleTypesError(op_name: str, lhs: Any, rhs: Any) -> TypeError:  # pylint: disable=invalid-name
-    """A formatted `TypeError` for unsupported operator application."""
-    return TypeError(f"unsupported operand type(s) for {op_name}: "
-                     f"'{type(lhs).__name__}' and '{type(rhs).__name__}'")
 
 
 class Var:
@@ -35,10 +31,19 @@ class Var:
     """
 
     def __init__(self, value: int):
-        self._val = value
+        self._val: int
+        if isinstance(value, Var):
+            self._val = value._val
+        elif isinstance(value, int):
+            self._val = value
+        else:
+            raise TypeError(f"expected 'int'; got '{type(value).__name__}")
 
     def __repr__(self) -> str:
         return f"Var({self._val})"
+
+    def __str__(self) -> str:
+        return str(self._val)
 
     def __int__(self) -> int:
         return self._val
@@ -54,56 +59,152 @@ class Var:
             return Var(int(self) + int(other))
         if isinstance(other, int):
             return Var(int(self) + other)
-        raise IncompatibleTypesError('+', self, other)
+        return NotImplemented
+
+    def __iadd__(self, other):
+        raise NotImplementedError()
 
     def __radd__(self, other) -> Var:
         if isinstance(other, int):
             return Var(other + int(self))
-        raise IncompatibleTypesError('+', other, self)
+        return NotImplemented
 
     def __sub__(self, other) -> Var:
         if isinstance(other, Var):
             return Var(int(self) - int(other))
         if isinstance(other, int):
             return Var(int(self) - other)
-        raise IncompatibleTypesError('-', self, other)
+        return NotImplemented
+
+    def __isub__(self, other):
+        raise NotImplementedError()
 
     def __rsub__(self, other) -> Var:
         if isinstance(other, int):
             return Var(other - int(self))
-        raise IncompatibleTypesError('-', other, self)
+        return NotImplemented
+
+    def __or__(self, other) -> Clause:
+        if isinstance(other, Var):
+            return Clause(self, other)
+        return NotImplemented
+
+    def __ior__(self, other):
+        raise NotImplementedError()
+
+    # NOTE: We do not implement __and__ because SweetPea deals only with CNF
+    #       formulas, which means that two variables cannot be conjuncted
+    #       directly. Instead, they must be put into separate clauses and then
+    #       the *clauses* can be conjuncted. Implementing __and__ would make it
+    #       easy to shoot ourselves in the feet by mistake.
 
 
-Clause = List[Var]
-CNF = List[Clause]
-
-
-def and_vars(a: Var, b: Var) -> CNF:  # pylint: disable=invalid-name
-    """Returns a CNF formula encoding (a ∨ b).
-
-    NOTE: The original version of this function in the Haskell code was named
-          `andCNF`. It took a clause (list of variables) as argument, and
-          simply returned that clause embedded in another list. In all cases,
-          the function was invoked with a list of two variables.
-              The name seems strange to me, because the variables themselves
-          are combined with ∨ to build a single clause. We might change this
-          name in the future to, e.g., `or_vars` for semantic consistency.
+class Clause(SimpleSequence[Var]):
+    """A sequence of variables. Clauses indicate logical disjunction between
+    the variables, i.e., `Clause(Var(3), Var(7))` encodes (3 ∨ 7).
     """
-    return [[a, b]]
+
+    def __add__(self, other) -> Clause:
+        if isinstance(other, Clause):
+            return Clause(*self._vals, *other._vals)
+        if isinstance(other, Var):
+            return Clause(*self._vals, other)
+        return NotImplemented
+
+    def __radd__(self, other) -> Clause:
+        if isinstance(other, Var):
+            return Clause(other, *self._vals)
+        return NotImplemented
+
+    def __and__(self, other) -> CNF:
+        if isinstance(other, Clause):
+            return CNF(self, other)
+        return NotImplemented
 
 
-def xor_vars(a: Var, b: Var) -> CNF:  # pylint: disable=invalid-name
-    """Returns a CNF formula encoding (a ⊕ b) as ((a ∨ b) ∧ (¬a ∨ ¬b))."""
-    return [[a, b], [~a, ~b]]
+class CNF(SimpleSequence[Clause]):
+    """A conjunction of disjunction clauses. For example:
 
+        CNF(Clause(Var(3), Var(7)), Clause(Var(1), Var(13)))
 
-def xnor_vars(a: Var, b: Var) -> CNF:  # pylint: disable=invalid-name
-    """Returns a CNF formula encoding (a ⊙ b) as ((a ∨ ¬b) ∧ (¬a ∨ b))."""
-    return [[a, ~b], [~a, b]]
-
-
-def distribute(x: Var, cnf: CNF) -> CNF:  # pylint: disable=invalid-name
-    """Distributes a given variable `x` across every clause in the given CNF
-    formula by replacing each `clause` with (`x` ∨ `clause`).
+    corresponds to the CNF formula ((3 ∨ 7) ∧ (1 ∨ 13)).
     """
-    return [[x] + clause for clause in cnf]
+
+    _num_vars: int
+
+    @classmethod
+    @property
+    def empty(cls):
+        """An empty CNF formula."""
+        return cls()
+
+    def __init__(self, *values):
+        super().__init__(*values)
+        self._num_vars = 0
+
+    # FIXME: See FIXME for SimpleSequence.__getitem__.
+    def __add__(self, other: Union[CNF, Clause, Var]) -> CNF:  # pylint: disable=unsubscriptable-object
+        # FIXME: As of pylint 2.6.0 with Python 3.9.1, pylint appears to have
+        #        trouble with accessing CNF instances' _vals field for some
+        #        reason.
+        # pylint: disable=no-member
+        if isinstance(other, CNF):
+            return CNF(*self._vals, *other._vals)
+        if isinstance(other, Clause):
+            return CNF(*self._vals, other)
+        if isinstance(other, Var):
+            return CNF(*self._vals, Clause(other))
+        return NotImplemented
+
+    # FIXME: See FIXME for SimpleSequence.__getitem__.
+    def __iadd__(self, other: Union[CNF, Clause, Iterable[Clause], Var]) -> CNF:  # pylint: disable=unsubscriptable-object
+        # FIXME: As of pylint 2.6.0 with Python 3.9.1, pylint appears to have
+        #        trouble with accessing CNF instances' _vals field for some
+        #        reason.
+        # pylint: disable=no-member
+        if isinstance(other, CNF):
+            self._vals += other._vals
+            return self
+        if isinstance(other, Clause):
+            self._vals += [other]
+            return self
+        if isinstance(other, (list, tuple)):
+            self._vals += other
+            return self
+        if isinstance(other, Var):
+            self._vals += [Clause(other)]
+        return NotImplemented
+
+    def get_fresh(self) -> int:
+        """Creates a new variable for the formula."""
+        self._num_vars += 1
+        return self._num_vars
+
+    def get_n_fresh(self, n: int) -> Iterator[int]:  # pylint: disable=invalid-name
+        """Generates the next n variables, numbered sequentially."""
+        for _ in range(n):
+            yield self.get_fresh()
+
+    # FIXME: As of pylint 2.6.0 with Python 3.9.1, pylint flags the following
+    #        method for not using `self` even though it does.
+    # FIXME: See FIXME for SimpleSequence.__getitem__.
+    def append(self, other: Union[CNF, Clause, Iterable[Clause], Var]):  # pylint: disable=no-self-use,unsubscriptable-object
+        """Appends a CNF formula to this formula."""
+        self += other
+
+    def set_to_zero(self, variable: Var):
+        """Zeroes the specified variable by appending its negation to the
+        existing CNF formula.
+        """
+        self.append(~variable)
+
+    def zero_out(self, in_list: Iterable[Var]):
+        """Appends a CNF formula negating the existing CNF formula."""
+        for variable in in_list:
+            self.set_to_zero(variable)
+
+    def set_to_one(self, variable: Var):
+        """Sets the specified variable to 1 by appending it to the existing CNF
+        formula.
+        """
+        self.append(variable)
