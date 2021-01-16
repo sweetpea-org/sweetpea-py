@@ -90,6 +90,13 @@ class Var:
 class Clause(SimpleSequence[Var]):
     """A sequence of variables. Clauses indicate logical disjunction between
     the variables, i.e., `Clause(Var(3), Var(7))` encodes (3 ∨ 7).
+
+    Clauses can also be instantiated with a list of variables. This method will
+    also accept raw integers instead of instances of `Var`. For example:
+
+        Clause([1, -2, 3])
+
+    corresponds to the formula (1 ∨ ¬2 ∨ 3).
     """
 
     @classmethod
@@ -137,6 +144,15 @@ class CNF(SimpleSequence[Clause]):
         CNF(Clause(Var(3), Var(7)), Clause(Var(1), Var(13)))
 
     corresponds to the CNF formula ((3 ∨ 7) ∧ (1 ∨ 13)).
+
+    CNF formulas can also be instantiated with a list of lists of variables,
+    where each inner list represents a clause and the outer list represents the
+    CNF formula itself. This method will also accept raw integers instead of
+    instances of `Var`. For example:
+
+        CNF([[1, 2, -3], [-2, 7, 1]])
+
+    corresponds to the CNF formula ((1 ∨ 2 ∨ ¬3) ∧ (¬2 ∨ 7 ∨ 1)).
     """
 
     @classmethod
