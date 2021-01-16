@@ -207,6 +207,16 @@ class CNF(SimpleSequence[Clause]):
     def __ror__(self, other: Var) -> CNF:
         return CNF([other + self._vals[0], *self._vals[1:]])
 
+    def __pow__(self, other: Var) -> CNF:
+        if isinstance(other, Var):
+            return CNF([clause | other for clause in self._vals])
+        return NotImplemented
+
+    def __rpow__(self, other: Var) -> CNF:
+        if isinstance(other, Var):
+            return CNF([other | clause for clause in self._vals])
+        return NotImplemented
+
     def get_fresh(self) -> int:
         """Creates a new variable for the formula."""
         self._num_vars += 1
