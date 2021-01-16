@@ -51,24 +51,29 @@ class Var:
         return self._val
 
     def __invert__(self) -> Var:
+        """Logical NOT."""
         return Var(-self._val)
 
     def __or__(self, other: Var) -> Clause:
+        """Logical OR."""
         if isinstance(other, Var):
             return Clause(self, other)
         return NotImplemented
 
     def __and__(self, other: Var) -> CNF:
+        """Logical AND."""
         if isinstance(other, Var):
             return CNF(Clause(self), Clause(other))
         return NotImplemented
 
     def __xor__(self, other: Var) -> CNF:
+        """Logical XOR."""
         if isinstance(other, Var):
             return CNF([[self, other], [~self, ~other]])
         return NotImplemented
 
     def __mod__(self, other: Var) -> CNF:
+        """Logical XNOR."""
         # NOTE: This method is used to implement logical XNOR instead of
         #       modulo. If only Python allowed custom operators.
         if isinstance(other, Var):
@@ -94,6 +99,9 @@ class Clause(SimpleSequence[Var]):
         return Var
 
     def __add__(self, other: Union[Clause, Var]) -> Clause:
+        """Logical OR. This alias exists due to the list-like interface of
+        Clauses.
+        """
         if isinstance(other, Clause):
             return Clause(*self, *other)
         if isinstance(other, Var):
@@ -106,6 +114,7 @@ class Clause(SimpleSequence[Var]):
         return NotImplemented
 
     def __and__(self, other: Union[Clause, Var]) -> CNF:
+        """Logical AND."""
         if isinstance(other, Clause):
             return CNF(self, other)
         if isinstance(other, Var):
@@ -118,6 +127,7 @@ class Clause(SimpleSequence[Var]):
         return NotImplemented
 
     def __or__(self, other: Union[Clause, Var]):
+        """Logical OR."""
         return self + other
 
     def __ror__(self, other: Var):
@@ -159,6 +169,9 @@ class CNF(SimpleSequence[Clause]):
         self._num_vars = 0
 
     def __add__(self, other: Union[CNF, Clause, Var]) -> CNF:
+        """Logical OR. This alias exists due to the list-like interface of CNF
+        formulas.
+        """
         if isinstance(other, CNF):
             return CNF(*self, *other)
         if isinstance(other, Clause):
@@ -182,18 +195,21 @@ class CNF(SimpleSequence[Clause]):
         return NotImplemented
 
     def __and__(self, other: Var) -> CNF:
+        """Logical AND."""
         return CNF(self._vals + [other])
 
     def __rand__(self, other: Var) -> CNF:
         return CNF([other] + self._vals)
 
     def __or__(self, other: Var) -> CNF:
+        """Logical OR."""
         return CNF([*self[:-1], self[-1] + other])
 
     def __ror__(self, other: Var) -> CNF:
         return CNF([other + self[0], *self[1:]])
 
     def __pow__(self, other: Var) -> CNF:
+        """Distribution of a variable across the clauses of a CNF formula."""
         if isinstance(other, Var):
             return CNF([clause | other for clause in self])
         return NotImplemented
