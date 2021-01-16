@@ -110,7 +110,23 @@ class Clause(SimpleSequence[Var]):
     def __and__(self, other) -> CNF:
         if isinstance(other, Clause):
             return CNF(self, other)
+        if isinstance(other, Var):
+            return CNF(self, Clause(other))
         return NotImplemented
+
+    def __rand__(self, other) -> CNF:
+        if isinstance(other, Var):
+            return CNF(Clause(other), self)
+        return NotImplemented
+
+    def __iand__(self, other):
+        raise NotImplementedError()
+
+    def __or__(self, other):
+        return self + other
+
+    def __ror__(self, other):
+        return other + self
 
 
 class CNF(SimpleSequence[Clause]):
