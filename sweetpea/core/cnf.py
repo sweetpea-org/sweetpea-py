@@ -48,41 +48,8 @@ class Var:
     def __int__(self) -> int:
         return self._val
 
-    def __neg__(self) -> Var:
-        return Var(-self._val)
-
     def __invert__(self) -> Var:
         return -self
-
-    def __add__(self, other) -> Var:
-        if isinstance(other, Var):
-            return Var(int(self) + int(other))
-        if isinstance(other, int):
-            return Var(int(self) + other)
-        return NotImplemented
-
-    def __iadd__(self, other):
-        raise NotImplementedError()
-
-    def __radd__(self, other) -> Var:
-        if isinstance(other, int):
-            return Var(other + int(self))
-        return NotImplemented
-
-    def __sub__(self, other) -> Var:
-        if isinstance(other, Var):
-            return Var(int(self) - int(other))
-        if isinstance(other, int):
-            return Var(int(self) - other)
-        return NotImplemented
-
-    def __isub__(self, other):
-        raise NotImplementedError()
-
-    def __rsub__(self, other) -> Var:
-        if isinstance(other, int):
-            return Var(other - int(self))
-        return NotImplemented
 
     def __or__(self, other) -> Clause:
         if isinstance(other, Var):
@@ -98,6 +65,23 @@ class Var:
         return NotImplemented
 
     def __iand__(self, other):
+        raise NotImplementedError()
+
+    def __xor__(self, other) -> CNF:
+        if isinstance(other, Var):
+            return CNF([[self, other], [~self, ~other]])
+        return NotImplemented
+
+    def __ixor__(self, other):
+        raise NotImplementedError()
+
+    def __mod__(self, other) -> CNF:
+        # NOTE: This method is used to implement logical XNOR instead of modulo. If only Python allowed custom operators.
+        if isinstance(other, Var):
+            return CNF([[self, ~other], [~self, other]])
+        return NotImplemented
+
+    def __imod__(self, other):
         raise NotImplementedError()
 
 
