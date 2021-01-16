@@ -95,14 +95,14 @@ class Clause(SimpleSequence[Var]):
 
     def __add__(self, other: Union[Clause, Var]) -> Clause:
         if isinstance(other, Clause):
-            return Clause(*self._vals, *other._vals)
+            return Clause(*self, *other)
         if isinstance(other, Var):
-            return Clause(*self._vals, other)
+            return Clause(*self, other)
         return NotImplemented
 
     def __radd__(self, other: Var) -> Clause:
         if isinstance(other, Var):
-            return Clause(other, *self._vals)
+            return Clause(other, *self)
         return NotImplemented
 
     def __and__(self, other: Union[Clause, Var]) -> CNF:
@@ -160,11 +160,11 @@ class CNF(SimpleSequence[Clause]):
 
     def __add__(self, other: Union[CNF, Clause, Var]) -> CNF:
         if isinstance(other, CNF):
-            return CNF(*self._vals, *other._vals)
+            return CNF(*self, *other)
         if isinstance(other, Clause):
-            return CNF(*self._vals, other)
+            return CNF(*self, other)
         if isinstance(other, Var):
-            return CNF(*self._vals, [other])
+            return CNF(*self, [other])
         return NotImplemented
 
     def __iadd__(self, other: Union[CNF, Clause, Iterable[Clause], Var]) -> CNF:
@@ -188,19 +188,19 @@ class CNF(SimpleSequence[Clause]):
         return CNF([other] + self._vals)
 
     def __or__(self, other: Var) -> CNF:
-        return CNF([*self._vals[:-1], self._vals[-1] + other])
+        return CNF([*self[:-1], self[-1] + other])
 
     def __ror__(self, other: Var) -> CNF:
-        return CNF([other + self._vals[0], *self._vals[1:]])
+        return CNF([other + self[0], *self[1:]])
 
     def __pow__(self, other: Var) -> CNF:
         if isinstance(other, Var):
-            return CNF([clause | other for clause in self._vals])
+            return CNF([clause | other for clause in self])
         return NotImplemented
 
     def __rpow__(self, other: Var) -> CNF:
         if isinstance(other, Var):
-            return CNF([other | clause for clause in self._vals])
+            return CNF([other | clause for clause in self])
         return NotImplemented
 
     def get_fresh(self) -> int:
@@ -236,7 +236,7 @@ class CNF(SimpleSequence[Clause]):
 
     def distribute(self, variable: Var):
         """Distributes a variable across each clause in the CNF formula."""
-        self._vals = [variable | clause for clause in self._vals]
+        self._vals = [variable | clause for clause in self]
 
     @staticmethod
     def and_vars(a: Union[int, Var], b: Union[int, Var]) -> CNF:
