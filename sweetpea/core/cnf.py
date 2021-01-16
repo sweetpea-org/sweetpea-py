@@ -247,3 +247,43 @@ class CNF(SimpleSequence[Clause]):
         formula.
         """
         self.append(variable)
+
+    def distribute(self, variable: Var):
+        """Distributes a variable across each clause in the CNF formula."""
+        self._vals = [variable | clause for clause in self._vals]
+
+    @staticmethod
+    def and_vars(a: Union[int, Var], b: Union[int, Var]) -> CNF:
+        """Returns a CNF formula encoding (a ∧ b)."""
+        if not isinstance(a, Var):
+            a = Var(a)
+        if not isinstance(b, Var):
+            b = Var(b)
+        return a & b
+
+    @staticmethod
+    def or_vars(a: Union[int, Var], b: Union[int, Var]) -> CNF:
+        """Returns a CNF formula encoding (a ∨ b)."""
+        if not isinstance(a, Var):
+            a = Var(a)
+        if not isinstance(b, Var):
+            b = Var(b)
+        return CNF(a | b)
+
+    @staticmethod
+    def xor_vars(a: Union[int, Var], b: Union[int, Var]) -> CNF:
+        """Returns a CNF formula encoding (a ⊕ b) as ((a ∨ b) ∧ (¬a ∨ ¬b))."""
+        if not isinstance(a, Var):
+            a = Var(a)
+        if not isinstance(b, Var):
+            b = Var(b)
+        return a ^ b
+
+    @staticmethod
+    def xnor_vars(a: Union[int, Var], b: Union[int, Var]) -> CNF:
+        """Returns a CNF formula encoding (a ⊙ b) as ((a ∨ ¬b) ∧ (¬a ∨ b))."""
+        if not isinstance(a, Var):
+            a = Var(a)
+        if not isinstance(b, Var):
+            b = Var(b)
+        return a % b
