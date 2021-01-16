@@ -35,6 +35,8 @@ class Var:
         if isinstance(value, Var):
             self._val = value._val
         elif isinstance(value, int):
+            if value == 0:
+                raise ValueError(f"Var values must be non-zero integers; got {value}")
             self._val = value
         else:
             raise TypeError(f"expected 'int'; got '{type(value).__name__}'")
