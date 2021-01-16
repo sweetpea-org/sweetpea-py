@@ -49,7 +49,7 @@ class Var:
         return self._val
 
     def __invert__(self) -> Var:
-        return -self
+        return Var(-self._val)
 
     def __or__(self, other) -> Clause:
         if isinstance(other, Var):
