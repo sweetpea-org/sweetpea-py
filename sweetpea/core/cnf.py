@@ -53,38 +53,27 @@ class Var:
     def __invert__(self) -> Var:
         return Var(-self._val)
 
-    def __or__(self, other) -> Clause:
+    def __or__(self, other: Var) -> Clause:
         if isinstance(other, Var):
             return Clause(self, other)
         return NotImplemented
 
-    def __ior__(self, other):
-        raise NotImplementedError()
-
-    def __and__(self, other) -> CNF:
+    def __and__(self, other: Var) -> CNF:
         if isinstance(other, Var):
             return CNF(Clause(self), Clause(other))
         return NotImplemented
 
-    def __iand__(self, other):
-        raise NotImplementedError()
-
-    def __xor__(self, other) -> CNF:
+    def __xor__(self, other: Var) -> CNF:
         if isinstance(other, Var):
             return CNF([[self, other], [~self, ~other]])
         return NotImplemented
 
-    def __ixor__(self, other):
-        raise NotImplementedError()
-
-    def __mod__(self, other) -> CNF:
-        # NOTE: This method is used to implement logical XNOR instead of modulo. If only Python allowed custom operators.
+    def __mod__(self, other: Var) -> CNF:
+        # NOTE: This method is used to implement logical XNOR instead of
+        #       modulo. If only Python allowed custom operators.
         if isinstance(other, Var):
             return CNF([[self, ~other], [~self, other]])
         return NotImplemented
-
-    def __imod__(self, other):
-        raise NotImplementedError()
 
 
 class Clause(SimpleSequence[Var]):
@@ -104,37 +93,34 @@ class Clause(SimpleSequence[Var]):
     def _element_type(cls):
         return Var
 
-    def __add__(self, other) -> Clause:
+    def __add__(self, other: Union[Clause, Var]) -> Clause:
         if isinstance(other, Clause):
             return Clause(*self._vals, *other._vals)
         if isinstance(other, Var):
             return Clause(*self._vals, other)
         return NotImplemented
 
-    def __radd__(self, other) -> Clause:
+    def __radd__(self, other: Var) -> Clause:
         if isinstance(other, Var):
             return Clause(other, *self._vals)
         return NotImplemented
 
-    def __and__(self, other) -> CNF:
+    def __and__(self, other: Union[Clause, Var]) -> CNF:
         if isinstance(other, Clause):
             return CNF(self, other)
         if isinstance(other, Var):
             return CNF(self, Clause(other))
         return NotImplemented
 
-    def __rand__(self, other) -> CNF:
+    def __rand__(self, other: Var) -> CNF:
         if isinstance(other, Var):
             return CNF(Clause(other), self)
         return NotImplemented
 
-    def __iand__(self, other):
-        raise NotImplementedError()
-
-    def __or__(self, other):
+    def __or__(self, other: Union[Clause, Var]):
         return self + other
 
-    def __ror__(self, other):
+    def __ror__(self, other: Var):
         return other + self
 
 
