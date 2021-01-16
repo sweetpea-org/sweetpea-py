@@ -3,20 +3,7 @@
 from enum import Enum, auto
 from typing import List, NamedTuple
 
-from .cnf import Clause, Count, CNF, Var
-
-
-# NOTE: As of Python 3.9, typing.NamedTuple (and typing.TypedDict) are now
-#       functions instead of classes. This causes Pylint to raise a few errors.
-#       The following three lines disable checking for these specific errors
-#       within this file. This behavior is documented in the following issues:
-#           https://bugs.python.org/issue41973
-#           https://github.com/PyCQA/pylint/issues/3876
-# TODO: Once Pylint is updated to accommodate this change, remove the lines
-#       disabling the checks.
-# pylint: disable=missing-class-docstring
-# pylint: disable=too-few-public-methods
-# pylint: disable=inherit-non-class
+from .cnf import CNF, Var
 
 
 class SolutionSpec(NamedTuple):

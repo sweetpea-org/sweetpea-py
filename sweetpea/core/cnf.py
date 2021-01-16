@@ -3,15 +3,12 @@
 # Allow type annotations to refer to not-yet-declared types.
 from __future__ import annotations
 
-from typing import Iterable, Iterator, NewType, Union
+from typing import Iterable, Iterator, Union
 
 from .simple_sequence import SimpleSequence
 
 
-__all__ = ['Count', 'Var', 'Clause', 'CNF']
-
-
-Count = NewType('Count', int)
+__all__ = ['Var', 'Clause', 'CNF']
 
 
 class Var:
