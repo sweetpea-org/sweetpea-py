@@ -160,7 +160,7 @@ class CNF(SimpleSequence[Clause]):
         if isinstance(other, Clause):
             return CNF(*self._vals, other)
         if isinstance(other, Var):
-            return CNF(*self._vals, Clause(other))
+            return CNF(*self._vals, [other])
         return NotImplemented
 
     def __iadd__(self, other: Union[CNF, Clause, Iterable[Clause], Var]) -> CNF:
@@ -176,6 +176,18 @@ class CNF(SimpleSequence[Clause]):
         if isinstance(other, Var):
             self._vals += [Clause(other)]
         return NotImplemented
+
+    def __and__(self, other: Var) -> CNF:
+        return CNF(self._vals + [other])
+
+    def __rand__(self, other: Var) -> CNF:
+        return CNF([other] + self._vals)
+
+    def __or__(self, other: Var) -> CNF:
+        return CNF([*self._vals[:-1], self._vals[-1] + other])
+
+    def __ror__(self, other: Var) -> CNF:
+        return CNF([other + self._vals[0], *self._vals[1:]])
 
     def get_fresh(self) -> int:
         """Creates a new variable for the formula."""
