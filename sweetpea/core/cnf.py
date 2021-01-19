@@ -216,41 +216,6 @@ class CNF(SimpleSequence[Clause]):
             return CNF([other | clause for clause in self])
         return NotImplemented
 
-    def get_fresh(self) -> int:
-        """Creates a new variable for the formula."""
-        self._num_vars += 1
-        return self._num_vars
-
-    def get_n_fresh(self, n: int) -> Iterator[int]:
-        """Generates the next n variables, numbered sequentially."""
-        for _ in range(n):
-            yield self.get_fresh()
-
-    def append(self, other: Union[CNF, Clause, Iterable[Clause], Var]):
-        """Appends a CNF formula to this formula."""
-        self += other
-
-    def set_to_zero(self, variable: Var):
-        """Zeroes the specified variable by appending its negation to the
-        existing CNF formula.
-        """
-        self.append(~variable)
-
-    def zero_out(self, in_list: Iterable[Var]):
-        """Appends a CNF formula negating the existing CNF formula."""
-        for variable in in_list:
-            self.set_to_zero(variable)
-
-    def set_to_one(self, variable: Var):
-        """Sets the specified variable to 1 by appending it to the existing CNF
-        formula.
-        """
-        self.append(variable)
-
-    def distribute(self, variable: Var):
-        """Distributes a variable across each clause in the CNF formula."""
-        self._vals = [variable | clause for clause in self]
-
     @staticmethod
     def and_vars(a: Union[int, Var], b: Union[int, Var]) -> CNF:
         """Returns a CNF formula encoding (a ∧ b)."""
@@ -286,3 +251,38 @@ class CNF(SimpleSequence[Clause]):
         if not isinstance(b, Var):
             b = Var(b)
         return a % b
+
+    def get_fresh(self) -> int:
+        """Creates a new variable for the formula."""
+        self._num_vars += 1
+        return self._num_vars
+
+    def get_n_fresh(self, n: int) -> Iterator[int]:
+        """Generates the next n variables, numbered sequentially."""
+        for _ in range(n):
+            yield self.get_fresh()
+
+    def append(self, other: Union[CNF, Clause, Iterable[Clause], Var]):
+        """Appends a CNF formula to this formula."""
+        self += other
+
+    def set_to_zero(self, variable: Var):
+        """Zeroes the specified variable by appending its negation to the
+        existing CNF formula.
+        """
+        self.append(~variable)
+
+    def zero_out(self, in_list: Iterable[Var]):
+        """Appends a CNF formula negating the existing CNF formula."""
+        for variable in in_list:
+            self.set_to_zero(variable)
+
+    def set_to_one(self, variable: Var):
+        """Sets the specified variable to 1 by appending it to the existing CNF
+        formula.
+        """
+        self.append(variable)
+
+    def distribute(self, variable: Var):
+        """Distributes a variable across each clause in the CNF formula."""
+        self._vals = [variable | clause for clause in self]
