@@ -14,6 +14,9 @@ from .haskell.data.list import drop, intercalate, take, unwords
 from .unigen import call_unigen
 
 
+__all__ = ['GenerationType', 'GenerationRequest', 'SolutionSpec', 'build_CNF', 'generate_CNF', 'sample_non_uniform']
+
+
 @contextmanager
 def temporary_CNF_file(base_path: Path = Path('.')) -> Iterator[Path]:
     cnf_file = base_path / Path(str(generate_UUID())).with_suffix('.cnf')
