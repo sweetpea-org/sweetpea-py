@@ -2,7 +2,7 @@ from contextlib import contextmanager
 from enum import Enum, auto
 from pathlib import Path
 from shlex import split as shell_split
-from subprocess import CompletedProcess, run
+from subprocess import run
 from typing import Callable, Iterator, List, NamedTuple, NoReturn, Optional
 from uuid import uuid4 as generate_UUID
 
