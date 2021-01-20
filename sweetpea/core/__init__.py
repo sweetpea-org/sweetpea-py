@@ -35,7 +35,7 @@ class GenerationRequest(NamedTuple):
     boolean_values: List[Var]
 
 
-def generate_CNF(
+def generate_uniform_samples(
         initial_CNF: CNF,
         fresh: int,
         support: int,
@@ -45,7 +45,7 @@ def generate_CNF(
     raise NotImplementedError()
 
 
-def generate_non_uniform_CNF(
+def generate_non_uniform_samples(
         count: int,
         initial_CNF: CNF,
         fresh: int,
