@@ -3,7 +3,9 @@
 # Allow type annotations to refer to not-yet-declared types.
 from __future__ import annotations
 
-from typing import Iterable, Iterator, Union
+import math
+
+from typing import Iterable, Iterator, List, Sequence, Union
 
 from .simple_sequence import SimpleSequence
 
@@ -245,7 +247,10 @@ class CNF(SimpleSequence[Clause]):
 
     @staticmethod
     def xnor_vars(a: Union[int, Var], b: Union[int, Var]) -> CNF:
-        """Returns a CNF formula encoding (a ⊙ b) as ((a ∨ ¬b) ∧ (¬a ∨ b))."""
+        """Returns a CNF formula encoding (a ⊙ b) as ((a ∨ ¬b) ∧ (¬a ∨ b)).
+
+        NOTE: (a ⊙ b) is logically equivalent to (a ⇔ b).
+        """
         if not isinstance(a, Var):
             a = Var(a)
         if not isinstance(b, Var):
@@ -286,3 +291,41 @@ class CNF(SimpleSequence[Clause]):
     def distribute(self, variable: Var):
         """Distributes a variable across each clause in the CNF formula."""
         self._vals = [variable | clause for clause in self]
+
+    def assert_k_of_n(self, k: int, clause: Clause):
+        ...
+
+    def pop_count(self, in_list: Sequence[Var]) -> List[Var]:
+        """Returns the list that represents the bits of the `sum` variable in
+        binary.
+        """
+        if not in_list:
+            raise ValueError("cannot take pop_count of empty list")
+        nearest_largest_power = math.ceil(math.log(len(in_list), 2))
+        aux_list = self.get_n_fresh(2 ** nearest_largest_power - len(in_list))
+        self.zero_out(aux_list)
+        return self._pop_count_layer([[x] for x in in_list + aux_list])
+
+    def _pop_count_layer(self, bit_list: Sequence[Sequence[Var]]) -> List[Var]:
+        if len(bit_list) == 1:
+            return bit_list[0]
+        midpoint = len(bit_list) // 2
+        left_half = bit_list[:midpoint]
+        right_half = bit_list[midpoint:]
+        var_list = self._pop_count_compute(left_half, right_half)
+        return self._pop_count_layer(var_list)
+
+    def _pop_count_compute(self, xs: Sequence[Sequence[Var]], ys: Sequence[Sequence[Var]]) -> List[List[Var]]:
+        if len(xs) != len(ys):
+            raise ValueError("cannot compute pop count with sequences of different lengths")
+
+        accum: List[List[Var]] = []
+
+        for (x, y) in zip(xs, ys):
+            (cs, ss) = self.rippple_carry(x, y)
+            max_c = max(cs)
+            formatted_result = [max_c] + list(reversed(ss))
+            accum.append(formatted_result)
+
+        accum.reverse()
+        return accum
