@@ -5,8 +5,10 @@ from __future__ import annotations
 
 import math
 
+from itertools import chain
 from typing import Iterable, Iterator, List, Sequence, Union
 
+from .binary import BinaryNumber, binary
 from .simple_sequence import SimpleSequence
 
 
@@ -39,6 +41,11 @@ class Var:
             self._val = value
         else:
             raise TypeError(f"expected 'int'; got '{type(value).__name__}'")
+
+    @property
+    def value(self) -> int:
+        """The integer value of this variable."""
+        return self._val
 
     def __repr__(self) -> str:
         return f"Var({self._val})"
@@ -191,14 +198,19 @@ class CNF(SimpleSequence[Clause]):
             return self
         if isinstance(other, Var):
             self._vals += [Clause(other)]
+            return self
+        if hasattr(other, '__next__'):
+            for item in other:
+                self._vals += item
+            return self
         return NotImplemented
 
     def __and__(self, other: Var) -> CNF:
         """Logical AND."""
-        return CNF(self._vals + [other])
+        return CNF(self._vals + [Clause(other)])
 
     def __rand__(self, other: Var) -> CNF:
-        return CNF([other] + self._vals)
+        return CNF([Clause(other)] + self._vals)
 
     def __or__(self, other: Var) -> CNF:
         """Logical OR."""
@@ -257,12 +269,16 @@ class CNF(SimpleSequence[Clause]):
             b = Var(b)
         return a % b
 
-    def get_fresh(self) -> int:
+    def get_fresh(self) -> Var:
         """Creates a new variable for the formula."""
+        # NOTE: I think this is a weird interface. A new variable is generated,
+        #       permanently affecting this CNF formula... but there's no
+        #       guarantee that the caller actually incorporates that variable
+        #       into the formula.
         self._num_vars += 1
-        return self._num_vars
+        return Var(self._num_vars)
 
-    def get_n_fresh(self, n: int) -> Iterator[int]:
+    def get_n_fresh(self, n: int) -> Iterator[Var]:
         """Generates the next n variables, numbered sequentially."""
         for _ in range(n):
             yield self.get_fresh()
@@ -292,40 +308,52 @@ class CNF(SimpleSequence[Clause]):
         """Distributes a variable across each clause in the CNF formula."""
         self._vals = [variable | clause for clause in self]
 
-    def assert_k_of_n(self, k: int, clause: Clause):
-        ...
+    def assert_k_of_n(self, k: int, in_list: Sequence[Var]):
+        # TODO: Describe this function's purpose.
+        sum_bits = self.pop_count(in_list)
+        # Add zero padding to the left.
+        in_binary = binary(k)
+        in_binary.reverse()
+        left_padded: BinaryNumber = in_binary[:len(sum_bits)]
+        left_padded += [-1 for _ in range(len(left_padded) - len(sum_bits))]
+        left_padded.reverse()
+        # Form the assertion.
+        assertion = [Var(lp * sb.value) for (lp, sb) in zip(left_padded, sum_bits)]
+        # Append the assertion to the formula.
+        self.append(Clause(x) for x in assertion)
 
     def pop_count(self, in_list: Sequence[Var]) -> List[Var]:
         """Returns the list that represents the bits of the `sum` variable in
         binary.
         """
         if not in_list:
-            raise ValueError("cannot take pop_count of empty list")
+            raise ValueError("cannot take pop count of empty list")
+        # Our pop count algorithm assumes the input is a binary number with a
+        # power-of-two number of digits. So first, we find out what the next
+        # power of two is for our number (which may be just the length of that
+        # number).
         nearest_largest_power = math.ceil(math.log(len(in_list), 2))
-        aux_list = self.get_n_fresh(2 ** nearest_largest_power - len(in_list))
+        # Then we generate a sequence of fresh variables (new digits) equal to
+        # the difference and set them all to 0.
+        aux_list = self.get_n_fresh((2 ** nearest_largest_power) - len(in_list))
         self.zero_out(aux_list)
-        return self._pop_count_layer([[x] for x in in_list + aux_list])
+        # Now we can start computing the actual pop count.
+        return self._pop_count_layer([[x] for x in chain(in_list, aux_list)])
 
-    def _pop_count_layer(self, bit_list: Sequence[Sequence[Var]]) -> List[Var]:
+    def _pop_count_layer(self, bit_list: List[List[Var]]) -> List[Var]:
         if len(bit_list) == 1:
             return bit_list[0]
         midpoint = len(bit_list) // 2
         left_half = bit_list[:midpoint]
         right_half = bit_list[midpoint:]
-        var_list = self._pop_count_compute(left_half, right_half)
-        return self._pop_count_layer(var_list)
-
-    def _pop_count_compute(self, xs: Sequence[Sequence[Var]], ys: Sequence[Sequence[Var]]) -> List[List[Var]]:
-        if len(xs) != len(ys):
-            raise ValueError("cannot compute pop count with sequences of different lengths")
-
-        accum: List[List[Var]] = []
-
-        for (x, y) in zip(xs, ys):
-            (cs, ss) = self.rippple_carry(x, y)
+        var_list: List[List[Var]] = []
+        # This zip assumes the two lists are of equal length. This is a safe
+        # assumption since we've guaranteed the input to have a length that's a
+        # power of two greater than one.
+        for (l, r) in zip(left_half, right_half):
+            (cs, ss) = self.ripple_carry(l, r)
             max_c = max(cs)
-            formatted_result = [max_c] + list(reversed(ss))
-            accum.append(formatted_result)
-
-        accum.reverse()
-        return accum
+            var_list.append([max_c] + list(reversed(ss)))
+        # Reverse the list because of append ordering.
+        var_list.reverse()
+        return self._pop_count_layer(var_list)
