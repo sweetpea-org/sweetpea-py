@@ -287,10 +287,9 @@ class CNF(SimpleSequence[Clause]):
         self._num_vars += 1
         return Var(self._num_vars)
 
-    def get_n_fresh(self, n: int) -> Iterator[Var]:
+    def get_n_fresh(self, n: int) -> List[Var]:
         """Generates the next n variables, numbered sequentially."""
-        for _ in range(n):
-            yield self.get_fresh()
+        return [self.get_fresh() for _ in range(n)]
 
     def append(self, other: Union[CNF, Clause, Iterable[Clause], Var]):
         """Appends a CNF formula to this formula."""
