@@ -330,6 +330,53 @@ class CNF(SimpleSequence[Clause]):
         # Append the assertion to the formula.
         self.append(Clause(x) for x in assertion)
 
+    def assert_k_less_than_n(self, k: int, in_list: Sequence[Var]):
+        self._inequality_assertion(True, k, in_list)
+
+    def assert_k_greater_than_n(self, k: int, in_list: Sequence[Var]):
+        self._inequality_assertion(False, k, in_list)
+
+    def _inequality_assertion(self, assert_less_than: bool, k: int, in_list: Sequence[Var]):
+        sum_bits = self.pop_count(in_list)
+        in_binary = binary(k)
+        k_vars = self.get_n_fresh(k)
+        assertion = [Var(kv * b) for (kv, b) in zip(k_vars, in_binary)]
+        self.append(Clause(x) for x in assertion)
+        self._make_same_length(k_vars, sum_bits)
+        if assert_less_than:
+            kbs, nbs = sum_bits, k_vars
+        else:
+            kbs, nbs = k_vars, sum_bits
+        neg_twos_comp_nbs = self._convert_to_negative_twos_complement(nbs)
+        (cs, ss) = self.ripple_carry(kbs, neg_twos_comp_nbs)
+        self.set_to_one(ss[-1])
+
+    def _make_same_length(self, xs: List[Var], ys: List[Var]):
+        if len(xs) < len(ys):
+            zero_padding = self.get_n_fresh(len(ys) - len(xs) + 1)
+            self.zero_out(zero_padding)
+            xs[:0] = zero_padding
+            one_more_zero = self.get_n_fresh(1)
+            self.zero_out(one_more_zero)
+            ys[:0] = one_more_zero
+        else:
+            self._make_same_length(ys, xs)
+
+    def _convert_to_negative_twos_complement(self, bits: BinaryNumber) -> BinaryNumber:
+        # Flip the bits, i.e., assert flipped_bits[i] ⇔ bits[i].
+        flipped_bits = self.get_n_fresh(len(bits))
+        for lhs, rhs in zip(flipped_bits, (Var(-b) for b in bits)):
+            self.append(CNF.xnor_vars(lhs, rhs))
+        # Make a zero-padded one (for the addition) of the correct dimension.
+        one_vars = self.get_n_fresh(len(bits))
+        # Set all the top bits to 0 and the bottom bit to 1.
+        self.zero_out(one_vars[:-1])
+        self.set_to_one(one_vars[-1])
+        # Add the lists.
+        (_, ss) = self.ripple_carry(flipped_bits, one_vars)
+        ss.reverse()
+        return ss
+
     def pop_count(self, in_list: Sequence[Var]) -> List[Var]:
         """Returns the list that represents the bits of the `sum` variable in
         binary.
