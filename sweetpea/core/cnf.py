@@ -336,7 +336,7 @@ class CNF(SimpleSequence[Clause]):
         sum_bits = self.pop_count(in_list)
         in_binary = binary(k)
         k_vars = self.get_n_fresh(k)
-        assertion = [Var(kv * b) for (kv, b) in zip(k_vars, in_binary)]
+        assertion = [Var(kv.value * b) for (kv, b) in zip(k_vars, in_binary)]
         self.append(Clause(x) for x in assertion)
         self._make_same_length(k_vars, sum_bits)
         if assert_less_than:
@@ -358,10 +358,10 @@ class CNF(SimpleSequence[Clause]):
         else:
             self._make_same_length(ys, xs)
 
-    def _convert_to_negative_twos_complement(self, bits: BinaryNumber) -> BinaryNumber:
+    def _convert_to_negative_twos_complement(self, bits: List[Var]) -> List[Var]:
         # Flip the bits, i.e., assert flipped_bits[i] ⇔ bits[i].
         flipped_bits = self.get_n_fresh(len(bits))
-        for lhs, rhs in zip(flipped_bits, (Var(-b) for b in bits)):
+        for lhs, rhs in zip(flipped_bits, (~b for b in bits)):
             self.append(CNF.xnor_vars(lhs, rhs))
         # Make a zero-padded one (for the addition) of the correct dimension.
         one_vars = self.get_n_fresh(len(bits))
