@@ -210,11 +210,15 @@ class CNF(SimpleSequence[Clause]):
             return self
         return NotImplemented
 
-    def __and__(self, other: Var) -> CNF:
+    def __and__(self, other: Union[Clause, Var]) -> CNF:
         """Logical AND."""
+        if isinstance(other, Clause):
+            return CNF(self._vals + [other])
         return CNF(self._vals + [Clause(other)])
 
-    def __rand__(self, other: Var) -> CNF:
+    def __rand__(self, other: Union[Clause, Var]) -> CNF:
+        if isinstance(other, Clause):
+            return CNF([other] + self._vals)
         return CNF([Clause(other)] + self._vals)
 
     def __or__(self, other: Var) -> CNF:
