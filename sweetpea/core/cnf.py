@@ -204,10 +204,6 @@ class CNF(SimpleSequence[Clause]):
         if isinstance(other, Var):
             self._vals += [Clause(other)]
             return self
-        if hasattr(other, '__next__'):
-            for item in other:
-                self._vals += item
-            return self
         return NotImplemented
 
     def __and__(self, other: Union[Clause, Var]) -> CNF:
