@@ -365,3 +365,63 @@ class CNF(SimpleSequence[Clause]):
         # Reverse the list because of append ordering.
         var_list.reverse()
         return self._pop_count_layer(var_list)
+
+    ########################################
+    ##
+    ## Adders
+    ##
+
+    def half_adder(self, a: Var, b: Var) -> Tuple[Var, Var]:
+        c = self.get_fresh()
+        s = self.get_fresh()
+
+        c_val = CNF.or_vars(a, b)
+        c_neg_val = CNF.or_vars(~a, ~b)
+        c_implies_c_val = c_val.distribute(~c)
+        c_val_implies_c = c_neg_val.distribute(c)
+        computed_c = c_implies_c_val + c_val_implies_c
+        self.append(computed_c)
+
+        s_val = CNF.xor_vars(a, b)
+        s_neg_val = CNF.xnor_vars(a, b)
+        s_implies_s_val = s_val.distribute(~s)
+        s_val_implies_s = s_neg_val.distribute(s)
+        computed_s = s_implies_s_val + s_val_implies_s
+        self.append(computed_s)
+
+        return (c, s)
+
+    def full_adder(self, a: Var, b: Var, cin: Var) -> Tuple[Var, Var]:
+        cout = self.get_fresh()
+        s = self.get_fresh()
+
+        c_val     = (a | b) & (a | cin) & (b | cin)
+        c_neg_val = (~a | ~b) & (~a | ~cin) & (~b | ~cin)
+        c_implies_c_val = c_val.distribute(~cout)
+        c_val_implies_c = c_neg_val.distribute(cout)
+        computed_c = c_implies_c_val + c_val_implies_c
+        self.append(computed_c)
+
+        s_val     = (~a | ~b | cin) & (~a | b | ~cin) & (a | ~b | ~cin) & (a | b | cin)
+        s_neg_val = (~a | ~b | ~cin) & (~a | b | cin) & (a | ~b | cin) & (a | b | ~cin)
+        s_implies_s_val = s_val.distribute(~s)
+        s_val_implies_s = s_neg_val.distribute(s)
+        computed_s = s_implies_s_val + s_val_implies_s
+        self.append(computed_s)
+
+        return (cout, s)
+
+    def ripple_carry(self, xs: List[Var], ys: List[Var]) -> Tuple[List[Var], List[Var]]:
+        cin = self.get_fresh()
+        self.set_to_zero(cin)
+
+        c_accum: List[Var] = []
+        s_accum: List[Var] = []
+
+        for x, y in zip(reversed(xs), reversed(ys)):
+            (c, s) = self.full_adder(x, y, cin)
+            c_accum.append(c)
+            s_accum.append(s)
+            cin = c
+
+        return (c_accum, s_accum)
