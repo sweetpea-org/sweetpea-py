@@ -2,7 +2,7 @@ from contextlib import contextmanager
 from enum import Enum, auto
 from pathlib import Path
 from shlex import split as shell_split
-from subprocess import CompletedProcess, run
+from subprocess import run
 from typing import Callable, Iterator, List, NamedTuple, NoReturn, Optional
 from uuid import uuid4 as generate_UUID
 
@@ -12,6 +12,9 @@ from .data_structures import CNF, CountState, Var, init_state
 from .haskell.control.monad.trans.state import State
 from .haskell.data.list import drop, intercalate, take, unwords
 from .unigen import call_unigen
+
+
+__all__ = ['GenerationType', 'GenerationRequest', 'SolutionSpec', 'build_CNF', 'generate_CNF', 'sample_non_uniform']
 
 
 @contextmanager
