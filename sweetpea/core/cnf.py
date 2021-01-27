@@ -6,7 +6,7 @@ from __future__ import annotations
 import math
 
 from itertools import chain
-from typing import Iterable, Iterator, List, Sequence, Union
+from typing import Iterable, List, Sequence, Tuple, Union
 
 from .binary import BinaryNumber, binary
 from .simple_sequence import SimpleSequence
