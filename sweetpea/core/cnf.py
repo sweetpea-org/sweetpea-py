@@ -1,7 +1,8 @@
 """Provides simple type aliases used in SweetPea Core."""
 
 # Allow type annotations to refer to not-yet-declared types.
-from __future__ import annotations
+# flake8 doesn't know about this so we have to #noqa it.
+from __future__ import annotations  # noqa
 
 import math
 
@@ -162,78 +163,12 @@ class CNF(SimpleSequence[Clause]):
     corresponds to the CNF formula ((1 ∨ 2 ∨ ¬3) ∧ (¬2 ∨ 7 ∨ 1)).
     """
 
-    @classmethod
-    @property
-    def _element_type(cls):
-        return Clause
-
-    _num_vars: int
-
-    @classmethod
-    @property
-    def empty(cls):
-        """An empty CNF formula."""
-        return cls()
-
-    def __init__(self, *values):
-        super().__init__(*values)
-        self._num_vars = 0
-
-    def __add__(self, other: Union[CNF, Clause, Var]) -> CNF:
-        """Logical OR. This alias exists due to the list-like interface of CNF
-        formulas.
-        """
-        if isinstance(other, CNF):
-            return CNF(*self, *other)
-        if isinstance(other, Clause):
-            return CNF(*self, other)
-        if isinstance(other, Var):
-            return CNF(*self, [other])
-        return NotImplemented
-
-    def __iadd__(self, other: Union[CNF, Clause, Iterable[Clause], Var]) -> CNF:
-        if isinstance(other, CNF):
-            self._vals += other._vals
-            return self
-        if isinstance(other, Clause):
-            self._vals += [other]
-            return self
-        if isinstance(other, (list, tuple)):
-            self._vals += other
-            return self
-        if isinstance(other, Var):
-            self._vals += [Clause(other)]
-            return self
-        return NotImplemented
-
-    def __and__(self, other: Union[Clause, Var]) -> CNF:
-        """Logical AND."""
-        if isinstance(other, Clause):
-            return CNF(self._vals + [other])
-        return CNF(self._vals + [Clause(other)])
-
-    def __rand__(self, other: Union[Clause, Var]) -> CNF:
-        if isinstance(other, Clause):
-            return CNF([other] + self._vals)
-        return CNF([Clause(other)] + self._vals)
-
-    def __or__(self, other: Var) -> CNF:
-        """Logical OR."""
-        return CNF([*self[:-1], self[-1] + other])
-
-    def __ror__(self, other: Var) -> CNF:
-        return CNF([other + self[0], *self[1:]])
-
-    def __pow__(self, other: Var) -> CNF:
-        """Distribution of a variable across the clauses of a CNF formula."""
-        if isinstance(other, Var):
-            return CNF([clause | other for clause in self])
-        return NotImplemented
-
-    def __rpow__(self, other: Var) -> CNF:
-        if isinstance(other, Var):
-            return CNF([other | clause for clause in self])
-        return NotImplemented
+    ########################################
+    ##
+    ## Static Methods
+    ##
+    ## These are used for creating CNF formulas by combining two variables in a
+    ## particular way.
 
     @staticmethod
     def and_vars(a: Union[int, Var], b: Union[int, Var]) -> CNF:
@@ -274,6 +209,102 @@ class CNF(SimpleSequence[Clause]):
             b = Var(b)
         return a % b
 
+    ########################################
+    ##
+    ## Class Configuration/Initialization
+    ##
+
+    @classmethod
+    @property
+    def _element_type(cls):
+        return Clause
+
+    _num_vars: int
+
+    @classmethod
+    @property
+    def empty(cls):
+        """An empty CNF formula."""
+        return cls()
+
+    def __init__(self, *values):
+        super().__init__(*values)
+        self._num_vars = 0
+
+    ########################################
+    ##
+    ## Operator Overloads
+    ##
+
+    # CNF + ___
+    def __add__(self, other: Union[CNF, Clause, Var]) -> CNF:
+        """Logical OR. This alias exists due to the list-like interface of CNF
+        formulas.
+        """
+        if isinstance(other, CNF):
+            return CNF(*self, *other)
+        if isinstance(other, Clause):
+            return CNF(*self, other)
+        if isinstance(other, Var):
+            return CNF(*self, [other])
+        return NotImplemented
+
+    # CNF += ___
+    def __iadd__(self, other: Union[CNF, Clause, Iterable[Clause], Var]) -> CNF:
+        if isinstance(other, CNF):
+            self._vals += other._vals
+            return self
+        if isinstance(other, Clause):
+            self._vals += [other]
+            return self
+        if isinstance(other, (list, tuple)):
+            self._vals += other
+            return self
+        if isinstance(other, Var):
+            self._vals += [Clause(other)]
+            return self
+        return NotImplemented
+
+    # CNF & ___
+    def __and__(self, other: Union[Clause, Var]) -> CNF:
+        """Logical AND."""
+        if isinstance(other, Clause):
+            return CNF(self._vals + [other])
+        return CNF(self._vals + [Clause(other)])
+
+    # ___ & CNF
+    def __rand__(self, other: Union[Clause, Var]) -> CNF:
+        if isinstance(other, Clause):
+            return CNF([other] + self._vals)
+        return CNF([Clause(other)] + self._vals)
+
+    # CNF | ___
+    def __or__(self, other: Var) -> CNF:
+        """Logical OR."""
+        return CNF([*self[:-1], self[-1] + other])
+
+    # ___ | CNF
+    def __ror__(self, other: Var) -> CNF:
+        return CNF([other + self[0], *self[1:]])
+
+    # CNF ** ___
+    def __pow__(self, other: Var) -> CNF:
+        """Distribution of a variable across the clauses of a CNF formula."""
+        if isinstance(other, Var):
+            return CNF([clause | other for clause in self])
+        return NotImplemented
+
+    # ___ ** CNF
+    def __rpow__(self, other: Var) -> CNF:
+        if isinstance(other, Var):
+            return CNF([other | clause for clause in self])
+        return NotImplemented
+
+    ########################################
+    ##
+    ## Variable Manipulation Functions
+    ##
+
     def get_fresh(self) -> Var:
         """Creates a new variable for the formula."""
         # NOTE: I think this is a weird interface. A new variable is generated,
@@ -311,6 +342,11 @@ class CNF(SimpleSequence[Clause]):
     def distribute(self, variable: Var):
         """Distributes a variable across each clause in the CNF formula."""
         self._vals = [variable | clause for clause in self]
+
+    ########################################
+    ##
+    ## CNF Assertions
+    ##
 
     def assert_k_of_n(self, k: int, in_list: Sequence[Var]):
         # TODO: Describe this function's purpose.
@@ -372,6 +408,11 @@ class CNF(SimpleSequence[Clause]):
         (_, ss) = self.ripple_carry(flipped_bits, one_vars)
         ss.reverse()
         return ss
+
+    ########################################
+    ##
+    ## Pop Count
+    ##
 
     def pop_count(self, in_list: Sequence[Var]) -> List[Var]:
         """Returns the list that represents the bits of the `sum` variable in
