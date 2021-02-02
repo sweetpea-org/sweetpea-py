@@ -39,12 +39,6 @@ class SimpleSequence(MutableSequence[_T]):
         raise NotImplementedError()
 
     @classmethod
-    @property
-    def empty(cls) -> SimpleSequence[_T]:
-        """An empty SimpleSequence of the given type."""
-        return cls([])
-
-    @classmethod
     def _construct_element(cls, value) -> _T:
         # NOTE: mypy 0.800 does not appear to correctly handle class properties
         #       produced with the `@classmethod` and `@property` decorators, so
@@ -54,8 +48,13 @@ class SimpleSequence(MutableSequence[_T]):
             return value
         return cls._element_type(value)  # type: ignore
 
-    def __init__(self, /, first_value: Union[List[Union[_T, int]], _T, int], *rest_values: Union[_T, int]):
-        if isinstance(first_value, (list, tuple)):
+    def __init__(self, /, first_value: Union[None, List[Union[_T, int]], _T, int] = None, *rest_values: Union[_T, int]):
+        values: Iterable[Union[_T, int]]
+        if first_value is None:
+            if rest_values:
+                raise ValueError(f"cannot instantiate {type(self).__name__} with both None and variadic arguments")
+            values = []
+        elif isinstance(first_value, (list, tuple)):
             if rest_values:
                 raise ValueError(f"cannot instantiate {type(self).__name__} with both list and variadic arguments")
             values = first_value
@@ -67,13 +66,13 @@ class SimpleSequence(MutableSequence[_T]):
         return f"{self.__class__.__name__}({', '.join(map(repr, self._vals))})"
 
     def __copy__(self) -> SimpleSequence[_T]:
-        new_sequence = cast(SimpleSequence[_T], self.__class__.empty)
+        new_sequence = self.__class__()
         new_sequence._vals = self._vals
         return new_sequence
 
     def __deepcopy__(self, memo: Dict) -> SimpleSequence[_T]:
         new_base_vals = deepcopy(self._vals, memo)
-        new_sequence = cast(SimpleSequence[_T], self.__class__.empty)
+        new_sequence = self.__class__()
         new_sequence._vals = new_base_vals
         return new_sequence
 
