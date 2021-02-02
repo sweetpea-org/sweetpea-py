@@ -224,12 +224,6 @@ class CNF(SimpleSequence[Clause]):
 
     _num_vars: int
 
-    @classmethod
-    @property
-    def empty(cls):
-        """An empty CNF formula."""
-        return cls()
-
     def __init__(self, *values):
         super().__init__(*values)
         self._num_vars = 0

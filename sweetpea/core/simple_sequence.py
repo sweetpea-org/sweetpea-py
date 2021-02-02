@@ -38,6 +38,12 @@ class SimpleSequence(MutableSequence[_T]):
         raise NotImplementedError()
 
     @classmethod
+    @property
+    def empty(cls) -> SimpleSequence[_T]:
+        """An empty SimpleSequence of the given type."""
+        return cls([])
+
+    @classmethod
     def _construct_element(cls, value) -> _T:
         # NOTE: mypy 0.800 does not appear to correctly handle class properties
         #       produced with the `@classmethod` and `@property` decorators, so
