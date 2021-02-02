@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from collections.abc import MutableSequence
-from typing import Iterable, List, Type, TypeVar, Union, overload
+from copy import deepcopy
+from typing import Dict, Iterable, List, Type, TypeVar, Union, cast, overload
 
 
 __all__ = ['SimpleSequence']
@@ -64,6 +65,17 @@ class SimpleSequence(MutableSequence[_T]):
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({', '.join(map(repr, self._vals))})"
+
+    def __copy__(self) -> SimpleSequence[_T]:
+        new_sequence = cast(SimpleSequence[_T], self.__class__.empty)
+        new_sequence._vals = self._vals
+        return new_sequence
+
+    def __deepcopy__(self, memo: Dict) -> SimpleSequence[_T]:
+        new_base_vals = deepcopy(self._vals, memo)
+        new_sequence = cast(SimpleSequence[_T], self.__class__.empty)
+        new_sequence._vals = new_base_vals
+        return new_sequence
 
     @overload
     def __getitem__(self, index: int) -> _T:
