@@ -57,7 +57,7 @@ class SimpleSequence(MutableSequence[_T]):
         self._vals = [self._construct_element(value) for value in values]
 
     def __repr__(self) -> str:
-        return self.__class__.__name__ + str(self._vals)
+        return f"{self.__class__.__name__}({', '.join(map(repr, self._vals))})"
 
     @overload
     def __getitem__(self, index: int) -> _T:
