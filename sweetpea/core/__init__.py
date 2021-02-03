@@ -2,5 +2,5 @@
 
 from .original_port import (
     GenerationType, GenerationRequest, SolutionSpec,
-    build_CNF, generate_CNF, sample_non_uniform
+    build_CNF, sample_uniform, sample_non_uniform
 )

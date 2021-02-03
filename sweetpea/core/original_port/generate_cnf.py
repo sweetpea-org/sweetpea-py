@@ -63,7 +63,7 @@ class SolutionSpec(NamedTuple):
     frequency: int
 
 
-def generate_CNF(initial_CNF: CNF,
+def sample_uniform(initial_CNF: CNF,
                  fresh: int,
                  support: int,
                  generation_requests: List[GenerationRequest],

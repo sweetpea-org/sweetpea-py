@@ -25,9 +25,9 @@ def build_cnf(block: Block) -> dict:
 
     backend_request = block.build_backend_request()
     job_result_str = build_CNF(backend_request.get_cnfs_as_json(),
-        'requests': backend_request.get_requests_as_json(),
-        'support': block.variables_per_sample(),
-        'fresh': backend_request.fresh - 1)
+        backend_request.fresh - 1,
+        block.variables_per_sample(),
+        backend_request.get_requests_as_generation_requests())
 
     return job_result_str        
 

@@ -3,6 +3,7 @@ import math
 
 from typing import List
 from sweetpea.logic import And, cnf_to_json
+from sweetpea.core.original_port.generate_cnf import GenerationRequest, GenerationType
 
 
 """
@@ -35,6 +36,9 @@ class LowLevelRequest:
             'booleanValues': self.variables
         }
 
+    def to_generation_request(self):
+        return GenerationRequest(GenerationType[self.comparison], self.k, self.variables)
+
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
@@ -62,6 +66,9 @@ class BackendRequest:
 
     def get_requests_as_json(self):
         return list(map(lambda r: r.to_dict(), self.ll_requests))
+
+    def get_requests_as_generation_requests(self):
+        return list(map(lambda r: r.to_generation_request(), self.ll_requests))
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__

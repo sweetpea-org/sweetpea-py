@@ -3,5 +3,5 @@
 from .data_structures import CNF
 from .generate_cnf import (
     GenerationRequest, GenerationType, SolutionSpec,
-    build_CNF, generate_CNF, sample_non_uniform
+    build_CNF, sample_uniform, sample_non_uniform
 )
