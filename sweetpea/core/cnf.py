@@ -212,6 +212,13 @@ class CNF(SimpleSequence[Clause]):
             b = Var(b)
         return a % b
 
+    @staticmethod
+    def distribute(v: Var, cnf: CNF) -> CNF:
+        """Distributes the given variable across each clause of the given CNF
+        formula, producing a new CNF formula.
+        """
+        return v ** cnf
+
     ########################################
     ##
     ## Class Configuration/Initialization
@@ -374,16 +381,13 @@ class CNF(SimpleSequence[Clause]):
         """
         self.append(variable)
 
-    def distribute(self, variable: Var):
-        """Distributes a variable across each clause in the CNF formula."""
-        self._vals = [variable | clause for clause in self]
-
     ########################################
     ##
     ## CNF Assertions
     ##
 
     def assert_k_of_n(self, k: int, in_list: Sequence[Var]):
+        # TODO DOC
         # TODO: Describe this function's purpose.
         sum_bits = self.pop_count(in_list)
         # Add zero padding to the left.
@@ -398,9 +402,11 @@ class CNF(SimpleSequence[Clause]):
         self.append(Clause(x) for x in assertion)
 
     def assert_k_less_than_n(self, k: int, in_list: Sequence[Var]):
+        # TODO DOC
         self._inequality_assertion(True, k, in_list)
 
     def assert_k_greater_than_n(self, k: int, in_list: Sequence[Var]):
+        # TODO DOC
         self._inequality_assertion(False, k, in_list)
 
     def _inequality_assertion(self, assert_less_than: bool, k: int, in_list: Sequence[Var]):
@@ -491,46 +497,49 @@ class CNF(SimpleSequence[Clause]):
     ##
 
     def half_adder(self, a: Var, b: Var) -> Tuple[Var, Var]:
+        # TODO DOC
         c = self.get_fresh()
         s = self.get_fresh()
 
         c_val = CNF.or_vars(a, b)
         c_neg_val = CNF.or_vars(~a, ~b)
-        c_implies_c_val = c_val.distribute(~c)
-        c_val_implies_c = c_neg_val.distribute(c)
+        c_implies_c_val = CNF.distribute(~c, c_val)
+        c_val_implies_c = CNF.distribute(c, c_neg_val)
         computed_c = c_implies_c_val + c_val_implies_c
         self.append(computed_c)
 
         s_val = CNF.xor_vars(a, b)
         s_neg_val = CNF.xnor_vars(a, b)
-        s_implies_s_val = s_val.distribute(~s)
-        s_val_implies_s = s_neg_val.distribute(s)
+        s_implies_s_val = CNF.distribute(~s, s_val)
+        s_val_implies_s = CNF.distribute(s, s_neg_val)
         computed_s = s_implies_s_val + s_val_implies_s
         self.append(computed_s)
 
         return (c, s)
 
     def full_adder(self, a: Var, b: Var, cin: Var) -> Tuple[Var, Var]:
+        # TODO DOC
         cout = self.get_fresh()
         s = self.get_fresh()
 
         c_val     = (a | b) & (a | cin) & (b | cin)
         c_neg_val = (~a | ~b) & (~a | ~cin) & (~b | ~cin)
-        c_implies_c_val = c_val.distribute(~cout)
-        c_val_implies_c = c_neg_val.distribute(cout)
+        c_implies_c_val = CNF.distribute(~cout, c_val)
+        c_val_implies_c = CNF.distribute(cout, c_neg_val)
         computed_c = c_implies_c_val + c_val_implies_c
         self.append(computed_c)
 
         s_val     = (~a | ~b | cin) & (~a | b | ~cin) & (a | ~b | ~cin) & (a | b | cin)
         s_neg_val = (~a | ~b | ~cin) & (~a | b | cin) & (a | ~b | cin) & (a | b | ~cin)
-        s_implies_s_val = s_val.distribute(~s)
-        s_val_implies_s = s_neg_val.distribute(s)
+        s_implies_s_val = CNF.distribute(~s, s_val)
+        s_val_implies_s = CNF.distribute(s, s_neg_val)
         computed_s = s_implies_s_val + s_val_implies_s
         self.append(computed_s)
 
         return (cout, s)
 
     def ripple_carry(self, xs: List[Var], ys: List[Var]) -> Tuple[List[Var], List[Var]]:
+        # TODO DOC
         cin = self.get_fresh()
         self.set_to_zero(cin)
 
