@@ -60,7 +60,7 @@ class Var:
     def __hash__(self) -> int:
         return hash(self._val)
 
-    def __eq__(self, other: Var) -> bool:
+    def __eq__(self, other) -> bool:
         if isinstance(other, Var):
             return int(self) == int(other)
         return NotImplemented
@@ -99,6 +99,9 @@ class Var:
         if isinstance(other, Var):
             return CNF([[self, ~other], [~self, other]])
         return NotImplemented
+
+    def __abs__(self) -> Var:
+        return Var(abs(int(self)))
 
 
 class Clause(SimpleSequence[Var]):
@@ -241,7 +244,7 @@ class CNF(SimpleSequence[Clause]):
 
     def __init__(self, *values):
         super().__init__(*values)
-        self._num_vars = 0
+        self._num_vars = len({abs(var) for clause in self._vals for var in clause})
 
     ########################################
     ##
