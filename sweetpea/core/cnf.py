@@ -57,6 +57,14 @@ class Var:
     def __int__(self) -> int:
         return self._val
 
+    def __hash__(self) -> int:
+        return hash(self._val)
+
+    def __eq__(self, other: Var) -> bool:
+        if isinstance(other, Var):
+            return int(self) == int(other)
+        return NotImplemented
+
     def __lt__(self, other: Var) -> bool:
         if isinstance(other, Var):
             return int(self) < int(other)
