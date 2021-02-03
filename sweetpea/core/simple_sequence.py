@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from collections.abc import MutableSequence
-from typing import Callable, Iterable, List, TypeVar, Union, overload
+from typing import Iterable, List, Type, TypeVar, Union, overload
 
 
 __all__ = ['SimpleSequence']
@@ -31,18 +31,21 @@ class SimpleSequence(MutableSequence[_T]):
     @classmethod
     @property
     @abstractmethod
-    def _element_type(cls) -> Callable[..., _T]:
-        """Returns a function that can produce instances of the element type.
-        (The simplest option is to just supply the element type's class
-        directly.)
+    def _element_type(cls) -> Type[_T]:
+        """Returns the class corresponding to the element type, from which new
+        elements can be constructed.
         """
         raise NotImplementedError()
 
     @classmethod
     def _construct_element(cls, value) -> _T:
-        if isinstance(value, cls._element_type):
+        # NOTE: mypy 0.800 does not appear to correctly handle class properties
+        #       produced with the `@classmethod` and `@property` decorators, so
+        #       the following invocations of `cls._element_type` are flagged as
+        #       incorrect.
+        if isinstance(value, cls._element_type):  # type: ignore
             return value
-        return cls._element_type(value)
+        return cls._element_type(value)  # type: ignore
 
     def __init__(self, /, first_value: Union[List[Union[_T, int]], _T, int], *rest_values: Union[_T, int]):
         if isinstance(first_value, (list, tuple)):

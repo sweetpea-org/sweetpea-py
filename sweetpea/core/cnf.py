@@ -1,12 +1,15 @@
 """Provides simple type aliases used in SweetPea Core."""
 
 # Allow type annotations to refer to not-yet-declared types.
-from __future__ import annotations
+# flake8 doesn't know about this so we have to #noqa it.
+from __future__ import annotations  # noqa
 
 import math
 
-from typing import Iterable, Iterator, List, Sequence, Union
+from itertools import chain
+from typing import Iterable, List, Optional, Sequence, Tuple, Union
 
+from .binary import BinaryNumber, binary
 from .simple_sequence import SimpleSequence
 
 
@@ -40,6 +43,11 @@ class Var:
         else:
             raise TypeError(f"expected 'int'; got '{type(value).__name__}'")
 
+    @property
+    def value(self) -> int:
+        """The integer value of this variable."""
+        return self._val
+
     def __repr__(self) -> str:
         return f"Var({self._val})"
 
@@ -48,6 +56,11 @@ class Var:
 
     def __int__(self) -> int:
         return self._val
+
+    def __lt__(self, other: Var) -> bool:
+        if isinstance(other, Var):
+            return int(self) < int(other)
+        return NotImplemented
 
     def __invert__(self) -> Var:
         """Logical NOT."""
@@ -96,6 +109,9 @@ class Clause(SimpleSequence[Var]):
     @property
     def _element_type(cls):
         return Var
+
+    def __str__(self) -> str:
+        return ' '.join(str(var) for var in self)
 
     def __add__(self, other: Union[Clause, Var]) -> Clause:
         """Logical OR. This alias exists due to the list-like interface of
@@ -150,73 +166,12 @@ class CNF(SimpleSequence[Clause]):
     corresponds to the CNF formula ((1 ∨ 2 ∨ ¬3) ∧ (¬2 ∨ 7 ∨ 1)).
     """
 
-    @classmethod
-    @property
-    def _element_type(cls):
-        return Clause
-
-    _num_vars: int
-
-    @classmethod
-    @property
-    def empty(cls):
-        """An empty CNF formula."""
-        return cls()
-
-    def __init__(self, *values):
-        super().__init__(*values)
-        self._num_vars = 0
-
-    def __add__(self, other: Union[CNF, Clause, Var]) -> CNF:
-        """Logical OR. This alias exists due to the list-like interface of CNF
-        formulas.
-        """
-        if isinstance(other, CNF):
-            return CNF(*self, *other)
-        if isinstance(other, Clause):
-            return CNF(*self, other)
-        if isinstance(other, Var):
-            return CNF(*self, [other])
-        return NotImplemented
-
-    def __iadd__(self, other: Union[CNF, Clause, Iterable[Clause], Var]) -> CNF:
-        if isinstance(other, CNF):
-            self._vals += other._vals
-            return self
-        if isinstance(other, Clause):
-            self._vals += [other]
-            return self
-        if isinstance(other, (list, tuple)):
-            self._vals += other
-            return self
-        if isinstance(other, Var):
-            self._vals += [Clause(other)]
-        return NotImplemented
-
-    def __and__(self, other: Var) -> CNF:
-        """Logical AND."""
-        return CNF(self._vals + [other])
-
-    def __rand__(self, other: Var) -> CNF:
-        return CNF([other] + self._vals)
-
-    def __or__(self, other: Var) -> CNF:
-        """Logical OR."""
-        return CNF([*self[:-1], self[-1] + other])
-
-    def __ror__(self, other: Var) -> CNF:
-        return CNF([other + self[0], *self[1:]])
-
-    def __pow__(self, other: Var) -> CNF:
-        """Distribution of a variable across the clauses of a CNF formula."""
-        if isinstance(other, Var):
-            return CNF([clause | other for clause in self])
-        return NotImplemented
-
-    def __rpow__(self, other: Var) -> CNF:
-        if isinstance(other, Var):
-            return CNF([other | clause for clause in self])
-        return NotImplemented
+    ########################################
+    ##
+    ## Static Methods
+    ##
+    ## These are used for creating CNF formulas by combining two variables in a
+    ## particular way.
 
     @staticmethod
     def and_vars(a: Union[int, Var], b: Union[int, Var]) -> CNF:
@@ -257,15 +212,152 @@ class CNF(SimpleSequence[Clause]):
             b = Var(b)
         return a % b
 
-    def get_fresh(self) -> int:
-        """Creates a new variable for the formula."""
-        self._num_vars += 1
-        return self._num_vars
+    ########################################
+    ##
+    ## Class Configuration/Initialization
+    ##
 
-    def get_n_fresh(self, n: int) -> Iterator[int]:
+    @classmethod
+    @property
+    def _element_type(cls):
+        return Clause
+
+    _num_vars: int
+
+    @classmethod
+    @property
+    def empty(cls):
+        """An empty CNF formula."""
+        return cls()
+
+    def __init__(self, *values):
+        super().__init__(*values)
+        self._num_vars = 0
+
+    ########################################
+    ##
+    ## String Rendering
+    ##
+
+    def __str__(self) -> str:
+        return self.as_dimacs_string()
+
+    def as_dimacs_string(self, sampled_variables: Optional[List[Var]] = None) -> str:
+        """Represents the CNF formula as a string in the modified DIMACS
+        format used by Unigen.
+
+        The DIMACS format is a standardized method of representing CNF formulas
+        as strings. This implementation is based on the details given here:
+
+            https://people.sc.fsu.edu/~jburkardt/data/cnf/cnf.html
+
+        Unigen also has an extra line that describes the list of variables you
+        would like to sample (instead of sampling among all variables). This
+        line is given as:
+
+            c ind v1 v2 ... vn 0
+
+        where v1, v2, ..., vn represent variables. This line goes above the
+        DIMACS "problem" line (the line beginning with "p").
+        """
+        if sampled_variables:
+            sample_line = "c ind " + ' '.join(str(var) for var in sampled_variables) + " 0"
+        else:
+            sample_line = "c No variables were specified for sampling."
+        lines = [
+            "c This CNF formula was generated by SweetPea.",
+            sample_line,
+            f"p cnf {self._num_vars} {len(self)}",
+        ] + [str(clause) + " 0" for clause in self]
+
+        return '\n'.join(lines)
+
+    ########################################
+    ##
+    ## Operator Overloads
+    ##
+
+    # CNF + ___
+    def __add__(self, other: Union[CNF, Clause, Var]) -> CNF:
+        """Logical OR. This alias exists due to the list-like interface of CNF
+        formulas.
+        """
+        if isinstance(other, CNF):
+            return CNF(*self, *other)
+        if isinstance(other, Clause):
+            return CNF(*self, other)
+        if isinstance(other, Var):
+            return CNF(*self, [other])
+        return NotImplemented
+
+    # CNF += ___
+    def __iadd__(self, other: Union[CNF, Clause, Iterable[Clause], Var]) -> CNF:
+        if isinstance(other, CNF):
+            self._vals += other._vals
+            return self
+        if isinstance(other, Clause):
+            self._vals += [other]
+            return self
+        if isinstance(other, (list, tuple)):
+            self._vals += other
+            return self
+        if isinstance(other, Var):
+            self._vals += [Clause(other)]
+            return self
+        return NotImplemented
+
+    # CNF & ___
+    def __and__(self, other: Union[Clause, Var]) -> CNF:
+        """Logical AND."""
+        if isinstance(other, Clause):
+            return CNF(self._vals + [other])
+        return CNF(self._vals + [Clause(other)])
+
+    # ___ & CNF
+    def __rand__(self, other: Union[Clause, Var]) -> CNF:
+        if isinstance(other, Clause):
+            return CNF([other] + self._vals)
+        return CNF([Clause(other)] + self._vals)
+
+    # CNF | ___
+    def __or__(self, other: Var) -> CNF:
+        """Logical OR."""
+        return CNF([*self[:-1], self[-1] + other])
+
+    # ___ | CNF
+    def __ror__(self, other: Var) -> CNF:
+        return CNF([other + self[0], *self[1:]])
+
+    # CNF ** ___
+    def __pow__(self, other: Var) -> CNF:
+        """Distribution of a variable across the clauses of a CNF formula."""
+        if isinstance(other, Var):
+            return CNF([clause | other for clause in self])
+        return NotImplemented
+
+    # ___ ** CNF
+    def __rpow__(self, other: Var) -> CNF:
+        if isinstance(other, Var):
+            return CNF([other | clause for clause in self])
+        return NotImplemented
+
+    ########################################
+    ##
+    ## Variable Manipulation Functions
+    ##
+
+    def get_fresh(self) -> Var:
+        """Creates a new variable for the formula."""
+        # NOTE: I think this is a weird interface. A new variable is generated,
+        #       permanently affecting this CNF formula... but there's no
+        #       guarantee that the caller actually incorporates that variable
+        #       into the formula.
+        self._num_vars += 1
+        return Var(self._num_vars)
+
+    def get_n_fresh(self, n: int) -> List[Var]:
         """Generates the next n variables, numbered sequentially."""
-        for _ in range(n):
-            yield self.get_fresh()
+        return [self.get_fresh() for _ in range(n)]
 
     def append(self, other: Union[CNF, Clause, Iterable[Clause], Var]):
         """Appends a CNF formula to this formula."""
@@ -292,40 +384,169 @@ class CNF(SimpleSequence[Clause]):
         """Distributes a variable across each clause in the CNF formula."""
         self._vals = [variable | clause for clause in self]
 
-    def assert_k_of_n(self, k: int, clause: Clause):
-        ...
+    ########################################
+    ##
+    ## CNF Assertions
+    ##
+
+    def assert_k_of_n(self, k: int, in_list: Sequence[Var]):
+        # TODO: Describe this function's purpose.
+        sum_bits = self.pop_count(in_list)
+        # Add zero padding to the left.
+        in_binary = binary(k)
+        in_binary.reverse()
+        left_padded: BinaryNumber = in_binary[:len(sum_bits)]
+        left_padded += [-1 for _ in range(len(left_padded) - len(sum_bits))]
+        left_padded.reverse()
+        # Form the assertion.
+        assertion = [Var(lp * sb.value) for (lp, sb) in zip(left_padded, sum_bits)]
+        # Append the assertion to the formula.
+        self.append(Clause(x) for x in assertion)
+
+    def assert_k_less_than_n(self, k: int, in_list: Sequence[Var]):
+        self._inequality_assertion(True, k, in_list)
+
+    def assert_k_greater_than_n(self, k: int, in_list: Sequence[Var]):
+        self._inequality_assertion(False, k, in_list)
+
+    def _inequality_assertion(self, assert_less_than: bool, k: int, in_list: Sequence[Var]):
+        sum_bits = self.pop_count(in_list)
+        in_binary = binary(k)
+        k_vars = self.get_n_fresh(k)
+        assertion = [Var(kv.value * b) for (kv, b) in zip(k_vars, in_binary)]
+        self.append(Clause(x) for x in assertion)
+        self._make_same_length(k_vars, sum_bits)
+        if assert_less_than:
+            kbs, nbs = sum_bits, k_vars
+        else:
+            kbs, nbs = k_vars, sum_bits
+        neg_twos_comp_nbs = self._convert_to_negative_twos_complement(nbs)
+        (cs, ss) = self.ripple_carry(kbs, neg_twos_comp_nbs)
+        self.set_to_one(ss[-1])
+
+    def _make_same_length(self, xs: List[Var], ys: List[Var]):
+        if len(xs) < len(ys):
+            zero_padding = self.get_n_fresh(len(ys) - len(xs) + 1)
+            self.zero_out(zero_padding)
+            xs[:0] = zero_padding
+            one_more_zero = self.get_n_fresh(1)
+            self.zero_out(one_more_zero)
+            ys[:0] = one_more_zero
+        else:
+            self._make_same_length(ys, xs)
+
+    def _convert_to_negative_twos_complement(self, bits: List[Var]) -> List[Var]:
+        # Flip the bits, i.e., assert flipped_bits[i] ⇔ bits[i].
+        flipped_bits = self.get_n_fresh(len(bits))
+        for lhs, rhs in zip(flipped_bits, (~b for b in bits)):
+            self.append(CNF.xnor_vars(lhs, rhs))
+        # Make a zero-padded one (for the addition) of the correct dimension.
+        one_vars = self.get_n_fresh(len(bits))
+        # Set all the top bits to 0 and the bottom bit to 1.
+        self.zero_out(one_vars[:-1])
+        self.set_to_one(one_vars[-1])
+        # Add the lists.
+        (_, ss) = self.ripple_carry(flipped_bits, one_vars)
+        ss.reverse()
+        return ss
+
+    ########################################
+    ##
+    ## Pop Count
+    ##
 
     def pop_count(self, in_list: Sequence[Var]) -> List[Var]:
         """Returns the list that represents the bits of the `sum` variable in
         binary.
         """
         if not in_list:
-            raise ValueError("cannot take pop_count of empty list")
+            raise ValueError("cannot take pop count of empty list")
+        # Our pop count algorithm assumes the input is a binary number with a
+        # power-of-two number of digits. So first, we find out what the next
+        # power of two is for our number (which may be just the length of that
+        # number).
         nearest_largest_power = math.ceil(math.log(len(in_list), 2))
-        aux_list = self.get_n_fresh(2 ** nearest_largest_power - len(in_list))
+        # Then we generate a sequence of fresh variables (new digits) equal to
+        # the difference and set them all to 0.
+        aux_list = self.get_n_fresh((2 ** nearest_largest_power) - len(in_list))
         self.zero_out(aux_list)
-        return self._pop_count_layer([[x] for x in in_list + aux_list])
+        # Now we can start computing the actual pop count.
+        return self._pop_count_layer([[x] for x in chain(in_list, aux_list)])
 
-    def _pop_count_layer(self, bit_list: Sequence[Sequence[Var]]) -> List[Var]:
+    def _pop_count_layer(self, bit_list: List[List[Var]]) -> List[Var]:
         if len(bit_list) == 1:
             return bit_list[0]
         midpoint = len(bit_list) // 2
         left_half = bit_list[:midpoint]
         right_half = bit_list[midpoint:]
-        var_list = self._pop_count_compute(left_half, right_half)
+        var_list: List[List[Var]] = []
+        # This zip assumes the two lists are of equal length. This is a safe
+        # assumption since we've guaranteed the input to have a length that's a
+        # power of two greater than one.
+        for (l, r) in zip(left_half, right_half):
+            (cs, ss) = self.ripple_carry(l, r)
+            max_c = max(cs)
+            var_list.append([max_c] + list(reversed(ss)))
+        # Reverse the list because of append ordering.
+        var_list.reverse()
         return self._pop_count_layer(var_list)
 
-    def _pop_count_compute(self, xs: Sequence[Sequence[Var]], ys: Sequence[Sequence[Var]]) -> List[List[Var]]:
-        if len(xs) != len(ys):
-            raise ValueError("cannot compute pop count with sequences of different lengths")
+    ########################################
+    ##
+    ## Adders
+    ##
 
-        accum: List[List[Var]] = []
+    def half_adder(self, a: Var, b: Var) -> Tuple[Var, Var]:
+        c = self.get_fresh()
+        s = self.get_fresh()
 
-        for (x, y) in zip(xs, ys):
-            (cs, ss) = self.rippple_carry(x, y)
-            max_c = max(cs)
-            formatted_result = [max_c] + list(reversed(ss))
-            accum.append(formatted_result)
+        c_val = CNF.or_vars(a, b)
+        c_neg_val = CNF.or_vars(~a, ~b)
+        c_implies_c_val = c_val.distribute(~c)
+        c_val_implies_c = c_neg_val.distribute(c)
+        computed_c = c_implies_c_val + c_val_implies_c
+        self.append(computed_c)
 
-        accum.reverse()
-        return accum
+        s_val = CNF.xor_vars(a, b)
+        s_neg_val = CNF.xnor_vars(a, b)
+        s_implies_s_val = s_val.distribute(~s)
+        s_val_implies_s = s_neg_val.distribute(s)
+        computed_s = s_implies_s_val + s_val_implies_s
+        self.append(computed_s)
+
+        return (c, s)
+
+    def full_adder(self, a: Var, b: Var, cin: Var) -> Tuple[Var, Var]:
+        cout = self.get_fresh()
+        s = self.get_fresh()
+
+        c_val     = (a | b) & (a | cin) & (b | cin)
+        c_neg_val = (~a | ~b) & (~a | ~cin) & (~b | ~cin)
+        c_implies_c_val = c_val.distribute(~cout)
+        c_val_implies_c = c_neg_val.distribute(cout)
+        computed_c = c_implies_c_val + c_val_implies_c
+        self.append(computed_c)
+
+        s_val     = (~a | ~b | cin) & (~a | b | ~cin) & (a | ~b | ~cin) & (a | b | cin)
+        s_neg_val = (~a | ~b | ~cin) & (~a | b | cin) & (a | ~b | cin) & (a | b | ~cin)
+        s_implies_s_val = s_val.distribute(~s)
+        s_val_implies_s = s_neg_val.distribute(s)
+        computed_s = s_implies_s_val + s_val_implies_s
+        self.append(computed_s)
+
+        return (cout, s)
+
+    def ripple_carry(self, xs: List[Var], ys: List[Var]) -> Tuple[List[Var], List[Var]]:
+        cin = self.get_fresh()
+        self.set_to_zero(cin)
+
+        c_accum: List[Var] = []
+        s_accum: List[Var] = []
+
+        for x, y in zip(reversed(xs), reversed(ys)):
+            (c, s) = self.full_adder(x, y, cin)
+            c_accum.append(c)
+            s_accum.append(s)
+            cin = c
+
+        return (c_accum, s_accum)
