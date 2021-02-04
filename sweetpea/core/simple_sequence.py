@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import abstractmethod
 from collections.abc import MutableSequence
 from copy import deepcopy
-from typing import Dict, Iterable, List, Type, TypeVar, Union, cast, overload
+from typing import Dict, Iterable, List, Type, TypeVar, Union, overload
 
 
 __all__ = ['SimpleSequence']
