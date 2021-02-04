@@ -443,7 +443,7 @@ class CNF(SimpleSequence[Clause]):
         # Form the assertion.
         assertion = [Var(lp * sb.value) for (lp, sb) in zip(left_padded, sum_bits)]
         # Append the assertion to the formula.
-        self.prepend(Clause(x) for x in assertion)
+        self.prepend(CNF([Clause(x) for x in assertion]))
 
     def assert_k_less_than_n(self, k: int, in_list: Sequence[Var]):
         # TODO DOC
@@ -458,7 +458,7 @@ class CNF(SimpleSequence[Clause]):
         in_binary = binary(k)
         k_vars = self.get_n_fresh(k)
         assertion = [Var(kv.value * b) for (kv, b) in zip(k_vars, in_binary)]
-        self.prepend(Clause(x) for x in assertion)
+        self.prepend(CNF([Clause(x) for x in assertion]))
         self._make_same_length(k_vars, sum_bits)
         if assert_less_than:
             kbs, nbs = sum_bits, k_vars
