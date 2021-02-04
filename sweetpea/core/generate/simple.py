@@ -21,7 +21,11 @@ def generate_simple(initial_cnf: CNF,
     with temporary_cnf_file() as cnf_file:
         combine_and_save_cnf(cnf_file, initial_cnf, fresh, support, generation_requests)
         solution_str = call_unigen(cnf_file, docker_mode=use_docker)
-        return [build_solution(line) for line in solution_str.strip().splitlines()]
+        # TODO: Validate that skipping the comments is the intended
+        #       functionality. The Haskell code doesn't appear to need to do
+        #       this, but this could be due to the Unigen upgrade or something
+        #       else. Just check it.
+        return [build_solution(line) for line in solution_str.strip().splitlines() if line and not line.startswith('c')]
 
 
 def build_solution(line: str) -> Solution:
