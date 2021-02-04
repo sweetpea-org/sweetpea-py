@@ -397,11 +397,22 @@ class CNF(SimpleSequence[Clause]):
         """Appends a CNF formula to this formula."""
         self += other
 
+    def prepend(self, other: Union[CNF, Clause, Iterable[Clause], Var]):
+        """Prepends a CNF formula to this formula."""
+        if isinstance(other, Var):
+            self._vals.insert(0, Clause(other))
+        elif isinstance(other, Clause):
+            self._vals.insert(0, other)
+        elif isinstance(other, CNF):
+            self._vals = [*other._vals, *self._vals]
+        else:
+            raise NotImplementedError()
+
     def set_to_zero(self, variable: Var):
         """Zeroes the specified variable by appending its negation to the
         existing CNF formula.
         """
-        self.append(~variable)
+        self.prepend(~variable)
 
     def zero_out(self, in_list: Iterable[Var]):
         """Appends a CNF formula negating the existing CNF formula."""
@@ -412,7 +423,7 @@ class CNF(SimpleSequence[Clause]):
         """Sets the specified variable to 1 by appending it to the existing CNF
         formula.
         """
-        self.append(variable)
+        self.prepend(variable)
 
     ########################################
     ##
@@ -432,7 +443,7 @@ class CNF(SimpleSequence[Clause]):
         # Form the assertion.
         assertion = [Var(lp * sb.value) for (lp, sb) in zip(left_padded, sum_bits)]
         # Append the assertion to the formula.
-        self.append(Clause(x) for x in assertion)
+        self.prepend(Clause(x) for x in assertion)
 
     def assert_k_less_than_n(self, k: int, in_list: Sequence[Var]):
         # TODO DOC
@@ -447,7 +458,7 @@ class CNF(SimpleSequence[Clause]):
         in_binary = binary(k)
         k_vars = self.get_n_fresh(k)
         assertion = [Var(kv.value * b) for (kv, b) in zip(k_vars, in_binary)]
-        self.append(Clause(x) for x in assertion)
+        self.prepend(Clause(x) for x in assertion)
         self._make_same_length(k_vars, sum_bits)
         if assert_less_than:
             kbs, nbs = sum_bits, k_vars
@@ -472,7 +483,7 @@ class CNF(SimpleSequence[Clause]):
         # Flip the bits, i.e., assert flipped_bits[i] ⇔ bits[i].
         flipped_bits = self.get_n_fresh(len(bits))
         for lhs, rhs in zip(flipped_bits, (~b for b in bits)):
-            self.append(CNF.xnor_vars(lhs, rhs))
+            self.prepend(CNF.xnor_vars(lhs, rhs))
         # Make a zero-padded one (for the addition) of the correct dimension.
         one_vars = self.get_n_fresh(len(bits))
         # Set all the top bits to 0 and the bottom bit to 1.
@@ -539,14 +550,14 @@ class CNF(SimpleSequence[Clause]):
         c_implies_c_val = CNF.distribute(~c, c_val)
         c_val_implies_c = CNF.distribute(c, c_neg_val)
         computed_c = c_implies_c_val + c_val_implies_c
-        self.append(computed_c)
+        self.prepend(computed_c)
 
         s_val = CNF.xor_vars(a, b)
         s_neg_val = CNF.xnor_vars(a, b)
         s_implies_s_val = CNF.distribute(~s, s_val)
         s_val_implies_s = CNF.distribute(s, s_neg_val)
         computed_s = s_implies_s_val + s_val_implies_s
-        self.append(computed_s)
+        self.prepend(computed_s)
 
         return (c, s)
 
@@ -560,14 +571,14 @@ class CNF(SimpleSequence[Clause]):
         c_implies_c_val = CNF.distribute(~cout, c_val)
         c_val_implies_c = CNF.distribute(cout, c_neg_val)
         computed_c = c_implies_c_val + c_val_implies_c
-        self.append(computed_c)
+        self.prepend(computed_c)
 
         s_val     = (~a | ~b | cin) & (~a | b | ~cin) & (a | ~b | ~cin) & (a | b | cin)
         s_neg_val = (~a | ~b | ~cin) & (~a | b | cin) & (a | ~b | cin) & (a | b | ~cin)
         s_implies_s_val = CNF.distribute(~s, s_val)
         s_val_implies_s = CNF.distribute(s, s_neg_val)
         computed_s = s_implies_s_val + s_val_implies_s
-        self.append(computed_s)
+        self.prepend(computed_s)
 
         return (cout, s)
 
