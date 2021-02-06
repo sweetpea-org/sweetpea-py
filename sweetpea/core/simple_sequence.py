@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from collections.abc import MutableSequence
 from copy import deepcopy
-from typing import Dict, Iterable, List, Type, TypeVar, Union, overload
+from typing import Dict, Iterable, List, MutableSequence, Type, TypeVar, Union, overload
 
 
 __all__ = ['SimpleSequence']
@@ -23,16 +22,9 @@ class SimpleSequence(MutableSequence[_T]):
 
     _vals: List[_T]
 
-    # TODO: I wasn't able to get this to work with @staticmethod, even though
-    #       it really *is* static. It could probably be done with a custom
-    #       decorator to mash-up the @staticmethod and @property or something.
-    # TODO: Even better would be to replace this with a simple attribute (like
-    #       _vals above) and build a custom class decorator that can manipulate
-    #       this. It'd look a lot cleaner, anyway.
     @classmethod
-    @property
     @abstractmethod
-    def _element_type(cls) -> Type[_T]:
+    def _get_element_type(cls) -> Type[_T]:
         """Returns the class corresponding to the element type, from which new
         elements can be constructed.
         """
@@ -40,15 +32,11 @@ class SimpleSequence(MutableSequence[_T]):
 
     @classmethod
     def _construct_element(cls, value) -> _T:
-        # NOTE: mypy 0.800 does not appear to correctly handle class properties
-        #       produced with the `@classmethod` and `@property` decorators, so
-        #       the following invocations of `cls._element_type` are flagged as
-        #       incorrect.
-        if isinstance(value, cls._element_type):  # type: ignore
+        if isinstance(value, cls._get_element_type()):
             return value
-        return cls._element_type(value)  # type: ignore
+        return cls._get_element_type()(value)
 
-    def __init__(self, /, first_value: Union[None, List[Union[_T, int]], _T, int] = None, *rest_values: Union[_T, int]):
+    def __init__(self, first_value: Union[None, List[Union[_T, int]], _T, int] = None, *rest_values: Union[_T, int]):
         values: Iterable[Union[_T, int]]
         if first_value is None:
             if rest_values:

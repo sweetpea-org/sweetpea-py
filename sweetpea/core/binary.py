@@ -3,14 +3,13 @@ binary format.
 """
 
 
-from typing import List, Literal
+from typing import List
 
 
-__all__ = ['Bit', 'BinaryNumber']
+__all__ = ['BinaryNumber']
 
 
-Bit = Literal[-1, 1]
-BinaryNumber = List[Bit]
+BinaryNumber = List[int]
 
 
 def binary(value: int) -> BinaryNumber:

@@ -117,8 +117,7 @@ class Clause(SimpleSequence[Var]):
     """
 
     @classmethod
-    @property
-    def _element_type(cls):
+    def _get_element_type(cls):
         return Var
 
     def __str__(self) -> str:
@@ -236,8 +235,7 @@ class CNF(SimpleSequence[Clause]):
     ##
 
     @classmethod
-    @property
-    def _element_type(cls):
+    def _get_element_type(cls):
         return Clause
 
     _num_vars: int
