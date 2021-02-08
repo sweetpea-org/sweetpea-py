@@ -7,13 +7,24 @@ from subprocess import CompletedProcess, run
 from typing import List, Optional
 
 from .docker_utility import docker_run
+from .return_code import ReturnCodeEnum
 from .tool_error import ToolError
 
 
 __all__ = ['call_and_parse_cryptominisat']
 
 
-class CryptoMinisatError(ToolError):
+class CryptoMiniSATReturnCode(ReturnCodeEnum):
+    """CryptoMiniSAT uses some unconventional return codes to indicate the
+    result of various computations.
+    """
+
+    Satisfiable   = 10
+    Unknown       = 15
+    Unsatisfiable = 20
+
+
+class CryptoMiniSATError(ToolError):
     """An error raised when CryptoMiniSAT fails."""
     pass
 
@@ -40,12 +51,12 @@ def call_cryptominisat(input_file: Path, docker_mode: bool = True) -> str:
         result = call_cryptominisat_docker(input_file)
     else:
         result = call_cryptominisat_cli(input_file)
-    if result.returncode == 0:
+    if CryptoMiniSATReturnCode.has_value(result.returncode):
         return result.stdout.decode()
     else:
         stdout = result.stdout.decode()
         stderr = result.stderr.decode()
-        raise CryptoMinisatError(result.returncode, stdout, stderr)
+        raise CryptoMiniSATError(result.returncode, stdout, stderr)
 
 
 def parse_cryptominisat_result(result: str) -> Optional[List[int]]:

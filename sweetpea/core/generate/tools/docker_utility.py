@@ -5,8 +5,10 @@ from enum import Enum
 from subprocess import CompletedProcess, run
 from typing import List, Optional
 
+from .return_code import ReturnCodeEnum
 
-class DockerRunReturnCode(Enum):
+
+class DockerRunReturnCode(ReturnCodeEnum):
     """Invocation of the `docker run` command can result in one of the
     following special return codes. Any other return code is the result of
     invoking the indicated command in the container.
@@ -18,10 +20,6 @@ class DockerRunReturnCode(Enum):
     DockerDaemonError                    = 125
     ContainedCommandCannotBeInvokedError = 126
     ContainedCommandCannotBeFoundError   = 127
-
-    @classmethod
-    def has_value(cls, value: int) -> bool:
-        return value in (e.value for e in cls)
 
 
 class DockerRunError(Exception):
