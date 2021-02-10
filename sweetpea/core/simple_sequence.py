@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from collections.abc import MutableSequence
-from typing import Iterable, List, Type, TypeVar, Union, overload
+from copy import deepcopy
+from typing import Dict, Iterable, List, MutableSequence, Type, TypeVar, Union, overload
 
 
 __all__ = ['SimpleSequence']
@@ -22,16 +22,9 @@ class SimpleSequence(MutableSequence[_T]):
 
     _vals: List[_T]
 
-    # TODO: I wasn't able to get this to work with @staticmethod, even though
-    #       it really *is* static. It could probably be done with a custom
-    #       decorator to mash-up the @staticmethod and @property or something.
-    # TODO: Even better would be to replace this with a simple attribute (like
-    #       _vals above) and build a custom class decorator that can manipulate
-    #       this. It'd look a lot cleaner, anyway.
     @classmethod
-    @property
     @abstractmethod
-    def _element_type(cls) -> Type[_T]:
+    def _get_element_type(cls) -> Type[_T]:
         """Returns the class corresponding to the element type, from which new
         elements can be constructed.
         """
@@ -39,16 +32,17 @@ class SimpleSequence(MutableSequence[_T]):
 
     @classmethod
     def _construct_element(cls, value) -> _T:
-        # NOTE: mypy 0.800 does not appear to correctly handle class properties
-        #       produced with the `@classmethod` and `@property` decorators, so
-        #       the following invocations of `cls._element_type` are flagged as
-        #       incorrect.
-        if isinstance(value, cls._element_type):  # type: ignore
+        if isinstance(value, cls._get_element_type()):
             return value
-        return cls._element_type(value)  # type: ignore
+        return cls._get_element_type()(value)
 
-    def __init__(self, /, first_value: Union[List[Union[_T, int]], _T, int], *rest_values: Union[_T, int]):
-        if isinstance(first_value, (list, tuple)):
+    def __init__(self, first_value: Union[None, List[Union[_T, int]], _T, int] = None, *rest_values: Union[_T, int]):
+        values: Iterable[Union[_T, int]]
+        if first_value is None:
+            if rest_values:
+                raise ValueError(f"cannot instantiate {type(self).__name__} with both None and variadic arguments")
+            values = []
+        elif isinstance(first_value, (list, tuple)):
             if rest_values:
                 raise ValueError(f"cannot instantiate {type(self).__name__} with both list and variadic arguments")
             values = first_value
@@ -57,7 +51,18 @@ class SimpleSequence(MutableSequence[_T]):
         self._vals = [self._construct_element(value) for value in values]
 
     def __repr__(self) -> str:
-        return self.__class__.__name__ + str(self._vals)
+        return f"{self.__class__.__name__}({', '.join(map(repr, self._vals))})"
+
+    def __copy__(self) -> SimpleSequence[_T]:
+        new_sequence = self.__class__()
+        new_sequence._vals = self._vals
+        return new_sequence
+
+    def __deepcopy__(self, memo: Dict) -> SimpleSequence[_T]:
+        new_base_vals = deepcopy(self._vals, memo)
+        new_sequence = self.__class__()
+        new_sequence._vals = new_base_vals
+        return new_sequence
 
     @overload
     def __getitem__(self, index: int) -> _T:

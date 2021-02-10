@@ -62,7 +62,6 @@ class SolutionSpec(NamedTuple):
     assignment: List[int]
     frequency: int
 
-
 def sample_uniform(initial_CNF: CNF,
                  fresh: int,
                  support: int,
@@ -70,15 +69,16 @@ def sample_uniform(initial_CNF: CNF,
                  use_docker: bool = True
                  ) -> List[SolutionSpec]:
     def build_solution(line: str) -> SolutionSpec:
-        parts = line.replace('v', '').strip().split()
+        parts = line.strip().split()
         assignment = [int(s) for s in parts[:-1]]
-        frequency = int(parts[-1].split(':')[-1])
+        frequency = 1 #int(parts[-1].split(':')[-1])
         return SolutionSpec(assignment, frequency)
 
     with temporary_CNF_file() as cnf_file:
         save_CNF(cnf_file, initial_CNF, fresh, support, generation_requests)
         solution_str = call_unigen(cnf_file, docker_mode=use_docker)
-        return [build_solution(line) for line in solution_str.strip().splitlines()]
+        lines = solution_str.splitlines()[-int(solution_str.split(b':')[-1].strip())-2:-2]
+        return [build_solution(line) for line in lines]
 
 
 # TODO
