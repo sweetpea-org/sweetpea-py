@@ -260,7 +260,7 @@ class CNF(SimpleSequence[Clause]):
 
             https://people.sc.fsu.edu/~jburkardt/data/cnf/cnf.html
         """
-        header = f"p cnf {self._num_vars} {len(self)}\n"
+        header = f"p cnf {self._num_vars} {len(self)}\n\n"
         return header + str(self)
 
     def as_unigen_string(self, support_set_length: Optional[int] = None, sampled_variables: Optional[List[Var]] = None) -> str:
