@@ -6,8 +6,8 @@ from shlex import split as shell_split
 from subprocess import CompletedProcess, run
 from typing import List, Optional, Tuple
 
-from .binary_check import check_binary_available
 from .docker_utility import docker_run
+from .executables import CRYPTOMINISAT_EXE, DEFAULT_DOWNLOAD_IF_MISSING, ensure_executable_available
 from .return_code import ReturnCodeEnum
 from .tool_error import ToolError
 
@@ -16,7 +16,6 @@ __all__ = ['cryptominisat_solve', 'cryptominisat_is_satisfiable']
 
 
 DEFAULT_DOCKER_MODE_ON = False
-DEFAULT_DOWNLOAD_IF_UNAVAILABLE = True
 
 
 class CryptoMiniSATReturnCode(ReturnCodeEnum):
@@ -43,24 +42,23 @@ def call_cryptominisat_docker(input_file: Path) -> CompletedProcess:
     return result
 
 
-def call_cryptominisat_cli(input_file: Path, download_if_unavailable: bool) -> CompletedProcess:
+def call_cryptominisat_cli(input_file: Path, download_if_missing: bool) -> CompletedProcess:
     # TODO DOC
-    binary = 'cryptominisat5'
-    check_binary_available(binary, download_if_unavailable)
-    command = [binary, "--verb=0", str(input_file)]
+    ensure_executable_available(CRYPTOMINISAT_EXE, download_if_missing)
+    command = [str(CRYPTOMINISAT_EXE), "--verb=0", str(input_file)]
     result = run(command, capture_output=True)
     return result
 
 
 def call_cryptominisat(input_file: Path,
                        docker_mode: bool = DEFAULT_DOCKER_MODE_ON,
-                       download_if_unavailable: bool = DEFAULT_DOWNLOAD_IF_UNAVAILABLE
+                       download_if_missing: bool = DEFAULT_DOWNLOAD_IF_MISSING
                        ) -> Tuple[str, CryptoMiniSATReturnCode]:
     # TODO DOC
     if docker_mode:
         result = call_cryptominisat_docker(input_file)
     else:
-        result = call_cryptominisat_cli(input_file, download_if_unavailable)
+        result = call_cryptominisat_cli(input_file, download_if_missing)
     if CryptoMiniSATReturnCode.has_value(result.returncode):
         return (result.stdout.decode(), CryptoMiniSATReturnCode(result.returncode))
     else:

@@ -5,8 +5,8 @@ from pathlib import Path
 from shlex import split as shell_split
 from subprocess import CompletedProcess, run
 
-from .binary_check import check_binary_available
 from .docker_utility import docker_run
+from .executables import DEFAULT_DOWNLOAD_IF_MISSING, UNIGEN_EXE, ensure_executable_available
 from .tool_error import ToolError
 
 
@@ -14,7 +14,6 @@ __all__ = ['UnigenError', 'call_unigen']
 
 
 DEFAULT_DOCKER_MODE_ON = False
-DEFAULT_DOWNLOAD_IF_UNAVAILABLE = True
 
 
 class UnigenError(ToolError):
@@ -31,11 +30,10 @@ def call_unigen_docker(input_file: Path) -> CompletedProcess:
     return result
 
 
-def call_unigen_cli(input_file: Path, download_if_unavailable: bool) -> CompletedProcess:
+def call_unigen_cli(input_file: Path, download_if_missing: bool) -> CompletedProcess:
     # TODO DOC
-    binary = 'unigen'
-    check_binary_available(binary, download_if_unavailable)
-    command = [binary, str(input_file)]
+    ensure_executable_available(UNIGEN_EXE, download_if_missing)
+    command = [str(UNIGEN_EXE), str(input_file)]
     # NOTE: flake8 doesn't seem to handle the calls to `run` correctly, but
     #       mypy reports everything is fine here so we `noqa` to prevent flake8
     #       complaining about what it doesn't understand.
@@ -45,13 +43,13 @@ def call_unigen_cli(input_file: Path, download_if_unavailable: bool) -> Complete
 
 def call_unigen(input_file: Path,
                 docker_mode: bool = DEFAULT_DOCKER_MODE_ON,
-                download_if_unavailable: bool = DEFAULT_DOWNLOAD_IF_UNAVAILABLE
+                download_if_missing: bool = DEFAULT_DOWNLOAD_IF_MISSING
                 ) -> str:
     # TODO DOC
     if docker_mode:
         result = call_unigen_docker(input_file)
     else:
-        result = call_unigen_cli(input_file, download_if_unavailable)
+        result = call_unigen_cli(input_file, download_if_missing)
     if result.returncode == 0:
         # Success!
         # (Comments in the earlier Haskell version of SweetPea's core indicate

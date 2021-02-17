@@ -1,8 +1,18 @@
-"""This script makes it easy to set up Unigen as needed by Sweetpea."""
+"""This script makes it easy to set up the Unigen and CryptoMiniSAT executables
+as needed by Sweetpea.
+
+NOTE: SweetPea Core only makes use of the automated download of the current
+      system and machine-type's executables from the latest release. The rest
+      of the code accommodates other use cases and is not strictly necessary,
+      but it took a bit of reading to suss out GitHub's API so I figured I'd
+      leave it in place for future use if necessary. But perhaps it should be
+      removed at some point.
+"""
 
 
 import platform
 
+from appdirs import user_data_dir
 from json import loads as load_json
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -11,16 +21,15 @@ from urllib.request import Request, urlopen
 from zipfile import ZipFile, ZipInfo
 
 
-__all__ = ['guided_download']
+__all__ = ['CRYPTOMINISAT_EXE', 'DEFAULT_DOWNLOAD_IF_MISSING', 'UNIGEN_EXE', 'ensure_executable_available']
 
 
 JSONDict = Dict[str, Any]
 
+DEFAULT_DOWNLOAD_IF_MISSING = True
 
 UNIGEN_EXE_LATEST_RELEASE_URL = "https://api.github.com/repos/sweetpea-org/unigen-exe/releases/latest"
 UNIGEN_EXE_SPECIFIC_TAG_URL = "https://api.github.com/repos/sweetpea-org/unigen-exe/releases/tags/{tag}"
-
-DEFAULT_EXE_BIN_LOCATION = Path('~').expanduser() / '.sweetpea' / 'bin'
 
 _ASSET_NAMES = {
     ('Darwin', 'arm64'): 'mac-apple-silicon',
@@ -28,6 +37,23 @@ _ASSET_NAMES = {
     ('Linux', 'x86_64'): 'linux-x86_64',
     ('Windows', 'x86_64'): 'win-x64',
 }
+
+
+def _running_windows() -> bool:
+    return platform.system() == 'Windows'
+
+
+# Determine the names for the executables on the host platform.
+# NOTE: I had originally wanted to implement this as static @property fields in
+#       a singleton class thing, but you can't combine @staticmethod or
+#       @classmethod with @property, so I used this instead.
+EXE_BIN_LOCATION = Path(user_data_dir('SweetPea', 'SweetPea-Org')) / 'bin'
+UNIGEN_EXE = EXE_BIN_LOCATION / 'unigen'
+if _running_windows():
+    UNIGEN_EXE = UNIGEN_EXE.with_suffix('.exe')
+CRYPTOMINISAT_EXE = EXE_BIN_LOCATION / 'cryptominisat5'
+if _running_windows():
+    CRYPTOMINISAT_EXE = CRYPTOMINISAT_EXE.with_suffix('.exe')
 
 
 def _select_asset_for_host_platform() -> Tuple[str, str]:
@@ -148,7 +174,7 @@ def download_and_extract_asset_zip_for_release(to_bin_dir: Path,
         # With the file downloaded, we can extract its contents.
         zf = ZipFile(temp_file_path)
         internal_base_asset_path = _get_asset_path(system, machine) + '/'
-        write_buffer: List[ZipInfo, Path] = []
+        write_buffer: List[Tuple[ZipInfo, Path]] = []
         for zipinfo in zf.infolist():
             if zipinfo.filename == internal_base_asset_path:
                 # We don't do anything with the base path.
@@ -171,50 +197,25 @@ def download_and_extract_asset_zip_for_release(to_bin_dir: Path,
             yield new_path
 
 
-def download(to_bin_dir: Path, system: str, machine: str, tag: Optional[str]):
+def download_executables(to_bin_dir: Optional[Path],
+                         system: Optional[str],
+                         machine: Optional[str],
+                         tag: Optional[str]):
     """Perform the download and extraction!"""
-    print("Downloading and extracting files...")
+    if to_bin_dir is None:
+        to_bin_dir = EXE_BIN_LOCATION
+    print(f"Downloading and extracting SweetPea executables to {to_bin_dir}...")
     for extracted_path in download_and_extract_asset_zip_for_release(to_bin_dir, system, machine, tag):
         print(f"    {extracted_path}")
-    print("Done. You may want to adjust your PATH in your shell's configuration:")
-    print(f"    PATH=\"{to_bin_dir}:$PATH\"")
+    print("Done.")
 
 
-def guided_download():
-    """Performs the download, prompting the user for each input."""
-
-    def prompt(query: str, default: Any, choices: Optional[List[Any]] = None) -> str:
-        print(query)
-        print(f"    Default: {default}")
-        if choices is not None:
-            print(f"    Choices: {choices}")
-        result = input(" > ")
-        if result:
-            return result
-        return str(default)
-
-    print("Attempting automated download of SweetPea dependency binaries.")
-    print("For each prompt, either select the default by pressing RETURN or input a new value followed by RETURN.")
-    to_bin_dir = prompt("Where would you like to place the binaries?", DEFAULT_EXE_BIN_LOCATION)
-    system = prompt("What system do you use?", platform.system(), list({system for system, _ in _ASSET_NAMES.keys()}))
-    machine = prompt("What machine type do you use?", platform.machine(), list({machine for _, machine in _ASSET_NAMES.keys()}))
-    tag = prompt("What release tag would you like to use?", 'latest')
-    if tag == 'latest':
-        tag = None
-    download(to_bin_dir, system, machine, tag)
-
-
-if __name__ == '__main__':
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--to-bin_dir', type=Path, default=DEFAULT_EXE_BIN_LOCATION,
-                        help=f"the directory to extract files to; default: {DEFAULT_EXE_BIN_LOCATION}")
-    parser.add_argument('--system', choices=list({system for system, _ in _ASSET_NAMES.keys()}),
-                        help=f"the system type, default: {platform.system()}")
-    parser.add_argument('--machine', choices=list({machine for _, machine in _ASSET_NAMES.keys()}),
-                        help=f"the machine type; default: {platform.machine()}")
-    parser.add_argument('--tag',
-                        help="the release tag to use; defaults to the latest release available")
-    args = parser.parse_args()
-
-    download(args.to_bin_dir, args.sytem, args.machine, args.tag)
+def ensure_executable_available(executable_path: Path, download_if_missing: bool = DEFAULT_DOWNLOAD_IF_MISSING):
+    """Checks whether a given necessary executable is available and, if not,
+    downloads it (and its companions) automatically.
+    """
+    if not executable_path.is_file():
+        if download_if_missing:
+            download_executables()
+        else:
+            raise RuntimeError(f"Could not find binary: {executable_path}")
