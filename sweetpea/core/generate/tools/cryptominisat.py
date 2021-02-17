@@ -14,6 +14,9 @@ from .tool_error import ToolError
 __all__ = ['cryptominisat_solve', 'cryptominisat_is_satisfiable']
 
 
+DEFAULT_DOCKER_MODE_ON = False
+
+
 class CryptoMiniSATReturnCode(ReturnCodeEnum):
     """CryptoMiniSAT uses some unconventional return codes to indicate the
     result of various computations.
@@ -45,7 +48,7 @@ def call_cryptominisat_cli(input_file: Path) -> CompletedProcess:
     return result
 
 
-def call_cryptominisat(input_file: Path, docker_mode: bool = True) -> Tuple[str, CryptoMiniSATReturnCode]:
+def call_cryptominisat(input_file: Path, docker_mode: bool = DEFAULT_DOCKER_MODE_ON) -> Tuple[str, CryptoMiniSATReturnCode]:
     # TODO DOC
     if docker_mode:
         result = call_cryptominisat_docker(input_file)
@@ -59,7 +62,7 @@ def call_cryptominisat(input_file: Path, docker_mode: bool = True) -> Tuple[str,
         raise CryptoMiniSATError(result.returncode, stdout, stderr)
 
 
-def cryptominisat_solve(input_file: Path, docker_mode: bool = True) -> Optional[List[int]]:
+def cryptominisat_solve(input_file: Path, docker_mode: bool = DEFAULT_DOCKER_MODE_ON) -> Optional[List[int]]:
     """Attempts to solve a CNF formula with CryptoMiniSAT and return the result
     as a list of integers.
 
@@ -77,7 +80,7 @@ def cryptominisat_solve(input_file: Path, docker_mode: bool = True) -> Optional[
         return None
 
 
-def cryptominisat_is_satisfiable(input_file: Path, docker_mode: bool = True) -> Optional[bool]:
+def cryptominisat_is_satisfiable(input_file: Path, docker_mode: bool = DEFAULT_DOCKER_MODE_ON) -> Optional[bool]:
     """Determines whether the CNF formula encoded in the input file is
     satisfiable, according to CryptoMiniSAT.
 

@@ -12,6 +12,9 @@ from .tool_error import ToolError
 __all__ = ['UnigenError', 'call_unigen']
 
 
+DEFAULT_DOCKER_MODE_ON = False
+
+
 class UnigenError(ToolError):
     """An error raised when Unigen fails."""
     pass
@@ -36,7 +39,7 @@ def call_unigen_cli(input_file: Path) -> CompletedProcess:
     return result
 
 
-def call_unigen(input_file: Path, docker_mode: bool = True) -> str:
+def call_unigen(input_file: Path, docker_mode: bool = DEFAULT_DOCKER_MODE_ON) -> str:
     # TODO DOC
     if docker_mode:
         result = call_unigen_docker(input_file)
