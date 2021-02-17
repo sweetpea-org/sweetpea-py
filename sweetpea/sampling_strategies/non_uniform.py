@@ -2,7 +2,7 @@ from typing import List, cast
 
 from sweetpea.sampling_strategies.base import SamplingStrategy, SamplingResult
 from sweetpea.blocks import Block
-from sweetpea.core import sample_non_uniform
+from sweetpea.core import generate_non_uniform
 
 """
 This represents the non-uniform sampling strategy, in which we 'sample' just by using a SAT
@@ -21,7 +21,7 @@ class NonUniformSamplingStrategy(SamplingStrategy):
 
         solutions = cast(List[dict], [])
 
-        solutions = sample_non_uniform(sample_count, 
+        solutions = generate_non_uniform(sample_count, 
             backend_request.get_cnfs_as_json(), 
             backend_request.fresh - 1,
             block.variables_per_sample(),

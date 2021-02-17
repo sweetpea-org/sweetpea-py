@@ -12,7 +12,7 @@ from uuid import uuid4 as generate_uuid
 from ..cnf import CNF, Var
 
 
-__all__ = ['AssertionType', 'GenerationRequest', 'Solution', 'combine_and_save_cnf', 'temporary_cnf_file']
+__all__ = ['AssertionType', 'GenerationRequest', 'Solution', 'combine_and_save_cnf', 'save_cnf', 'temporary_cnf_file']
 
 
 @contextmanager
@@ -58,7 +58,9 @@ def combine_cnf_with_requests(initial_cnf: CNF,
                               fresh: int,
                               support: int,
                               generation_requests: List[GenerationRequest]) -> CNF:
-    # TODO DOC
+    """Combines a base CNF formula with a new CNF formula formed from the given
+    GenerationRequests.
+    """
     fresh_cnf = CNF()
     for request in generation_requests:
         if request.assertion_type is AssertionType.EQ:
@@ -73,11 +75,19 @@ def combine_cnf_with_requests(initial_cnf: CNF,
     return final_cnf  # TODO: Does this still work right?
 
 
+def save_cnf(filename: Path, cnf: CNF):
+    """Writes a CNF formula to a file at the given path."""
+    filename.write_text(cnf.as_dimacs_string())
+
+
 def combine_and_save_cnf(filename: Path,
                          initial_cnf: CNF,
                          fresh: int,
                          support: int,
                          generation_requests: List[GenerationRequest]):
-    # TODO DOC
+    """Combines a base CNF formula with the augmentations specified by the
+    list of GenerationRequests, merges those formulas, then saves the result to
+    a file at the given path.
+    """
     combined_cnf = combine_cnf_with_requests(initial_cnf, fresh, support, generation_requests)
-    filename.write_text(combined_cnf.as_dimacs_string())
+    save_cnf(filename, combined_cnf)

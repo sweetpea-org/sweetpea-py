@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from ..cnf import CNF
-from .tools.cryptominisat import call_and_parse_cryptominisat
+from .tools.cryptominisat import cryptominisat_solve
 from .utility import GenerationRequest, Solution, combine_and_save_cnf, temporary_cnf_file
 
 
@@ -35,7 +35,7 @@ def compute_solutions(filename: Path,
         solutions = []
     if count == 0:
         return solutions
-    solution = call_and_parse_cryptominisat(filename)
+    solution = cryptominisat_solve(filename)
     if not solution:
         return solutions
     solution = solution[:support]

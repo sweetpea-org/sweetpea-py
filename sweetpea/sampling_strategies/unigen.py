@@ -10,7 +10,7 @@ from ascii_graph import Pyasciigraph
 from sweetpea.sampling_strategies.base import SamplingStrategy, SamplingResult
 from sweetpea.blocks import Block
 from sweetpea.docker import update_docker_image, start_docker_container, check_server_health, stop_docker_container
-from sweetpea.core import sample_uniform
+from sweetpea.core import generate_simple
 
 """
 This strategy relies fully on Unigen to produce the desired number of samples.
@@ -29,7 +29,7 @@ class UnigenSamplingStrategy(SamplingStrategy):
 
         solutions = cast(List[dict], [])
 
-        solutions = sample_uniform(
+        solutions = generate_simple(
             # sample_count, 
             backend_request.get_cnfs_as_json(), 
             backend_request.fresh - 1,
