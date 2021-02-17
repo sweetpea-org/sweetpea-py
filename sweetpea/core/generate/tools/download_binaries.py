@@ -11,6 +11,9 @@ from urllib.request import Request, urlopen
 from zipfile import ZipFile, ZipInfo
 
 
+__all__ = ['guided_download']
+
+
 JSONDict = Dict[str, Any]
 
 
@@ -168,6 +171,39 @@ def download_and_extract_asset_zip_for_release(to_bin_dir: Path,
             yield new_path
 
 
+def download(to_bin_dir: Path, system: str, machine: str, tag: Optional[str]):
+    """Perform the download and extraction!"""
+    print("Downloading and extracting files...")
+    for extracted_path in download_and_extract_asset_zip_for_release(to_bin_dir, system, machine, tag):
+        print(f"    {extracted_path}")
+    print("Done. You may want to adjust your PATH in your shell's configuration:")
+    print(f"    PATH=\"{to_bin_dir}:$PATH\"")
+
+
+def guided_download():
+    """Performs the download, prompting the user for each input."""
+
+    def prompt(query: str, default: Any, choices: Optional[List[Any]] = None) -> str:
+        print(query)
+        print(f"    Default: {default}")
+        if choices is not None:
+            print(f"    Choices: {choices}")
+        result = input(" > ")
+        if result:
+            return result
+        return str(default)
+
+    print("Attempting automated download of SweetPea dependency binaries.")
+    print("For each prompt, either select the default by pressing RETURN or input a new value followed by RETURN.")
+    to_bin_dir = prompt("Where would you like to place the binaries?", DEFAULT_EXE_BIN_LOCATION)
+    system = prompt("What system do you use?", platform.system(), list({system for system, _ in _ASSET_NAMES.keys()}))
+    machine = prompt("What machine type do you use?", platform.machine(), list({machine for _, machine in _ASSET_NAMES.keys()}))
+    tag = prompt("What release tag would you like to use?", 'latest')
+    if tag == 'latest':
+        tag = None
+    download(to_bin_dir, system, machine, tag)
+
+
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
@@ -180,11 +216,5 @@ if __name__ == '__main__':
     parser.add_argument('--tag',
                         help="the release tag to use; defaults to the latest release available")
     args = parser.parse_args()
-    print("Downloading and extracting files...")
-    for extracted_path in download_and_extract_asset_zip_for_release(to_bin_dir=args.to_bin_dir,
-                                                                     system=args.system,
-                                                                     machine=args.machine,
-                                                                     tag=args.tag):
-        print(f"    {extracted_path}")
-    print("Done. You may want to adjust your PATH in your shell's configuration:")
-    print(f"    PATH=\"{args.to_bin_dir}:$PATH\"")
+
+    download(args.to_bin_dir, args.sytem, args.machine, args.tag)
