@@ -9,15 +9,15 @@ from .tools.cryptominisat import cryptominisat_solve
 from .utility import GenerationRequest, Solution, combine_and_save_cnf, temporary_cnf_file
 
 
-__all__ = ['generate_non_uniform']
+__all__ = ['sample_non_uniform']
 
 
-def generate_non_uniform(count: int,
-                         initial_cnf: CNF,
-                         fresh: int,
-                         support: int,
-                         generation_requests: List[GenerationRequest]
-                         ) -> List[Solution]:
+def sample_non_uniform(count: int,
+                       initial_cnf: CNF,
+                       fresh: int,
+                       support: int,
+                       generation_requests: List[GenerationRequest]
+                       ) -> List[Solution]:
     # TODO DOC
     with temporary_cnf_file() as cnf_file:
         combine_and_save_cnf(cnf_file, initial_cnf, fresh, support, generation_requests)
