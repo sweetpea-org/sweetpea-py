@@ -1,11 +1,13 @@
 """This module provides simple Docker command-line functionality."""
 
 
-from enum import Enum
 from subprocess import CompletedProcess, run
 from typing import List, Optional
 
 from .return_code import ReturnCodeEnum
+
+
+DEFAULT_DOCKER_MODE_ON = False
 
 
 class DockerRunReturnCode(ReturnCodeEnum):

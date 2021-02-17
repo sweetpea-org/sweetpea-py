@@ -5,15 +5,12 @@ from pathlib import Path
 from shlex import split as shell_split
 from subprocess import CompletedProcess, run
 
-from .docker_utility import docker_run
+from .docker_utility import DEFAULT_DOCKER_MODE_ON, docker_run
 from .executables import DEFAULT_DOWNLOAD_IF_MISSING, UNIGEN_EXE, ensure_executable_available
 from .tool_error import ToolError
 
 
 __all__ = ['UnigenError', 'call_unigen']
-
-
-DEFAULT_DOCKER_MODE_ON = False
 
 
 class UnigenError(ToolError):

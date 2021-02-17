@@ -6,16 +6,13 @@ from shlex import split as shell_split
 from subprocess import CompletedProcess, run
 from typing import List, Optional, Tuple
 
-from .docker_utility import docker_run
+from .docker_utility import DEFAULT_DOCKER_MODE_ON, docker_run
 from .executables import CRYPTOMINISAT_EXE, DEFAULT_DOWNLOAD_IF_MISSING, ensure_executable_available
 from .return_code import ReturnCodeEnum
 from .tool_error import ToolError
 
 
 __all__ = ['cryptominisat_solve', 'cryptominisat_is_satisfiable']
-
-
-DEFAULT_DOCKER_MODE_ON = False
 
 
 class CryptoMiniSATReturnCode(ReturnCodeEnum):
