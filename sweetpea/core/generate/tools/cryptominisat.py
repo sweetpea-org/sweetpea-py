@@ -12,7 +12,7 @@ from .return_code import ReturnCodeEnum
 from .tool_error import ToolError
 
 
-__all__ = ['cryptominisat_solve', 'cryptominisat_is_satisfiable']
+__all__ = ['DEFAULT_DOCKER_MODE_ON', 'cryptominisat_solve', 'cryptominisat_is_satisfiable']
 
 
 class CryptoMiniSATReturnCode(ReturnCodeEnum):

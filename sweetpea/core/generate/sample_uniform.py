@@ -4,7 +4,7 @@
 from typing import List
 
 from ..cnf import CNF
-from .tools.unigen import call_unigen
+from .tools.unigen import DEFAULT_DOCKER_MODE_ON, call_unigen
 from .utility import GenerationRequest, Solution, combine_and_save_cnf, temporary_cnf_file
 
 
@@ -15,7 +15,7 @@ def sample_uniform(initial_cnf: CNF,
                    fresh: int,
                    support: int,
                    generation_requests: List[GenerationRequest],
-                   use_docker: bool = True
+                   use_docker: bool = DEFAULT_DOCKER_MODE_ON
                    ) -> List[Solution]:
     # TODO DOC
     with temporary_cnf_file() as cnf_file:

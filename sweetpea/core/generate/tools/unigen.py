@@ -10,7 +10,7 @@ from .executables import DEFAULT_DOWNLOAD_IF_MISSING, UNIGEN_EXE, ensure_executa
 from .tool_error import ToolError
 
 
-__all__ = ['UnigenError', 'call_unigen']
+__all__ = ['DEFAULT_DOCKER_MODE_ON', 'UnigenError', 'call_unigen']
 
 
 class UnigenError(ToolError):

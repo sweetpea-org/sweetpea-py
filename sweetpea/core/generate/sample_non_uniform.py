@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from ..cnf import CNF
-from .tools.cryptominisat import cryptominisat_solve
+from .tools.cryptominisat import DEFAULT_DOCKER_MODE_ON, cryptominisat_solve
 from .utility import GenerationRequest, Solution, combine_and_save_cnf, temporary_cnf_file
 
 
@@ -28,14 +28,15 @@ def sample_non_uniform(count: int,
 def compute_solutions(filename: Path,
                       support: int,
                       count: int,
-                      solutions: Optional[List[List[int]]] = None
+                      solutions: Optional[List[List[int]]] = None,
+                      use_docker: bool = DEFAULT_DOCKER_MODE_ON
                       ) -> List[List[int]]:
     # TODO DOC
     if solutions is None:
         solutions = []
     if count == 0:
         return solutions
-    solution = cryptominisat_solve(filename)
+    solution = cryptominisat_solve(filename, use_docker)
     if not solution:
         return solutions
     solution = solution[:support]
