@@ -48,6 +48,7 @@ def _build_exe_name(base_name: str) -> Path:
     path = EXE_BIN_LOCATION / base_name
     if platform.system() == 'Windows':
         path = path.with_suffix('.exe')
+    return path
 
 
 # The various executables we provide.
