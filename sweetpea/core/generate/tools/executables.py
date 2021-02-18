@@ -197,10 +197,10 @@ def download_and_extract_asset_zip_for_release(to_bin_dir: Path,
             yield new_path
 
 
-def download_executables(to_bin_dir: Optional[Path],
-                         system: Optional[str],
-                         machine: Optional[str],
-                         tag: Optional[str]):
+def download_executables(to_bin_dir: Optional[Path] = None,
+                         system: Optional[str] = None,
+                         machine: Optional[str] = None,
+                         tag: Optional[str] = None):
     """Perform the download and extraction!"""
     if to_bin_dir is None:
         to_bin_dir = EXE_BIN_LOCATION
