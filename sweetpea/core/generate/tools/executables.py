@@ -11,9 +11,11 @@ NOTE: SweetPea Core only makes use of the automated download of the current
 
 
 import platform
+import stat
 
 from appdirs import user_data_dir
 from json import loads as load_json
+from os import chmod
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Iterator, List, Optional, Tuple
@@ -202,6 +204,16 @@ def download_and_extract_asset_zip_for_release(to_bin_dir: Path,
             yield new_path
 
 
+def ensure_executable_permissions(executable_path: Path):
+    """Set permissions on the indicated executable such that the file owner can
+    read, write, or execute it, and the owner's group and other users can read
+    and execute it.
+    """
+    # chmod 755 executable_path
+    chmod(executable_path,
+          stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH)
+
+
 def download_executables(to_bin_dir: Optional[Path] = None,
                          system: Optional[str] = None,
                          machine: Optional[str] = None,
@@ -212,6 +224,8 @@ def download_executables(to_bin_dir: Optional[Path] = None,
     print(f"Downloading and extracting SweetPea executables to {to_bin_dir}...")
     for extracted_path in download_and_extract_asset_zip_for_release(to_bin_dir, system, machine, tag):
         print(f"    {extracted_path}")
+    for executable_path in EXECUTABLE_PATHS:
+        ensure_executable_permissions(executable_path)
     print("Done.")
 
 
@@ -219,7 +233,7 @@ def ensure_executable_available(executable_path: Path, download_if_missing: bool
     """Checks whether a given necessary executable is available and, if not,
     downloads it (and its companions) automatically.
     """
-    if not executable_path.is_file():
+    if executable_path in EXECUTABLE_PATHS and not executable_path.is_file():
         if download_if_missing:
             download_executables()
         else:
