@@ -38,22 +38,27 @@ _ASSET_NAMES = {
     ('Windows', 'x86_64'): 'win-x64',
 }
 
+# The folder in which executables will be stored.
+EXE_BIN_LOCATION = Path(user_data_dir('SweetPea', 'SweetPea-Org')) / 'Executables'
 
-def _running_windows() -> bool:
-    return platform.system() == 'Windows'
+
+def _build_exe_name(base_name: str) -> Path:
+    path = EXE_BIN_LOCATION / base_name
+    if platform.system() == 'Windows':
+        path = path.with_suffix('.exe')
 
 
-# Determine the names for the executables on the host platform.
-# NOTE: I had originally wanted to implement this as static @property fields in
-#       a singleton class thing, but you can't combine @staticmethod or
-#       @classmethod with @property, so I used this instead.
-EXE_BIN_LOCATION = Path(user_data_dir('SweetPea', 'SweetPea-Org')) / 'bin'
-UNIGEN_EXE = EXE_BIN_LOCATION / 'unigen'
-if _running_windows():
-    UNIGEN_EXE = UNIGEN_EXE.with_suffix('.exe')
-CRYPTOMINISAT_EXE = EXE_BIN_LOCATION / 'cryptominisat5'
-if _running_windows():
-    CRYPTOMINISAT_EXE = CRYPTOMINISAT_EXE.with_suffix('.exe')
+# The various executables we provide.
+APPROXMC_EXE = _build_exe_name('approxmc')
+CRYPTOMINISAT_EXE = _build_exe_name('cryptominisat5')
+UNIGEN_EXE = _build_exe_name('unigen')
+
+# An easy-to-use collection of the paths.
+EXECUTABLE_PATHS = [
+    APPROXMC_EXE,
+    CRYPTOMINISAT_EXE,
+    UNIGEN_EXE,
+]
 
 
 def _select_asset_for_host_platform() -> Tuple[str, str]:
