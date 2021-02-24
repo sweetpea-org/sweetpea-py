@@ -15,10 +15,6 @@ def build_cnf(block: Block) -> CNF:
     return combined_cnf
 
 
-# TODO: Make a 'local' version of this for better performance?
-# (Invoke solver directly, rather than through docker)
-# Make sure there is working local function
-
 def is_cnf_still_sat(block: Block, additional_clauses: List[And]) -> bool:
     
     backend_request = block.build_backend_request()

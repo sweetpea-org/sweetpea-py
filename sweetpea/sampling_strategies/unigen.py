@@ -9,7 +9,6 @@ from ascii_graph import Pyasciigraph
 
 from sweetpea.sampling_strategies.base import SamplingStrategy, SamplingResult
 from sweetpea.blocks import Block
-from sweetpea.docker import update_docker_image, start_docker_container, check_server_health, stop_docker_container
 from sweetpea.core import sample_uniform, CNF
 
 """
