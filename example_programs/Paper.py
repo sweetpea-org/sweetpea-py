@@ -1,6 +1,8 @@
+# Make SweetPea visible regardless of whether it's been installed.
 import sys
-import operator
 sys.path.append("..")
+
+import operator
 from sweetpea.primitives import factor, derived_level, within_trial, transition
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments, at_most_k_in_a_row, exclude
 
@@ -29,10 +31,9 @@ def both_diff(colors, words):
 one = derived_level("one", transition(one_diff, [color, word]))
 both = derived_level("both", transition(both_diff, [color, word]))
 changed = factor("changed", [one, both])
-                                       
+
 block        = fully_cross_block([color,word,congruence,changed], [color,word,changed], [])
 
 experiments  = synthesize_trials_non_uniform(block, 1)
 
 print_experiments(block, experiments)
-
