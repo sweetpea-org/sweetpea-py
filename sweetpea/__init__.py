@@ -1,5 +1,6 @@
 from functools import reduce
 from typing import Any, List, Union, Tuple, cast
+import itertools
 
 from sweetpea.derivation_processor import DerivationProcessor
 from sweetpea.internal import chunk, get_all_levels, intersperse
@@ -70,11 +71,82 @@ def print_experiments(block: Block, experiments: List[dict]):
 
     format_str = reduce(lambda a, b: a + '{{:<{}}} | '.format(b), column_widths, '')[:-3] + '\n'
 
+
     print('{} trial sequences found.'.format(len(experiments)))
     for e in experiments:
         strs = [list(map(lambda v: name + " " + v, values)) for (name,values) in e.items()]
         transposed = list(map(list, zip(*strs)))
         print(reduce(lambda a, b: a + format_str.format(*b), transposed, ''))
+
+
+"""
+Tabulate the generated experiments in human-friendly form.
+The generated table will show absolute and relative frequencies of combinations of factor levels.
+"""
+def tabulate_experiments(experiments: List[dict], factors=None, trials=None):
+
+    for e in experiments:
+        tabulation = dict()
+        frequency_list = list()
+        proportion_list = list()
+        levels = list()
+
+        if trials is None:
+            trials = list(range(0, len(e[list(e.keys())[0]])))
+
+        num_trials = len(trials)
+
+        # initialize table
+        for f in factors:
+            tabulation[f.factor_name] = list()
+            factor_levels = list()
+            for l in f.levels:
+                factor_levels.append(l.external_name)
+            levels.append(factor_levels)
+
+        max_combinations = 0
+        for element in itertools.product(*levels):
+            max_combinations += 1
+
+            # add factor combination
+            for idx, factor in enumerate(tabulation.keys()):
+                tabulation[factor].append(element[idx])
+
+            # compute frequency
+            frequency = 0
+            for trial in trials:
+                valid_condition = True
+                for idx, factor in enumerate(tabulation.keys()):
+                    if e[factor][trial] !=  element[idx]:
+                        valid_condition = False
+                        break
+                if valid_condition:
+                    frequency += 1
+
+            proportion = frequency / num_trials
+
+            frequency_list.append(str(frequency))
+            proportion_list.append(str(proportion*100) + '%')
+
+        tabulation["frequency"] = frequency_list
+        tabulation["proportion"] = proportion_list
+
+        frequency_factor = Factor("frequency", list(set(frequency_list)))
+        proportion_factor = Factor("proportion", list(set(proportion_list)))
+
+        design = factors
+        design.append(frequency_factor)
+        design.append(proportion_factor)
+
+        block = fully_cross_block(design, design, [])
+
+        # print table
+        experiment_print = list()
+        experiment_print.append(tabulation)
+        print_experiments(block, experiment_print)
+
+
+
 
 
 """
