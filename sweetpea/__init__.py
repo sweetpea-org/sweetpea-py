@@ -13,7 +13,7 @@ from sweetpea.sampling_strategies.base import SamplingStrategy
 from sweetpea.sampling_strategies.non_uniform import NonUniformSamplingStrategy
 from sweetpea.sampling_strategies.unigen import UnigenSamplingStrategy
 from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy
-from sweetpea.server import submit_job, get_job_result, build_cnf
+from sweetpea.server import build_cnf
 import csv
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -78,7 +78,7 @@ def print_experiments(block: Block, experiments: List[dict]):
 
 
 """
-Export the generated experiments to csv files. Each experiment will be exported to a separate csv file. 
+Export the generated experiments to csv files. Each experiment will be exported to a separate csv file.
 """
 def experiment_to_csv(experiments: List[dict], file_prefix = "experiment"):
     for idx, experiment in enumerate(experiments):
@@ -159,12 +159,5 @@ DIMACS format: Starting lines are marked by a c to denote a comment
     for example, (x(9) AND y(2)) => 9 2 0, while (NOT x(9) OR y(2)) => -9 2 0.
 """
 def __generate_cnf(block: Block) -> str:
-    update_docker_image("sweetpea/server")
-    container = start_docker_container("sweetpea/server", 8080)
-
-    try:
-        cnf_result = build_cnf(block)
-    finally:
-        stop_docker_container(container)
-
-    return cnf_result['cnf_str']
+    cnf = build_cnf(block)
+    return cnf.as_unigen_string()

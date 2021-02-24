@@ -37,6 +37,16 @@ class Block:
         self.errors = cast(Set[str], set())
         self.__validate()
 
+    def extract_basic_factor_names(self, level: DerivedLevel) -> set:
+        included_factor_names = set()
+        for factor in level.window.args:
+            if factor.is_derived():
+                for l in factor.levels:
+                    included_factor_names.update(self.extract_basic_factor_names(l))
+            else:
+                included_factor_names.add(factor.factor_name)
+        return included_factor_names
+
     def __validate(self):
         # Ensure basic factors of derived levels in design form complete subset
         # of all declared basic factors.
@@ -47,8 +57,7 @@ class Block:
                 if isinstance(level, SimpleLevel):
                     basic_factor_names.add(level.factor.factor_name)
                 elif isinstance(level, DerivedLevel):
-                    for factor in level.window.args:
-                        included_factor_names.add(factor.factor_name)
+                    included_factor_names.update(self.extract_basic_factor_names(level))
                 else:
                     raise RuntimeError('Expected SimpleLevel or DerivedLevel but found ' + str(type(level)))
         undefined_factor_names = included_factor_names - basic_factor_names

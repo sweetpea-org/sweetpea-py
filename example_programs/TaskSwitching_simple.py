@@ -1,3 +1,7 @@
+# Make SweetPea visible regardless of whether it's been installed.
+import sys
+sys.path.append("..")
+
 from sweetpea.primitives import factor, derived_level, within_trial, transition
 from sweetpea.constraints import at_most_k_in_a_row
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments

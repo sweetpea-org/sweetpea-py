@@ -7,10 +7,11 @@ from time import time
 from typing import List, cast
 
 from sweetpea.blocks import Block
+from sweetpea.core import CNF, cnf_is_satisfiable
 from sweetpea.docker import update_docker_image, start_docker_container, stop_docker_container
-from sweetpea.logic import And
+from sweetpea.logic import And, cnf_to_json
 from sweetpea.sampling_strategies.base import SamplingStrategy, SamplingResult
-from sweetpea.server import build_cnf, is_cnf_still_sat
+from sweetpea.server import build_cnf
 
 
 """
@@ -37,14 +38,13 @@ class GuidedSamplingStrategy(SamplingStrategy):
 
         try:
             # Build the full CNF for this block
-            cnf_result = build_cnf(block)
-            cnf_id = cnf_result['id']
+            cnf = build_cnf(block)
 
             metrics['solver_call_count'] = 0
             for _ in range(sample_count):
                 sample_metrics = cast(dict, {})
                 t_start = time()
-                samples.append(GuidedSamplingStrategy.__generate_sample(block, cnf_id, sample_metrics))
+                samples.append(GuidedSamplingStrategy.__generate_sample(block, cnf, sample_metrics))
                 sample_metrics['time'] = time() - t_start
                 metrics['sample_metrics'].append(sample_metrics)
                 metrics['solver_call_count'] += sample_metrics['solver_call_count']
@@ -59,7 +59,7 @@ class GuidedSamplingStrategy(SamplingStrategy):
 
 
     @staticmethod
-    def __generate_sample(block: Block, cnf_id: str, sample_metrics: dict) -> dict:
+    def __generate_sample(block: Block, cnf: CNF, sample_metrics: dict) -> dict:
         sample_metrics['trials'] = []
 
         # Start a 'committed' list of CNFs
@@ -90,7 +90,9 @@ class GuidedSamplingStrategy(SamplingStrategy):
                 unsat = []
                 for v in flat_vars:
                     t_start = time()
-                    allowed = is_cnf_still_sat(cnf_id, committed + [And([v])])
+                    full_cnf = cnf + CNF(cnf_to_json(committed)) + CNF(cnf_to_json([And([v])]))
+                    allowed = cnf_is_satisfiable(full_cnf)
+                    # allowed = is_cnf_still_sat(cnf_id, committed + [And([v])])
                     duration_seconds = time() - t_start
                     solver_calls.append({'time': duration_seconds, 'SAT': allowed})
                     if not allowed:
