@@ -3,6 +3,7 @@ import math
 
 from typing import List
 from sweetpea.logic import And, cnf_to_json
+from sweetpea.core import Var
 from sweetpea.core.generate.utility import GenerationRequest, AssertionType
 
 
@@ -37,7 +38,7 @@ class LowLevelRequest:
         }
 
     def to_generation_request(self):
-        return GenerationRequest(AssertionType[self.comparison], self.k, self.variables)
+        return GenerationRequest(AssertionType[self.comparison], self.k, [Var(v) for v in self.variables])
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
