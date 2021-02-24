@@ -92,7 +92,6 @@ class GuidedSamplingStrategy(SamplingStrategy):
                     t_start = time()
                     full_cnf = cnf + CNF(cnf_to_json(committed)) + CNF(cnf_to_json([And([v])]))
                     allowed = cnf_is_satisfiable(full_cnf)
-                    # allowed = is_cnf_still_sat(cnf_id, committed + [And([v])])
                     duration_seconds = time() - t_start
                     solver_calls.append({'time': duration_seconds, 'SAT': allowed})
                     if not allowed:

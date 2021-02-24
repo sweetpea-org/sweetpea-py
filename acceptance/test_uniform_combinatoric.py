@@ -4,7 +4,8 @@ import pytest
 
 from sweetpea.docker import start_docker_container, stop_docker_container
 from sweetpea.logic import And
-from sweetpea.server import build_cnf, is_cnf_still_sat
+from sweetpea.server import build_cnf
+from sweetpea.core import cnf_is_satisfiable
 from sweetpea.sampling_strategies.uniform_combinatoric import UCSolutionEnumerator
 
 
@@ -27,7 +28,6 @@ def test_uniform_combinatoric_is_always_valid(filename):
 
         # Build the CNF for this block
         build_cnf_result = build_cnf(vars()['block'])
-        cnf_id = build_cnf_result['id']
         
         # Build the sampler
         enumerator = UCSolutionEnumerator(vars()['block'])
@@ -36,8 +36,8 @@ def test_uniform_combinatoric_is_always_valid(filename):
         sample_count = min(enumerator.solution_count(), 200)
         print("Checking that UC samples are SAT for {}, sample count={}".format(filename, sample_count))
         for s in range(sample_count):
-            sample = enumerator.generate_solution_variables()
-            if not is_cnf_still_sat(cnf_id, [And(sample)]):
+            sample = enumerator.generate_solution_variables()            
+            if not cnf_is_satisfiable(build_cnf_result + CNF([And(sample)])):
                 failures.append("Found UNSAT solution! Solution={} File={}".format(sample, filename))
 
         if failures:

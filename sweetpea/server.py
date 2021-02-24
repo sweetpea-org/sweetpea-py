@@ -1,24 +1,31 @@
 from sweetpea.blocks import Block
-from sweetpea.core import CNF
-
+from sweetpea.core import CNF, combine_cnf_with_requests, cnf_is_satisfiable
+from typing import List
+from sweetpea.logic import And, cnf_to_json
 
 def build_cnf(block: Block) -> CNF:
     """Converts a Block into a CNF represented as a Unigen-compatible string.
     """
     backend_request = block.build_backend_request()
     cnf = CNF(backend_request.get_cnfs_as_json())
-    return cnf
+    combined_cnf = combine_cnf_with_requests(cnf, 
+        backend_request.fresh - 1, 
+        block.variables_per_sample(), 
+        backend_request.get_requests_as_generation_requests())
+    return combined_cnf
 
 
 # TODO: Make a 'local' version of this for better performance?
 # (Invoke solver directly, rather than through docker)
 # Make sure there is working local function
-# def is_cnf_still_sat(cnf_id: str, additional_clauses: List[And]) -> bool:
-#     request_data = {
-#         'action': 'IsSAT',
-#         'cnfId': cnf_id,
-#         'cnfs': cnf_to_json(additional_clauses)
-#     }
 
-#     sat_job_id = submit_job(request_data)
-#     return get_job_result(sat_job_id) == "True"
+def is_cnf_still_sat(block: Block, additional_clauses: List[And]) -> bool:
+    
+    backend_request = block.build_backend_request()
+    cnf = CNF(backend_request.get_cnfs_as_json()) + CNF(cnf_to_json(additional_clauses))
+    combined_cnf = combine_cnf_with_requests(cnf, 
+        backend_request.fresh - 1, 
+        block.variables_per_sample(), 
+        backend_request.get_requests_as_generation_requests())
+    cnf_is_satisfiable(combined_cnf)
+    return combined_cnf

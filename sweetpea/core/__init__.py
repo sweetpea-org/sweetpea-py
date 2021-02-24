@@ -3,5 +3,6 @@
 from .cnf import Clause, CNF, Var
 from .generate import (
     AssertionType, GenerationRequest, Solution,
-    cnf_is_satisfiable, sample_non_uniform, sample_uniform
+    cnf_is_satisfiable, sample_non_uniform, sample_uniform, 
+    combine_cnf_with_requests
 )

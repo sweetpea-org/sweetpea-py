@@ -30,11 +30,10 @@ def test_is_cnf_still_sat_should_respond_correctly():
     
         # Build the CNF on the server.
         cnf_result = build_cnf(block)
-        cnf_id = cnf_result['id']
 
-        assert     is_cnf_still_sat(cnf_id, [And([1, 3])])
+        assert     is_cnf_still_sat(block, [And([1, 3])])
 
-        assert not is_cnf_still_sat(cnf_id, [And([7, 8])])
-        assert not is_cnf_still_sat(cnf_id, [And([1, 7, 13])])
+        assert not is_cnf_still_sat(block, [And([7, 8])])
+        assert not is_cnf_still_sat(block, [And([1, 7, 13])])
     finally:
         stop_docker_container(container)
