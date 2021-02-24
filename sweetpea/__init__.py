@@ -85,7 +85,7 @@ The generated table will show absolute and relative frequencies of combinations 
 """
 def tabulate_experiments(experiments: List[dict], factors=None, trials=None):
 
-    for e in experiments:
+    for idx, e in enumerate(experiments):
         tabulation = dict()
         frequency_list = list()
         proportion_list = list()
@@ -138,12 +138,17 @@ def tabulate_experiments(experiments: List[dict], factors=None, trials=None):
         design.append(frequency_factor)
         design.append(proportion_factor)
 
-        block = fully_cross_block(design, design, [])
+        # print tabulation
+        nested_assignment_strs = [list(map(lambda l: f.factor_name + " " + get_external_level_name(l), f.levels)) for f
+                                  in design]
+        column_widths = list(map(lambda l: max(list(map(len, l))), nested_assignment_strs))
 
-        # print table
-        experiment_print = list()
-        experiment_print.append(tabulation)
-        print_experiments(block, experiment_print)
+        format_str = reduce(lambda a, b: a + '{{:<{}}} | '.format(b), column_widths, '')[:-3] + '\n'
+
+        print('Experiment {}:'.format(idx))
+        strs = [list(map(lambda v: name + " " + v, values)) for (name, values) in tabulation.items()]
+        transposed = list(map(list, zip(*strs)))
+        print(reduce(lambda a, b: a + format_str.format(*b), transposed, ''))
 
 
 
