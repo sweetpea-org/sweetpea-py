@@ -73,7 +73,8 @@ def print_experiments(block: Block, experiments: List[dict]):
 
 
     print('{} trial sequences found.'.format(len(experiments)))
-    for e in experiments:
+    for idx, e in enumerate(experiments):
+        print('Experiment {}:'.format(idx))
         strs = [list(map(lambda v: name + " " + v, values)) for (name,values) in e.items()]
         transposed = list(map(list, zip(*strs)))
         print(reduce(lambda a, b: a + format_str.format(*b), transposed, ''))
@@ -85,7 +86,7 @@ The generated table will show absolute and relative frequencies of combinations 
 """
 def tabulate_experiments(experiments: List[dict], factors=None, trials=None):
 
-    for idx, e in enumerate(experiments):
+    for exp_idx, e in enumerate(experiments):
         tabulation = dict()
         frequency_list = list()
         proportion_list = list()
@@ -134,7 +135,9 @@ def tabulate_experiments(experiments: List[dict], factors=None, trials=None):
         frequency_factor = Factor("frequency", list(set(frequency_list)))
         proportion_factor = Factor("proportion", list(set(proportion_list)))
 
-        design = factors
+        design = list()
+        for f in factors:
+            design.append(f)
         design.append(frequency_factor)
         design.append(proportion_factor)
 
@@ -145,7 +148,7 @@ def tabulate_experiments(experiments: List[dict], factors=None, trials=None):
 
         format_str = reduce(lambda a, b: a + '{{:<{}}} | '.format(b), column_widths, '')[:-3] + '\n'
 
-        print('Experiment {}:'.format(idx))
+        print('Experiment {}:'.format(exp_idx))
         strs = [list(map(lambda v: name + " " + v, values)) for (name, values) in tabulation.items()]
         transposed = list(map(list, zip(*strs)))
         print(reduce(lambda a, b: a + format_str.format(*b), transposed, ''))
