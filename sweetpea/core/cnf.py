@@ -496,7 +496,7 @@ class CNF(SimpleSequence[Clause]):
         else:
             kbs, nbs = k_vars, sum_bits
         neg_twos_comp_nbs = self._convert_to_negative_twos_complement(nbs)
-        (cs, ss) = self.ripple_carry(kbs, neg_twos_comp_nbs)
+        (_, ss) = self.ripple_carry(kbs, neg_twos_comp_nbs)
         self.set_to_one(ss[-1])
 
     def _make_same_length(self, xs: List[Var], ys: List[Var]):
