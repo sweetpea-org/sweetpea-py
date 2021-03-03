@@ -267,7 +267,7 @@ class CNF(SimpleSequence[Clause]):
     def __str__(self) -> str:
         return ''.join(str(clause) + ' 0\n' for clause in reversed(self._vals))
 
-    def as_dimacs_string(self) -> str:
+    def as_dimacs_string(self, fresh_variable_count: Optional[int] = None) -> str:
         """Represents the CNF formula as a string in the DIMACS format.
 
         The DIMACS format is a standardized method of representing CNF formulas
@@ -275,7 +275,9 @@ class CNF(SimpleSequence[Clause]):
 
             https://people.sc.fsu.edu/~jburkardt/data/cnf/cnf.html
         """
-        header = f"p cnf {self._num_vars} {len(self)}\n\n"
+        if fresh_variable_count is None:
+            fresh_variable_count = self._num_vars
+        header = f"p cnf {fresh_variable_count} {len(self)}\n\n"
         return header + str(self)
 
     def as_unigen_string(self, support_set_length: Optional[int] = None, sampled_variables: Optional[List[Var]] = None) -> str:
