@@ -324,6 +324,19 @@ class CNF(SimpleSequence[Clause]):
         # Done!
         return unigen_string
 
+    def as_list_of_list_of_ints(self) -> List[List[int]]:
+        """Converts the CNF to a list of lists of integers."""
+        return [[int(var) for var in clause] for clause in self]
+
+    def as_haskell_cnf(self) -> Tuple[int, List[List[int]]]:
+        """Converts the CNF to a tuple whose first element is the number of
+        fresh variables in the formula and whose second element is the CNF
+        represented as a list of list of integers. This is the way CNF formulas
+        were encoded in the original Haskell code, and this method exists for
+        compatibility checks.
+        """
+        return (self._num_vars, self.as_list_of_list_of_ints())
+
     ########################################
     ##
     ## Operator Overloads
