@@ -447,8 +447,8 @@ class CNF(SimpleSequence[Clause]):
 
     def zero_out(self, in_list: Iterable[Var]):
         """Appends a CNF formula negating the existing CNF formula."""
-        for variable in in_list:
-            self.set_to_zero(variable)
+        zeroed_cnf = CNF([[~var] for var in in_list])
+        self.prepend(zeroed_cnf)
 
     def set_to_one(self, variable: Var):
         """Sets the specified variable to 1 by appending it to the existing CNF
