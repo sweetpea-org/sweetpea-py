@@ -6,7 +6,7 @@ various generation functionalities.
 from contextlib import contextmanager
 from enum import Enum, auto
 from pathlib import Path
-from typing import Iterator, List, NamedTuple
+from typing import Iterator, List, NamedTuple, Optional
 from uuid import uuid4 as generate_uuid
 
 from ..cnf import CNF, Var
@@ -75,9 +75,13 @@ def combine_cnf_with_requests(initial_cnf: CNF,
     return final_cnf  # TODO: Does this still work right?
 
 
-def save_cnf(filename: Path, cnf: CNF):
+def save_cnf(filename: Path,
+             cnf: CNF,
+             fresh: Optional[int] = None,
+             support: Optional[int] = None):
     """Writes a CNF formula to a file at the given path."""
-    filename.write_text(cnf.as_dimacs_string())
+    filename.write_text(cnf.as_unigen_string(fresh_variable_count=fresh,
+                                             support_set_length=support))
 
 
 def combine_and_save_cnf(filename: Path,
@@ -90,4 +94,4 @@ def combine_and_save_cnf(filename: Path,
     a file at the given path.
     """
     combined_cnf = combine_cnf_with_requests(initial_cnf, fresh, support, generation_requests)
-    save_cnf(filename, combined_cnf)
+    save_cnf(filename, combined_cnf, support, fresh)
