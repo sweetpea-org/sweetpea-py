@@ -280,7 +280,10 @@ class CNF(SimpleSequence[Clause]):
         header = f"p cnf {fresh_variable_count} {len(self)}\n\n"
         return header + str(self)
 
-    def as_unigen_string(self, support_set_length: Optional[int] = None, sampled_variables: Optional[List[Var]] = None) -> str:
+    def as_unigen_string(self,
+                         fresh_variable_count: Optional[int] = None,
+                         support_set_length: Optional[int] = None,
+                         sampled_variables: Optional[List[Var]] = None) -> str:
         """Returns a string representing the CNF formula in the modified DIMACS /
         format used by Unigen.
 
@@ -315,7 +318,7 @@ class CNF(SimpleSequence[Clause]):
         # modifications after the "problem" line. We know the problem line is
         # the first line, so we just do a simple substitution on the first
         # newline character in the string.
-        dimacs_string = self.as_dimacs_string()
+        dimacs_string = self.as_dimacs_string(fresh_variable_count)
         unigen_string = dimacs_string.replace('\n', '\n' + support_string + '\n', 1)
 
         # Done!
