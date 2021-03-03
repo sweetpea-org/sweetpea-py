@@ -180,6 +180,21 @@ class CNF(SimpleSequence[Clause]):
     ##
     ## Static Methods
     ##
+
+    ## This method is for initializing a CNF from a given number of fresh vars.
+    @staticmethod
+    def from_fresh(fresh: int) -> CNF:
+        """Returns an empty CNF formula with a given number of fresh variables
+        already allocated.
+
+        TODO: This method probably shouldn't exist! The number of fresh
+              variables should be deduced from the formulas themselves. This
+              exists for legacy compatibility and should eventually be removed.
+        """
+        cnf = CNF()
+        cnf._num_vars = fresh
+        return cnf
+
     ## These are used for creating CNF formulas by combining two variables in a
     ## particular way.
 
