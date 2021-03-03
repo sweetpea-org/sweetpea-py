@@ -61,7 +61,7 @@ def combine_cnf_with_requests(initial_cnf: CNF,
     """Combines a base CNF formula with a new CNF formula formed from the given
     GenerationRequests.
     """
-    fresh_cnf = CNF()
+    fresh_cnf = CNF.from_fresh(fresh)
     for request in generation_requests:
         if request.assertion_type is AssertionType.EQ:
             fresh_cnf.assert_k_of_n(request.k, request.boolean_values)
