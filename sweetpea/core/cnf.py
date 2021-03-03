@@ -513,8 +513,11 @@ class CNF(SimpleSequence[Clause]):
     def _convert_to_negative_twos_complement(self, bits: List[Var]) -> List[Var]:
         # Flip the bits, i.e., assert flipped_bits[i] ⇔ bits[i].
         flipped_bits = self.get_n_fresh(len(bits))
+        flipped_cnf = CNF()
         for lhs, rhs in zip(flipped_bits, (~b for b in bits)):
-            self.prepend(CNF.xnor_vars(lhs, rhs))
+            double_implied = CNF.xnor_vars(lhs, rhs)
+            flipped_cnf += double_implied
+        self.prepend(flipped_cnf)
         # Make a zero-padded one (for the addition) of the correct dimension.
         one_vars = self.get_n_fresh(len(bits))
         # Set all the top bits to 0 and the bottom bit to 1.
