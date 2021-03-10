@@ -142,8 +142,7 @@ def save_cnf(filename: Path,
              fresh: Optional[int] = None,
              support: Optional[int] = None):
     """Writes a CNF formula to a file at the given path."""
-    filename.write_text(cnf.as_unigen_string(fresh_variable_count=fresh,
-                                             support_set_length=support))
+    filename.write_text(cnf.as_unigen_string(support_set_length=support))
 
 
 def combine_and_save_cnf(filename: Path,
