@@ -71,6 +71,6 @@ def test_that_design_is_correctly_constrained(design):
     block = fully_cross_block(design, crossing, constraints)
     experiments = synthesize_trials_non_uniform(block, 100)
 
-    assert len(experiments) == 100, "Design: %s" % str(list(map(lambda f: f.name, design)))
+    assert len(experiments) == 100, "Design: %s" % str(list(map(lambda f: f.factor_name, design)))
     for c in constraints:
         assert_atmostkinarow(c, experiments)

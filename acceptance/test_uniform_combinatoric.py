@@ -2,9 +2,9 @@ import glob
 import os
 import pytest
 
-from sweetpea.logic import And
+from sweetpea.logic import And, cnf_to_json
 from sweetpea.server import build_cnf
-from sweetpea.core import cnf_is_satisfiable
+from sweetpea.core import cnf_is_satisfiable, CNF
 from sweetpea.sampling_strategies.uniform_combinatoric import UCSolutionEnumerator
 
 
@@ -34,7 +34,7 @@ def test_uniform_combinatoric_is_always_valid(filename):
     print("Checking that UC samples are SAT for {}, sample count={}".format(filename, sample_count))
     for s in range(sample_count):
         sample = enumerator.generate_solution_variables()            
-        if not cnf_is_satisfiable(build_cnf_result + CNF([And(sample)])):
+        if not cnf_is_satisfiable(build_cnf_result + CNF(cnf_to_json([And(sample)]))):
             failures.append("Found UNSAT solution! Solution={} File={}".format(sample, filename))
 
     if failures:

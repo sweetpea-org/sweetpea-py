@@ -106,7 +106,8 @@ class GuidedSamplingStrategy(SamplingStrategy):
             allowed_trials = []
             for potential_trial in potential_trials:
                 start_time = time()
-                allowed = is_cnf_still_sat(cnf_id, committed + [And(potential_trial)])
+                full_cnf = cnf + CNF(cnf_to_json(committed)) + CNF(cnf_to_json([And(potential_trial)]))
+                allowed = cnf_is_satisfiable(full_cnf)
                 duration_seconds = time() - start_time
 
                 solver_calls.append({'time': duration_seconds, 'SAT': allowed})

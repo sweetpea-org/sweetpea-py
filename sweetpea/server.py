@@ -23,5 +23,4 @@ def is_cnf_still_sat(block: Block, additional_clauses: List[And]) -> bool:
         backend_request.fresh - 1, 
         block.variables_per_sample(), 
         backend_request.get_requests_as_generation_requests())
-    cnf_is_satisfiable(combined_cnf)
-    return combined_cnf
+    return cnf_is_satisfiable(combined_cnf)
