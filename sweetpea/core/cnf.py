@@ -300,7 +300,7 @@ class CNF(SimpleSequence[Clause]):
         """
         if support_set_length is not None and sampled_variables is not None:
             raise ValueError("cannot give both a support set length and sampled variables list to as_unigen_string!")
-        if support_set_length is not None:
+        elif support_set_length is not None:
             support_set = [Var(n) for n in range(1, support_set_length + 1)]
         elif sampled_variables is not None:
             support_set = sampled_variables
@@ -319,7 +319,7 @@ class CNF(SimpleSequence[Clause]):
         # the first line, so we just do a simple substitution on the first
         # newline character in the string.
         dimacs_string = self.as_dimacs_string(fresh_variable_count)
-        unigen_string = dimacs_string.replace('\n', '\n' + support_string + '\n', 1)
+        unigen_string = dimacs_string.replace('\n', '\n' + support_string, 1)
 
         # Done!
         return unigen_string
