@@ -61,18 +61,16 @@ def combine_cnf_with_requests(initial_cnf: CNF,
     """Combines a base CNF formula with a new CNF formula formed from the given
     GenerationRequests.
     """
-    fresh_cnf = CNF()
     for request in generation_requests:
         if request.assertion_type is AssertionType.EQ:
-            fresh_cnf.assert_k_of_n(request.k, request.boolean_values)
+            initial_cnf.assert_k_of_n(request.k, request.boolean_values)
         elif request.assertion_type is AssertionType.LT:
-            fresh_cnf.assert_k_less_than_n(request.k, request.boolean_values)
+            initial_cnf.assert_k_less_than_n(request.k, request.boolean_values)
         elif request.assertion_type is AssertionType.GT:
-            fresh_cnf.assert_k_greater_than_n(request.k, request.boolean_values)
+            initial_cnf.assert_k_greater_than_n(request.k, request.boolean_values)
         else:
             raise ValueError(f"invalid assertion type: {request.assertion_type}")
-    final_cnf = fresh_cnf + initial_cnf
-    return final_cnf  # TODO: Does this still work right?
+    return initial_cnf  # TODO: Does this still work right?
 
 
 def save_cnf(filename: Path, cnf: CNF):

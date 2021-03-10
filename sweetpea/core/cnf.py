@@ -436,7 +436,8 @@ class CNF(SimpleSequence[Clause]):
         in_binary = binary(k)
         in_binary.reverse()
         left_padded: BinaryNumber = in_binary[:len(sum_bits)]
-        left_padded += [-1 for _ in range(len(left_padded) - len(sum_bits))]
+        t = len(sum_bits)-len(left_padded)
+        left_padded += [-1 for _ in range(t)]
         left_padded.reverse()
         # Form the assertion.
         assertion = [Var(lp * sb.value) for (lp, sb) in zip(left_padded, sum_bits)]
@@ -467,7 +468,9 @@ class CNF(SimpleSequence[Clause]):
         self.set_to_one(ss[-1])
 
     def _make_same_length(self, xs: List[Var], ys: List[Var]):
-        if len(xs) < len(ys):
+        if len(xs) == len(ys):
+            return
+        elif len(xs) < len(ys):
             zero_padding = self.get_n_fresh(len(ys) - len(xs) + 1)
             self.zero_out(zero_padding)
             xs[:0] = zero_padding
