@@ -156,4 +156,4 @@ def combine_and_save_cnf(filename: Path,
     a file at the given path.
     """
     combined_cnf = combine_cnf_with_requests(initial_cnf, fresh, support, generation_requests)
-    save_cnf(filename, combined_cnf, support, fresh)
+    save_cnf(filename, combined_cnf, fresh, support)
