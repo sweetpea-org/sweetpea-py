@@ -469,7 +469,7 @@ class CNF(SimpleSequence[Clause]):
         in_binary = binary(k)
         in_binary.reverse()
         left_padded: BinaryNumber = in_binary[:len(sum_bits)]
-        left_padded += [-1 for _ in range(len(left_padded) - len(sum_bits))]
+        left_padded += [-1 for _ in range(len(sum_bits) - len(left_padded))]
         left_padded.reverse()
         # Form the assertion.
         assertion = [Var(lp * sb.value) for (lp, sb) in zip(left_padded, sum_bits)]
