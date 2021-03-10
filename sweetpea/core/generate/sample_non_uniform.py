@@ -6,10 +6,10 @@ from typing import List, Optional
 
 from ..cnf import CNF
 from .tools.cryptominisat import DEFAULT_DOCKER_MODE_ON, cryptominisat_solve
-from .utility import GenerationRequest, Solution, combine_and_save_cnf, temporary_cnf_file
+from .utility import GenerationRequest, ProblemSpecification, Solution, combine_and_save_cnf, temporary_cnf_file
 
 
-__all__ = ['sample_non_uniform']
+__all__ = ['sample_non_uniform', 'sample_non_uniform_from_specification']
 
 
 def sample_non_uniform(count: int,
@@ -23,6 +23,11 @@ def sample_non_uniform(count: int,
         combine_and_save_cnf(cnf_file, initial_cnf, fresh, support, generation_requests)
         solutions = compute_solutions(cnf_file, support, count)
         return [Solution(solution, 1) for solution in solutions]
+
+
+def sample_non_uniform_from_specification(spec: ProblemSpecification) -> List[Solution]:
+    # TODO DOC
+    return sample_non_uniform(spec.count, spec.cnf, spec.fresh, spec.support, spec.requests)
 
 
 def compute_solutions(filename: Path,

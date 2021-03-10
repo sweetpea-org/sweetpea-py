@@ -3,16 +3,25 @@ various generation functionalities.
 """
 
 
+from __future__ import annotations
+
 from contextlib import contextmanager
 from enum import Enum, auto
 from pathlib import Path
-from typing import Iterator, List, NamedTuple, Optional
+from typing import Dict, Iterator, List, NamedTuple, Optional, Union
 from uuid import uuid4 as generate_uuid
 
 from ..cnf import CNF, Var
 
 
-__all__ = ['AssertionType', 'GenerationRequest', 'Solution', 'combine_and_save_cnf', 'save_cnf', 'temporary_cnf_file']
+__all__ = [
+    'AssertionType', 'GenerationRequest', 'SampleType', 'ProblemSpecification', 'Solution',
+    'combine_and_save_cnf', 'save_cnf', 'temporary_cnf_file']
+
+
+JSONDict = Dict[str, 'JSONObject']
+JSONArray = List['JSONObject']
+JSONObject = Union[str, int, JSONDict, JSONArray]
 
 
 @contextmanager
@@ -40,12 +49,65 @@ class AssertionType(Enum):
     LT = auto()
     GT = auto()
 
+    @staticmethod
+    def from_json(s: str) -> AssertionType:
+        """Converts a JSON string to an AssertionType."""
+        return AssertionType[s]
+
 
 class GenerationRequest(NamedTuple):
     """A request to generate a CNF."""
     assertion_type: AssertionType
     k: int
     boolean_values: List[Var]
+
+    @staticmethod
+    def from_json(data: JSONDict) -> GenerationRequest:
+        """Converts a JSON object to a GenerationRequest."""
+        return GenerationRequest(
+            assertion_type=AssertionType.from_json(data['equalityType']),
+            k=data['k'],
+            boolean_values=[Var(v) for v in data['booleanValues']])
+
+
+class SampleType(Enum):
+    """The varieties of SAT sampling."""
+    Uniform       = auto()
+    NonUniform    = auto()
+    IsSatisfiable = auto()
+
+    @staticmethod
+    def from_json(s: str) -> SampleType:
+        """Converts a JSON string to a SampleType."""
+        if s in ('BuildCNF', 'SampleUniform', 'Uniform'):
+            return SampleType.Uniform
+        elif s in ('SampleNonUniform', 'NonUniform'):
+            return SampleType.NonUniform
+        elif s in ('IsSAT', 'IsSatisfiable'):
+            return SampleType.IsSatisfiable
+        else:
+            raise ValueError(f"Invalid value for SampleType: {s}")
+
+
+class ProblemSpecification(NamedTuple):
+    """A specification of a complete problem to be solved."""
+    sample_type: SampleType
+    count: int
+    fresh: int
+    support: int
+    cnf: CNF
+    requests: List[GenerationRequest]
+
+    @staticmethod
+    def from_json(data: JSONDict) -> ProblemSpecification:
+        """Converts a JSON object to a ProblemSpecification."""
+        return ProblemSpecification(
+            sample_type=SampleType.from_json(data['action']),
+            count=data['sampleCount'],
+            fresh=data['fresh'],
+            support=data['support'],
+            cnf=CNF(data['cnfs']),
+            requests=[GenerationRequest.from_json(gr) for gr in data['requests']])
 
 
 class Solution(NamedTuple):
