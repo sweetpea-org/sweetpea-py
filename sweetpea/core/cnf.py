@@ -500,7 +500,9 @@ class CNF(SimpleSequence[Clause]):
         self.set_to_one(ss[-1])
 
     def _make_same_length(self, xs: List[Var], ys: List[Var]):
-        if len(xs) < len(ys):
+        if len(xs) == len(ys):
+            return
+        elif len(xs) < len(ys):
             zero_padding = self.get_n_fresh(len(ys) - len(xs) + 1)
             self.zero_out(zero_padding)
             xs[:0] = zero_padding

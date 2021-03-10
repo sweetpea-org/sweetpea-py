@@ -2,7 +2,6 @@ from collections import namedtuple
 from functools import reduce
 from itertools import product
 from typing import Any, Dict, List, Tuple, Union, cast
-from sweetpea.docker import update_docker_image, start_docker_container, stop_docker_container
 
 And = namedtuple('And', 'input_list')
 Or  = namedtuple('Or',  'input_list')

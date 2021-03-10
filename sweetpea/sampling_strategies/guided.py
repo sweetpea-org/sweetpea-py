@@ -8,7 +8,6 @@ from typing import List, cast
 
 from sweetpea.blocks import Block
 from sweetpea.core import CNF, cnf_is_satisfiable
-from sweetpea.docker import update_docker_image, start_docker_container, stop_docker_container
 from sweetpea.logic import And, cnf_to_json
 from sweetpea.sampling_strategies.base import SamplingStrategy, SamplingResult
 from sweetpea.server import build_cnf
@@ -26,9 +25,6 @@ class GuidedSamplingStrategy(SamplingStrategy):
     @staticmethod
     def sample(block: Block, sample_count: int) -> SamplingResult:
 
-        update_docker_image("sweetpea/server")
-        container = start_docker_container("sweetpea/server", 8080)
-
         samples = cast(List[dict], [])
         metrics = cast(dict, {
             'sample_metrics': []
@@ -36,24 +32,20 @@ class GuidedSamplingStrategy(SamplingStrategy):
 
         overall_start = time()
 
-        try:
-            # Build the full CNF for this block
-            cnf = build_cnf(block)
+        # Build the full CNF for this block
+        cnf = build_cnf(block)
 
-            metrics['solver_call_count'] = 0
-            for _ in range(sample_count):
-                sample_metrics = cast(dict, {})
-                t_start = time()
-                samples.append(GuidedSamplingStrategy.__generate_sample(block, cnf, sample_metrics))
-                sample_metrics['time'] = time() - t_start
-                metrics['sample_metrics'].append(sample_metrics)
-                metrics['solver_call_count'] += sample_metrics['solver_call_count']
+        metrics['solver_call_count'] = 0
+        for _ in range(sample_count):
+            sample_metrics = cast(dict, {})
+            t_start = time()
+            samples.append(GuidedSamplingStrategy.__generate_sample(block, cnf, sample_metrics))
+            sample_metrics['time'] = time() - t_start
+            metrics['sample_metrics'].append(sample_metrics)
+            metrics['solver_call_count'] += sample_metrics['solver_call_count']
 
-            metrics['time'] = time() - overall_start
-            GuidedSamplingStrategy.__compute_additional_metrics(metrics)
-
-        finally:
-            stop_docker_container(container)
+        metrics['time'] = time() - overall_start
+        GuidedSamplingStrategy.__compute_additional_metrics(metrics)
 
         return SamplingResult(samples, metrics)
 
@@ -92,7 +84,6 @@ class GuidedSamplingStrategy(SamplingStrategy):
                     t_start = time()
                     full_cnf = cnf + CNF(cnf_to_json(committed)) + CNF(cnf_to_json([And([v])]))
                     allowed = cnf_is_satisfiable(full_cnf)
-                    # allowed = is_cnf_still_sat(cnf_id, committed + [And([v])])
                     duration_seconds = time() - t_start
                     solver_calls.append({'time': duration_seconds, 'SAT': allowed})
                     if not allowed:
@@ -115,7 +106,8 @@ class GuidedSamplingStrategy(SamplingStrategy):
             allowed_trials = []
             for potential_trial in potential_trials:
                 start_time = time()
-                allowed = is_cnf_still_sat(cnf_id, committed + [And(potential_trial)])
+                full_cnf = cnf + CNF(cnf_to_json(committed)) + CNF(cnf_to_json([And(potential_trial)]))
+                allowed = cnf_is_satisfiable(full_cnf)
                 duration_seconds = time() - start_time
 
                 solver_calls.append({'time': duration_seconds, 'SAT': allowed})
