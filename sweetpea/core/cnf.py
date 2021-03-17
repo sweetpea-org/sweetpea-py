@@ -487,7 +487,7 @@ class CNF(SimpleSequence[Clause]):
     def _inequality_assertion(self, assert_less_than: bool, k: int, in_list: Sequence[Var]):
         sum_bits = self.pop_count(in_list)
         in_binary = binary(k)
-        k_vars = self.get_n_fresh(k)
+        k_vars = self.get_n_fresh(len(in_binary))
         assertion = [Var(kv.value * b) for (kv, b) in zip(k_vars, in_binary)]
         self.prepend(CNF([Clause(x) for x in assertion]))
         self._make_same_length(k_vars, sum_bits)
