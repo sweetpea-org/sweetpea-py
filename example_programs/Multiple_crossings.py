@@ -1,5 +1,7 @@
+# Make SweetPea visible regardless of whether it's been installed.
 import sys
 sys.path.append("..")
+
 from sweetpea.primitives import factor, derived_level, within_trial
 from sweetpea import multiple_cross_block, synthesize_trials_non_uniform, print_experiments
 
@@ -76,7 +78,7 @@ four_case = factor("four_case", [
     derived_level("con_con", within_trial(con_con, [left, right])),
     derived_level("con_inc", within_trial(con_inc, [left, right])),
     derived_level("inc_inc", within_trial(inc_inc, [left, right])),
-    derived_level("inc_con", within_trial(inc_con, [left, right]))    
+    derived_level("inc_con", within_trial(inc_con, [left, right]))
 ])
 
 # DEFINE SEQUENCE CONSTRAINTS
