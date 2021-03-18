@@ -134,15 +134,3 @@ def test_correct_solution_count_with_repeated_color_factor_and_no_repetition_all
     experiments  = synthesize_trials_non_uniform(block, 100)
 
     assert len(experiments) == 8
-
-
-# @pytest.mark.parametrize('design', permutations([color, text, con_factor]))
-# def test_uc_sampling_strategy(design):
-#     crossing = [color, text]
-#     constraints = []
-
-#     block  = fully_cross_block(design, crossing, constraints)
-#     experiments  = synthesize_trials(block, 50, sampling_strategy=UniformCombinatoricSamplingStrategy)
-
-#     # Even though there are only 12 distinct solutions to this design, we can generate as many samples as we want.
-#     assert len(experiments) == 50
