@@ -17,7 +17,9 @@ def sample_uniform(initial_cnf: CNF,
                    generation_requests: List[GenerationRequest],
                    use_docker: bool = DEFAULT_DOCKER_MODE_ON
                    ) -> List[Solution]:
-    # TODO DOC
+    """Samples solutions to a CNF problem uniformly. The solution is computed
+    by using Unigen.
+    """
     with temporary_cnf_file() as cnf_file:
         combine_and_save_cnf(cnf_file, initial_cnf, fresh, support, generation_requests)
         solution_str = call_unigen(cnf_file, docker_mode=use_docker)
@@ -29,7 +31,7 @@ def sample_uniform(initial_cnf: CNF,
 
 
 def build_solution(line: str) -> Solution:
-    # TODO DOC
+    """Given a Unigen solution, constructs a `Solution` object."""
     parts = line.replace('v', '').strip().split()
     assignment = [int(p) for p in parts[:-1]]
     frequency = int(parts[-1].split(':')[-1])

@@ -18,7 +18,9 @@ def sample_non_uniform(count: int,
                        support: int,
                        generation_requests: List[GenerationRequest]
                        ) -> List[Solution]:
-    # TODO DOC
+    """Samples solutions to a CNF problem non-uniformly. Produces `count`
+    solutions, each with a support set of length `support`.
+    """
     with temporary_cnf_file() as cnf_file:
         combine_and_save_cnf(cnf_file, initial_cnf, fresh, support, generation_requests)
         solutions = compute_solutions(cnf_file, support, count)
@@ -26,7 +28,13 @@ def sample_non_uniform(count: int,
 
 
 def sample_non_uniform_from_specification(spec: ProblemSpecification) -> List[Solution]:
-    # TODO DOC
+    """Samples solutions to a CNF problem non-uniformly, using a
+    `ProblemSpecification` object.
+
+    NOTE: This function exists for easier legacy compatibility from when
+          SweetPea's input was given as JSON files. This should no longer be
+          necessary.
+    """
     return sample_non_uniform(spec.count, spec.cnf, spec.fresh, spec.support, spec.requests)
 
 
@@ -36,7 +44,13 @@ def compute_solutions(filename: Path,
                       solutions: Optional[List[List[int]]] = None,
                       use_docker: bool = DEFAULT_DOCKER_MODE_ON
                       ) -> List[List[int]]:
-    # TODO DOC
+    """Attempts to solve a CNF problem `count` times with CryptoMiniSAT. Each
+    time a solution is generated, it is added to the problem file's header so
+    new solutions may be generated. If at any point CryptoMiniSAT fails to
+    generate a solution, execution terminates and the existing list of
+    solutions will be returned.
+    """
+    # TODO: Implement iteratively instead of recursively.
     if solutions is None:
         solutions = []
     if count == 0:
@@ -50,7 +64,10 @@ def compute_solutions(filename: Path,
 
 
 def update_file(filename: Path, solution: List[int]):
-    # TODO DOC
+    """Updates a CNF file by adding a solution to the enclosed problem to the
+    header. This allows CryptoMiniSAT to find additional (distinct) solutions
+    to the problem.
+    """
 
     def update_header(additional_clause_count: int, header: str) -> str:
         segments = header.strip().split()

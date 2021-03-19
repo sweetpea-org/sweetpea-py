@@ -118,7 +118,7 @@ class Solution(NamedTuple):
 
 def combine_cnf_with_requests(initial_cnf: CNF,
                               fresh: int,
-                              support: int,
+                              support: int,  # FIXME: Remove.
                               generation_requests: List[GenerationRequest]) -> CNF:
     """Combines a base CNF formula with a new CNF formula formed from the given
     GenerationRequests.

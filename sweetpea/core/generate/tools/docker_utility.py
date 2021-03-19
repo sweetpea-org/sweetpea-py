@@ -34,7 +34,11 @@ class DockerRunError(Exception):
 def docker_run(container: str,
                args: Optional[List[str]] = None,
                input_bytes: Optional[bytes] = None) -> CompletedProcess:
-    # TODO DOC
+    """Runs a Docker container, with the optional arguments and input if
+    provided.
+
+    If the execution produces an error, a DockerRunError will be raised.
+    """
     if args is None:
         args = []
     command = ['docker', 'run', *args, container]

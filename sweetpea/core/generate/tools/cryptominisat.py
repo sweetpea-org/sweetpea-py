@@ -31,7 +31,9 @@ class CryptoMiniSATError(ToolError):
 
 
 def call_cryptominisat_docker(input_file: Path) -> CompletedProcess:
-    # TODO DOC
+    """Calls CryptoMiniSAT in a Docker container, reading a given file as the
+    input problem.
+    """
     cms_container = 'msoos/cryptominisat'
     input_bytes = input_file.read_bytes()
     args = shell_split("--rm -i -a stdin -a stdout")
@@ -40,7 +42,14 @@ def call_cryptominisat_docker(input_file: Path) -> CompletedProcess:
 
 
 def call_cryptominisat_cli(input_file: Path, download_if_missing: bool) -> CompletedProcess:
-    # TODO DOC
+    """Calls CryptoMiniSAT from the command line, reading a given file as the
+    input problem.
+
+    If `download_if_missing` is `True`, SweetPea will automatically download
+    the CryptoMiniSAT executable (and other executables SweetPea depends on) to
+    a local directory from this repository:
+        https://github.com/sweetpea-org/unigen-exe
+    """
     ensure_executable_available(CRYPTOMINISAT_EXE, download_if_missing)
     command = [str(CRYPTOMINISAT_EXE), "--verb=0", str(input_file)]
     result = run(command, capture_output=True)
@@ -51,7 +60,15 @@ def call_cryptominisat(input_file: Path,
                        docker_mode: bool = DEFAULT_DOCKER_MODE_ON,
                        download_if_missing: bool = DEFAULT_DOWNLOAD_IF_MISSING
                        ) -> Tuple[str, CryptoMiniSATReturnCode]:
-    # TODO DOC
+    """Calls CryptoMiniSAT with the given file as input.
+
+    If `docker_mode` is `True`, this will use a Docker container to run
+    CryptoMiniSAT. If it's `False`, a command-line executable will be used.
+
+    If `docker_mode` is `False` and no local CryptoMiniSAT executable can be
+    found, and if `download_if_missing` is `True`, the needed executable will
+    be automatically downloaded if it's missing.
+    """
     if docker_mode:
         result = call_cryptominisat_docker(input_file)
     else:
