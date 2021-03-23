@@ -239,3 +239,23 @@ def ensure_executable_available(executable_path: Path, download_if_missing: bool
             download_executables()
         else:
             raise RuntimeError(f"Could not find binary: {executable_path}")
+
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--bin-dir', type=Path, default=EXE_BIN_LOCATION,
+                        help=f"the directory to install executables to; default is: {EXE_BIN_LOCATION}")
+    parser.add_argument('-s', '--system', choices=[None] + [p[0] for p in _ASSET_NAMES.keys()], default=None,
+                        help="the target system; default is determined platform.system()")
+    parser.add_argument('-m', '--machine', choices=[None] + [p[1] for p in _ASSET_NAMES.keys()], default=None,
+                        help="the target machine type; default is determined by platform.machine()")
+    parser.add_argument('-t', '--tag', default=None,
+                        help="the unigen-exe tag to target; default is the latest tag available")
+    args = parser.parse_args()
+
+    download_executables(
+        to_bin_dir=args.bin_dir,
+        system=args.system,
+        machine=args.machine,
+        tag=args.tag)
