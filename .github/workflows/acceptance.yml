@@ -16,7 +16,11 @@ jobs:
          #       `jobs.<job_id>.runs-on` heading) to see if we can update to Big
          #       Sur yet:
          #           https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
-         os: [ubuntu-latest, macos-10.15, windows-latest]
+         # NOTE: GitHub Actions currently used amd64 versions of Windows, which
+         #       we do not support yet due to unigen-exe not having pre-built
+         #       binaries for the platform.
+         # TODO: Add tests for Windows when we can support the platform.
+         os: [ubuntu-latest, macos-10.15]
          # NOTE: 3.7.9 is the official earliest supported version. We include
          #       3.7 to also test the latest 3.7.x version.
          python-version: ['3.7.9', '3.7', '3.8', '3.9']
