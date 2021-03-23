@@ -5,6 +5,7 @@ on: [push, pull_request]
 jobs:
   run:
     name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
        matrix:
          # NOTE: We explicitly use macOS 10.15 for clarity. As of this writing,
