@@ -25,8 +25,6 @@ jobs:
          #       3.7 to also test the latest 3.7.x version.
          python-version: ['3.7.9', '3.7', '3.8', '3.9']
     steps:
-      - name: Checkout SweetPea
-        uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
@@ -35,5 +33,19 @@ jobs:
         run: pip install --upgrade pip
       - name: Set up SweetPea's Python package dependencies
         run: pip install -r requirements.txt
+      - name: Checkout executables
+        uses: actions/checkout@v2
+        with:
+          repository: sweetpea-org/unigen-exe
+          path: executables
+          ref: v0.1
+      - name: Extend $PATH with executables
+        run: echo "executables" >> $GITHUB_PATH
+      - name: Checkout SweetPea
+        uses: actions/checkout@v2
+        with:
+          path: sweetpea
       - name: Run acceptance tests
-        run: python -m pytest -p no:warnings acceptance
+        run: |
+          cd sweetpea
+          python -m pytest -p no:warnings acceptance
