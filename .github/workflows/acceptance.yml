@@ -25,6 +25,10 @@ jobs:
          #       3.7 to also test the latest 3.7.x version.
          python-version: ['3.7.9', '3.7', '3.8', '3.9']
     steps:
+      - name: Checkout SweetPea
+        uses: actions/checkout@v2
+        with:
+          path: sweetpea
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
@@ -41,10 +45,6 @@ jobs:
           ref: v0.1
       - name: Extend $PATH with executables
         run: echo "executables" >> $GITHUB_PATH
-      - name: Checkout SweetPea
-        uses: actions/checkout@v2
-        with:
-          path: sweetpea
       - name: Run acceptance tests
         run: |
           cd sweetpea
