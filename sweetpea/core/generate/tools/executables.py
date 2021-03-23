@@ -15,7 +15,7 @@ import stat
 
 from appdirs import user_data_dir
 from json import loads as load_json
-from os import chmod
+from os import chmod, environ
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Iterator, List, Optional, Tuple
@@ -41,7 +41,11 @@ _ASSET_NAMES = {
 }
 
 # The folder in which executables will be stored.
-EXE_BIN_LOCATION = Path(user_data_dir('SweetPea', 'SweetPea-Org')) / 'Executables'
+UNIGEN_EXE_ENV_VAR = 'UNIGEN_EXE_DIR'
+if UNIGEN_EXE_ENV_VAR in environ:
+    EXE_BIN_LOCATION = Path(environ[UNIGEN_EXE_ENV_VAR])
+else:
+    EXE_BIN_LOCATION = Path(user_data_dir('SweetPea', 'SweetPea-Org')) / 'Executables'
 
 
 def _build_exe_name(base_name: str) -> Path:
