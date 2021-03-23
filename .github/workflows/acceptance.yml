@@ -43,9 +43,7 @@ jobs:
           repository: sweetpea-org/unigen-exe
           path: executables
           ref: v0.1
-      - name: Extend $PATH with executables
-        run: echo "executables" >> $GITHUB_PATH
       - name: Run acceptance tests
-        run: |
-          cd sweetpea
-          python -m pytest -p no:warnings acceptance
+        env:
+          UNIGEN_EXE_DIR: executables
+        run: python -m pytest -p no:warnings sweetpea/acceptance
