@@ -1,14 +1,3 @@
-from pathlib import Path
-from sys import exit, stderr
-try:
-    import matplotlib.pyplot as plt
-except ModuleNotFoundError:
-    this_file = Path(__file__)
-    repo_root = this_file.parent.parent
-    relative = this_file.relative_to(repo_root.parent)
-    print(f"{relative} requires matplotlib to run.", file=stderr)
-    exit(1)
-
 import networkx as nx
 
 from typing import List
@@ -44,6 +33,7 @@ class DesignGraph():
         return g
 
     def draw(self):
+        import matplotlib as plt
         nx.draw(self.graph, with_labels=True)
         plt.show()
 
