@@ -33,4 +33,4 @@ jobs:
       - name: Run tests
         env:
           UNIGEN_EXE_DIR: executables
-        run: python -m pytest -vv -p no:warnings sweetpea
+        run: python -m pytest -vv -p no:warnings sweetpea/sweetpea
