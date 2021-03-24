@@ -34,7 +34,10 @@ class SimpleSequence(MutableSequence[_T]):
     def _construct_element(cls, value) -> _T:
         if isinstance(value, cls._get_element_type()):
             return value
-        return cls._get_element_type()(value)
+        # NOTE: mypy reports "Too many arguments for 'object'" on the following
+        #       line. However, the code works as expected, so typechecking is
+        #       disabled for this line.
+        return cls._get_element_type()(value)  # type: ignore
 
     def __init__(self, first_value: Union[None, List[Union[_T, int]], _T, int] = None, *rest_values: Union[_T, int]):
         values: Iterable[Union[_T, int]]
