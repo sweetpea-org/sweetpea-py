@@ -86,11 +86,12 @@ def _select_asset_for_host_platform() -> Tuple[str, str]:
 def _get_asset_path(system: Optional[str], machine: Optional[str]) -> str:
     """Retrieves the name of the appropriate release asset."""
     if system is None and machine is None:
-        system, machine = _select_asset_for_host_platform()
-    elif system is not None or machine is not None:
+        return _ASSET_NAMES[_select_asset_for_host_platform()]
+    elif system is not None and machine is not None:
+        return _ASSET_NAMES[(system, machine)]
+    else:
         # We don't allow one or the other --- it must be both or neither.
         raise RuntimeError(f"Must specify (a) both system and machine or (b) neither. Got system: {system}, machine: {machine}")
-    return _ASSET_NAMES[(system, machine)]
 
 
 def _get_asset_zip(system: Optional[str], machine: Optional[str]) -> str:
