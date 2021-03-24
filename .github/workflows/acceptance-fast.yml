@@ -44,5 +44,5 @@ jobs:
       - name: Run acceptance tests
         env:
           UNIGEN_DOWNLOAD_IF_MISSING: no
-        run: |
-          UNIGEN_EXE_DIR="$(pwd)/executables" python -m pytest sweetpea/acceptance
+          UNIGEN_EXE_DIR: "$(pwd)/executables"
+        run: python -m pytest sweetpea/acceptance
