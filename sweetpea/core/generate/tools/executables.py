@@ -37,7 +37,8 @@ _ASSET_NAMES = {
     ('Darwin', 'arm64'): 'mac-apple-silicon',
     ('Darwin', 'x86_64'): 'mac-intel',
     ('Linux', 'x86_64'): 'linux-x86_64',
-    ('Windows', 'x86_64'): 'win-x64',
+    ('Windows', 'x86_64'): 'win-x64',  # TODO: Verify that this is needed.
+    ('Windows', 'AMD64'): 'win-x64',
 }
 
 # The folder in which executables will be stored.
