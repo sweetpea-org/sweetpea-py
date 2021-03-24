@@ -1,6 +1,17 @@
 name: Fast acceptance tests
 
-on: push
+on:
+  push:
+    paths:
+      # Run whenever this file is modified.
+      - '.github/workflows/acceptance-fast.yml'
+      # Run if the requirements are updated, to ensure they're correct.
+      - 'requirements.txt'
+      # Run whenever an acceptance test or the SweetPea library is modified.
+      - 'acceptance/**'
+      - 'sweetpea/**'
+  pull_request:
+    # Always run for pull requests.
 
 jobs:
   run:

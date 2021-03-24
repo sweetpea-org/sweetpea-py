@@ -1,6 +1,16 @@
 name: Tests
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      # Run whenever this file is modified.
+      - '.github/workflows/test.yml'
+      # Run if the requirements are updated, to ensure they're correct.
+      - 'requirements.txt'
+      # Run whenever the SweetPea library is modified.
+      - 'sweetpea/**'
+  pull_request:
+    # Always run for pull requests.
 
 jobs:
   run:

@@ -1,6 +1,12 @@
-name: Fast acceptance tests
+name: Slow acceptance tests
 
-on: pull_request
+on:
+  push:
+    paths:
+      # Only run this workflow on pushes if this file is modified.
+      - '.github/workflows/acceptance-slow.yml'
+  pull_request:
+    # Always run for pull requests.
 
 jobs:
   run:
