@@ -21,6 +21,6 @@ jobs:
       - name: Update pip
         run: pip install --upgrade pip
       - name: Set up SweetPea's Python package dependencies
-        run: pip install -r sweetpea/requirements.txt
+        run: pip install -r requirements.txt
       - name: Run mypy typechecking
         run: mypy --ignore-missing-imports sweetpea
