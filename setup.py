@@ -14,12 +14,13 @@ setuptools.setup(
     url="https://github.com/sweetpea-org/sweetpea-py",
     packages=setuptools.find_packages(),
     install_requires=[
-      'docker',
-      'requests',
-      'ascii-graph',
-      'networkx',
-      'matplotlib',
-      'numpy'
+        'ascii-graph',
+        'appdirs',
+        'mypy',
+        'networkx',
+        'numpy',
+        'pytest',
+        'requests',
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
