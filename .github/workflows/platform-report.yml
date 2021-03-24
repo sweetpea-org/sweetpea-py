@@ -1,0 +1,19 @@
+name: Manually run platform report
+
+on: workflow_dispatch
+
+jobs:
+  run:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-10.15, windows-latest]
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7.9'
+      - name: Get platform information
+        run: |
+          python -c "from platform import machine, system; print('System: ' + system() + '\nMachine: ' + machine())"
