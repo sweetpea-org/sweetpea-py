@@ -90,7 +90,7 @@ class SampleType(Enum):
 class ProblemSpecification(NamedTuple):
     """A specification of a complete problem to be solved."""
     sample_type: SampleType
-    count: int
+    sample_count: int
     fresh: int
     support: int
     cnf: CNF
@@ -101,7 +101,7 @@ class ProblemSpecification(NamedTuple):
         """Converts a JSON object to a ProblemSpecification."""
         return ProblemSpecification(
             sample_type=SampleType.from_json(data['action']),
-            count=data['sampleCount'],
+            sample_count=data['sampleCount'],
             fresh=data['fresh'],
             support=data['support'],
             cnf=CNF(data['cnfs']),

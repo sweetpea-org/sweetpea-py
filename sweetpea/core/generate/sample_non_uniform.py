@@ -35,7 +35,7 @@ def sample_non_uniform_from_specification(spec: ProblemSpecification) -> List[So
           SweetPea's input was given as JSON files. This should no longer be
           necessary.
     """
-    return sample_non_uniform(spec.count, spec.cnf, spec.fresh, spec.support, spec.requests)
+    return sample_non_uniform(spec.sample_count, spec.cnf, spec.fresh, spec.support, spec.requests)
 
 
 def compute_solutions(filename: Path,
