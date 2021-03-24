@@ -32,4 +32,4 @@ jobs:
       - name: Run acceptance tests
         env:
           UNIGEN_EXE_DIR: executables
-        run: python -m pytest -p no:warnings sweetpea/acceptance --run-slow
+        run: python -m pytest sweetpea/acceptance --run-slow
