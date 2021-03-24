@@ -41,6 +41,5 @@ jobs:
           path: executables
           ref: v0.1
       - name: Run tests
-        env:
-          UNIGEN_EXE_DIR: executables
-        run: python -m pytest sweetpea/sweetpea
+        run: |
+          UNIGEN_EXE_DIR="$(pwd)/executables" python -m pytest sweetpea/sweetpea
