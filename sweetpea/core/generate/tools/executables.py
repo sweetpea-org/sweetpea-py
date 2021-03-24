@@ -14,6 +14,7 @@ import platform
 import stat
 
 from appdirs import user_data_dir
+from itertools import groupby
 from json import loads as load_json
 from os import chmod, environ
 from pathlib import Path
@@ -40,6 +41,8 @@ _ASSET_NAMES = {
     ('Windows', 'x86_64'): 'win-x64',  # TODO: Verify that this is needed.
     ('Windows', 'AMD64'): 'win-x64',
 }
+
+_VALID_ASSETS = {k: list(p[1] for p in v) for k, v in groupby(_ASSET_NAMES.keys(), lambda p: p[0])}
 
 # The folder in which executables will be stored.
 UNIGEN_EXE_ENV_VAR = 'UNIGEN_EXE_DIR'
@@ -73,16 +76,9 @@ def _select_asset_for_host_platform() -> Tuple[str, str]:
     """Select the correct asset for the host platform."""
     system = platform.system()
     machine = platform.machine()
-    bad_machine = False
-    if system == 'Darwin':
-        bad_machine = machine not in ('arm64', 'x86_64')
-    elif system == 'Linux':
-        bad_machine = machine != 'x86_64'
-    elif system == 'Windows':
-        bad_machine = machine != 'x86_64'
-    else:
+    if system not in _VALID_ASSETS:
         raise RuntimeError(f"Unsupported system: {system}")
-    if bad_machine:
+    if machine not in _VALID_ASSETS[system]:
         raise RuntimeError(f"Unsupported {system} machine type: {machine}")
     return system, machine
 
