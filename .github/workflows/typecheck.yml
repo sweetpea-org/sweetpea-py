@@ -1,0 +1,26 @@
+name: Typecheck tests
+
+on: [push, pull_request]
+
+jobs:
+  run:
+    name: ${{ matrix.os }} || Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # NOTE: See notes in acceptance.yml.
+        os: [ubuntu-latest, macos-10.15]
+        python-version: ['3.7.9', '3.7', '3.8', '3.9']
+    steps:
+      - name: Checkout SweetPea
+        uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Update pip
+        run: pip install --upgrade pip
+      - name: Set up SweetPea's Python package dependencies
+        run: pip install -r sweetpea/requirements.txt
+      - name: Run mypy typechecking
+        run: mypy --ignore-missing-imports sweetpea
