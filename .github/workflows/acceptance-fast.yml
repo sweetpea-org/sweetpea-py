@@ -41,8 +41,9 @@ jobs:
           repository: sweetpea-org/unigen-exe
           path: executables
           ref: v0.1
+      - name: Set executable directory environment variable
+        run: echo "::set-env name=UNIGEN_EXE_DIR::$(echo $PWD)/executables"
       - name: Run acceptance tests
         env:
           UNIGEN_DOWNLOAD_IF_MISSING: no
-          UNIGEN_EXE_DIR: "$(pwd)/executables"
         run: python -m pytest sweetpea/acceptance
