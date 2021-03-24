@@ -8,7 +8,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from enum import Enum, auto
 from pathlib import Path
-from typing import Dict, Iterator, List, NamedTuple, Optional, Union
+from typing import Any, Dict, Iterator, List, NamedTuple, Optional
 from uuid import uuid4 as generate_uuid
 
 from ..cnf import CNF, Var
@@ -19,9 +19,7 @@ __all__ = [
     'combine_and_save_cnf', 'save_cnf', 'temporary_cnf_file']
 
 
-JSONDict = Dict[str, 'JSONObject']
-JSONArray = List['JSONObject']
-JSONObject = Union[str, int, JSONDict, JSONArray]
+JSONDict = Dict[str, Any]
 
 
 @contextmanager
