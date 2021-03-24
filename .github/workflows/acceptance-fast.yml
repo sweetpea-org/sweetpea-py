@@ -1,0 +1,35 @@
+name: Fast acceptance tests
+
+on: push
+
+jobs:
+  run:
+    name: ${{ matrix.os }} || Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+       matrix:
+         os: [ubuntu-latest, macos-10.15, windows-latest]
+         python-version: ['3.7.9', '3.7', '3.8', '3.9']
+    steps:
+      - name: Checkout SweetPea
+        uses: actions/checkout@v2
+        with:
+          path: sweetpea
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Update pip
+        run: pip install --upgrade pip
+      - name: Set up SweetPea's Python package dependencies
+        run: pip install -r sweetpea/requirements.txt
+      - name: Checkout executables
+        uses: actions/checkout@v2
+        with:
+          repository: sweetpea-org/unigen-exe
+          path: executables
+          ref: v0.1
+      - name: Run acceptance tests
+        env:
+          UNIGEN_EXE_DIR: executables
+        run: python -m pytest -p no:warnings sweetpea/acceptance

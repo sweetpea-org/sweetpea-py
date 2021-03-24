@@ -1,6 +1,6 @@
-name: Acceptance tests
+name: Fast acceptance tests
 
-on: [push, pull_request]
+on: pull_request
 
 jobs:
   run:
@@ -32,4 +32,4 @@ jobs:
       - name: Run acceptance tests
         env:
           UNIGEN_EXE_DIR: executables
-        run: python -m pytest -p no:warnings sweetpea/acceptance
+        run: python -m pytest -p no:warnings sweetpea/acceptance --run-slow
