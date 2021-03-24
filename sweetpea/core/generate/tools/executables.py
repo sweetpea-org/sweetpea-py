@@ -29,7 +29,17 @@ __all__ = ['CRYPTOMINISAT_EXE', 'DEFAULT_DOWNLOAD_IF_MISSING', 'UNIGEN_EXE', 'en
 
 JSONDict = Dict[str, Any]
 
-DEFAULT_DOWNLOAD_IF_MISSING = True
+DOWNLOAD_UNIGEN_ENV_VAR = 'UNIGEN_DOWNLOAD_IF_MISSING'
+if DOWNLOAD_UNIGEN_ENV_VAR in environ:
+    download_if_missing = environ[DOWNLOAD_UNIGEN_ENV_VAR]
+    if download_if_missing in ('True', 'true', 'T', 't', 'Yes', 'yes', 'Y', 'y'):
+        DEFAULT_DOWNLOAD_IF_MISSING = True
+    elif download_if_missing in ('False', 'false', 'F', 'f', 'No', 'no', 'N', 'n'):
+        DEFAULT_DOWNLOAD_IF_MISSING = False
+    else:
+        raise RuntimeError(f"Invalid {DOWNLOAD_UNIGEN_ENV_VAR} value: {download_if_missing}. Please use 'True' or 'False'.")
+else:
+    DEFAULT_DOWNLOAD_IF_MISSING = True
 
 UNIGEN_EXE_LATEST_RELEASE_URL = "https://api.github.com/repos/sweetpea-org/unigen-exe/releases/latest"
 UNIGEN_EXE_SPECIFIC_TAG_URL = "https://api.github.com/repos/sweetpea-org/unigen-exe/releases/tags/{tag}"
