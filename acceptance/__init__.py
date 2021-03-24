@@ -1,6 +1,7 @@
 from typing import Tuple, List, Union
 
-from itertools import repeat
+from itertools import repeat, permutations
+from random import shuffle
 
 from sweetpea.primitives import factor, simple_level, derived_level, get_external_level_name, Factor
 from sweetpea.constraints import at_most_k_in_a_row
@@ -35,3 +36,8 @@ def assert_no_repetition(experiments: List[dict]) -> None:
         transposed = list(map(list, zip(*levels_lists)))
         for t in transposed:
             assert transposed.count(t) == 1, "{} repeats in this trial sequence!".format(t)
+
+def shuffled_design_sample(input, num):
+    perms = list(permutations(input))
+    shuffle(perms)
+    return perms[:num]

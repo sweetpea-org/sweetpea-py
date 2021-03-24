@@ -14,6 +14,8 @@ Such a design is constructed by calling SweetPea functions such as
    :maxdepth: 2
    :caption: Contents:
 
+   sweetpea_core/index
+
    sweetpea/main
    sweetpea/factors
    sweetpea/derivations

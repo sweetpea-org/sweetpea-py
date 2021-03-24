@@ -1,12 +1,9 @@
 import pytest
 
-from itertools import repeat, permutations
-from random import shuffle
-
 from sweetpea.primitives import factor, derived_level, within_trial, transition
 from sweetpea.constraints import at_most_k_in_a_row
-from sweetpea import fully_cross_block, print_experiments, synthesize_trials_non_uniform, __generate_cnf
-from acceptance import assert_atmostkinarow
+from sweetpea import fully_cross_block, print_experiments, synthesize_trials_non_uniform
+from acceptance import assert_atmostkinarow, shuffled_design_sample
 
 # Simple Factors
 color  = factor("color",  ["red", "blue"])
@@ -52,13 +49,7 @@ response_transition = factor("response transition", [
 ])
 
 
-def __shuffled_design_sample():
-    perms = list(permutations([color, motion, task, response, congruency, task_transition, response_transition]))
-    shuffle(perms)
-    return perms[:6]
-
-
-@pytest.mark.parametrize('design', __shuffled_design_sample())
+@pytest.mark.parametrize('design', shuffled_design_sample([color, motion, task, response, congruency, task_transition, response_transition], 6))
 def test_that_design_is_correctly_constrained(design):
     crossing = [color, motion, task]
 
@@ -71,6 +62,6 @@ def test_that_design_is_correctly_constrained(design):
     block = fully_cross_block(design, crossing, constraints)
     experiments = synthesize_trials_non_uniform(block, 100)
 
-    assert len(experiments) == 100, "Design: %s" % str(list(map(lambda f: f.name, design)))
+    assert len(experiments) == 100, "Design: %s" % str(list(map(lambda f: f.factor_name, design)))
     for c in constraints:
         assert_atmostkinarow(c, experiments)

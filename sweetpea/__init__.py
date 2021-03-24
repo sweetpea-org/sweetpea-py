@@ -3,10 +3,9 @@ from typing import Any, List, Union, Tuple, cast
 import itertools
 
 from sweetpea.derivation_processor import DerivationProcessor
-from sweetpea.internal import chunk, get_all_levels, intersperse
+from sweetpea.internal import chunk, get_all_levels
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.blocks import Block, FullyCrossBlock
-from sweetpea.docker import update_docker_image, start_docker_container, stop_docker_container, check_server_health
 from sweetpea.backend import BackendRequest
 from sweetpea.primitives import *
 from sweetpea.constraints import *
@@ -14,7 +13,7 @@ from sweetpea.sampling_strategies.base import SamplingStrategy
 from sweetpea.sampling_strategies.non_uniform import NonUniformSamplingStrategy
 from sweetpea.sampling_strategies.unigen import UnigenSamplingStrategy
 from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy
-from sweetpea.server import submit_job, get_job_result, build_cnf
+from sweetpea.server import build_cnf
 import csv
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -84,8 +83,8 @@ def print_experiments(block: Block, experiments: List[dict]):
 Tabulate the generated experiments in human-friendly form.
 The generated table will show absolute and relative frequencies of combinations of factor levels.
 """
-def tabulate_experiments(experiments: List[dict], factors=None, trials=None):
-
+def tabulate_experiments(experiments: List[dict], factors: List[factor]=list(), trials: List[int]=None):
+  
     for exp_idx, e in enumerate(experiments):
         tabulation = dict()
         frequency_list = list()
@@ -239,12 +238,5 @@ DIMACS format: Starting lines are marked by a c to denote a comment
     for example, (x(9) AND y(2)) => 9 2 0, while (NOT x(9) OR y(2)) => -9 2 0.
 """
 def __generate_cnf(block: Block) -> str:
-    update_docker_image("sweetpea/server")
-    container = start_docker_container("sweetpea/server", 8080)
-
-    try:
-        cnf_result = build_cnf(block)
-    finally:
-        stop_docker_container(container)
-
-    return cnf_result['cnf_str']
+    cnf = build_cnf(block)
+    return cnf.as_unigen_string()
