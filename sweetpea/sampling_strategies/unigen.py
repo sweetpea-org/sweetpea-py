@@ -26,8 +26,6 @@ class UnigenSamplingStrategy(SamplingStrategy):
                 if "WARNING" not in e:
                     return SamplingResult([], {})
 
-        solutions = cast(List[dict], [])
-
         solutions = sample_uniform(
             # sample_count,
             CNF(backend_request.get_cnfs_as_json()),
