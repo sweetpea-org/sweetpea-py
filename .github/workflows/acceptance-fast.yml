@@ -10,8 +10,8 @@ on:
       # Run whenever an acceptance test or the SweetPea library is modified.
       - 'acceptance/**'
       - 'sweetpea/**'
-  pull_request:
-    # Always run for pull requests.
+  # pull_request:
+    # Never run for pull requests. We use the slow acceptance tests for those.
 
 jobs:
   run:
