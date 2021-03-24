@@ -37,7 +37,7 @@ jobs:
           path: executables
           ref: v0.1
       - name: Set executable directory environment variable
-        run: echo "::set-env name=UNIGEN_EXE_DIR::$(echo $PWD)/executables"
+        run: echo "UNIGEN_EXE_DIR=$PWD/executables" >> $GITHUB_ENV
       - name: Run acceptance tests
         env:
           UNIGEN_DOWNLOAD_IF_MISSING: no
