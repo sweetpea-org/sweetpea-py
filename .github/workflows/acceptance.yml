@@ -8,21 +8,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
        matrix:
-         # NOTE: We explicitly use macOS 10.15 for clarity. As of this writing,
-         #       the `macos-latest` runner is just an alias for `macos-10.15`.
-         #       Big Sur support is currently in early preview and is not yet
-         #       publicly available.
-         # TODO: Check back at the following page (under the
-         #       `jobs.<job_id>.runs-on` heading) to see if we can update to Big
-         #       Sur yet:
-         #           https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
-         # NOTE: GitHub Actions currently used amd64 versions of Windows, which
-         #       we do not support yet due to unigen-exe not having pre-built
-         #       binaries for the platform.
-         # TODO: Add tests for Windows when we can support the platform.
-         os: [ubuntu-latest, macos-10.15]
-         # NOTE: 3.7.9 is the official earliest supported version. We include
-         #       3.7 to also test the latest 3.7.x version.
+         os: [ubuntu-latest, macos-10.15, windows-latest]
          python-version: ['3.7.9', '3.7', '3.8', '3.9']
     steps:
       - name: Checkout SweetPea
