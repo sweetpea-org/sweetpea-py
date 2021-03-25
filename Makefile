@@ -14,3 +14,7 @@ test: typecheck
 acceptance:
 	@echo "Running acceptance tests..."
 	python3 -m pytest -p no:warnings acceptance
+
+acceptance-slow:
+	@echo "Running acceptance tests, including tests marked as slow..."
+	python3 -m pytest -p no:warnings acceptance --run-slow

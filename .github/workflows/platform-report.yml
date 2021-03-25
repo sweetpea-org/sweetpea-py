@@ -1,0 +1,23 @@
+name: Manually run platform report
+
+# The platform report must be run manually. You can do this either by using the
+# Actions menu on the repository page on the GitHub website, or else by using
+# the GitHub API.
+on: workflow_dispatch
+
+jobs:
+  run:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-10.15, windows-latest]
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7.9'
+      - name: Get platform information
+        run: |
+          python -c "from platform import machine, system; print('System: ' + system() + '\nMachine: ' + machine())"

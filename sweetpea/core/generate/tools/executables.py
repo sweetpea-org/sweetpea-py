@@ -14,8 +14,9 @@ import platform
 import stat
 
 from appdirs import user_data_dir
+from itertools import groupby
 from json import loads as load_json
-from os import chmod
+from os import chmod, environ
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Any, Dict, Iterator, List, Optional, Tuple
@@ -28,7 +29,17 @@ __all__ = ['CRYPTOMINISAT_EXE', 'DEFAULT_DOWNLOAD_IF_MISSING', 'UNIGEN_EXE', 'en
 
 JSONDict = Dict[str, Any]
 
-DEFAULT_DOWNLOAD_IF_MISSING = True
+DOWNLOAD_UNIGEN_ENV_VAR = 'UNIGEN_DOWNLOAD_IF_MISSING'
+if DOWNLOAD_UNIGEN_ENV_VAR in environ:
+    download_if_missing = environ[DOWNLOAD_UNIGEN_ENV_VAR]
+    if download_if_missing in ('True', 'true', 'T', 't', 'Yes', 'yes', 'Y', 'y'):
+        DEFAULT_DOWNLOAD_IF_MISSING = True
+    elif download_if_missing in ('False', 'false', 'F', 'f', 'No', 'no', 'N', 'n'):
+        DEFAULT_DOWNLOAD_IF_MISSING = False
+    else:
+        raise RuntimeError(f"Invalid {DOWNLOAD_UNIGEN_ENV_VAR} value: {download_if_missing}. Please use 'True' or 'False'.")
+else:
+    DEFAULT_DOWNLOAD_IF_MISSING = True
 
 UNIGEN_EXE_LATEST_RELEASE_URL = "https://api.github.com/repos/sweetpea-org/unigen-exe/releases/latest"
 UNIGEN_EXE_SPECIFIC_TAG_URL = "https://api.github.com/repos/sweetpea-org/unigen-exe/releases/tags/{tag}"
@@ -37,11 +48,18 @@ _ASSET_NAMES = {
     ('Darwin', 'arm64'): 'mac-apple-silicon',
     ('Darwin', 'x86_64'): 'mac-intel',
     ('Linux', 'x86_64'): 'linux-x86_64',
-    ('Windows', 'x86_64'): 'win-x64',
+    ('Windows', 'x86_64'): 'win-x64',  # TODO: Verify that this is needed.
+    ('Windows', 'AMD64'): 'win-x64',
 }
 
+_VALID_ASSETS = {k: list(p[1] for p in v) for k, v in groupby(_ASSET_NAMES.keys(), lambda p: p[0])}
+
 # The folder in which executables will be stored.
-EXE_BIN_LOCATION = Path(user_data_dir('SweetPea', 'SweetPea-Org')) / 'Executables'
+UNIGEN_EXE_ENV_VAR = 'UNIGEN_EXE_DIR'
+if UNIGEN_EXE_ENV_VAR in environ:
+    EXE_BIN_LOCATION = Path(environ[UNIGEN_EXE_ENV_VAR])
+else:
+    EXE_BIN_LOCATION = Path(user_data_dir('SweetPea', 'SweetPea-Org')) / 'Executables'
 
 
 def _build_exe_name(base_name: str) -> Path:
@@ -68,16 +86,9 @@ def _select_asset_for_host_platform() -> Tuple[str, str]:
     """Select the correct asset for the host platform."""
     system = platform.system()
     machine = platform.machine()
-    bad_machine = False
-    if system == 'Darwin':
-        bad_machine = machine not in ('arm64', 'x86_64')
-    elif system == 'Linux':
-        bad_machine = machine != 'x86_64'
-    elif system == 'Windows':
-        bad_machine = machine != 'x86_64'
-    else:
+    if system not in _VALID_ASSETS:
         raise RuntimeError(f"Unsupported system: {system}")
-    if bad_machine:
+    if machine not in _VALID_ASSETS[system]:
         raise RuntimeError(f"Unsupported {system} machine type: {machine}")
     return system, machine
 
@@ -85,11 +96,12 @@ def _select_asset_for_host_platform() -> Tuple[str, str]:
 def _get_asset_path(system: Optional[str], machine: Optional[str]) -> str:
     """Retrieves the name of the appropriate release asset."""
     if system is None and machine is None:
-        system, machine = _select_asset_for_host_platform()
-    elif system is not None or machine is not None:
+        return _ASSET_NAMES[_select_asset_for_host_platform()]
+    elif system is not None and machine is not None:
+        return _ASSET_NAMES[(system, machine)]
+    else:
         # We don't allow one or the other --- it must be both or neither.
         raise RuntimeError(f"Must specify (a) both system and machine or (b) neither. Got system: {system}, machine: {machine}")
-    return _ASSET_NAMES[(system, machine)]
 
 
 def _get_asset_zip(system: Optional[str], machine: Optional[str]) -> str:
@@ -239,3 +251,33 @@ def ensure_executable_available(executable_path: Path, download_if_missing: bool
             download_executables()
         else:
             raise RuntimeError(f"Could not find binary: {executable_path}")
+
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--bin-dir', type=Path, default=EXE_BIN_LOCATION,
+                        help=f"the directory to install executables to; default is: {EXE_BIN_LOCATION}")
+    parser.add_argument('-s', '--system', choices=['None'] + [p[0] for p in _ASSET_NAMES.keys()], default='None',
+                        help="the target system; default is determined platform.system()")
+    parser.add_argument('-m', '--machine', choices=['None'] + [p[1] for p in _ASSET_NAMES.keys()], default='None',
+                        help="the target machine type; default is determined by platform.machine()")
+    parser.add_argument('-t', '--tag', default=None,
+                        help="the unigen-exe tag to target; default is the latest tag available")
+    parser.add_argument('--asset-string', action='store_true',
+                        help="only print out the asset string for the indicated system+machine combination")
+    args = parser.parse_args()
+
+    if args.system == 'None':
+        args.system = None
+    if args.machine == 'None':
+        args.machine = None
+
+    if args.asset_string:
+        print(_get_asset_path(system=args.system, machine=args.machine))
+    else:
+        download_executables(
+            to_bin_dir=args.bin_dir,
+            system=args.system,
+            machine=args.machine,
+            tag=args.tag)

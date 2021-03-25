@@ -93,7 +93,7 @@ def permute_complements(xs: List[T],
     elif to_position == 0:
         return [[xs[0]], [complement_func(xs[0])]]
     else:
-        results: List[List[Var]] = []
+        results: List[List[T]] = []
         permuted_xss = permute_complements(xs, to_position - 1, complement_func)
         for permuted_xs in permuted_xss:
             results.append([x for x in permuted_xs] + [xs[to_position]])

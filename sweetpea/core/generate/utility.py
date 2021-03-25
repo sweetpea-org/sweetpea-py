@@ -8,7 +8,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from enum import Enum, auto
 from pathlib import Path
-from typing import Dict, Iterator, List, NamedTuple, Optional, Union
+from typing import Any, Dict, Iterator, List, NamedTuple, Optional
 from uuid import uuid4 as generate_uuid
 
 from ..cnf import CNF, Var
@@ -19,9 +19,7 @@ __all__ = [
     'combine_and_save_cnf', 'save_cnf', 'temporary_cnf_file']
 
 
-JSONDict = Dict[str, 'JSONObject']
-JSONArray = List['JSONObject']
-JSONObject = Union[str, int, JSONDict, JSONArray]
+JSONDict = Dict[str, Any]
 
 
 @contextmanager
@@ -92,7 +90,7 @@ class SampleType(Enum):
 class ProblemSpecification(NamedTuple):
     """A specification of a complete problem to be solved."""
     sample_type: SampleType
-    count: int
+    sample_count: int
     fresh: int
     support: int
     cnf: CNF
@@ -103,7 +101,7 @@ class ProblemSpecification(NamedTuple):
         """Converts a JSON object to a ProblemSpecification."""
         return ProblemSpecification(
             sample_type=SampleType.from_json(data['action']),
-            count=data['sampleCount'],
+            sample_count=data['sampleCount'],
             fresh=data['fresh'],
             support=data['support'],
             cnf=CNF(data['cnfs']),

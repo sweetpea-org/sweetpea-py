@@ -1,0 +1,36 @@
+name: Tests
+
+on:
+  push:
+    paths:
+      # Run whenever this file is modified.
+      - '.github/workflows/test.yml'
+      # Run if the requirements are updated, to ensure they're correct.
+      - 'requirements.txt'
+      # Run whenever the SweetPea library is modified.
+      - 'sweetpea/**'
+  pull_request:
+    # Always run for pull requests.
+
+jobs:
+  run:
+    name: ${{ matrix.os }} || Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-10.15, windows-latest]
+        python-version: ['3.7.9', '3.7', '3.8', '3.9']
+    steps:
+      - name: Checkout SweetPea
+        uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Update pip
+        run: pip install --upgrade pip
+      - name: Set up SweetPea's Python package dependencies
+        run: pip install -r requirements.txt
+      - name: Run tests
+        run: python -m pytest sweetpea
