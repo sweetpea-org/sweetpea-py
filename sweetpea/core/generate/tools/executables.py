@@ -264,6 +264,8 @@ if __name__ == '__main__':
                         help="the target machine type; default is determined by platform.machine()")
     parser.add_argument('-t', '--tag', default=None,
                         help="the unigen-exe tag to target; default is the latest tag available")
+    parser.add_argument('--asset-string', action='store_true',
+                        help="only print out the asset string for the indicated system+machine combination")
     args = parser.parse_args()
 
     if args.system == 'None':
@@ -271,8 +273,11 @@ if __name__ == '__main__':
     if args.machine == 'None':
         args.machine = None
 
-    download_executables(
-        to_bin_dir=args.bin_dir,
-        system=args.system,
-        machine=args.machine,
-        tag=args.tag)
+    if args.asset_string:
+        print(_get_asset_path(system=args.system, machine=args.machine))
+    else:
+        download_executables(
+            to_bin_dir=args.bin_dir,
+            system=args.system,
+            machine=args.machine,
+            tag=args.tag)
