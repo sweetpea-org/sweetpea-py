@@ -1,7 +1,12 @@
 SweetPea
 ========
 
-[![Build Status](https://travis-ci.org/sweetpea-org/sweetpea-py.svg?branch=master)](https://travis-ci.org/sweetpea-org/sweetpea-py)
+| Test Type               | Test Status                                                                                                       |
+|-------------------------|-------------------------------------------------------------------------------------------------------------------|
+| Typecheck tests         | ![typecheck](https://github.com/sweetpea-org/sweetpea-py/actions/workflows/typecheck.yml/badge.svg)               |
+| Acceptance tests (fast) | ![acceptance (fast)](https://github.com/sweetpea-org/sweetpea-py/actions/workflows/acceptance-fast.yml/badge.svg) |
+| Acceptance tests (slow) | ![acceptance (slow)](https://github.com/sweetpea-org/sweetpea-py/actions/workflows/acceptance-slow.yml/badge.svg) |
+| Python package tests    | ![package](https://github.com/sweetpea-org/sweetpea-py/actions/workflows/test.yml/badge.svg)                      |
 
 SweetPea is a language for declaratively specifying randomized experimental designs and synthesizing trial sequences generated from the design specification.
 An experimental design is a description of experimental factors, relationships between factors, sequential constraints, and how to map those factors onto a sequence of trials. Such a design is constructed by calling SweetPea functions such as `fully_cross_block`, `factor`, `derived_level`, and `at_most_k_in_a_row`.
@@ -49,7 +54,7 @@ experiments  = synthesize_trials(block)
 print_experiments(block, experiments)
 ```
 
-Additional examples can be found in the `example_programs` directory. 
+Additional examples can be found in the `example_programs` directory.
 
 ## Full Documentation
 
@@ -119,7 +124,7 @@ When that environment variable is set, SweetPea will never try to start/stop the
 [2]: https://docs.python.org/3/tutorial/venv.html
 
 # Specify a Port
-By default, SweetPea attempts to run its docker server using port 8080 on the host machine. If this port is not available, it can be changed by setting the `SWEETPEA_DOCKER_PORT` environment variable. For example, if SweetPea should instead run on port 5050, 
+By default, SweetPea attempts to run its docker server using port 8080 on the host machine. If this port is not available, it can be changed by setting the `SWEETPEA_DOCKER_PORT` environment variable. For example, if SweetPea should instead run on port 5050,
 ```
 $ export SWEETPEA_DOCKER_PORT=5050
 ```
