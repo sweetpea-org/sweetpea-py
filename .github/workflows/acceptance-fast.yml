@@ -42,7 +42,7 @@ jobs:
           path: executables
           ref: v0.1
       - name: Get asset path name
-        run: echo "UNIGEN_ASSET_PATH=$(python sweetpea/core/generate/tools/executables.py --asset-string)" >> $GITHUB_ENV
+        run: echo "UNIGEN_ASSET_PATH=$(python sweetpea/sweetpea/core/generate/tools/executables.py --asset-string)" >> $GITHUB_ENV
       - name: Run acceptance tests
         env:
           UNIGEN_EXE_DIR: $GITHUB_WORKSPACE/executables/$UNIGEN_ASSET_PATH/
