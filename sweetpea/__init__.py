@@ -1,5 +1,5 @@
 from functools import reduce
-from typing import Any, List, Union, Tuple, cast
+from typing import Dict, List, Optional, cast
 import itertools
 
 from sweetpea.derivation_processor import DerivationProcessor
@@ -83,13 +83,17 @@ def print_experiments(block: Block, experiments: List[dict]):
 Tabulate the generated experiments in human-friendly form.
 The generated table will show absolute and relative frequencies of combinations of factor levels.
 """
-def tabulate_experiments(experiments: List[dict], factors: List[factor]=list(), trials: List[int]=None):
-  
+def tabulate_experiments(experiments: List[Dict],
+                         factors: Optional[List[Factor]] = None,
+                         trials: Optional[List[int]] = None):
+    if factors is None:
+        factors = []
+
     for exp_idx, e in enumerate(experiments):
-        tabulation = dict()
+        tabulation: Dict[str, List[str]] = dict()
         frequency_list = list()
         proportion_list = list()
-        levels = list()
+        levels: List[List[str]] = list()
 
         if trials is None:
             trials = list(range(0, len(e[list(e.keys())[0]])))
@@ -99,25 +103,27 @@ def tabulate_experiments(experiments: List[dict], factors: List[factor]=list(), 
         # initialize table
         for f in factors:
             tabulation[f.factor_name] = list()
-            factor_levels = list()
+            factor_levels: List[str] = list()
             for l in f.levels:
                 factor_levels.append(l.external_name)
             levels.append(factor_levels)
 
         max_combinations = 0
+        # Each `element` is an n-tuple (s1, s2, ..., sn) where n is the number
+        # of levels and each element is a level name.
         for element in itertools.product(*levels):
             max_combinations += 1
 
             # add factor combination
-            for idx, factor in enumerate(tabulation.keys()):
-                tabulation[factor].append(element[idx])
+            for idx, factor_name in enumerate(tabulation.keys()):
+                tabulation[factor_name].append(element[idx])
 
             # compute frequency
             frequency = 0
             for trial in trials:
                 valid_condition = True
                 for idx, factor in enumerate(tabulation.keys()):
-                    if e[factor][trial] !=  element[idx]:
+                    if e[factor][trial] != element[idx]:
                         valid_condition = False
                         break
                 if valid_condition:
@@ -157,7 +163,7 @@ def tabulate_experiments(experiments: List[dict], factors: List[factor]=list(), 
 
 
 """
-Export the generated experiments to csv files. Each experiment will be exported to a separate csv file. 
+Export the generated experiments to csv files. Each experiment will be exported to a separate csv file.
 """
 def experiment_to_csv(experiments: List[dict], file_prefix = "experiment"):
     for idx, experiment in enumerate(experiments):
