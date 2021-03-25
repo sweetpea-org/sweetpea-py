@@ -13,6 +13,10 @@ on:
   # pull_request:
     # Never run for pull requests. We use the slow acceptance tests for those.
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   run:
     name: ${{ matrix.os }} || Python ${{ matrix.python-version }}
@@ -41,7 +45,7 @@ jobs:
           repository: sweetpea-org/unigen-exe
           path: executables
           ref: v0.1
-      - name: Get asset path name
+      - name: Set asset path name
         run: echo "UNIGEN_ASSET_PATH=$(python sweetpea/sweetpea/core/generate/tools/executables.py --asset-string)" >> $GITHUB_ENV
       - name: Set executable directory environment variable
         run: echo "UNIGEN_EXE_DIR=$GITHUB_WORKSPACE/executables/$UNIGEN_ASSET_PATH/" >> $GITHUB_ENV
