@@ -10,14 +10,27 @@ from typing import Dict, Iterable, List, MutableSequence, Type, TypeVar, Union, 
 __all__ = ['SimpleSequence']
 
 
+#: A generic type.
 _T = TypeVar('_T')
 
 
 class SimpleSequence(MutableSequence[_T]):
-    """A simple, custom generic sequence.
+    """A custom generic sequence. :class:`SimpleSequence` features an advanced
+    initialization mechanism that allows for automatically converting given
+    arguments into elements of the desired type. It can also smartly handle
+    being given lists of elements for initialization.
 
-    Implementation inspired by:
-        https://github.com/python/mypy/issues/4108
+    The purpose of :class:`SimpleSequence` was to grant classes like
+    :class:`Clause` and :class:`CNF` the ability to be initialized with
+    literals without needing to duplicate that code. :class:`SimpleSequence` is
+    a :class:`typing.MutableSequence` with all the expected functionality, and
+    it also provides built-in support for :func:`copy.copy` and
+    :func:`copy.deepcopy`.
+
+    :class:`SimpleSequence` was also built to support better type-checking
+    throughout SweetPea. To that effect, the implementation was inspired by
+    discussion in `mypy issue #4108
+    <https://github.com/python/mypy/issues/4108>`_.
     """
 
     _vals: List[_T]
@@ -103,12 +116,11 @@ class SimpleSequence(MutableSequence[_T]):
     def __delitem__(self, index: slice) -> None:
         pass
 
-    # FIXME: See FIXME for SimpleSequence.__getitem__.
-    def __delitem__(self, index: Union[int, slice]) -> None:  # pylint: disable=unsubscriptable-object
+    def __delitem__(self, index: Union[int, slice]) -> None:
         self._vals.__delitem__(index)
 
     def insert(self, index: int, item: _T) -> None:
-        """Inserts an item before the index."""
+        """Inserts the ``item`` before the given ``index`` in the sequence."""
         self._vals.insert(index, item)
 
     def __len__(self) -> int:
