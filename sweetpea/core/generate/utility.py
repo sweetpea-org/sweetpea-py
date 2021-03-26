@@ -16,7 +16,8 @@ from ..cnf import CNF, Var
 
 __all__ = [
     'AssertionType', 'GenerationRequest', 'SampleType', 'ProblemSpecification', 'Solution',
-    'combine_and_save_cnf', 'save_cnf', 'temporary_cnf_file']
+    'combine_and_save_cnf', 'combine_cnf_with_requests', 'save_cnf', 'temporary_cnf_file'
+]
 
 
 JSONDict = Dict[str, Any]
