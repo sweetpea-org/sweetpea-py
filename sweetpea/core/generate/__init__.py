@@ -1,4 +1,7 @@
-"""This module provides functionality for generating CNF formulas."""
+"""This module provides functionality for generating CNF formulas.
+
+Something something test text.
+"""
 
 
 from .is_satisfiable import cnf_is_satisfiable
