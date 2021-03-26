@@ -1,0 +1,275 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>sweetpea.core.generate.tools.docker_utility module &mdash; SweetPea  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="sweetpea.core.generate.tools.executables module" href="sweetpea.core.generate.tools.executables.html" />
+    <link rel="prev" title="sweetpea.core.generate.tools.cryptominisat module" href="sweetpea.core.generate.tools.cryptominisat.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> SweetPea
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">sweetpea</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="sweetpea.html">sweetpea package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="sweetpea.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="sweetpea.core.html">sweetpea.core package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.sampling_strategies.html">sweetpea.sampling_strategies package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.tests.html">sweetpea.tests package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sweetpea.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SweetPea</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="modules.html">sweetpea</a> &raquo;</li>
+        
+          <li><a href="sweetpea.html">sweetpea package</a> &raquo;</li>
+        
+          <li><a href="sweetpea.core.html">sweetpea.core package</a> &raquo;</li>
+        
+          <li><a href="sweetpea.core.generate.html">sweetpea.core.generate package</a> &raquo;</li>
+        
+          <li><a href="sweetpea.core.generate.tools.html">sweetpea.core.generate.tools package</a> &raquo;</li>
+        
+      <li>sweetpea.core.generate.tools.docker_utility module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/_apidoc/sweetpea.core.generate.tools.docker_utility.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-sweetpea.core.generate.tools.docker_utility">
+<span id="sweetpea-core-generate-tools-docker-utility-module"></span><h1>sweetpea.core.generate.tools.docker_utility module<a class="headerlink" href="#module-sweetpea.core.generate.tools.docker_utility" title="Permalink to this headline">¶</a></h1>
+<p>This module provides simple Docker command-line functionality.</p>
+<dl class="py class">
+<dt id="sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.docker_utility.</span></code><code class="sig-name descname"><span class="pre">DockerRunReturnCode</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="sweetpea.core.generate.tools.return_code.html#sweetpea.core.generate.tools.return_code.ReturnCodeEnum" title="sweetpea.core.generate.tools.return_code.ReturnCodeEnum"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.core.generate.tools.return_code.ReturnCodeEnum</span></code></a></p>
+<p>Invocation of the <cite>docker run</cite> command can result in one of the
+following special return codes. Any other return code is the result of
+invoking the indicated command in the container.</p>
+<dl class="simple">
+<dt>Reference:</dt><dd><p><a class="reference external" href="https://docs.docker.com/engine/reference/run/#exit-status">https://docs.docker.com/engine/reference/run/#exit-status</a></p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode.DockerDaemonError">
+<code class="sig-name descname"><span class="pre">DockerDaemonError</span></code><em class="property"> <span class="pre">=</span> <span class="pre">125</span></em><a class="headerlink" href="#sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode.DockerDaemonError" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode.ContainedCommandCannotBeInvokedError">
+<code class="sig-name descname"><span class="pre">ContainedCommandCannotBeInvokedError</span></code><em class="property"> <span class="pre">=</span> <span class="pre">126</span></em><a class="headerlink" href="#sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode.ContainedCommandCannotBeInvokedError" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode.ContainedCommandCannotBeFoundError">
+<code class="sig-name descname"><span class="pre">ContainedCommandCannotBeFoundError</span></code><em class="property"> <span class="pre">=</span> <span class="pre">127</span></em><a class="headerlink" href="#sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode.ContainedCommandCannotBeFoundError" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt id="sweetpea.core.generate.tools.docker_utility.DockerRunError">
+<em class="property"><span class="pre">exception</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.docker_utility.</span></code><code class="sig-name descname"><span class="pre">DockerRunError</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returncode</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode" title="sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode"><span class="pre">sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">stderr</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.tools.docker_utility.DockerRunError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.7/library/exceptions.html#Exception" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></a></p>
+<p>An error raised when something fails while invoking Docker.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="sweetpea.core.generate.tools.docker_utility.docker_run">
+<code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.docker_utility.</span></code><code class="sig-name descname"><span class="pre">docker_run</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">container</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_bytes</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#bytes" title="(in Python v3.7)"><span class="pre">bytes</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/subprocess.html#subprocess.CompletedProcess" title="(in Python v3.7)"><span class="pre">subprocess.CompletedProcess</span></a><a class="headerlink" href="#sweetpea.core.generate.tools.docker_utility.docker_run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runs a Docker container, with the optional arguments and input if
+provided.</p>
+<p>If the execution produces an error, a DockerRunError will be raised.</p>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="sweetpea.core.generate.tools.executables.html" class="btn btn-neutral float-right" title="sweetpea.core.generate.tools.executables module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="sweetpea.core.generate.tools.cryptominisat.html" class="btn btn-neutral float-left" title="sweetpea.core.generate.tools.cryptominisat module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, SweetPea Research Group.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

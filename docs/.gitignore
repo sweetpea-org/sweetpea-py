@@ -1,2 +1,5 @@
-_build/
+_build/*
+_build/*/
+!_build/html/
+_build/html/_sources/
 _source/_apidoc/

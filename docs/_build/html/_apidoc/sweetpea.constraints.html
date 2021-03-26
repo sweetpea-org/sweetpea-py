@@ -1,0 +1,416 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>sweetpea.constraints module &mdash; SweetPea  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="sweetpea.derivation_processor module" href="sweetpea.derivation_processor.html" />
+    <link rel="prev" title="sweetpea.combinatorics module" href="sweetpea.combinatorics.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> SweetPea
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="modules.html">sweetpea</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="sweetpea.html">sweetpea package</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="sweetpea.html#subpackages">Subpackages</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="sweetpea.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.backend.html">sweetpea.backend module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.base_constraint.html">sweetpea.base_constraint module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.blocks.html">sweetpea.blocks module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.combinatorics.html">sweetpea.combinatorics module</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">sweetpea.constraints module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.derivation_processor.html">sweetpea.derivation_processor module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.design_graph.html">sweetpea.design_graph module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.design_partitions.html">sweetpea.design_partitions module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.encoding_diagram.html">sweetpea.encoding_diagram module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.internal.html">sweetpea.internal module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.logic.html">sweetpea.logic module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.metrics.html">sweetpea.metrics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.primitives.html">sweetpea.primitives module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.server.html">sweetpea.server module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SweetPea</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="modules.html">sweetpea</a> &raquo;</li>
+        
+          <li><a href="sweetpea.html">sweetpea package</a> &raquo;</li>
+        
+      <li>sweetpea.constraints module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/_apidoc/sweetpea.constraints.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-sweetpea.constraints">
+<span id="sweetpea-constraints-module"></span><h1>sweetpea.constraints module<a class="headerlink" href="#module-sweetpea.constraints" title="Permalink to this headline">¶</a></h1>
+<dl class="py function">
+<dt id="sweetpea.constraints.validate_factor_and_level">
+<code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">validate_factor_and_level</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><span class="pre">sweetpea.blocks.Block</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><span class="pre">sweetpea.primitives.Factor</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.SimpleLevel" title="sweetpea.primitives.SimpleLevel"><span class="pre">sweetpea.primitives.SimpleLevel</span></a><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><span class="pre">sweetpea.primitives.DerivedLevel</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)"><span class="pre">None</span></a><a class="headerlink" href="#sweetpea.constraints.validate_factor_and_level" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="sweetpea.constraints.Consistency">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">Consistency</span></code><a class="headerlink" href="#sweetpea.constraints.Consistency" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="sweetpea.base_constraint.html#sweetpea.base_constraint.Constraint" title="sweetpea.base_constraint.Constraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.base_constraint.Constraint</span></code></a></p>
+<dl class="py method">
+<dt id="sweetpea.constraints.Consistency.validate">
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><span class="pre">sweetpea.blocks.Block</span></a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)"><span class="pre">None</span></a><a class="headerlink" href="#sweetpea.constraints.Consistency.validate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="sweetpea.constraints.Consistency.apply">
+<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">apply</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><span class="pre">sweetpea.blocks.Block</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend_request</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.backend.html#sweetpea.backend.BackendRequest" title="sweetpea.backend.BackendRequest"><span class="pre">sweetpea.backend.BackendRequest</span></a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)"><span class="pre">None</span></a><a class="headerlink" href="#sweetpea.constraints.Consistency.apply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="sweetpea.constraints.FullyCross">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">FullyCross</span></code><a class="headerlink" href="#sweetpea.constraints.FullyCross" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="sweetpea.base_constraint.html#sweetpea.base_constraint.Constraint" title="sweetpea.base_constraint.Constraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.base_constraint.Constraint</span></code></a></p>
+<dl class="py method">
+<dt id="sweetpea.constraints.FullyCross.validate">
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><span class="pre">sweetpea.blocks.Block</span></a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)"><span class="pre">None</span></a><a class="headerlink" href="#sweetpea.constraints.FullyCross.validate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="sweetpea.constraints.FullyCross.apply">
+<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">apply</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.FullyCrossBlock" title="sweetpea.blocks.FullyCrossBlock"><span class="pre">sweetpea.blocks.FullyCrossBlock</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend_request</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.backend.html#sweetpea.backend.BackendRequest" title="sweetpea.backend.BackendRequest"><span class="pre">sweetpea.backend.BackendRequest</span></a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)"><span class="pre">None</span></a><a class="headerlink" href="#sweetpea.constraints.FullyCross.apply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="sweetpea.constraints.MultipleCross">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">MultipleCross</span></code><a class="headerlink" href="#sweetpea.constraints.MultipleCross" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="sweetpea.base_constraint.html#sweetpea.base_constraint.Constraint" title="sweetpea.base_constraint.Constraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.base_constraint.Constraint</span></code></a></p>
+<dl class="py method">
+<dt id="sweetpea.constraints.MultipleCross.validate">
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><span class="pre">sweetpea.blocks.Block</span></a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)"><span class="pre">None</span></a><a class="headerlink" href="#sweetpea.constraints.MultipleCross.validate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="sweetpea.constraints.MultipleCross.apply">
+<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">apply</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.MultipleCrossBlock" title="sweetpea.blocks.MultipleCrossBlock"><span class="pre">sweetpea.blocks.MultipleCrossBlock</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend_request</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.backend.html#sweetpea.backend.BackendRequest" title="sweetpea.backend.BackendRequest"><span class="pre">sweetpea.backend.BackendRequest</span></a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)"><span class="pre">None</span></a><a class="headerlink" href="#sweetpea.constraints.MultipleCross.apply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="sweetpea.constraints.Derivation">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">Derivation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">derived_idx</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">dependent_idxs</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><span class="pre">sweetpea.primitives.Factor</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.Derivation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="sweetpea.base_constraint.html#sweetpea.base_constraint.Constraint" title="sweetpea.base_constraint.Constraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.base_constraint.Constraint</span></code></a></p>
+<dl class="py method">
+<dt id="sweetpea.constraints.Derivation.validate">
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><span class="pre">sweetpea.blocks.Block</span></a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)"><span class="pre">None</span></a><a class="headerlink" href="#sweetpea.constraints.Derivation.validate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="sweetpea.constraints.Derivation.apply">
+<code class="sig-name descname"><span class="pre">apply</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><span class="pre">sweetpea.blocks.Block</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend_request</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.backend.html#sweetpea.backend.BackendRequest" title="sweetpea.backend.BackendRequest"><span class="pre">sweetpea.backend.BackendRequest</span></a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)"><span class="pre">None</span></a><a class="headerlink" href="#sweetpea.constraints.Derivation.apply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="sweetpea.constraints.Derivation.is_complex">
+<code class="sig-name descname"><span class="pre">is_complex</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><span class="pre">sweetpea.blocks.Block</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.Derivation.is_complex" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="sweetpea.constraints.at_most_k_in_a_row">
+<code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">at_most_k_in_a_row</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.at_most_k_in_a_row" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="sweetpea.constraints.AtMostKInARow">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">AtMostKInARow</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><span class="pre">sweetpea.primitives.Factor</span></a><span class="p"><span class="pre">,</span> </span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.SimpleLevel" title="sweetpea.primitives.SimpleLevel"><span class="pre">sweetpea.primitives.SimpleLevel</span></a><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><span class="pre">sweetpea.primitives.DerivedLevel</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.AtMostKInARow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.constraints._KInARow</span></code></p>
+<dl class="py method">
+<dt id="sweetpea.constraints.AtMostKInARow.apply_to_backend_request">
+<code class="sig-name descname"><span class="pre">apply_to_backend_request</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><span class="pre">sweetpea.blocks.Block</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><span class="pre">sweetpea.primitives.Factor</span></a><span class="p"><span class="pre">,</span> </span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.SimpleLevel" title="sweetpea.primitives.SimpleLevel"><span class="pre">sweetpea.primitives.SimpleLevel</span></a><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><span class="pre">sweetpea.primitives.DerivedLevel</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend_request</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.backend.html#sweetpea.backend.BackendRequest" title="sweetpea.backend.BackendRequest"><span class="pre">sweetpea.backend.BackendRequest</span></a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)"><span class="pre">None</span></a><a class="headerlink" href="#sweetpea.constraints.AtMostKInARow.apply_to_backend_request" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="sweetpea.constraints.no_more_than_k_in_a_row">
+<code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">no_more_than_k_in_a_row</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.no_more_than_k_in_a_row" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="sweetpea.constraints.NoMoreThanKInARow">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">NoMoreThanKInARow</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.NoMoreThanKInARow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="sweetpea.base_constraint.html#sweetpea.base_constraint.Constraint" title="sweetpea.base_constraint.Constraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.base_constraint.Constraint</span></code></a></p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="sweetpea.constraints.exactly_k">
+<code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">exactly_k</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.exactly_k" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="sweetpea.constraints.ExactlyK">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">ExactlyK</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><span class="pre">sweetpea.primitives.Factor</span></a><span class="p"><span class="pre">,</span> </span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.SimpleLevel" title="sweetpea.primitives.SimpleLevel"><span class="pre">sweetpea.primitives.SimpleLevel</span></a><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><span class="pre">sweetpea.primitives.DerivedLevel</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.ExactlyK" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.constraints._KInARow</span></code></p>
+<dl class="py method">
+<dt id="sweetpea.constraints.ExactlyK.apply_to_backend_request">
+<code class="sig-name descname"><span class="pre">apply_to_backend_request</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><span class="pre">sweetpea.blocks.Block</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><span class="pre">sweetpea.primitives.Factor</span></a><span class="p"><span class="pre">,</span> </span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.SimpleLevel" title="sweetpea.primitives.SimpleLevel"><span class="pre">sweetpea.primitives.SimpleLevel</span></a><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><span class="pre">sweetpea.primitives.DerivedLevel</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend_request</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.backend.html#sweetpea.backend.BackendRequest" title="sweetpea.backend.BackendRequest"><span class="pre">sweetpea.backend.BackendRequest</span></a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)"><span class="pre">None</span></a><a class="headerlink" href="#sweetpea.constraints.ExactlyK.apply_to_backend_request" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="sweetpea.constraints.exactly_k_in_a_row">
+<code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">exactly_k_in_a_row</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.exactly_k_in_a_row" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="sweetpea.constraints.ExactlyKInARow">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">ExactlyKInARow</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><span class="pre">sweetpea.primitives.Factor</span></a><span class="p"><span class="pre">,</span> </span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.SimpleLevel" title="sweetpea.primitives.SimpleLevel"><span class="pre">sweetpea.primitives.SimpleLevel</span></a><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><span class="pre">sweetpea.primitives.DerivedLevel</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.ExactlyKInARow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.constraints._KInARow</span></code></p>
+<dl class="py method">
+<dt id="sweetpea.constraints.ExactlyKInARow.apply_to_backend_request">
+<code class="sig-name descname"><span class="pre">apply_to_backend_request</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><span class="pre">sweetpea.blocks.Block</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><span class="pre">sweetpea.primitives.Factor</span></a><span class="p"><span class="pre">,</span> </span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.SimpleLevel" title="sweetpea.primitives.SimpleLevel"><span class="pre">sweetpea.primitives.SimpleLevel</span></a><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><span class="pre">sweetpea.primitives.DerivedLevel</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend_request</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.backend.html#sweetpea.backend.BackendRequest" title="sweetpea.backend.BackendRequest"><span class="pre">sweetpea.backend.BackendRequest</span></a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)"><span class="pre">None</span></a><a class="headerlink" href="#sweetpea.constraints.ExactlyKInARow.apply_to_backend_request" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="sweetpea.constraints.exclude">
+<code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">exclude</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.exclude" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="sweetpea.constraints.Exclude">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">Exclude</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.Exclude" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="sweetpea.base_constraint.html#sweetpea.base_constraint.Constraint" title="sweetpea.base_constraint.Constraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.base_constraint.Constraint</span></code></a></p>
+<dl class="py method">
+<dt id="sweetpea.constraints.Exclude.validate">
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><span class="pre">sweetpea.blocks.Block</span></a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)"><span class="pre">None</span></a><a class="headerlink" href="#sweetpea.constraints.Exclude.validate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="sweetpea.constraints.Exclude.extract_simplelevel">
+<code class="sig-name descname"><span class="pre">extract_simplelevel</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><span class="pre">sweetpea.blocks.Block</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><span class="pre">sweetpea.primitives.DerivedLevel</span></a></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><span class="pre">sweetpea.primitives.Factor</span></a><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.SimpleLevel" title="sweetpea.primitives.SimpleLevel"><span class="pre">sweetpea.primitives.SimpleLevel</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#sweetpea.constraints.Exclude.extract_simplelevel" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="sweetpea.constraints.Exclude.apply">
+<code class="sig-name descname"><span class="pre">apply</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><span class="pre">sweetpea.blocks.Block</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend_request</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.backend.html#sweetpea.backend.BackendRequest" title="sweetpea.backend.BackendRequest"><span class="pre">sweetpea.backend.BackendRequest</span></a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)"><span class="pre">None</span></a><a class="headerlink" href="#sweetpea.constraints.Exclude.apply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="sweetpea.constraints.minimum_trials">
+<code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">minimum_trials</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trials</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.minimum_trials" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="sweetpea.constraints.MinimumTrials">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">MinimumTrials</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trials</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.MinimumTrials" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="sweetpea.base_constraint.html#sweetpea.base_constraint.Constraint" title="sweetpea.base_constraint.Constraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.base_constraint.Constraint</span></code></a></p>
+<dl class="py method">
+<dt id="sweetpea.constraints.MinimumTrials.validate">
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><span class="pre">sweetpea.blocks.Block</span></a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)"><span class="pre">None</span></a><a class="headerlink" href="#sweetpea.constraints.MinimumTrials.validate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="sweetpea.constraints.MinimumTrials.apply">
+<code class="sig-name descname"><span class="pre">apply</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><span class="pre">sweetpea.blocks.Block</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend_request</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.backend.html#sweetpea.backend.BackendRequest" title="sweetpea.backend.BackendRequest"><span class="pre">sweetpea.backend.BackendRequest</span></a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)"><span class="pre">None</span></a><a class="headerlink" href="#sweetpea.constraints.MinimumTrials.apply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="sweetpea.derivation_processor.html" class="btn btn-neutral float-right" title="sweetpea.derivation_processor module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="sweetpea.combinatorics.html" class="btn btn-neutral float-left" title="sweetpea.combinatorics module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, SweetPea Research Group.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
