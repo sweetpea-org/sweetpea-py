@@ -6,9 +6,9 @@
 SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
 SPHINXAPIDOC  ?= sphinx-apidoc
-SOURCEDIR     = source
+SOURCEDIR     = _source
 APIDOCDIR     = $(SOURCEDIR)/_apidoc
-BUILDDIR      = build
+BUILDDIR      = _build
 MODULEDIR     = ../sweetpea
 
 .PHONY: apidoc clean-apidoc help Makefile
