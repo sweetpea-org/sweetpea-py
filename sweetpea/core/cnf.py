@@ -9,7 +9,7 @@ import math
 from itertools import chain
 from typing import Iterable, List, Optional, Sequence, Tuple, Union
 
-from .binary import BinaryNumber, binary
+from .binary import BinaryNumber, int_to_binary
 from .simple_sequence import SimpleSequence
 
 
@@ -466,7 +466,7 @@ class CNF(SimpleSequence[Clause]):
         # TODO: Describe this function's purpose.
         sum_bits = self.pop_count(in_list)
         # Add zero padding to the left.
-        in_binary = binary(k)
+        in_binary =  int_to_binary(k)
         in_binary.reverse()
         left_padded: BinaryNumber = in_binary[:len(sum_bits)]
         left_padded += [-1 for _ in range(len(sum_bits) - len(left_padded))]
@@ -486,7 +486,7 @@ class CNF(SimpleSequence[Clause]):
 
     def _inequality_assertion(self, assert_less_than: bool, k: int, in_list: Sequence[Var]):
         sum_bits = self.pop_count(in_list)
-        in_binary = binary(k)
+        in_binary = int_to_binary(k)
         k_vars = self.get_n_fresh(len(in_binary))
         assertion = [Var(kv.value * b) for (kv, b) in zip(k_vars, in_binary)]
         self.prepend(CNF([Clause(x) for x in assertion]))
