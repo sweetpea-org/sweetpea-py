@@ -33,6 +33,7 @@ import sphinx_rtd_theme  # noqa
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
+    'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
     'sphinx.ext.githubpages',
@@ -67,6 +68,16 @@ html_theme = 'sphinx_rtd_theme'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+
+# -- Intersphinx configuration -----------------------------------------------
+
+# NOTE: SweetPea currently is based on Python 3.7.9, so we point to the 3.7
+#       documentation for intersphinx links. (You cannot specify a particular
+#       minor version.)
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3.7', None),
+}
 
 
 # -- Extension configuration -------------------------------------------------
