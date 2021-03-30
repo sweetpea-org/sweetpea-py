@@ -178,14 +178,19 @@
             
   <div class="section" id="module-sweetpea.core.generate.tools.cryptominisat">
 <span id="sweetpea-core-generate-tools-cryptominisat-module"></span><h1>sweetpea.core.generate.tools.cryptominisat module<a class="headerlink" href="#module-sweetpea.core.generate.tools.cryptominisat" title="Permalink to this headline">¶</a></h1>
-<p>This module provides functionality for calling CryptoMiniSAT.</p>
+<p>This module provides functionality for calling the third-party CryptoMiniSAT
+tool.</p>
+<p><a class="reference external" href="https://github.com/msoos/cryptominisat">CryptoMiniSAT</a> is a an advanced
+incremental SAT solver. SweetPea uses CryptoMiniSAT for a few processes,
+including solving some CNF formulas or checking whether a CNF formula is
+satisfiable to begin with.</p>
 <dl class="py function">
 <dt id="sweetpea.core.generate.tools.cryptominisat.cryptominisat_solve">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.cryptominisat.</span></code><code class="sig-name descname"><span class="pre">cryptominisat_solve</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_file</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/pathlib.html#pathlib.Path" title="(in Python v3.7)"><span class="pre">pathlib.Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">docker_mode</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#bool" title="(in Python v3.7)"><span class="pre">bool</span></a></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#sweetpea.core.generate.tools.cryptominisat.cryptominisat_solve" title="Permalink to this definition">¶</a></dt>
-<dd><p>Attempts to solve a CNF formula with CryptoMiniSAT and return the result
-as a list of integers.</p>
-<p>Returns an empty list if the result was unsatisfiable, and returns None if
-CryptoMiniSAT encounters some unknown issue.</p>
+<dd><p>Attempts to solve a CNF formula with CryptoMiniSAT and returns the
+result as a list of integers.</p>
+<p>Returns an empty list if the result was unsatisfiable, and returns <code class="docutils literal notranslate"><span class="pre">None</span></code>
+if CryptoMiniSAT encounters some unknown issue.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -193,7 +198,7 @@ CryptoMiniSAT encounters some unknown issue.</p>
 <code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.cryptominisat.</span></code><code class="sig-name descname"><span class="pre">cryptominisat_is_satisfiable</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_file</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/pathlib.html#pathlib.Path" title="(in Python v3.7)"><span class="pre">pathlib.Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">docker_mode</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#bool" title="(in Python v3.7)"><span class="pre">bool</span></a></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#bool" title="(in Python v3.7)"><span class="pre">bool</span></a><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#sweetpea.core.generate.tools.cryptominisat.cryptominisat_is_satisfiable" title="Permalink to this definition">¶</a></dt>
 <dd><p>Determines whether the CNF formula encoded in the input file is
 satisfiable, according to CryptoMiniSAT.</p>
-<p>Returns None if CryptoMiniSAT encounters an unknown issue.</p>
+<p>Returns <code class="docutils literal notranslate"><span class="pre">None</span></code> if CryptoMiniSAT encounters an unknown issue.</p>
 </dd></dl>
 
 </div>

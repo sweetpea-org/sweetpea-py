@@ -178,16 +178,82 @@
             
   <div class="section" id="module-sweetpea.core.generate.tools.executables">
 <span id="sweetpea-core-generate-tools-executables-module"></span><h1>sweetpea.core.generate.tools.executables module<a class="headerlink" href="#module-sweetpea.core.generate.tools.executables" title="Permalink to this headline">¶</a></h1>
-<p>This script makes it easy to set up the Unigen and CryptoMiniSAT executables
-as needed by Sweetpea.</p>
-<dl class="simple">
-<dt>NOTE: SweetPea Core only makes use of the automated download of the current</dt><dd><p>system and machine-type’s executables from the latest release. The rest
-of the code accommodates other use cases and is not strictly necessary,
-but it took a bit of reading to suss out GitHub’s API so I figured I’d
-leave it in place for future use if necessary. But perhaps it should be
-removed at some point.</p>
+<p>This module makes it easy to set up the Unigen and CryptoMiniSAT executables
+as needed by Sweetpea. It can also be run as a script.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>SweetPea Core only makes use of the automated download of the current
+system and machine-type’s executables from the latest release. The rest of
+the code accommodates other use cases and is not strictly necessary, but it
+took a bit of reading to suss out GitHub’s API so I figured I’d leave it in
+place for future use if necessary. But perhaps it should be removed at some
+point.</p>
+</div>
+<div class="section" id="using-this-module-as-a-script">
+<h2>Using This Module As a Script<a class="headerlink" href="#using-this-module-as-a-script" title="Permalink to this headline">¶</a></h2>
+<p>To use this module as a script, do <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">executables.py</span></code> (specifying the
+full path as needed). A number of options are supported:</p>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show a help message and exit.</p>
+</dd>
+<dt><kbd><span class="option">-d <var>BIN_DIR</var></span>, <span class="option">--bin-dir <var>BIN_DIR</var></span></kbd></dt>
+<dd><p>The directory into which to install the executables.</p>
+<p>The default is determined by <code class="xref py py-func docutils literal notranslate"><span class="pre">appdirs.user_data_dir()</span></code> +
+<code class="docutils literal notranslate"><span class="pre">SweetPea/Executables</span></code>.</p>
+</dd>
+<dt><kbd><span class="option">-s <var>SYSTEM</var></span>, <span class="option">--system <var>SYSTEM</var></span></kbd></dt>
+<dd><p>The target system. Valid options are <code class="docutils literal notranslate"><span class="pre">None</span></code>, <code class="docutils literal notranslate"><span class="pre">Darwin</span></code>, <code class="docutils literal notranslate"><span class="pre">Linux</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">Windows</span></code>. When <code class="docutils literal notranslate"><span class="pre">None</span></code> is given, the system will be automatically
+deduced by <a class="reference external" href="https://docs.python.org/3.7/library/platform.html#platform.system" title="(in Python v3.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">platform.system()</span></code></a>.</p>
+<p>The default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt><kbd><span class="option">-m <var>MACHINE</var></span>, <span class="option">--machine <var>MACHINE</var></span></kbd></dt>
+<dd><p>The target machine type. Valid options are <code class="docutils literal notranslate"><span class="pre">None</span></code>, <code class="docutils literal notranslate"><span class="pre">arm64</span></code>, <code class="docutils literal notranslate"><span class="pre">x86_64</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">AMD64</span></code>. When <code class="docutils literal notranslate"><span class="pre">None</span></code> is given, the machine type will be
+automatically deduced by <a class="reference external" href="https://docs.python.org/3.7/library/platform.html#platform.machine" title="(in Python v3.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">platform.machine()</span></code></a>.</p>
+<p>The default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt><kbd><span class="option">-t <var>TAG</var></span>, <span class="option">--tag <var>TAG</var></span></kbd></dt>
+<dd><p>The <a class="reference external" href="https://github.com/sweetpea-org/unigen-exe">sweetpea-org/unigen-exe</a>
+release tag to target for downloading.</p>
+<p>The default is to use the latest available release tag.</p>
+</dd>
+<dt><kbd><span class="option">--asset-string</span></kbd></dt>
+<dd><p>Prints out the asset string for the indicated system+machine combination.
+This is provided mostly for debugging.</p>
 </dd>
 </dl>
+<dl class="py data">
+<dt id="sweetpea.core.generate.tools.executables.DOWNLOAD_UNIGEN_ENV_VAR">
+<code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.executables.</span></code><code class="sig-name descname"><span class="pre">DOWNLOAD_UNIGEN_ENV_VAR</span></code><em class="property"> <span class="pre">=</span> <span class="pre">'UNIGEN_DOWNLOAD_IF_MISSING'</span></em><a class="headerlink" href="#sweetpea.core.generate.tools.executables.DOWNLOAD_UNIGEN_ENV_VAR" title="Permalink to this definition">¶</a></dt>
+<dd><p>The name of the environment variable that can be used to specify whether the
+bundled executables should be downloaded. The default value is <code class="docutils literal notranslate"><span class="pre">True</span></code>.
+Valid options are:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 67%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>Download executables if missing</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">True</span></code>, <code class="docutils literal notranslate"><span class="pre">true</span></code>, <code class="docutils literal notranslate"><span class="pre">T</span></code>, <code class="docutils literal notranslate"><span class="pre">t</span></code>, <code class="docutils literal notranslate"><span class="pre">Yes</span></code>, <code class="docutils literal notranslate"><span class="pre">yes</span></code>, <code class="docutils literal notranslate"><span class="pre">Y</span></code>, <code class="docutils literal notranslate"><span class="pre">y</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Do not download executables</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">False</span></code>, <code class="docutils literal notranslate"><span class="pre">false</span></code>, <code class="docutils literal notranslate"><span class="pre">F</span></code>, <code class="docutils literal notranslate"><span class="pre">f</span></code>, <code class="docutils literal notranslate"><span class="pre">No</span></code>, <code class="docutils literal notranslate"><span class="pre">no</span></code>, <code class="docutils literal notranslate"><span class="pre">N</span></code>, <code class="docutils literal notranslate"><span class="pre">n</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="py data">
+<dt id="sweetpea.core.generate.tools.executables.UNIGEN_EXE_ENV_VAR">
+<code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.executables.</span></code><code class="sig-name descname"><span class="pre">UNIGEN_EXE_ENV_VAR</span></code><em class="property"> <span class="pre">=</span> <span class="pre">'UNIGEN_EXE_DIR'</span></em><a class="headerlink" href="#sweetpea.core.generate.tools.executables.UNIGEN_EXE_ENV_VAR" title="Permalink to this definition">¶</a></dt>
+<dd><p>The folder in which executables will be stored if they are going to be
+downloaded. The default is an automatically generated directory in the
+user’s data directory as determined by <code class="xref py py-func docutils literal notranslate"><span class="pre">appdirs.user_data_dir()</span></code>.</p>
+</dd></dl>
+
 <dl class="py function">
 <dt id="sweetpea.core.generate.tools.executables.ensure_executable_available">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.executables.</span></code><code class="sig-name descname"><span class="pre">ensure_executable_available</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">executable_path</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/pathlib.html#pathlib.Path" title="(in Python v3.7)"><span class="pre">pathlib.Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">download_if_missing</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#bool" title="(in Python v3.7)"><span class="pre">bool</span></a></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.tools.executables.ensure_executable_available" title="Permalink to this definition">¶</a></dt>
@@ -195,6 +261,7 @@ removed at some point.</p>
 downloads it (and its companions) automatically.</p>
 </dd></dl>
 
+</div>
 </div>
 
 

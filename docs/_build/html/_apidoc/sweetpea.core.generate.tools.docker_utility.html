@@ -178,32 +178,42 @@
             
   <div class="section" id="module-sweetpea.core.generate.tools.docker_utility">
 <span id="sweetpea-core-generate-tools-docker-utility-module"></span><h1>sweetpea.core.generate.tools.docker_utility module<a class="headerlink" href="#module-sweetpea.core.generate.tools.docker_utility" title="Permalink to this headline">¶</a></h1>
-<p>This module provides simple Docker command-line functionality.</p>
+<p>This module provides simple Docker command-line functionality. It is
+generally discouraged to use this functionality, as we prefer using the bundled
+executables from <a class="reference external" href="https://github.com/sweetpea-org/unigen-exe">sweetpea-org/unigen-exe</a>. However, these executables may
+lag behind their respective repositories, so we provide the Docker
+functionality to stay on the cutting edge.</p>
+<dl class="py data">
+<dt id="sweetpea.core.generate.tools.docker_utility.DEFAULT_DOCKER_MODE_ON">
+<code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.docker_utility.</span></code><code class="sig-name descname"><span class="pre">DEFAULT_DOCKER_MODE_ON</span></code><em class="property"> <span class="pre">=</span> <span class="pre">False</span></em><a class="headerlink" href="#sweetpea.core.generate.tools.docker_utility.DEFAULT_DOCKER_MODE_ON" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether Docker should be used by default.</p>
+</dd></dl>
+
 <dl class="py class">
 <dt id="sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.docker_utility.</span></code><code class="sig-name descname"><span class="pre">DockerRunReturnCode</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="sweetpea.core.generate.tools.return_code.html#sweetpea.core.generate.tools.return_code.ReturnCodeEnum" title="sweetpea.core.generate.tools.return_code.ReturnCodeEnum"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.core.generate.tools.return_code.ReturnCodeEnum</span></code></a></p>
-<p>Invocation of the <cite>docker run</cite> command can result in one of the
+<p>Invocation of the <code class="docutils literal notranslate"><span class="pre">docker</span> <span class="pre">run</span></code> command can result in one of the
 following special return codes. Any other return code is the result of
 invoking the indicated command in the container.</p>
-<dl class="simple">
-<dt>Reference:</dt><dd><p><a class="reference external" href="https://docs.docker.com/engine/reference/run/#exit-status">https://docs.docker.com/engine/reference/run/#exit-status</a></p>
-</dd>
-</dl>
+<p>Based on <a class="reference external" href="https://docs.docker.com/engine/reference/run/#exit-status">this reference information</a>.</p>
 <dl class="py attribute">
 <dt id="sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode.DockerDaemonError">
 <code class="sig-name descname"><span class="pre">DockerDaemonError</span></code><em class="property"> <span class="pre">=</span> <span class="pre">125</span></em><a class="headerlink" href="#sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode.DockerDaemonError" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>There was an error executing the Docker daemon itself.</p>
+</dd></dl>
 
 <dl class="py attribute">
 <dt id="sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode.ContainedCommandCannotBeInvokedError">
 <code class="sig-name descname"><span class="pre">ContainedCommandCannotBeInvokedError</span></code><em class="property"> <span class="pre">=</span> <span class="pre">126</span></em><a class="headerlink" href="#sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode.ContainedCommandCannotBeInvokedError" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The command produced an error in the container.</p>
+</dd></dl>
 
 <dl class="py attribute">
 <dt id="sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode.ContainedCommandCannotBeFoundError">
 <code class="sig-name descname"><span class="pre">ContainedCommandCannotBeFoundError</span></code><em class="property"> <span class="pre">=</span> <span class="pre">127</span></em><a class="headerlink" href="#sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode.ContainedCommandCannotBeFoundError" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The command specified could not be found in the container.</p>
+</dd></dl>
 
 </dd></dl>
 
@@ -219,7 +229,8 @@ invoking the indicated command in the container.</p>
 <code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.docker_utility.</span></code><code class="sig-name descname"><span class="pre">docker_run</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">container</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_bytes</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#bytes" title="(in Python v3.7)"><span class="pre">bytes</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/subprocess.html#subprocess.CompletedProcess" title="(in Python v3.7)"><span class="pre">subprocess.CompletedProcess</span></a><a class="headerlink" href="#sweetpea.core.generate.tools.docker_utility.docker_run" title="Permalink to this definition">¶</a></dt>
 <dd><p>Runs a Docker container, with the optional arguments and input if
 provided.</p>
-<p>If the execution produces an error, a DockerRunError will be raised.</p>
+<p>If the execution produces an error, a <a class="reference internal" href="#sweetpea.core.generate.tools.docker_utility.DockerRunError" title="sweetpea.core.generate.tools.docker_utility.DockerRunError"><code class="xref py py-class docutils literal notranslate"><span class="pre">DockerRunError</span></code></a> will be
+raised.</p>
 </dd></dl>
 
 </div>
