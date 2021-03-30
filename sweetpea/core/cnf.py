@@ -288,9 +288,8 @@ class CNF(SimpleSequence[Clause]):
         """Represents the :class:`CNF` as a string in the DIMACS format.
 
         The DIMACS format is a standardized method of representing CNF formulas
-        as strings. This implementation is based on the details given here:
-
-            https://people.sc.fsu.edu/~jburkardt/data/cnf/cnf.html
+        as strings. This implementation is based on the details given `here
+        <https://people.sc.fsu.edu/~jburkardt/data/cnf/cnf.html>`_.
         """
         if fresh_variable_count is None:
             fresh_variable_count = self._num_vars
