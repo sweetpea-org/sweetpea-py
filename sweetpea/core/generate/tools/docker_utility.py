@@ -1,4 +1,10 @@
-"""This module provides simple Docker command-line functionality."""
+"""This module provides simple Docker command-line functionality. It is
+generally discouraged to use this functionality, as we prefer using the bundled
+executables from `sweetpea-org/unigen-exe
+<https://github.com/sweetpea-org/unigen-exe>`_. However, these executables may
+lag behind their respective repositories, so we provide the Docker
+functionality to stay on the cutting edge.
+"""
 
 
 from subprocess import CompletedProcess, run
@@ -7,20 +13,24 @@ from typing import List, Optional
 from .return_code import ReturnCodeEnum
 
 
+#: Whether Docker should be used by default.
 DEFAULT_DOCKER_MODE_ON = False
 
 
 class DockerRunReturnCode(ReturnCodeEnum):
-    """Invocation of the `docker run` command can result in one of the
+    """Invocation of the ``docker run`` command can result in one of the
     following special return codes. Any other return code is the result of
     invoking the indicated command in the container.
 
-    Reference:
-        https://docs.docker.com/engine/reference/run/#exit-status
+    Based on `this reference information
+    <https://docs.docker.com/engine/reference/run/#exit-status>`_.
     """
 
+    #: There was an error executing the Docker daemon itself.
     DockerDaemonError                    = 125
+    #: The command produced an error in the container.
     ContainedCommandCannotBeInvokedError = 126
+    #: The command specified could not be found in the container.
     ContainedCommandCannotBeFoundError   = 127
 
 
@@ -37,7 +47,8 @@ def docker_run(container: str,
     """Runs a Docker container, with the optional arguments and input if
     provided.
 
-    If the execution produces an error, a DockerRunError will be raised.
+    If the execution produces an error, a :class:`DockerRunError` will be
+    raised.
     """
     if args is None:
         args = []

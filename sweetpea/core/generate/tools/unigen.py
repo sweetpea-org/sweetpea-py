@@ -1,4 +1,10 @@
-"""This module provides functionality for calling Unigen."""
+"""This module provides functionality for calling the third-party Unigen tool.
+
+`Unigen <https://github.com/meelgroup/unigen>`_ is a state-of-the-art,
+almost-uniform SAT sampler that uses `CryptoMiniSAT
+<https://github.com/msoos/cryptominisat>`_ to solve SAT problems. SweetPea uses
+Unigen for a few processes.
+"""
 
 
 from pathlib import Path
@@ -33,10 +39,10 @@ def call_unigen_cli(input_file: Path, download_if_missing: bool) -> CompletedPro
     """Calls Unigen from the command line, reading a given file as the input
     problem.
 
-    If `download_if_missing` is `True`, SweetPea will automatically download
-    the Unigen executable (and other executables SweetPea depends on) to a
-    local directory from this repository:
-        https://github.com/sweetpea-org/unigen-exe
+    If ``download_if_missing`` is ``True``, SweetPea will automatically
+    download the Unigen executable (and other executables SweetPea depends on)
+    to a local directory from the `sweetpea-org/unigen-exe repository
+    <https://github.com/sweetpea-org/unigen-exe>`_.
     """
     ensure_executable_available(UNIGEN_EXE, download_if_missing)
     command = [str(UNIGEN_EXE), str(input_file)]
@@ -53,12 +59,12 @@ def call_unigen(input_file: Path,
                 ) -> str:
     """Calls Unigen with the given file as input.
 
-    If `docker_mode` is `True`, this will use a Docker container to run Unigen.
-    If it's `False`, a command-line executable will be used.
+    If ``docker_mode`` is ``True``, this will use a Docker container to run
+    Unigen. If it's ``False``, a command-line executable will be used.
 
-    If `docker_mode` is `False` and no local Unigen executable can be found,
-    and if `download_if_missing` is `True`, the needed executable will be
-    automatically downloaded if it's missing.
+    If ``docker_mode`` is ``False`` and no local Unigen executable can be
+    found, and if ``download_if_missing`` is ``True``, the needed executable
+    will be automatically downloaded if it's missing.
     """
     if docker_mode:
         result = call_unigen_docker(input_file)
