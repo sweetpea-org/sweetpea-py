@@ -176,24 +176,36 @@
             
   <div class="section" id="module-sweetpea.core.generate.sample_non_uniform">
 <span id="sweetpea-core-generate-sample-non-uniform-module"></span><h1>sweetpea.core.generate.sample_non_uniform module<a class="headerlink" href="#module-sweetpea.core.generate.sample_non_uniform" title="Permalink to this headline">¶</a></h1>
-<p>This module provides non-uniform CNF sampling functionality.</p>
+<p>This module provides non-uniform CNF sampling functionality through the
+<a class="reference internal" href="#sweetpea.core.generate.sample_non_uniform.sample_non_uniform" title="sweetpea.core.generate.sample_non_uniform.sample_non_uniform"><code class="xref py py-func docutils literal notranslate"><span class="pre">sample_non_uniform()</span></code></a> function.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For compatibility with older testing mechanisms, there is also the
+<a class="reference internal" href="#sweetpea.core.generate.sample_non_uniform.sample_non_uniform_from_specification" title="sweetpea.core.generate.sample_non_uniform.sample_non_uniform_from_specification"><code class="xref py py-func docutils literal notranslate"><span class="pre">sample_non_uniform_from_specification()</span></code></a> function, which takes a
+<a class="reference internal" href="sweetpea.core.generate.utility.html#sweetpea.core.generate.utility.ProblemSpecification" title="sweetpea.core.generate.utility.ProblemSpecification"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProblemSpecification</span></code></a> as input. The <a class="reference internal" href="sweetpea.core.generate.utility.html#sweetpea.core.generate.utility.ProblemSpecification" title="sweetpea.core.generate.utility.ProblemSpecification"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProblemSpecification</span></code></a>
+can be generated with an appropriately formatted JSON file, which is how
+inputs were given in the original Haskell version of SweetPea Core. This
+function (and the associated classes) will likely be removed from SweetPea
+at some point.</p>
+</div>
 <dl class="py function">
 <dt id="sweetpea.core.generate.sample_non_uniform.sample_non_uniform">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.sample_non_uniform.</span></code><code class="sig-name descname"><span class="pre">sample_non_uniform</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_cnf</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.core.cnf.html#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><span class="pre">sweetpea.core.cnf.CNF</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">fresh</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">generation_requests</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sweetpea.core.generate.utility.html#sweetpea.core.generate.utility.GenerationRequest" title="sweetpea.core.generate.utility.GenerationRequest"><span class="pre">sweetpea.core.generate.utility.GenerationRequest</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sweetpea.core.generate.utility.html#sweetpea.core.generate.utility.Solution" title="sweetpea.core.generate.utility.Solution"><span class="pre">sweetpea.core.generate.utility.Solution</span></a><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#sweetpea.core.generate.sample_non_uniform.sample_non_uniform" title="Permalink to this definition">¶</a></dt>
-<dd><p>Samples solutions to a CNF problem non-uniformly. Produces <cite>count</cite>
-solutions, each with a support set of length <cite>support</cite>.</p>
+<dd><p>Samples solutions to a CNF problem non-uniformly. Produces <code class="docutils literal notranslate"><span class="pre">count</span></code>
+solutions, each with a support set of length <code class="docutils literal notranslate"><span class="pre">support</span></code>.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt id="sweetpea.core.generate.sample_non_uniform.sample_non_uniform_from_specification">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.sample_non_uniform.</span></code><code class="sig-name descname"><span class="pre">sample_non_uniform_from_specification</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spec</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.core.generate.utility.html#sweetpea.core.generate.utility.ProblemSpecification" title="sweetpea.core.generate.utility.ProblemSpecification"><span class="pre">sweetpea.core.generate.utility.ProblemSpecification</span></a></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sweetpea.core.generate.utility.html#sweetpea.core.generate.utility.Solution" title="sweetpea.core.generate.utility.Solution"><span class="pre">sweetpea.core.generate.utility.Solution</span></a><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#sweetpea.core.generate.sample_non_uniform.sample_non_uniform_from_specification" title="Permalink to this definition">¶</a></dt>
 <dd><p>Samples solutions to a CNF problem non-uniformly, using a
-<cite>ProblemSpecification</cite> object.</p>
-<dl class="simple">
-<dt>NOTE: This function exists for easier legacy compatibility from when</dt><dd><p>SweetPea’s input was given as JSON files. This should no longer be
+<a class="reference internal" href="sweetpea.core.generate.utility.html#sweetpea.core.generate.utility.ProblemSpecification" title="sweetpea.core.generate.utility.ProblemSpecification"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProblemSpecification</span></code></a>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This function exists for easier legacy compatibility from when
+SweetPea’s input was given as JSON files. This should no longer be
 necessary.</p>
-</dd>
-</dl>
+</div>
 </dd></dl>
 
 </div>

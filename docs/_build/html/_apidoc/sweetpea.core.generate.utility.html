@@ -177,34 +177,34 @@
   <div class="section" id="module-sweetpea.core.generate.utility">
 <span id="sweetpea-core-generate-utility-module"></span><h1>sweetpea.core.generate.utility module<a class="headerlink" href="#module-sweetpea.core.generate.utility" title="Permalink to this headline">¶</a></h1>
 <p>This module provides the types and common functions that are used across the
-various generation functionalities.</p>
+various submodules of <a class="reference internal" href="sweetpea.core.generate.html#module-sweetpea.core.generate" title="sweetpea.core.generate"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sweetpea.core.generate</span></code></a>.</p>
 <dl class="py class">
 <dt id="sweetpea.core.generate.utility.AssertionType">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.utility.</span></code><code class="sig-name descname"><span class="pre">AssertionType</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.utility.AssertionType" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.7/library/enum.html#enum.Enum" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></a></p>
-<p>The three supported variants of CNF assertion:</p>
-<p>EQ :: assert k == n
-LT :: assert k &lt; n
-GT :: assert k &gt; n</p>
+<p>The three supported variants of CNF assertion.</p>
 <dl class="py attribute">
 <dt id="sweetpea.core.generate.utility.AssertionType.EQ">
 <code class="sig-name descname"><span class="pre">EQ</span></code><em class="property"> <span class="pre">=</span> <span class="pre">1</span></em><a class="headerlink" href="#sweetpea.core.generate.utility.AssertionType.EQ" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Assert k == n.</p>
+</dd></dl>
 
 <dl class="py attribute">
 <dt id="sweetpea.core.generate.utility.AssertionType.LT">
 <code class="sig-name descname"><span class="pre">LT</span></code><em class="property"> <span class="pre">=</span> <span class="pre">2</span></em><a class="headerlink" href="#sweetpea.core.generate.utility.AssertionType.LT" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Assert k &lt; n.</p>
+</dd></dl>
 
 <dl class="py attribute">
 <dt id="sweetpea.core.generate.utility.AssertionType.GT">
 <code class="sig-name descname"><span class="pre">GT</span></code><em class="property"> <span class="pre">=</span> <span class="pre">3</span></em><a class="headerlink" href="#sweetpea.core.generate.utility.AssertionType.GT" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Assert k &gt; n.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.generate.utility.AssertionType.from_json">
 <em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">from_json</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#sweetpea.core.generate.utility.AssertionType" title="sweetpea.core.generate.utility.AssertionType"><span class="pre">sweetpea.core.generate.utility.AssertionType</span></a><a class="headerlink" href="#sweetpea.core.generate.utility.AssertionType.from_json" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts a JSON string to an AssertionType.</p>
+<dd><p>Converts a JSON string to an <a class="reference internal" href="#sweetpea.core.generate.utility.AssertionType" title="sweetpea.core.generate.utility.AssertionType"><code class="xref py py-class docutils literal notranslate"><span class="pre">AssertionType</span></code></a>.</p>
 </dd></dl>
 
 </dd></dl>
@@ -217,25 +217,25 @@ GT :: assert k &gt; n</p>
 <dl class="py method">
 <dt id="sweetpea.core.generate.utility.GenerationRequest.assertion_type">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">assertion_type</span></code><a class="headerlink" href="#sweetpea.core.generate.utility.GenerationRequest.assertion_type" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 0</p>
+<dd><p>The variant of assertion to make.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.generate.utility.GenerationRequest.k">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">k</span></code><a class="headerlink" href="#sweetpea.core.generate.utility.GenerationRequest.k" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 1</p>
+<dd><p>The <code class="docutils literal notranslate"><span class="pre">k</span></code> value.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.generate.utility.GenerationRequest.boolean_values">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">boolean_values</span></code><a class="headerlink" href="#sweetpea.core.generate.utility.GenerationRequest.boolean_values" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 2</p>
+<dd><p>A list of variables to use in generation.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.generate.utility.GenerationRequest.from_json">
 <em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">from_json</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#sweetpea.core.generate.utility.GenerationRequest" title="sweetpea.core.generate.utility.GenerationRequest"><span class="pre">sweetpea.core.generate.utility.GenerationRequest</span></a><a class="headerlink" href="#sweetpea.core.generate.utility.GenerationRequest.from_json" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts a JSON object to a GenerationRequest.</p>
+<dd><p>Converts a JSON object to a <a class="reference internal" href="#sweetpea.core.generate.utility.GenerationRequest" title="sweetpea.core.generate.utility.GenerationRequest"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenerationRequest</span></code></a>.</p>
 </dd></dl>
 
 </dd></dl>
@@ -244,26 +244,29 @@ GT :: assert k &gt; n</p>
 <dt id="sweetpea.core.generate.utility.SampleType">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.utility.</span></code><code class="sig-name descname"><span class="pre">SampleType</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.utility.SampleType" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.7/library/enum.html#enum.Enum" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></a></p>
-<p>The varieties of SAT sampling.</p>
+<p>The supported methods of interacting with SweetPea core.</p>
 <dl class="py attribute">
 <dt id="sweetpea.core.generate.utility.SampleType.Uniform">
 <code class="sig-name descname"><span class="pre">Uniform</span></code><em class="property"> <span class="pre">=</span> <span class="pre">1</span></em><a class="headerlink" href="#sweetpea.core.generate.utility.SampleType.Uniform" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Uniform sampling of a CNF formula.</p>
+</dd></dl>
 
 <dl class="py attribute">
 <dt id="sweetpea.core.generate.utility.SampleType.NonUniform">
 <code class="sig-name descname"><span class="pre">NonUniform</span></code><em class="property"> <span class="pre">=</span> <span class="pre">2</span></em><a class="headerlink" href="#sweetpea.core.generate.utility.SampleType.NonUniform" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Non-uniform sampling of a CNF formula.</p>
+</dd></dl>
 
 <dl class="py attribute">
 <dt id="sweetpea.core.generate.utility.SampleType.IsSatisfiable">
 <code class="sig-name descname"><span class="pre">IsSatisfiable</span></code><em class="property"> <span class="pre">=</span> <span class="pre">3</span></em><a class="headerlink" href="#sweetpea.core.generate.utility.SampleType.IsSatisfiable" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Test whether a CNF formula is satisfiable.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.generate.utility.SampleType.from_json">
 <em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">from_json</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#sweetpea.core.generate.utility.SampleType" title="sweetpea.core.generate.utility.SampleType"><span class="pre">sweetpea.core.generate.utility.SampleType</span></a><a class="headerlink" href="#sweetpea.core.generate.utility.SampleType.from_json" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts a JSON string to a SampleType.</p>
+<dd><p>Converts a JSON string to a <a class="reference internal" href="#sweetpea.core.generate.utility.SampleType" title="sweetpea.core.generate.utility.SampleType"><code class="xref py py-class docutils literal notranslate"><span class="pre">SampleType</span></code></a>.</p>
 </dd></dl>
 
 </dd></dl>
@@ -272,17 +275,17 @@ GT :: assert k &gt; n</p>
 <dt id="sweetpea.core.generate.utility.ProblemSpecification">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.utility.</span></code><code class="sig-name descname"><span class="pre">ProblemSpecification</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_type</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#sweetpea.core.generate.utility.SampleType" title="sweetpea.core.generate.utility.SampleType"><span class="pre">SampleType</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_count</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">fresh</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">cnf</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">CNF</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requests</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.core.generate.utility.GenerationRequest" title="sweetpea.core.generate.utility.GenerationRequest"><span class="pre">GenerationRequest</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.utility.ProblemSpecification" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#tuple" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a></p>
-<p>A specification of a complete problem to be solved.</p>
+<p>A specification of a complete SweetPea problem to be solved.</p>
 <dl class="py method">
 <dt id="sweetpea.core.generate.utility.ProblemSpecification.sample_type">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">sample_type</span></code><a class="headerlink" href="#sweetpea.core.generate.utility.ProblemSpecification.sample_type" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 0</p>
+<dd><p>The type of sample to produce.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.generate.utility.ProblemSpecification.sample_count">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">sample_count</span></code><a class="headerlink" href="#sweetpea.core.generate.utility.ProblemSpecification.sample_count" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 1</p>
+<dd><p>The number of samples to take.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -294,25 +297,25 @@ GT :: assert k &gt; n</p>
 <dl class="py method">
 <dt id="sweetpea.core.generate.utility.ProblemSpecification.support">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">support</span></code><a class="headerlink" href="#sweetpea.core.generate.utility.ProblemSpecification.support" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 3</p>
+<dd><p>The length of the support set.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.generate.utility.ProblemSpecification.cnf">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">cnf</span></code><a class="headerlink" href="#sweetpea.core.generate.utility.ProblemSpecification.cnf" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 4</p>
+<dd><p>The CNF formula to sample.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.generate.utility.ProblemSpecification.requests">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">requests</span></code><a class="headerlink" href="#sweetpea.core.generate.utility.ProblemSpecification.requests" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 5</p>
+<dd><p>A list of requests to make with regard to the CNF formula.</p>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.generate.utility.ProblemSpecification.from_json">
 <em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">from_json</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#sweetpea.core.generate.utility.ProblemSpecification" title="sweetpea.core.generate.utility.ProblemSpecification"><span class="pre">sweetpea.core.generate.utility.ProblemSpecification</span></a><a class="headerlink" href="#sweetpea.core.generate.utility.ProblemSpecification.from_json" title="Permalink to this definition">¶</a></dt>
-<dd><p>Converts a JSON object to a ProblemSpecification.</p>
+<dd><p>Converts a JSON object to a <a class="reference internal" href="#sweetpea.core.generate.utility.ProblemSpecification" title="sweetpea.core.generate.utility.ProblemSpecification"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProblemSpecification</span></code></a>.</p>
 </dd></dl>
 
 </dd></dl>
@@ -340,15 +343,15 @@ GT :: assert k &gt; n</p>
 <dt id="sweetpea.core.generate.utility.combine_and_save_cnf">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.utility.</span></code><code class="sig-name descname"><span class="pre">combine_and_save_cnf</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/pathlib.html#pathlib.Path" title="(in Python v3.7)"><span class="pre">pathlib.Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_cnf</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.core.cnf.html#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><span class="pre">sweetpea.core.cnf.CNF</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">fresh</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">generation_requests</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.core.generate.utility.GenerationRequest" title="sweetpea.core.generate.utility.GenerationRequest"><span class="pre">sweetpea.core.generate.utility.GenerationRequest</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.utility.combine_and_save_cnf" title="Permalink to this definition">¶</a></dt>
 <dd><p>Combines a base CNF formula with the augmentations specified by the
-list of GenerationRequests, merges those formulas, then saves the result to
-a file at the given path.</p>
+<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#list" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference internal" href="#sweetpea.core.generate.utility.GenerationRequest" title="sweetpea.core.generate.utility.GenerationRequest"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenerationRequests</span></code></a>, merges
+those formulas, then saves the result to a file at the given path.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt id="sweetpea.core.generate.utility.combine_cnf_with_requests">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.utility.</span></code><code class="sig-name descname"><span class="pre">combine_cnf_with_requests</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_cnf</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.core.cnf.html#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><span class="pre">sweetpea.core.cnf.CNF</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">fresh</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">generation_requests</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.core.generate.utility.GenerationRequest" title="sweetpea.core.generate.utility.GenerationRequest"><span class="pre">sweetpea.core.generate.utility.GenerationRequest</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="sweetpea.core.cnf.html#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><span class="pre">sweetpea.core.cnf.CNF</span></a><a class="headerlink" href="#sweetpea.core.generate.utility.combine_cnf_with_requests" title="Permalink to this definition">¶</a></dt>
-<dd><p>Combines a base CNF formula with a new CNF formula formed from the given
-GenerationRequests.</p>
+<dd><p>Combines a base <code class="xref py py-class docutils literal notranslate"><span class="pre">CNF</span></code> with a new <code class="xref py py-class docutils literal notranslate"><span class="pre">CNF</span></code> formed from the
+given <a class="reference internal" href="#sweetpea.core.generate.utility.GenerationRequest" title="sweetpea.core.generate.utility.GenerationRequest"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenerationRequests</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -360,9 +363,9 @@ GenerationRequests.</p>
 <dl class="py function">
 <dt id="sweetpea.core.generate.utility.temporary_cnf_file">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.utility.</span></code><code class="sig-name descname"><span class="pre">temporary_cnf_file</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_path</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/pathlib.html#pathlib.Path" title="(in Python v3.7)"><span class="pre">pathlib.Path</span></a></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">PosixPath('.')</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/pathlib.html#pathlib.Path" title="(in Python v3.7)"><span class="pre">pathlib.Path</span></a><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#sweetpea.core.generate.utility.temporary_cnf_file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a <cite>Path</cite> to a new, local file in the directory of the given path
-with a .cnf suffix. When used as a context manager (recommended), the file
-will be deleted when it leaves the context scope.</p>
+<dd><p>Returns a <a class="reference external" href="https://docs.python.org/3.7/library/pathlib.html#pathlib.Path" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a> to a new, local file in the directory of
+the given path with a <code class="docutils literal notranslate"><span class="pre">.cnf</span></code> suffix. When used as a context manager
+(recommended), the file will be deleted when it leaves the context scope.</p>
 </dd></dl>
 
 </div>
