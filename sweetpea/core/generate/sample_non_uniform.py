@@ -1,4 +1,15 @@
-"""This module provides non-uniform CNF sampling functionality."""
+"""This module provides non-uniform CNF sampling functionality through the
+:func:`sample_non_uniform` function.
+
+.. NOTE::
+    For compatibility with older testing mechanisms, there is also the
+    :func:`sample_non_uniform_from_specification` function, which takes a
+    :class:`.ProblemSpecification` as input. The :class:`.ProblemSpecification`
+    can be generated with an appropriately formatted JSON file, which is how
+    inputs were given in the original Haskell version of SweetPea Core. This
+    function (and the associated classes) will likely be removed from SweetPea
+    at some point.
+"""
 
 
 from pathlib import Path
@@ -18,8 +29,8 @@ def sample_non_uniform(count: int,
                        support: int,
                        generation_requests: List[GenerationRequest]
                        ) -> List[Solution]:
-    """Samples solutions to a CNF problem non-uniformly. Produces `count`
-    solutions, each with a support set of length `support`.
+    """Samples solutions to a CNF problem non-uniformly. Produces ``count``
+    solutions, each with a support set of length ``support``.
     """
     with temporary_cnf_file() as cnf_file:
         combine_and_save_cnf(cnf_file, initial_cnf, fresh, support, generation_requests)
@@ -29,11 +40,12 @@ def sample_non_uniform(count: int,
 
 def sample_non_uniform_from_specification(spec: ProblemSpecification) -> List[Solution]:
     """Samples solutions to a CNF problem non-uniformly, using a
-    `ProblemSpecification` object.
+    :class:`.ProblemSpecification`.
 
-    NOTE: This function exists for easier legacy compatibility from when
-          SweetPea's input was given as JSON files. This should no longer be
-          necessary.
+    .. NOTE::
+        This function exists for easier legacy compatibility from when
+        SweetPea's input was given as JSON files. This should no longer be
+        necessary.
     """
     return sample_non_uniform(spec.sample_count, spec.cnf, spec.fresh, spec.support, spec.requests)
 
@@ -44,7 +56,7 @@ def compute_solutions(filename: Path,
                       solutions: Optional[List[List[int]]] = None,
                       use_docker: bool = DEFAULT_DOCKER_MODE_ON
                       ) -> List[List[int]]:
-    """Attempts to solve a CNF problem `count` times with CryptoMiniSAT. Each
+    """Attempts to solve a CNF problem ``count`` times with CryptoMiniSAT. Each
     time a solution is generated, it is added to the problem file's header so
     new solutions may be generated. If at any point CryptoMiniSAT fails to
     generate a solution, execution terminates and the existing list of
