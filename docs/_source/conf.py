@@ -89,6 +89,8 @@ autodoc_default_options = {
     'member-order': 'bysource',
 }
 
+autodoc_typehints = 'description'
+
 # -- Options for todo extension ----------------------------------------------
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
