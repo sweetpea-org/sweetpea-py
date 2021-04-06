@@ -82,6 +82,8 @@ intersphinx_mapping = {
 
 # -- Extension configuration -------------------------------------------------
 
+autoclass_content = 'both'
+
 autodoc_default_options = {
     # autodocs for publicly visible members.
     'members': True,
