@@ -1,4 +1,4 @@
-.. _introduction:
+.. _home:
 
 SweetPea
 ========
@@ -14,18 +14,10 @@ constraints on the sequencing of factors, and how to map those factors onto a
 sequence of trials. Such a design is constructed by calling the various
 functions exposed at the top of the :mod:`sweetpea` module.
 
+
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 1
    :caption: Contents:
 
-   .. NOTE: We start at _apidoc/sweetpea instead of _apidoc/modules because we
-      only provide a single module, so having a higher-level organizational page
-      isn't very helpful.
-   _apidoc/sweetpea
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   guide
+   api
