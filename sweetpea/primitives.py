@@ -3,21 +3,34 @@ from itertools import product, chain, repeat
 import random
 
 
-"""
-Helper function which grabs names from derived levels;
-    if the level is non-derived the level *is* the name
-"""
 def get_internal_level_name(level: Any) -> Any:
+    """Returns the internal name of a level.
+
+    :param level:
+        The level of which to get the internal name.
+
+    :returns:
+        The internal name of the ``level``.
+    """
     return level.internal_name
 
+
 def get_external_level_name(level: Any) -> Any:
+    """Returns the external name of a level.
+
+    :param level:
+        The level of which to get the external name.
+
+    :returns:
+        The external name of the ``level``.
+    """
     return level.external_name
+
 
 class __Primitive:
     def require_type(self, label: str, type: Type, value: Any):
         if not isinstance(value, type):
             raise ValueError(label + ' must be a ' + str(type) + '.')
-
 
     def require_non_empty_list(self, label: str, value: Any):
         self.require_type(label, List, value)
@@ -27,8 +40,6 @@ class __Primitive:
     def __str__(self):
         raise Exception("Attempted implicit string cast of primitive")
 
-def simple_level(name):
-    return SimpleLevel(name)
 
 class SimpleLevel(__Primitive):
     def __init__(self, name):
@@ -56,8 +67,9 @@ class SimpleLevel(__Primitive):
         return hash(self.internal_name)
 
 
-def derived_level(name, window):
-    return DerivedLevel(name, window)
+def simple_level(name) -> SimpleLevel:
+    return SimpleLevel(name)
+
 
 class DerivedLevel(__Primitive):
     def __init__(self, name, window):
@@ -100,14 +112,31 @@ class DerivedLevel(__Primitive):
     def __str__(self):
         return str(self.__dict__)
 
-def else_level(name):
-    return ElseLevel(name)
+
+def derived_level(name, derivation) -> DerivedLevel:
+    """Creates a :class:`.DerivedLevel`, which depends on the levels of other
+    factors in a design.
+
+    :param name:
+        The level's name, which can be any printable value.
+
+    :param derivation:
+        A condition on other factors' levels. See :ref:`guide_derivations`.
+
+    :returns:
+        A :class:`.DerivedLevel` with the indicated ``name`` and
+        ``derivation``.
+    """
+    return DerivedLevel(name, derivation)
+
 
 class ElseLevel():
     def __init__(self, name):
         self.name = name
+
     def set_factor(self, factor):
         self.factor = factor
+
     def __call__(self, other_levels: List[DerivedLevel]) -> DerivedLevel:
         if other_levels is None:
             return DerivedLevel(self.name, WithinTrial(lambda: False, []))
@@ -118,11 +147,42 @@ class ElseLevel():
         return DerivedLevel(self.name, window)
 
 
-def factor(name, levels):
-    return Factor(name, levels)
+def else_level(name) -> ElseLevel:
+    return ElseLevel(name)
+
 
 class Factor(__Primitive):
-    def __init__(self, name: str, levels) -> None:
+    """In factorial experimental design, a *factor* is an independent variable
+    under examination. Factors have a ``name`` and are composed of *levels*,
+    where each level corresponds to a discrete value a factor can assume as
+    part of the experiment.
+    """
+
+    def __init__(self, name: str, levels):
+        """
+        :param name:
+            The name of the :class:`.Factor`.
+
+        :param levels:
+            The possible values the :class:`.Factor` can assume. The ``levels``
+            can be given as an iterable of either elements produced by calls to
+            :func:`.derived_level` or just plain :class:`strs <str>`.
+
+            When the levels are instances produced by :func:`.derived_level`,
+            they must all be distinct, mutually exclusive, and cover all cases.
+            This is the preferred mechanism for specifying levels.
+
+            When the levels are all :class:`strs <str>`, they will be
+            internally converted into levels like those produced by
+            :func:`.derived_level`. Multiple instances of equivalent strings
+            are considered as distinct levels.
+
+            .. WARNING::
+                Because the resulting levels will have identical names, using
+                the name of those levels in constraints or deriving other
+                factors from this :class:`.Factor` will treat that name as an
+                accessor for all matching levels. Be careful!
+        """
         self.factor_name = name
         self.levels = self.__make_levels(levels)
         self.__validate()
@@ -186,12 +246,15 @@ class Factor(__Primitive):
     def __hash__(self):
         return(hash(self.factor_name))
 
-    """
-    Returns true if this factor applies to the given trial number. (1-based)
-    For example, Factors with Transition windows in the derived level don't apply
-    to Trial 1, but do apply to all subsequent trials.
-    """
     def applies_to_trial(self, trial_number: int) -> bool:
+        """Determines whether this :class:`.Factor` applies to the given trial
+        number. For example, :class:`Factors <.Factor>` with
+        :class:`.Transition` windows in derived levels do not apply to trial
+        ``1``, but do apply to all subsequent trials.
+
+        .. TIP::
+            Trials start their numbering at ``1``.
+        """
         if trial_number <= 0:
             raise ValueError('Trial numbers may not be less than 1')
 
@@ -215,6 +278,21 @@ class Factor(__Primitive):
         return str(self.__dict__)
 
 
+def factor(name: str, levels) -> Factor:
+    """Creates a plain :class:`.Factor` for use in an experimental design.
+
+    :param name:
+        The name of the :class:`.Factor` to create.
+
+    :param levels:
+        The :class:`.Factor`'s possible values.
+
+    :returns:
+        A :class:`.Factor` with the indicated ``name`` and ``levels``.
+    """
+    return Factor(name, levels)
+
+
 class __BaseWindow():
     def __init__(self, fn, args, width: int, stride: int) -> None:
         self.fn = fn
@@ -226,7 +304,7 @@ class __BaseWindow():
 
     def __validate(self):
         if not callable(self.fn):
-            raise ValueError('Derivation function should be callable, but found ' + str(fn) + '.')
+            raise ValueError('Derivation function should be callable, but found ' + str(self.fn) + '.')
         for f in self.args:
             if not isinstance(f, Factor):
                 raise ValueError('Derivation level should be derived from factors, but found ' + str(f) + '.')
@@ -235,16 +313,9 @@ class __BaseWindow():
         if self.stride < 1:
             raise ValueError('Window width must be at least 1, but found ' + str(self.stride) + '.')
 
-
         if len(set(map(lambda f: f.factor_name, self.args))) != self.argc:
             raise ValueError('Factors should not be repeated in the argument list to a derivation function.')
 
-
-"""
-TODO: Docs
-"""
-def within_trial(fn, args):
-    return WithinTrial(fn, args)
 
 class WithinTrial(__Primitive, __BaseWindow):
     def __init__(self, fn, args):
@@ -263,11 +334,10 @@ class WithinTrial(__Primitive, __BaseWindow):
         return str(self.__dict__)
 
 
-"""
-TODO: Docs
-"""
-def transition(fn, args):
-    return Transition(fn, args)
+def within_trial(fn, args) -> WithinTrial:
+    # TODO DOC
+    return WithinTrial(fn, args)
+
 
 class Transition(__Primitive, __BaseWindow):
     def __init__(self, fn, args):
@@ -286,8 +356,10 @@ class Transition(__Primitive, __BaseWindow):
         return str(self.__dict__)
 
 
-def window(fn, args, width, stride):
-    return Window(fn, args, width, stride)
+def transition(fn, args) -> Transition:
+    # TODO DOC
+    return Transition(fn, args)
+
 
 class Window(__Primitive, __BaseWindow):
     def __init__(self, fn, args, width, stride):
@@ -305,3 +377,8 @@ class Window(__Primitive, __BaseWindow):
 
     def __str__(self):
         return str(self.__dict__)
+
+
+def window(fn, args, width, stride) -> Window:
+    # TODO DOC
+    return Window(fn, args, width, stride)
