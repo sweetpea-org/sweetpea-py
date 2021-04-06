@@ -34,8 +34,10 @@ help:
 #       TODO: Do I like this one?
 #   --maxdepth 4
 #       Limit the depth of each module's table of contents.
+#   --no-toc
+#       Disable the top-level table of contents file.
 apidoc: apidoc-clean
-	@$(SPHINXAPIDOC) --module-first --separate --maxdepth 4 \
+	@$(SPHINXAPIDOC) --module-first --separate --maxdepth 4 --no-toc \
 	    --output-dir "$(APIDOCDIR)" "$(MODULEDIR)"
 
 # Remove everything in the APIDOCDIR prior to generation.
