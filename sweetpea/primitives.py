@@ -318,6 +318,10 @@ class __BaseWindow():
 
 
 class WithinTrial(__Primitive, __BaseWindow):
+    """A description of a level that is selected depending on levels from other
+    factors, all within the same trial.
+    """
+
     def __init__(self, fn, args):
         super().__init__(fn, args, 1, 1)
 
@@ -335,11 +339,30 @@ class WithinTrial(__Primitive, __BaseWindow):
 
 
 def within_trial(fn, args) -> WithinTrial:
-    # TODO DOC
+    """Creates a :class:`.WithinTrial` derivation. (See the guide's page on
+    :ref:`derivations <guide_derivations>`.)
+
+    :param fn:
+        A function that takes as many level names as factors in ``args``. The
+        function should be a predicate that returns ``True`` if the combination
+        of levels implies the result derivation.
+
+    :param args:
+        A list of factors whose levels determine whether a level with the
+        returned derivation is selected.
+
+    :returns:
+        A :class:`.WithinTrial` derivation.
+    """
     return WithinTrial(fn, args)
 
 
 class Transition(__Primitive, __BaseWindow):
+    """A description of a level that is selected depending on a combination of
+    levels from other factors in the current trial and the immediately
+    preceding trial.
+    """
+
     def __init__(self, fn, args):
         super().__init__(fn, args, 2, 1)
 
@@ -357,11 +380,35 @@ class Transition(__Primitive, __BaseWindow):
 
 
 def transition(fn, args) -> Transition:
-    # TODO DOC
+    """Creates a :class:`.Transition` derivation. (See the guide's page on
+    :ref:`derivations <guide_derivations>`.)
+
+    :param fn:
+        A function that takes as many level lists as factors in ``factors``. In
+        each list, the first element is the level value for the previous trial,
+        and the second element is the level value for the current trial. The
+        function should return ``True`` if the combination of levels implies
+        the result derivation, and ``False`` otherwise.
+
+    :param args:
+        A list of factors whose levels across trials determine whether a level
+        with the returned derivation is selected.
+
+    :returns:
+        A :class:`.Transition` derivation.
+    """
     return Transition(fn, args)
 
 
 class Window(__Primitive, __BaseWindow):
+    """Describes a level that is selected depending on a combination of levels
+    from other factors in the current trial and multiple preceding trials.
+
+    A :class:`.Window` is a generalization of a :class:`.Transition`
+    derivation that selects a level depending on multiple trials, and where
+    preceding trials are separated by ``stride - 1`` intervening trials.
+    """
+
     def __init__(self, fn, args, width, stride):
         super().__init__(fn, args, width, stride)
         # TODO: validation
@@ -380,5 +427,33 @@ class Window(__Primitive, __BaseWindow):
 
 
 def window(fn, args, width, stride) -> Window:
-    # TODO DOC
+    """Creates a :class:`.Window` derivation. (See the guide's page on
+    :ref:`derivations <guide_derivations>`.)
+
+    The :func:`.window` function is a generalization of the :func:`.transition`
+    function that selects a level depending on multiple trials, and where
+    preceding trials are separated by ``stride - 1`` intervening trials.
+
+    :param fn:
+        A function that takes as many level lists as factors in ``factors``. In
+        each list, the first element is the level value for the earliest of
+        ``width`` trials, and so on. The function should return ``True`` if
+        the combination of levels implies the result derivation, and ``False``
+        otherwise.
+
+    :param args:
+        A list of factors whose levels across trials determine whether a level
+        with the returned derivation is selected.
+
+    :param width:
+        The number of trials of ``factors`` to consider when selecting the new,
+        derived level.
+
+    :param stride:
+        One more than the number of trials to skip between the trials that are
+        considered when selecting the new, derived level.
+
+    :returns:
+        A :class:`.Window` derivation.
+    """
     return Window(fn, args, width, stride)
