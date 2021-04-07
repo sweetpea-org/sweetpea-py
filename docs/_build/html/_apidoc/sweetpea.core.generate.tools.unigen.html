@@ -86,7 +86,8 @@
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="modules.html">sweetpea</a><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guide.html">SweetPea Guide and Information</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">SweetPea API Documentation</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="sweetpea.html">sweetpea package</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="sweetpea.html#subpackages">Subpackages</a><ul class="current">
 <li class="toctree-l4 current"><a class="reference internal" href="sweetpea.core.html">sweetpea.core package</a></li>
@@ -147,7 +148,7 @@
     
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
-          <li><a href="modules.html">sweetpea</a> &raquo;</li>
+          <li><a href="../api.html">SweetPea API Documentation</a> &raquo;</li>
         
           <li><a href="sweetpea.html">sweetpea package</a> &raquo;</li>
         
@@ -184,20 +185,41 @@ almost-uniform SAT sampler that uses <a class="reference external" href="https:/
 Unigen for a few processes.</p>
 <dl class="py exception">
 <dt id="sweetpea.core.generate.tools.unigen.UnigenError">
-<em class="property"><span class="pre">exception</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.unigen.</span></code><code class="sig-name descname"><span class="pre">UnigenError</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returncode</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">stdout</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">stderr</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.tools.unigen.UnigenError" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">exception</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.unigen.</span></code><code class="sig-name descname"><span class="pre">UnigenError</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returncode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stdout</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stderr</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.tools.unigen.UnigenError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="sweetpea.core.generate.tools.tool_error.html#sweetpea.core.generate.tools.tool_error.ToolError" title="sweetpea.core.generate.tools.tool_error.ToolError"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.core.generate.tools.tool_error.ToolError</span></code></a></p>
 <p>An error raised when Unigen fails.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>returncode</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+<li><p><strong>stdout</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – </p></li>
+<li><p><strong>stderr</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – </p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt id="sweetpea.core.generate.tools.unigen.call_unigen">
-<code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.unigen.</span></code><code class="sig-name descname"><span class="pre">call_unigen</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_file</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/pathlib.html#pathlib.Path" title="(in Python v3.7)"><span class="pre">pathlib.Path</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">docker_mode</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#bool" title="(in Python v3.7)"><span class="pre">bool</span></a></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download_if_missing</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#bool" title="(in Python v3.7)"><span class="pre">bool</span></a></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a><a class="headerlink" href="#sweetpea.core.generate.tools.unigen.call_unigen" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.unigen.</span></code><code class="sig-name descname"><span class="pre">call_unigen</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">docker_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download_if_missing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.tools.unigen.call_unigen" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calls Unigen with the given file as input.</p>
 <p>If <code class="docutils literal notranslate"><span class="pre">docker_mode</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, this will use a Docker container to run
 Unigen. If it’s <code class="docutils literal notranslate"><span class="pre">False</span></code>, a command-line executable will be used.</p>
 <p>If <code class="docutils literal notranslate"><span class="pre">docker_mode</span></code> is <code class="docutils literal notranslate"><span class="pre">False</span></code> and no local Unigen executable can be
 found, and if <code class="docutils literal notranslate"><span class="pre">download_if_missing</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, the needed executable
 will be automatically downloaded if it’s missing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_file</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/pathlib.html#pathlib.Path" title="(in Python v3.7)"><em>pathlib.Path</em></a>) – </p></li>
+<li><p><strong>docker_mode</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a>) – </p></li>
+<li><p><strong>download_if_missing</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)">str</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 </div>

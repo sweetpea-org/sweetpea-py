@@ -86,7 +86,8 @@
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="modules.html">sweetpea</a><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guide.html">SweetPea Guide and Information</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">SweetPea API Documentation</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="sweetpea.html">sweetpea package</a><ul class="current">
 <li class="toctree-l3"><a class="reference internal" href="sweetpea.html#subpackages">Subpackages</a></li>
 <li class="toctree-l3 current"><a class="reference internal" href="sweetpea.html#submodules">Submodules</a><ul class="current">
@@ -158,7 +159,7 @@
     
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
-          <li><a href="modules.html">sweetpea</a> &raquo;</li>
+          <li><a href="../api.html">SweetPea API Documentation</a> &raquo;</li>
         
           <li><a href="sweetpea.html">sweetpea package</a> &raquo;</li>
         
@@ -221,18 +222,49 @@
 </dl>
 <dl class="py method">
 <dt id="sweetpea.derivation_processor.DerivationProcessor.generate_derivations">
-<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">generate_derivations</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><span class="pre">sweetpea.blocks.Block</span></a></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sweetpea.constraints.html#sweetpea.constraints.Derivation" title="sweetpea.constraints.Derivation"><span class="pre">sweetpea.constraints.Derivation</span></a><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#sweetpea.derivation_processor.DerivationProcessor.generate_derivations" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">generate_derivations</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.derivation_processor.DerivationProcessor.generate_derivations" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>block</strong> (<a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><em>sweetpea.blocks.Block</em></a>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>List[<a class="reference internal" href="sweetpea.constraints.html#sweetpea.constraints.Derivation" title="sweetpea.constraints.Derivation">sweetpea.constraints.Derivation</a>]</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.derivation_processor.DerivationProcessor.generate_argument_list">
-<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">generate_argument_list</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><span class="pre">sweetpea.primitives.DerivedLevel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">tup</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Tuple</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">List</span><a class="headerlink" href="#sweetpea.derivation_processor.DerivationProcessor.generate_argument_list" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">generate_argument_list</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tup</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.derivation_processor.DerivationProcessor.generate_argument_list" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>level</strong> (<a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><em>sweetpea.primitives.DerivedLevel</em></a>) – </p></li>
+<li><p><strong>tup</strong> (<em>Tuple</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>List</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.derivation_processor.DerivationProcessor.shift_window">
-<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">shift_window</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idxs</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.WithinTrial" title="sweetpea.primitives.WithinTrial"><span class="pre">sweetpea.primitives.WithinTrial</span></a><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.Transition" title="sweetpea.primitives.Transition"><span class="pre">sweetpea.primitives.Transition</span></a><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.Window" title="sweetpea.primitives.Window"><span class="pre">sweetpea.primitives.Window</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trial_size</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#sweetpea.derivation_processor.DerivationProcessor.shift_window" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">shift_window</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idxs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trial_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.derivation_processor.DerivationProcessor.shift_window" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>idxs</strong> (<em>List</em><em>[</em><em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>window</strong> (<em>Union</em><em>[</em><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.WithinTrial" title="sweetpea.primitives.WithinTrial"><em>sweetpea.primitives.WithinTrial</em></a><em>, </em><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.Transition" title="sweetpea.primitives.Transition"><em>sweetpea.primitives.Transition</em></a><em>, </em><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.Window" title="sweetpea.primitives.Window"><em>sweetpea.primitives.Window</em></a><em>]</em>) – </p></li>
+<li><p><strong>trial_size</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>List[List[<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)">int</a>]]</p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 

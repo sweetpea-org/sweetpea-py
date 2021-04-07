@@ -86,7 +86,8 @@
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="modules.html">sweetpea</a><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guide.html">SweetPea Guide and Information</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">SweetPea API Documentation</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="sweetpea.html">sweetpea package</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="sweetpea.html#subpackages">Subpackages</a><ul class="current">
 <li class="toctree-l4"><a class="reference internal" href="sweetpea.core.html">sweetpea.core package</a></li>
@@ -147,7 +148,7 @@
     
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
-          <li><a href="modules.html">sweetpea</a> &raquo;</li>
+          <li><a href="../api.html">SweetPea API Documentation</a> &raquo;</li>
         
           <li><a href="sweetpea.html">sweetpea package</a> &raquo;</li>
         
@@ -180,15 +181,34 @@
 <dd><p>Bases: <a class="reference internal" href="sweetpea.sampling_strategies.base.html#sweetpea.sampling_strategies.base.SamplingStrategy" title="sweetpea.sampling_strategies.base.SamplingStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.sampling_strategies.base.SamplingStrategy</span></code></a></p>
 <dl class="py method">
 <dt id="sweetpea.sampling_strategies.uniform_combinatoric.UniformCombinatoricSamplingStrategy.sample">
-<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">sample</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><span class="pre">sweetpea.blocks.Block</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_count</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="sweetpea.sampling_strategies.base.html#sweetpea.sampling_strategies.base.SamplingResult" title="sweetpea.sampling_strategies.base.SamplingResult"><span class="pre">sweetpea.sampling_strategies.base.SamplingResult</span></a><a class="headerlink" href="#sweetpea.sampling_strategies.uniform_combinatoric.UniformCombinatoricSamplingStrategy.sample" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">sample</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_count</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.sampling_strategies.uniform_combinatoric.UniformCombinatoricSamplingStrategy.sample" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>block</strong> (<a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><em>sweetpea.blocks.Block</em></a>) – </p></li>
+<li><p><strong>sample_count</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="sweetpea.sampling_strategies.base.html#sweetpea.sampling_strategies.base.SamplingResult" title="sweetpea.sampling_strategies.base.SamplingResult">sweetpea.sampling_strategies.base.SamplingResult</a></p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
 <dl class="py class">
 <dt id="sweetpea.sampling_strategies.uniform_combinatoric.UCSolutionEnumerator">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.sampling_strategies.uniform_combinatoric.</span></code><code class="sig-name descname"><span class="pre">UCSolutionEnumerator</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.FullyCrossBlock" title="sweetpea.blocks.FullyCrossBlock"><span class="pre">sweetpea.blocks.FullyCrossBlock</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.sampling_strategies.uniform_combinatoric.UCSolutionEnumerator" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.sampling_strategies.uniform_combinatoric.</span></code><code class="sig-name descname"><span class="pre">UCSolutionEnumerator</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.sampling_strategies.uniform_combinatoric.UCSolutionEnumerator" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.7/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>block</strong> (<a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.FullyCrossBlock" title="sweetpea.blocks.FullyCrossBlock"><em>sweetpea.blocks.FullyCrossBlock</em></a>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)">None</a></p>
+</dd>
+</dl>
 <dl class="py method">
 <dt id="sweetpea.sampling_strategies.uniform_combinatoric.UCSolutionEnumerator.solution_count">
 <code class="sig-name descname"><span class="pre">solution_count</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.sampling_strategies.uniform_combinatoric.UCSolutionEnumerator.solution_count" title="Permalink to this definition">¶</a></dt>
@@ -196,23 +216,52 @@
 
 <dl class="py method">
 <dt id="sweetpea.sampling_strategies.uniform_combinatoric.UCSolutionEnumerator.generate_random_sample">
-<code class="sig-name descname"><span class="pre">generate_random_sample</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_array</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span> </span><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#dict" title="(in Python v3.7)"><span class="pre">dict</span></a><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#sweetpea.sampling_strategies.uniform_combinatoric.UCSolutionEnumerator.generate_random_sample" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-name descname"><span class="pre">generate_random_sample</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_array</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.sampling_strategies.uniform_combinatoric.UCSolutionEnumerator.generate_random_sample" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>sample_array</strong> (<em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Tuple[<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)">int</a>, <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#dict" title="(in Python v3.7)">dict</a>]</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.sampling_strategies.uniform_combinatoric.UCSolutionEnumerator.generate_sample">
-<code class="sig-name descname"><span class="pre">generate_sample</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence_number</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#dict" title="(in Python v3.7)"><span class="pre">dict</span></a><a class="headerlink" href="#sweetpea.sampling_strategies.uniform_combinatoric.UCSolutionEnumerator.generate_sample" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-name descname"><span class="pre">generate_sample</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence_number</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.sampling_strategies.uniform_combinatoric.UCSolutionEnumerator.generate_sample" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>sequence_number</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#dict" title="(in Python v3.7)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.sampling_strategies.uniform_combinatoric.UCSolutionEnumerator.generate_solution_variables">
-<code class="sig-name descname"><span class="pre">generate_solution_variables</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; <span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#sweetpea.sampling_strategies.uniform_combinatoric.UCSolutionEnumerator.generate_solution_variables" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-name descname"><span class="pre">generate_solution_variables</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.sampling_strategies.uniform_combinatoric.UCSolutionEnumerator.generate_solution_variables" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>List[<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)">int</a>]</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.sampling_strategies.uniform_combinatoric.UCSolutionEnumerator.generate_trail_values">
-<code class="sig-name descname"><span class="pre">generate_trail_values</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence_number</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#dict" title="(in Python v3.7)"><span class="pre">dict</span></a><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#sweetpea.sampling_strategies.uniform_combinatoric.UCSolutionEnumerator.generate_trail_values" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-name descname"><span class="pre">generate_trail_values</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sequence_number</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.sampling_strategies.uniform_combinatoric.UCSolutionEnumerator.generate_trail_values" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>sequence_number</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>List[<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#dict" title="(in Python v3.7)">dict</a>]</p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 

@@ -86,7 +86,8 @@
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="modules.html">sweetpea</a><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guide.html">SweetPea Guide and Information</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">SweetPea API Documentation</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="sweetpea.html">sweetpea package</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="sweetpea.html#subpackages">Subpackages</a><ul class="current">
 <li class="toctree-l4 current"><a class="reference internal" href="sweetpea.core.html">sweetpea.core package</a></li>
@@ -147,7 +148,7 @@
     
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
-          <li><a href="modules.html">sweetpea</a> &raquo;</li>
+          <li><a href="../api.html">SweetPea API Documentation</a> &raquo;</li>
         
           <li><a href="sweetpea.html">sweetpea package</a> &raquo;</li>
         
@@ -177,7 +178,7 @@
 <p>Provides a simple custom sequence type for internal use.</p>
 <dl class="py class">
 <dt id="sweetpea.core.simple_sequence.SimpleSequence">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.core.simple_sequence.</span></code><code class="sig-name descname"><span class="pre">SimpleSequence</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">first_value</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)"><span class="pre">None</span></a><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">_T</span><span class="p"><span class="pre">,</span> </span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><span class="pre">_T</span><span class="p"><span class="pre">,</span> </span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">rest_values</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">_T</span><span class="p"><span class="pre">,</span> </span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.simple_sequence.SimpleSequence" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.core.simple_sequence.</span></code><code class="sig-name descname"><span class="pre">SimpleSequence</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">first_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">rest_values</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.simple_sequence.SimpleSequence" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">MutableSequence</span></code>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">sweetpea.core.simple_sequence._T</span></code>]</p>
 <p>A custom generic sequence. <a class="reference internal" href="#sweetpea.core.simple_sequence.SimpleSequence" title="sweetpea.core.simple_sequence.SimpleSequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleSequence</span></code></a> features an advanced
 initialization mechanism that allows for automatically converting given
@@ -194,8 +195,19 @@ throughout SweetPea. To that effect, the implementation was inspired by
 discussion in <a class="reference external" href="https://github.com/python/mypy/issues/4108">mypy issue #4108</a>.</p>
 <dl class="py method">
 <dt id="sweetpea.core.simple_sequence.SimpleSequence.insert">
-<code class="sig-name descname"><span class="pre">insert</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">item</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">_T</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)"><span class="pre">None</span></a><a class="headerlink" href="#sweetpea.core.simple_sequence.SimpleSequence.insert" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">insert</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">item</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.simple_sequence.SimpleSequence.insert" title="Permalink to this definition">¶</a></dt>
 <dd><p>Inserts the <code class="docutils literal notranslate"><span class="pre">item</span></code> before the given <code class="docutils literal notranslate"><span class="pre">index</span></code> in the sequence.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>index</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+<li><p><strong>item</strong> (<em>_T</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)">None</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>

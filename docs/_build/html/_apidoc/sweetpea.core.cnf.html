@@ -86,7 +86,8 @@
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="modules.html">sweetpea</a><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guide.html">SweetPea Guide and Information</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">SweetPea API Documentation</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="sweetpea.html">sweetpea package</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="sweetpea.html#subpackages">Subpackages</a><ul class="current">
 <li class="toctree-l4 current"><a class="reference internal" href="sweetpea.core.html">sweetpea.core package</a></li>
@@ -147,7 +148,7 @@
     
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
-          <li><a href="modules.html">sweetpea</a> &raquo;</li>
+          <li><a href="../api.html">SweetPea API Documentation</a> &raquo;</li>
         
           <li><a href="sweetpea.html">sweetpea package</a> &raquo;</li>
         
@@ -188,7 +189,7 @@ combined into <a class="reference internal" href="#sweetpea.core.cnf.Clause" tit
 manipulating <a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><code class="xref py py-class docutils literal notranslate"><span class="pre">CNFs</span></code></a>.</p>
 <dl class="py class">
 <dt id="sweetpea.core.cnf.Var">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.core.cnf.</span></code><code class="sig-name descname"><span class="pre">Var</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.Var" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.core.cnf.</span></code><code class="sig-name descname"><span class="pre">Var</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.Var" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.7/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>A variable for use in a CNF formula.</p>
 <p>This is essentially a wrapper for the builtin <a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> type, but with a
@@ -205,6 +206,11 @@ negation, etc), but these are not cross-type compatible (e.g.,
 overhead or issue.</p></li>
 </ul>
 </div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>value</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p>
+</dd>
+</dl>
 <dl class="py method">
 <dt id="sweetpea.core.cnf.Var.value">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">value</span></code><a class="headerlink" href="#sweetpea.core.cnf.Var.value" title="Permalink to this definition">¶</a></dt>
@@ -215,7 +221,7 @@ overhead or issue.</p></li>
 
 <dl class="py class">
 <dt id="sweetpea.core.cnf.Clause">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.core.cnf.</span></code><code class="sig-name descname"><span class="pre">Clause</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">first_value</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)"><span class="pre">None</span></a><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">_T</span><span class="p"><span class="pre">,</span> </span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><span class="pre">_T</span><span class="p"><span class="pre">,</span> </span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">rest_values</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">_T</span><span class="p"><span class="pre">,</span> </span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.Clause" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.core.cnf.</span></code><code class="sig-name descname"><span class="pre">Clause</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">first_value</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">rest_values</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.Clause" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="sweetpea.core.simple_sequence.html#sweetpea.core.simple_sequence.SimpleSequence" title="sweetpea.core.simple_sequence.SimpleSequence"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.core.simple_sequence.SimpleSequence</span></code></a>[<a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.core.cnf.Var</span></code></a>]</p>
 <p>A sequence of <a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><code class="xref py py-class docutils literal notranslate"><span class="pre">Vars</span></code></a>. A <a class="reference internal" href="#sweetpea.core.cnf.Clause" title="sweetpea.core.cnf.Clause"><code class="xref py py-class docutils literal notranslate"><span class="pre">Clause</span></code></a> indicates a
 logical disjunction between the contained variables. For example,
@@ -242,7 +248,7 @@ instances of <a class="reference internal" href="#sweetpea.core.cnf.Var" title="
 corresponds to the CNF formula ((1 ∨ 2 ∨ ¬3) ∧ (¬2 ∨ 7 ∨ 1)).</p>
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.from_fresh">
-<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">from_fresh</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fresh</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><span class="pre">sweetpea.core.cnf.CNF</span></a><a class="headerlink" href="#sweetpea.core.cnf.CNF.from_fresh" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">from_fresh</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fresh</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.from_fresh" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns an empty <a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><code class="xref py py-class docutils literal notranslate"><span class="pre">CNF</span></code></a> with the given number of fresh
 <a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><code class="xref py py-class docutils literal notranslate"><span class="pre">Vars</span></code></a> already allocated.</p>
 <div class="admonition note">
@@ -251,55 +257,126 @@ corresponds to the CNF formula ((1 ∨ 2 ∨ ¬3) ∧ (¬2 ∨ 7 ∨ 1)).</p>
 should be deduced from the formulas themselves. This exists for
 legacy compatibility and should eventually be removed.</p>
 </div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>fresh</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF">sweetpea.core.cnf.CNF</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.and_vars">
-<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">and_vars</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><span class="pre">sweetpea.core.cnf.CNF</span></a><a class="headerlink" href="#sweetpea.core.cnf.CNF.and_vars" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">and_vars</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.and_vars" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a CNF formula encoding (a ∧ b).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>Union</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a><em>]</em>) – </p></li>
+<li><p><strong>b</strong> (<em>Union</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF">sweetpea.core.cnf.CNF</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.or_vars">
-<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">or_vars</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><span class="pre">sweetpea.core.cnf.CNF</span></a><a class="headerlink" href="#sweetpea.core.cnf.CNF.or_vars" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">or_vars</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.or_vars" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a CNF formula encoding (a ∨ b).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>Union</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a><em>]</em>) – </p></li>
+<li><p><strong>b</strong> (<em>Union</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF">sweetpea.core.cnf.CNF</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.xor_vars">
-<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">xor_vars</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><span class="pre">sweetpea.core.cnf.CNF</span></a><a class="headerlink" href="#sweetpea.core.cnf.CNF.xor_vars" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">xor_vars</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.xor_vars" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a CNF formula encoding (a ⊕ b) as ((a ∨ b) ∧ (¬a ∨ ¬b)).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>Union</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a><em>]</em>) – </p></li>
+<li><p><strong>b</strong> (<em>Union</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF">sweetpea.core.cnf.CNF</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.xnor_vars">
-<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">xnor_vars</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><span class="pre">sweetpea.core.cnf.CNF</span></a><a class="headerlink" href="#sweetpea.core.cnf.CNF.xnor_vars" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">xnor_vars</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.xnor_vars" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a CNF formula encoding (a ⊙ b) as ((a ∨ ¬b) ∧ (¬a ∨ b)).</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>(a ⊙ b) is logically equivalent to (a ⇔ b), so this function
 replaces the original Haskell version’s <a class="reference external" href="https://github.com/sweetpea-org/sweetpea-core/blob/20493dd1ffc8f5a53bd4004286e6a64298a16ce3/src/DataStructures.hs#L122-L124"><code class="docutils literal notranslate"><span class="pre">doubleImplies</span></code> function</a>.</p>
 </div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<em>Union</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a><em>]</em>) – </p></li>
+<li><p><strong>b</strong> (<em>Union</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF">sweetpea.core.cnf.CNF</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.distribute">
-<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">distribute</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">cnf</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><span class="pre">sweetpea.core.cnf.CNF</span></a></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><span class="pre">sweetpea.core.cnf.CNF</span></a><a class="headerlink" href="#sweetpea.core.cnf.CNF.distribute" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">distribute</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cnf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.distribute" title="Permalink to this definition">¶</a></dt>
 <dd><p>Distributes the given <a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><code class="xref py py-class docutils literal notranslate"><span class="pre">Var</span></code></a> across each <a class="reference internal" href="#sweetpea.core.cnf.Clause" title="sweetpea.core.cnf.Clause"><code class="xref py py-class docutils literal notranslate"><span class="pre">Clause</span></code></a> of
 the given CNF formula, producing a new :class`CNF`.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>v</strong> (<a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a>) – </p></li>
+<li><p><strong>cnf</strong> (<a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><em>sweetpea.core.cnf.CNF</em></a>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF">sweetpea.core.cnf.CNF</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.as_dimacs_string">
-<code class="sig-name descname"><span class="pre">as_dimacs_string</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fresh_variable_count</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a><a class="headerlink" href="#sweetpea.core.cnf.CNF.as_dimacs_string" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">as_dimacs_string</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fresh_variable_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.as_dimacs_string" title="Permalink to this definition">¶</a></dt>
 <dd><p>Represents the <a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><code class="xref py py-class docutils literal notranslate"><span class="pre">CNF</span></code></a> as a string in the DIMACS format.</p>
 <p>The DIMACS format is a standardized method of representing CNF formulas
 as strings. This implementation is based on the details given <a class="reference external" href="https://people.sc.fsu.edu/~jburkardt/data/cnf/cnf.html">here</a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>fresh_variable_count</strong> (<em>Optional</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)">str</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.as_unigen_string">
-<code class="sig-name descname"><span class="pre">as_unigen_string</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fresh_variable_count</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">support_set_length</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampled_variables</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a><a class="headerlink" href="#sweetpea.core.cnf.CNF.as_unigen_string" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">as_unigen_string</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fresh_variable_count</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">support_set_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampled_variables</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.as_unigen_string" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a string representing the CNF formula in the modified DIMACS
 format used by Unigen.</p>
 <p>See <a class="reference internal" href="#sweetpea.core.cnf.CNF.as_dimacs_string" title="sweetpea.core.cnf.CNF.as_dimacs_string"><code class="xref py py-meth docutils literal notranslate"><span class="pre">CNF.as_dimacs_string()</span></code></a> for details about the DIMACS format.</p>
@@ -312,18 +389,35 @@ variables). This line is given in the form:</p>
 <p>where <code class="docutils literal notranslate"><span class="pre">v1</span></code>, <code class="docutils literal notranslate"><span class="pre">v2</span></code>, …, <code class="docutils literal notranslate"><span class="pre">vn</span></code> represent variables in the formula.
 This line is placed just below the “problem” line (the line beginning
 with <code class="docutils literal notranslate"><span class="pre">p</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fresh_variable_count</strong> (<em>Optional</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em>) – </p></li>
+<li><p><strong>support_set_length</strong> (<em>Optional</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em>) – </p></li>
+<li><p><strong>sampled_variables</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a><em>]</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)">str</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.as_list_of_list_of_ints">
-<code class="sig-name descname"><span class="pre">as_list_of_list_of_ints</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; <span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#sweetpea.core.cnf.CNF.as_list_of_list_of_ints" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">as_list_of_list_of_ints</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.as_list_of_list_of_ints" title="Permalink to this definition">¶</a></dt>
 <dd><p>Converts the <a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><code class="xref py py-class docutils literal notranslate"><span class="pre">CNF</span></code></a> to a <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#list" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of
 <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#list" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">lists</span></code></a> of <a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ints</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>List[List[<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)">int</a>]]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.as_haskell_cnf">
-<code class="sig-name descname"><span class="pre">as_haskell_cnf</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; <span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#sweetpea.core.cnf.CNF.as_haskell_cnf" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">as_haskell_cnf</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.as_haskell_cnf" title="Permalink to this definition">¶</a></dt>
 <dd><p>Converts the <a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><code class="xref py py-class docutils literal notranslate"><span class="pre">CNF</span></code></a> to a <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#tuple" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a> whose first element is
 the number of fresh variables in the formula and whose second element
 is the <a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><code class="xref py py-class docutils literal notranslate"><span class="pre">CNF</span></code></a> represented as a <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#list" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of
@@ -334,88 +428,197 @@ is the <a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetp
 code. It only exists for consistency checks across the two code
 bases.</p>
 </div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tuple[<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)">int</a>, List[List[<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)">int</a>]]]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.get_fresh">
-<code class="sig-name descname"><span class="pre">get_fresh</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><a class="headerlink" href="#sweetpea.core.cnf.CNF.get_fresh" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">get_fresh</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.get_fresh" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a new <a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><code class="xref py py-class docutils literal notranslate"><span class="pre">Var</span></code></a> for the formula.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var">sweetpea.core.cnf.Var</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.get_n_fresh">
-<code class="sig-name descname"><span class="pre">get_n_fresh</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#sweetpea.core.cnf.CNF.get_n_fresh" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">get_n_fresh</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.get_n_fresh" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates the next <em>n</em> <a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><code class="xref py py-class docutils literal notranslate"><span class="pre">Vars</span></code></a>, numbered sequentially.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>n</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>List[<a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var">sweetpea.core.cnf.Var</a>]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.append">
-<code class="sig-name descname"><span class="pre">append</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><span class="pre">sweetpea.core.cnf.CNF</span></a><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="#sweetpea.core.cnf.Clause" title="sweetpea.core.cnf.Clause"><span class="pre">sweetpea.core.cnf.Clause</span></a><span class="p"><span class="pre">,</span> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.core.cnf.Clause" title="sweetpea.core.cnf.Clause"><span class="pre">sweetpea.core.cnf.Clause</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.append" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">append</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.append" title="Permalink to this definition">¶</a></dt>
 <dd><p>Appends a <a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><code class="xref py py-class docutils literal notranslate"><span class="pre">CNF</span></code></a> to this <a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><code class="xref py py-class docutils literal notranslate"><span class="pre">CNF</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>other</strong> (<em>Union</em><em>[</em><a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><em>sweetpea.core.cnf.CNF</em></a><em>, </em><a class="reference internal" href="#sweetpea.core.cnf.Clause" title="sweetpea.core.cnf.Clause"><em>sweetpea.core.cnf.Clause</em></a><em>, </em><em>Iterable</em><em>[</em><a class="reference internal" href="#sweetpea.core.cnf.Clause" title="sweetpea.core.cnf.Clause"><em>sweetpea.core.cnf.Clause</em></a><em>]</em><em>, </em><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a><em>]</em>) – </p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.prepend">
-<code class="sig-name descname"><span class="pre">prepend</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><span class="pre">sweetpea.core.cnf.CNF</span></a><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="#sweetpea.core.cnf.Clause" title="sweetpea.core.cnf.Clause"><span class="pre">sweetpea.core.cnf.Clause</span></a><span class="p"><span class="pre">,</span> </span><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.core.cnf.Clause" title="sweetpea.core.cnf.Clause"><span class="pre">sweetpea.core.cnf.Clause</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.prepend" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">prepend</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.prepend" title="Permalink to this definition">¶</a></dt>
 <dd><p>Prepends a <a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><code class="xref py py-class docutils literal notranslate"><span class="pre">CNF</span></code></a> to this <a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><code class="xref py py-class docutils literal notranslate"><span class="pre">CNF</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>other</strong> (<em>Union</em><em>[</em><a class="reference internal" href="#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><em>sweetpea.core.cnf.CNF</em></a><em>, </em><a class="reference internal" href="#sweetpea.core.cnf.Clause" title="sweetpea.core.cnf.Clause"><em>sweetpea.core.cnf.Clause</em></a><em>, </em><em>Iterable</em><em>[</em><a class="reference internal" href="#sweetpea.core.cnf.Clause" title="sweetpea.core.cnf.Clause"><em>sweetpea.core.cnf.Clause</em></a><em>]</em><em>, </em><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a><em>]</em>) – </p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.set_to_zero">
-<code class="sig-name descname"><span class="pre">set_to_zero</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.set_to_zero" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">set_to_zero</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.set_to_zero" title="Permalink to this definition">¶</a></dt>
 <dd><p>Zeroes the specified <a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><code class="xref py py-class docutils literal notranslate"><span class="pre">Var</span></code></a> by appending its negation to the
 existing CNF formula.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>variable</strong> (<a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a>) – </p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.zero_out">
-<code class="sig-name descname"><span class="pre">zero_out</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_list</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.zero_out" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">zero_out</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.zero_out" title="Permalink to this definition">¶</a></dt>
 <dd><p>Appends a CNF formula negating the existing CNF formula.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>in_list</strong> (<em>Iterable</em><em>[</em><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a><em>]</em>) – </p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.set_to_one">
-<code class="sig-name descname"><span class="pre">set_to_one</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.set_to_one" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">set_to_one</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.set_to_one" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets the specified variable to <code class="docutils literal notranslate"><span class="pre">1</span></code> by appending it to the existing
 CNF formula.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>variable</strong> (<a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a>) – </p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.assert_k_of_n">
-<code class="sig-name descname"><span class="pre">assert_k_of_n</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_list</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.assert_k_of_n" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-name descname"><span class="pre">assert_k_of_n</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.assert_k_of_n" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>k</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+<li><p><strong>in_list</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a><em>]</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.assert_k_less_than_n">
-<code class="sig-name descname"><span class="pre">assert_k_less_than_n</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_list</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.assert_k_less_than_n" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-name descname"><span class="pre">assert_k_less_than_n</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.assert_k_less_than_n" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>k</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+<li><p><strong>in_list</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a><em>]</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.assert_k_greater_than_n">
-<code class="sig-name descname"><span class="pre">assert_k_greater_than_n</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_list</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.assert_k_greater_than_n" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-name descname"><span class="pre">assert_k_greater_than_n</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.assert_k_greater_than_n" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>k</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+<li><p><strong>in_list</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a><em>]</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.pop_count">
-<code class="sig-name descname"><span class="pre">pop_count</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_list</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#sweetpea.core.cnf.CNF.pop_count" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">pop_count</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.pop_count" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the list of <a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><code class="xref py py-class docutils literal notranslate"><span class="pre">Vars</span></code></a> that represents the bits of
 the given list variable in binary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>in_list</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a><em>]</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>List[<a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var">sweetpea.core.cnf.Var</a>]</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.half_adder">
-<code class="sig-name descname"><span class="pre">half_adder</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#sweetpea.core.cnf.CNF.half_adder" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-name descname"><span class="pre">half_adder</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.half_adder" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a>) – </p></li>
+<li><p><strong>b</strong> (<a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Tuple[<a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var">sweetpea.core.cnf.Var</a>, <a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var">sweetpea.core.cnf.Var</a>]</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.full_adder">
-<code class="sig-name descname"><span class="pre">full_adder</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">cin</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">,</span> </span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#sweetpea.core.cnf.CNF.full_adder" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-name descname"><span class="pre">full_adder</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">b</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cin</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.full_adder" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>a</strong> (<a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a>) – </p></li>
+<li><p><strong>b</strong> (<a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a>) – </p></li>
+<li><p><strong>cin</strong> (<a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Tuple[<a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var">sweetpea.core.cnf.Var</a>, <a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var">sweetpea.core.cnf.Var</a>]</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.core.cnf.CNF.ripple_carry">
-<code class="sig-name descname"><span class="pre">ripple_carry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xs</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ys</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><span class="pre">sweetpea.core.cnf.Var</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#sweetpea.core.cnf.CNF.ripple_carry" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-name descname"><span class="pre">ripple_carry</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ys</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.cnf.CNF.ripple_carry" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>xs</strong> (<em>List</em><em>[</em><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a><em>]</em>) – </p></li>
+<li><p><strong>ys</strong> (<em>List</em><em>[</em><a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Tuple[List[<a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var">sweetpea.core.cnf.Var</a>], List[<a class="reference internal" href="#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var">sweetpea.core.cnf.Var</a>]]</p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 

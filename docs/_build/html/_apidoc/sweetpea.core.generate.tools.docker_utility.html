@@ -86,7 +86,8 @@
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="modules.html">sweetpea</a><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guide.html">SweetPea Guide and Information</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">SweetPea API Documentation</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="sweetpea.html">sweetpea package</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="sweetpea.html#subpackages">Subpackages</a><ul class="current">
 <li class="toctree-l4 current"><a class="reference internal" href="sweetpea.core.html">sweetpea.core package</a></li>
@@ -147,7 +148,7 @@
     
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
-          <li><a href="modules.html">sweetpea</a> &raquo;</li>
+          <li><a href="../api.html">SweetPea API Documentation</a> &raquo;</li>
         
           <li><a href="sweetpea.html">sweetpea package</a> &raquo;</li>
         
@@ -219,18 +220,38 @@ invoking the indicated command in the container.</p>
 
 <dl class="py exception">
 <dt id="sweetpea.core.generate.tools.docker_utility.DockerRunError">
-<em class="property"><span class="pre">exception</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.docker_utility.</span></code><code class="sig-name descname"><span class="pre">DockerRunError</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returncode</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="#sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode" title="sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode"><span class="pre">sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">stderr</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.tools.docker_utility.DockerRunError" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">exception</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.docker_utility.</span></code><code class="sig-name descname"><span class="pre">DockerRunError</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">returncode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stderr</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.tools.docker_utility.DockerRunError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.7/library/exceptions.html#Exception" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></a></p>
 <p>An error raised when something fails while invoking Docker.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>returncode</strong> (<a class="reference internal" href="#sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode" title="sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode"><em>sweetpea.core.generate.tools.docker_utility.DockerRunReturnCode</em></a>) – </p></li>
+<li><p><strong>stderr</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – </p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt id="sweetpea.core.generate.tools.docker_utility.docker_run">
-<code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.docker_utility.</span></code><code class="sig-name descname"><span class="pre">docker_run</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">container</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_bytes</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#bytes" title="(in Python v3.7)"><span class="pre">bytes</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference external" href="https://docs.python.org/3.7/library/subprocess.html#subprocess.CompletedProcess" title="(in Python v3.7)"><span class="pre">subprocess.CompletedProcess</span></a><a class="headerlink" href="#sweetpea.core.generate.tools.docker_utility.docker_run" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.docker_utility.</span></code><code class="sig-name descname"><span class="pre">docker_run</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">container</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_bytes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.tools.docker_utility.docker_run" title="Permalink to this definition">¶</a></dt>
 <dd><p>Runs a Docker container, with the optional arguments and input if
 provided.</p>
 <p>If the execution produces an error, a <a class="reference internal" href="#sweetpea.core.generate.tools.docker_utility.DockerRunError" title="sweetpea.core.generate.tools.docker_utility.DockerRunError"><code class="xref py py-class docutils literal notranslate"><span class="pre">DockerRunError</span></code></a> will be
 raised.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>container</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – </p></li>
+<li><p><strong>args</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>input_bytes</strong> (<em>Optional</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#bytes" title="(in Python v3.7)"><em>bytes</em></a><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.7/library/subprocess.html#subprocess.CompletedProcess" title="(in Python v3.7)">subprocess.CompletedProcess</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 </div>

@@ -86,7 +86,8 @@
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="modules.html">sweetpea</a><ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guide.html">SweetPea Guide and Information</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">SweetPea API Documentation</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="sweetpea.html">sweetpea package</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="sweetpea.html#subpackages">Subpackages</a><ul class="current">
 <li class="toctree-l4 current"><a class="reference internal" href="sweetpea.core.html">sweetpea.core package</a></li>
@@ -147,7 +148,7 @@
     
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
-          <li><a href="modules.html">sweetpea</a> &raquo;</li>
+          <li><a href="../api.html">SweetPea API Documentation</a> &raquo;</li>
         
           <li><a href="sweetpea.html">sweetpea package</a> &raquo;</li>
         
@@ -180,9 +181,23 @@
 <a class="reference internal" href="#sweetpea.core.generate.sample_uniform.sample_uniform" title="sweetpea.core.generate.sample_uniform.sample_uniform"><code class="xref py py-func docutils literal notranslate"><span class="pre">sample_uniform()</span></code></a> function.</p>
 <dl class="py function">
 <dt id="sweetpea.core.generate.sample_uniform.sample_uniform">
-<code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.sample_uniform.</span></code><code class="sig-name descname"><span class="pre">sample_uniform</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_cnf</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference internal" href="sweetpea.core.cnf.html#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><span class="pre">sweetpea.core.cnf.CNF</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">fresh</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">generation_requests</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sweetpea.core.generate.utility.html#sweetpea.core.generate.utility.GenerationRequest" title="sweetpea.core.generate.utility.GenerationRequest"><span class="pre">sweetpea.core.generate.utility.GenerationRequest</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_docker</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#bool" title="(in Python v3.7)"><span class="pre">bool</span></a></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="sweetpea.core.generate.utility.html#sweetpea.core.generate.utility.Solution" title="sweetpea.core.generate.utility.Solution"><span class="pre">sweetpea.core.generate.utility.Solution</span></a><span class="p"><span class="pre">]</span></span><a class="headerlink" href="#sweetpea.core.generate.sample_uniform.sample_uniform" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.sample_uniform.</span></code><code class="sig-name descname"><span class="pre">sample_uniform</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_cnf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fresh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generation_requests</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_docker</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.sample_uniform.sample_uniform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Samples solutions to a CNF problem uniformly. The solution is computed
 using Unigen.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>initial_cnf</strong> (<a class="reference internal" href="sweetpea.core.cnf.html#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><em>sweetpea.core.cnf.CNF</em></a>) – </p></li>
+<li><p><strong>fresh</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+<li><p><strong>support</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+<li><p><strong>generation_requests</strong> (<em>List</em><em>[</em><a class="reference internal" href="sweetpea.core.generate.utility.html#sweetpea.core.generate.utility.GenerationRequest" title="sweetpea.core.generate.utility.GenerationRequest"><em>sweetpea.core.generate.utility.GenerationRequest</em></a><em>]</em>) – </p></li>
+<li><p><strong>use_docker</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>List[<a class="reference internal" href="sweetpea.core.generate.utility.html#sweetpea.core.generate.utility.Solution" title="sweetpea.core.generate.utility.Solution">sweetpea.core.generate.utility.Solution</a>]</p>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
