@@ -70,6 +70,11 @@ html_theme = 'sphinx_rtd_theme'
 html_static_path = []
 
 
+# -- Options for LaTeX output -------------------------------------------------
+
+latex_engine = 'xelatex'
+
+
 # -- Intersphinx configuration -----------------------------------------------
 
 # NOTE: SweetPea currently is based on Python 3.7.9, so we point to the 3.7
