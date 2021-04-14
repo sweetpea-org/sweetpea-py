@@ -7,7 +7,7 @@ from sweetpea.primitives import factor, simple_level, derived_level, get_externa
 from sweetpea.constraints import at_most_k_in_a_row
 from sweetpea.internal import get_all_levels
 from sweetpea.derivation_processor import DerivationProcessor
-
+import os
 
 def __assert_atmostkinarow_pair(k: int, level: Tuple[factor, Union[simple_level, derived_level]], experiments: List[dict]) -> None:
     sublist = list(repeat(level[1], k + 1))
@@ -41,3 +41,5 @@ def shuffled_design_sample(input, num):
     perms = list(permutations(input))
     shuffle(perms)
     return perms[:num]
+
+path_to_cnf_files = os.path.dirname(os.path.abspath(__file__)) + "/cnf_files"

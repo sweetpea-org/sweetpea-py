@@ -7,7 +7,7 @@ from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatori
 from sweetpea import multiple_cross_block, synthesize_trials_non_uniform, synthesize_trials
 from sweetpea.tests.test_utils import get_level_from_name
 from sweetpea.server import build_cnf
-from acceptance import shuffled_design_sample
+from acceptance import shuffled_design_sample, path_to_cnf_files
 
 # Basic setup
 color_list = ["red", "blue"]
@@ -73,9 +73,9 @@ def test_correct_solution_count_with_congruence_factor_and_constrained_cnf(desig
     block  = multiple_cross_block(design, crossing, constraints)
     cnf = build_cnf(block)
 
-    # with open('acceptance/cnf_files/test_correct_solution_count_with_congruence_factor_and_constrained.cnf', 'w') as f:
+    # with open(path_to_cnf_files+'/test_correct_solution_count_with_congruence_factor_and_constrained.cnf', 'w') as f:
     #     f.write(cnf.as_unigen_string())
-    with open('acceptance/cnf_files/test_correct_solution_count_with_congruence_factor_and_constrained.cnf', 'r') as f:
+    with open(path_to_cnf_files+'/test_correct_solution_count_with_congruence_factor_and_constrained.cnf', 'r') as f:
         old_cnf = f.read()
 
     assert old_cnf == cnf.as_unigen_string()
@@ -99,9 +99,9 @@ def test_correct_solution_count_with_congruence_factor_and_constrained_exactly_c
     block  = multiple_cross_block(design, crossing, constraints)
     cnf = build_cnf(block)
 
-    # with open('acceptance/cnf_files/test_correct_solution_count_with_congruence_factor_and_constrained_exactly.cnf', 'w') as f:
+    # with open(path_to_cnf_files+'/test_correct_solution_count_with_congruence_factor_and_constrained_exactly.cnf', 'w') as f:
     #     f.write(cnf.as_unigen_string())
-    with open('acceptance/cnf_files/test_correct_solution_count_with_congruence_factor_and_constrained_exactly.cnf', 'r') as f:
+    with open(path_to_cnf_files+'/test_correct_solution_count_with_congruence_factor_and_constrained_exactly.cnf', 'r') as f:
         old_cnf = f.read()
 
     assert old_cnf == cnf.as_unigen_string()
@@ -174,9 +174,9 @@ def test_correct_solution_count_with_repeated_color_factor_and_no_repetition_all
     block  = multiple_cross_block(design, crossing, constraints)
     cnf = build_cnf(block)
 
-    # with open('acceptance/cnf_files/test_correct_solution_count_with_repeated_color_factor_and_no_repetition_allowed.cnf', 'w') as f:
+    # with open(path_to_cnf_files+'/test_correct_solution_count_with_repeated_color_factor_and_no_repetition_allowed.cnf', 'w') as f:
     #     f.write(cnf.as_unigen_string())
-    with open('acceptance/cnf_files/test_correct_solution_count_with_repeated_color_factor_and_no_repetition_allowed.cnf', 'r') as f:
+    with open(path_to_cnf_files+'/test_correct_solution_count_with_repeated_color_factor_and_no_repetition_allowed.cnf', 'r') as f:
         old_cnf = f.read()
 
     assert old_cnf == cnf.as_unigen_string()

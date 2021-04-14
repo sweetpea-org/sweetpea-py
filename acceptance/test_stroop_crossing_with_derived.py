@@ -9,6 +9,7 @@ from sweetpea.encoding_diagram import print_encoding_diagram
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
 from sweetpea.tests.test_utils import get_level_from_name
 from sweetpea.server import build_cnf
+from acceptance import path_to_cnf_files
 
 
 direction = factor("direction", ["up", "down"])
@@ -82,9 +83,9 @@ def test_correct_solution_count_when_transition_in_crossing_and_constrained_cnf(
     block  = fully_cross_block(design, crossing, constraints)
     cnf = build_cnf(block)
 
-    # with open('acceptance/cnf_files/test_correct_solution_count_when_transition_in_crossing_and_constrained.cnf', 'w') as f:
+    # with open(path_to_cnf_files+'/test_correct_solution_count_when_transition_in_crossing_and_constrained.cnf', 'w') as f:
     #     f.write(cnf.as_unigen_string())
-    with open('acceptance/cnf_files/test_correct_solution_count_when_transition_in_crossing_and_constrained.cnf', 'r') as f:
+    with open(path_to_cnf_files+'/test_correct_solution_count_when_transition_in_crossing_and_constrained.cnf', 'r') as f:
         old_cnf = f.read()
 
     assert old_cnf == cnf.as_unigen_string()
