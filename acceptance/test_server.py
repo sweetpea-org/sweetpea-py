@@ -22,10 +22,15 @@ block = fully_cross_block([color, text, con_factor], [color, text], [])
 
 def test_is_cnf_still_sat_should_respond_correctly():
 
-    cnf_result = build_cnf(block)
-
     # Build the CNF on the server.
     cnf_result = build_cnf(block)
+
+    # with open('acceptance/cnf_files/test_is_cnf_still_sat_should_respond_correctly.cnf', 'w') as f:
+    #     f.write(cnf_result.as_unigen_string())
+    with open('acceptance/cnf_files/test_is_cnf_still_sat_should_respond_correctly.cnf', 'r') as f:
+        old_cnf = f.read()
+
+    assert old_cnf == cnf_result.as_unigen_string()
 
     assert     is_cnf_still_sat(block, [And([1, 3])])
 
