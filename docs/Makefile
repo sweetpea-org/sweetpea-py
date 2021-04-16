@@ -7,7 +7,7 @@ SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
 SPHINXAPIDOC  ?= sphinx-apidoc
 SOURCEDIR     = _source
-APIDOCDIR     = $(SOURCEDIR)/_apidoc
+APIDOCDIR     = $(SOURCEDIR)/api
 BUILDDIR      = _build
 MODULEDIR     = ../sweetpea
 

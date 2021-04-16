@@ -14,4 +14,4 @@ which provides the implementation of the :ref:`SweetPea language <home>`.
    :maxdepth: 4
    :caption: Contents:
 
-   ../_apidoc/sweetpea
+   ../api/sweetpea

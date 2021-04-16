@@ -38,7 +38,7 @@
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="SweetPea API Documentation" href="api.html" />
+    <link rel="next" title="Installation and Setup" href="guide/installation.html" />
     <link rel="prev" title="SweetPea" href="index.html" /> 
 </head>
 
@@ -87,17 +87,10 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">SweetPea Guide and Information</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#factorial-design">Factorial Design</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#factors">Factors</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#derivations">Derivations</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#windows">Windows</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#transitions">Transitions</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#within-trials">Within-Trials</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="guide/installation.html">Installation and Setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guide/factorial_design.html">Factorial Experiment Design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guide/usage.html">Using SweetPea</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guide/contributing.html">Contributing to SweetPea</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">SweetPea API Documentation</a></li>
@@ -172,62 +165,14 @@
 <span id="guide"></span><h1>SweetPea Guide and Information<a class="headerlink" href="#sweetpea-guide-and-information" title="Permalink to this headline">¶</a></h1>
 <p>This page will provide a brief overview of the purpose of SweetPea and provide
 information on how to get it, use it, and consult the documentation.</p>
-<div class="contents local topic" id="contents">
-<p class="topic-title">Contents:</p>
-<ul class="simple">
-<li><p><a class="reference internal" href="#installation" id="id1">Installation</a></p></li>
-<li><p><a class="reference internal" href="#factorial-design" id="id2">Factorial Design</a></p>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Contents:</span></p>
 <ul>
-<li><p><a class="reference internal" href="#factors" id="id3">Factors</a></p></li>
-<li><p><a class="reference internal" href="#derivations" id="id4">Derivations</a></p>
-<ul>
-<li><p><a class="reference internal" href="#windows" id="id5">Windows</a></p></li>
-<li><p><a class="reference internal" href="#transitions" id="id6">Transitions</a></p></li>
-<li><p><a class="reference internal" href="#within-trials" id="id7">Within-Trials</a></p></li>
+<li class="toctree-l1"><a class="reference internal" href="guide/installation.html">Installation and Setup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide/factorial_design.html">Factorial Experiment Design</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide/usage.html">Using SweetPea</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide/contributing.html">Contributing to SweetPea</a></li>
 </ul>
-</li>
-</ul>
-</li>
-</ul>
-</div>
-<p>This is some more text.</p>
-<div class="section" id="installation">
-<span id="guide-installation"></span><h2><a class="toc-backref" href="#id1">Installation</a><a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
-<p>How to install SweetPea.</p>
-</div>
-<div class="section" id="factorial-design">
-<span id="guide-factorial-design"></span><h2><a class="toc-backref" href="#id2">Factorial Design</a><a class="headerlink" href="#factorial-design" title="Permalink to this headline">¶</a></h2>
-<p>(Explain the basics of factorial experimental design.)</p>
-<div class="section" id="factors">
-<span id="guide-factors"></span><h3><a class="toc-backref" href="#id3">Factors</a><a class="headerlink" href="#factors" title="Permalink to this headline">¶</a></h3>
-<p>Something something factors.</p>
-</div>
-<div class="section" id="derivations">
-<span id="guide-derivations"></span><h3><a class="toc-backref" href="#id4">Derivations</a><a class="headerlink" href="#derivations" title="Permalink to this headline">¶</a></h3>
-<p>A <em>derivation</em> identifies a combination of <em>factor</em> <em>levels</em>.
-Together, this combination of levels selects another level that is constructed
-with <a class="reference internal" href="_apidoc/sweetpea.primitives.html#sweetpea.primitives.derived_level" title="sweetpea.primitives.derived_level"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweetpea.primitives.derived_level()</span></code></a>.</p>
-<p>There are three variants of derivation: <em>windows</em>, <em>transitions</em>, and
-<em>within-trial specifications</em>.</p>
-<div class="section" id="windows">
-<h4><a class="toc-backref" href="#id5">Windows</a><a class="headerlink" href="#windows" title="Permalink to this headline">¶</a></h4>
-<p>A <em>window</em> (constructed with <a class="reference internal" href="_apidoc/sweetpea.primitives.html#sweetpea.primitives.window" title="sweetpea.primitives.window"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweetpea.primitives.window()</span></code></a>) creates a
-level that is selected depending on a combination of levels from other factors
-in the current trial and multiple preceding trials.</p>
-</div>
-<div class="section" id="transitions">
-<h4><a class="toc-backref" href="#id6">Transitions</a><a class="headerlink" href="#transitions" title="Permalink to this headline">¶</a></h4>
-<p>A <em>transition</em> (constructed with <a class="reference internal" href="_apidoc/sweetpea.primitives.html#sweetpea.primitives.transition" title="sweetpea.primitives.transition"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweetpea.primitives.transition()</span></code></a>)
-describes a level that is selected depending on a combination of levels from
-other factors in the current trial and the immediately preceding trial.</p>
-</div>
-<div class="section" id="within-trials">
-<h4><a class="toc-backref" href="#id7">Within-Trials</a><a class="headerlink" href="#within-trials" title="Permalink to this headline">¶</a></h4>
-<p>The <em>within-trial specifications</em> (constructed with
-<a class="reference internal" href="_apidoc/sweetpea.primitives.html#sweetpea.primitives.within_trial" title="sweetpea.primitives.within_trial"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweetpea.primitives.within_trial()</span></code></a>) describe a level that is selected
-depending on levels from other factors, all within the same trial.</p>
-</div>
-</div>
 </div>
 </div>
 
@@ -237,7 +182,7 @@ depending on levels from other factors, all within the same trial.</p>
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="api.html" class="btn btn-neutral float-right" title="SweetPea API Documentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="guide/installation.html" class="btn btn-neutral float-right" title="Installation and Setup" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
         <a href="index.html" class="btn btn-neutral float-left" title="SweetPea" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
