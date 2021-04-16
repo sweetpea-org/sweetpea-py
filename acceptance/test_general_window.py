@@ -7,6 +7,8 @@ from sweetpea.constraints import at_most_k_in_a_row, exclude
 from sweetpea.encoding_diagram import print_encoding_diagram
 from sweetpea.primitives import factor, derived_level, window
 from sweetpea.tests.test_utils import get_level_from_name
+from sweetpea.server import build_cnf
+from acceptance import path_to_cnf_files
 
 # Basic setup
 color_list = ["red", "blue"]
@@ -68,3 +70,19 @@ def test_correct_solution_count_when_bookends_must_not_match_each_other(design):
     experiments  = synthesize_trials_non_uniform(block, 100)
 
     assert len(experiments) == 16
+
+def test_correct_solution_count_when_bookends_must_not_match_each_other_cnf(design=[color, text, congruent_bookend]):
+    crossing = [color, text]
+
+    # Require both bookends to be incongruent with each other.
+    constraints = [at_most_k_in_a_row(1, congruent_bookend)]
+
+    block  = fully_cross_block(design, crossing, constraints)
+    cnf = build_cnf(block)
+
+    # with open(path_to_cnf_files+'/test_correct_solution_count_when_bookends_must_not_match_each_other.cnf', 'w') as f:
+    #     f.write(cnf.as_unigen_string())
+    with open(path_to_cnf_files+'/test_correct_solution_count_when_bookends_must_not_match_each_other.cnf', 'r') as f:
+        old_cnf = f.read()
+
+    assert old_cnf == cnf.as_unigen_string()
