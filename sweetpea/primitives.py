@@ -121,7 +121,8 @@ def derived_level(name, derivation) -> DerivedLevel:
         The level's name, which can be any printable value.
 
     :param derivation:
-        A condition on other factors' levels. See :ref:`guide_derivations`.
+        A condition on other factors' levels. See
+        :ref:`guide_factorial_derivations`.
 
     :returns:
         A :class:`.DerivedLevel` with the indicated ``name`` and
@@ -340,7 +341,7 @@ class WithinTrial(__Primitive, __BaseWindow):
 
 def within_trial(fn, args) -> WithinTrial:
     """Creates a :class:`.WithinTrial` derivation. (See the guide's page on
-    :ref:`derivations <guide_derivations>`.)
+    :ref:`derivations <guide_factorial_derivations>`.)
 
     :param fn:
         A function that takes as many level names as factors in ``args``. The
@@ -381,7 +382,7 @@ class Transition(__Primitive, __BaseWindow):
 
 def transition(fn, args) -> Transition:
     """Creates a :class:`.Transition` derivation. (See the guide's page on
-    :ref:`derivations <guide_derivations>`.)
+    :ref:`derivations <guide_factorial_derivations>`.)
 
     :param fn:
         A function that takes as many level lists as factors in ``factors``. In
@@ -428,7 +429,7 @@ class Window(__Primitive, __BaseWindow):
 
 def window(fn, args, width, stride) -> Window:
     """Creates a :class:`.Window` derivation. (See the guide's page on
-    :ref:`derivations <guide_derivations>`.)
+    :ref:`derivations <guide_factorial_derivations>`.)
 
     The :func:`.window` function is a generalization of the :func:`.transition`
     function that selects a level depending on multiple trials, and where
