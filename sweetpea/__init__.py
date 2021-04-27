@@ -9,13 +9,10 @@ from typing import Dict, List, Optional, cast
 import itertools
 
 from sweetpea.derivation_processor import DerivationProcessor
-from sweetpea.internal import chunk, get_all_levels
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.blocks import Block, FullyCrossBlock
-from sweetpea.backend import BackendRequest
-from sweetpea.primitives import *
-from sweetpea.constraints import *
-from sweetpea.sampling_strategies.base import SamplingStrategy
+from sweetpea.primitives import Factor, get_external_level_name
+from sweetpea.constraints import Consistency, Constraint, FullyCross, MultipleCross, MultipleCrossBlock
 from sweetpea.sampling_strategies.non_uniform import NonUniformSamplingStrategy
 from sweetpea.sampling_strategies.unigen import UnigenSamplingStrategy
 from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy
