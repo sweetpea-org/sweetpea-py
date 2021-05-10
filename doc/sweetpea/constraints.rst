@@ -20,7 +20,7 @@ Constraints
               :type levels: Union[Factor, Tuple(Factor, Any)]
               :rtype: Constraint
 
-.. function:: no_more_than_k_in_a_row(k, levels)
+.. function:: at_most_k_in_a_row(k, levels)
 
               The same as :func:`at_most_than_k_in_a_row`.
                                     

@@ -114,7 +114,7 @@ class FullyCross(Constraint):
         # Step 2: For each trial, cross all levels of all factors in the crossing.
         crossing_factors = list(map(lambda t: (list(product(*[block.factor_variables_for_trial(f, t) for f in block.crossing[0]]))), crossing_trials))
 
-        # Step 3: For each trial, cross all levels of all design-only factors in the crossing.    
+        # Step 3: For each trial, cross all levels of all design-only factors in the crossing.
         design_factors = cast(List[List[List[int]]], [])
         design_factors = list(map(lambda _: [], crossing_trials))
         for f in list(filter(lambda f: f not in block.crossing[0] and not f.has_complex_window(), block.design)):
@@ -123,11 +123,11 @@ class FullyCross(Constraint):
         design_combinations = cast(List[List[Tuple[int, ...]]], [])
         design_combinations = list(map(lambda l: list(product(*l)), design_factors))
 
-        # Step 4: For each trial, combine each of the crossing factors with all of the design-only factors.    
+        # Step 4: For each trial, combine each of the crossing factors with all of the design-only factors.
         crossings = cast(List[List[List[Tuple[int, ...]]]], [])
         for i, t in enumerate(crossing_trials):
             crossings.append(list(map(lambda c: [c] + design_combinations[i] ,crossing_factors[i])))
-        
+
         # Step 5: Remove crossings that are not possible.
         # From here on ignore all values other than the first in every list.
         crossings = block.filter_excluded_derived_levels(crossings)
@@ -187,7 +187,7 @@ class MultipleCross(Constraint):
             crossings = cast(List[List[List[Tuple[int, ...]]]], [])
             for i, t in enumerate(crossing_trials):
                 crossings.append(list(map(lambda c: [c] + design_combinations[i] ,crossing_factors[i])))
-            
+
             # Step 5: Remove crossings that are not possible.
             # From here on ignore all values other than the first in every list.
             crossings = block.filter_excluded_derived_levels(crossings)
@@ -545,7 +545,7 @@ class Exclude(Constraint):
                     for c in combos:
                         if block.factor_in_crossing(j[0]) and block.require_complete_crossing:
                             block.errors.add("WARNING: Some combinations have been excluded, this crossing may not be complete!")
-                        c[j[0]] = j[1] 
+                        c[j[0]] = j[1]
             excluded_levels.extend(combos)
         return excluded_levels
 
