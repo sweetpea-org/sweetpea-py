@@ -1,556 +1,787 @@
-from typing import Any, Type, List, Tuple, Union, cast
-from itertools import product, chain, repeat
-import random
+"""This module provides the fundamental primitives used by the SweetPea
+domain-specific language.
+"""
+
+# NOTE: This import allows for forward references in type annotations.
+from __future__ import annotations
+
+from dataclasses import InitVar, dataclass, field
+from itertools import product
+from random import randint
+from typing import Any, Callable, Dict, Generic, List, Optional, Sequence, Tuple, TypeVar, Union
 
 
-# TODO: Why do these functions exist? Just... do `level.internal_name` and
-#       `level.external_name`? These don't seem helpful.
-def get_internal_level_name(level: Any) -> Any:
-    """Returns the internal name of a level.
+###############################################################################
+##
+## Levels
+##
 
-    :param level:
-        The level of which to get the internal name.
 
-    :returns:
-        The internal name of the ``level``.
+"""
+
+TODO: REMOVE
+
+Level weights are relative. They are positive integer values*, where the value
+represents the number of variables devoted to that level. If we imagine two
+factors with a few levels, all with the default weight of 1:
+
+    f0 = Factor('color', ['red', 'blue', 'green'])
+    f1 = Factor('text', ['red', 'blue'])
+
+and convert them into a CNF formula, we will have one variable per level:
+
+    (1 ∨ 2 ∨ 3) ∧ (4 ∨ 5 ∨ 6)
+
+If we adjust one of the `color` levels to have a weight of `2`, though:
+
+    f0 = Factor('color', ['red', SimpleLevel('blue', 2), 'green'])
+    f1 = Factor('text', ['red', 'blue'])
+
+The formula would instead look like:
+
+    (1 ∨ 2 ∨ 3 ∨ 4) ∧ (5 ∨ 6 ∨ 7)
+
+The `blue` level now has two variables: `3` and `4`. When sampling, this gives
+that level two opportunities to be chosen for every one time either of the
+other levels could be chosen.
+
+* They don't have to be positive integers forever. Eventually, they can support
+varieties of values for greater configuration, but for the moment we'll stick
+with the integers.
+
+"""
+
+
+@dataclass
+class Level:
+    """A discrete value that a :class:`.Factor` can hold.
+
+    .. NOTE::
+        Do not directly instantiate :class:`.Level`. Instead, construct one of
+        the subclasses:
+
+        - :class:`.SimpleLevel`
+        - :class:`.DerivedLevel`
+        - :class:`.ElseLevel`
+
+    For more on levels, consult :ref:`the guide <guide_factorial_levels>`.
     """
-    return level.internal_name
 
+    #: The externally visible name of the level.
+    name: str
+    # TODO: I think we can get rid of `Level.internal_name` and replace it with
+    #       some other mechanism. See the TODO notes in `Level.__post_init__`.
+    #: The internal name, which is meant to be unique among levels.
+    internal_name: str = field(init=False)
+    # TODO: There is probably a way to make this smoother. As it stands,
+    #       factors are responsible for registering themselves with their
+    #       levels. Perhaps factors could be the only way to create levels?
+    #: The factor to which this level belongs.
+    factor: Factor = field(init=False)
+    # NOTE: Because of the way dataclasses work, a base class (e.g., `Level`)
+    #       cannot provide an attribute with a default value if a subclass
+    #       (e.g., `DerivedLevel`) provides additional non-default values. This
+    #       means the base class cannot provide a `weight` field with a default
+    #       value of `1`, which is what we want to achieve. (Additionally,
+    #       we'd prefer the `weight` to always be the last field of a level's
+    #       initialization parameters.)
+    #           The solution is to have the base class implement a hidden
+    #       attribute, and provide access to it via a `@property`. Then, the
+    #       child classes must add a `weight` `InitVar` field with a default
+    #       value after their other fields, and use the `__post_init__` to set
+    #       `_weight`. This looks something like:
+    #
+    #           @dataclass
+    #           class NewLevel(Level):
+    #               ...
+    #               weight: InitVar[int] = 1
+    #
+    #               def __post_init__(self, ..., weight: int):
+    #                   ...
+    #                   self._weight = weight
+    #                   ...
+    _weight: int = field(init=False)
 
-def get_external_level_name(level: Any) -> Any:
-    """Returns the external name of a level.
+    def __new__(cls, *_, **__):
+        if cls == Level:
+            raise ValueError(f"Cannot directly instantiate {cls.__name__}.")
+        return super().__new__(cls)
 
-    :param level:
-        The level of which to get the external name.
+    def __post_init__(self):
+        # TODO: Using random integers seems insecure. Perhaps use UUIDs or a
+        #       global (module-level) incremented counter.
+        # TODO: Alternatively, because this is only used for the `__eq__`
+        #       implementation, we could potentially remove this altogether and
+        #       simply switch to using `is` checks (which is a more secure way
+        #       of doing the same thing). The downside there is that this
+        #       requires users of SweetPea to understand the distinction
+        #       between `==` and `is`, which adds a bit of a barrier for an
+        #       audience that is not primarily made of programmers.
+        self.internal_name = self.name + f"{randint(0, 99999):05d}"
 
-    :returns:
-        The external name of the ``level``.
-    """
-    return level.external_name
-
-
-# TODO: This class provides absolutely nothing useful whatsoever.
-class __Primitive:
-    def require_type(self, label: str, type: Type, value: Any):
-        if not isinstance(value, type):
-            raise ValueError(label + ' must be a ' + str(type) + '.')
-
-    def require_non_empty_list(self, label: str, value: Any):
-        self.require_type(label, List, value)
-        if len(value) == 0:
-            raise ValueError(label + ' must not be empty.')
-
-    def __str__(self):
-        raise Exception("Attempted implicit string cast of primitive")
-
-
-# TODO: Factor out the common bits of the Level classes into a `BaseLevel`.
-# TODO: Simplify this.
-class SimpleLevel(__Primitive):
-    def __init__(self, name: Any):
-        self.external_name = str(name)
-        # TODO: Is random the way to go here? Maybe a UUID would be better, or
-        #       a global counter that increments each time?
-        self.internal_name = str(name) + "{:05d}".format(random.randint(0, 99999))
-        # TODO: Inline.
-        self.__validate()
-
-    def __validate(self):
-        # TODO: Does this do anything? The `object` type implements `__eq__`
-        #       trivially, so this should never fail.
-        if not (hasattr(self.external_name, "__eq__")):
-            raise ValueError("Level names must be comparable, but received "
-                             + str(self.external_name))
-
-    def __str__(self):
-        # TODO: There's no guarantee that this is the result of an *implicit*
-        #       conversion.
-        raise Exception("Attempted implicit string cast of simple level")
-
-    # TODO: Remove.
-    def set_factor(self, factor):
-        self.factor = factor
-
-    def __eq__(self, other):
-        # TODO: This should probably be `isinstance`, not `type(__) ==`.
-        if (type(other) != SimpleLevel):
-            print("Attempted to compare a simple level to another type, " + str(type(other)))
-        return other.internal_name == self.internal_name
-
-    # TODO: This makes multiple instances of `DerivedLevel` with the same name
-    #       indistinguishable. Is this behavior desirable?
-    # TODO: Do we actually need `__hash__` support? Maybe check that.
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.internal_name)
 
-
-# TODO: DOC
-# TODO: I really dislike these functions. They're just aliases for the class
-#       constructors, which seems not-so-helpful. If we keep them, these should
-#       be moved to `__init__.py` and provide some useful default values or
-#       something.
-def simple_level(name) -> SimpleLevel:
-    return SimpleLevel(name)
-
-
-class DerivedLevel(__Primitive):
-    def __init__(self, name, window):
-        # TODO: I think we should just require `name` to be a string when it
-        #       comes in, leaving it to the client to determine how that
-        #       happens.
-        self.external_name = str(name)
-        # TODO: Same as SimpleLevel: is random the way to go here?
-        self.internal_name = str(name) + "{:05d}".format(random.randint(0, 99999))
-        self.window = window
-        # TODO: Inline.
-        self.__validate()
-        # TODO: Inline.
-        self.__expand_window_arguments()
-
-    def __validate(self):
-        # TODO: The `external_name` is set equal to the result of `str` in
-        #       `__init__`, so how can this ever fail?
-        self.require_type('DerivedLevel.external_name', str, self.external_name)
-        # TODO: Simplify.
-        # TODO: Maybe also save this somewhere as an attribute?
-        window_type = type(self.window)
-        allowed_window_types = [WithinTrial, Transition, Window]
-        if window_type not in allowed_window_types:
-            raise ValueError('DerivedLevel.window must be one of ' + str(allowed_window_types) + ', but was ' + str(window_type) + '.')
-        for f in self.window.args:
-            if f.has_complex_window() and f.levels[0].window.stride > 1:
-                raise ValueError('DerivedLevel can not take factors with stride > 1, found factor with stride = ' + str(f.levels[0].window.stride) + '.')
-
-    # TODO: Inline.
-    def __expand_window_arguments(self) -> None:
-        # TODO: Rewrite as list comprehension and simplify.
-        self.window.args = list(chain(*[list(repeat(arg, self.window.width)) for arg in self.window.args]))
-
-    # TODO: This return type seems almost entirely useless.
-    def get_dependent_cross_product(self) -> List[Tuple[Any, ...]]:
-        # TODO: Use a list comprehension instead of this list/product business.
-        return list(product(*[[(dependent_factor, x) for x in dependent_factor.levels] for dependent_factor in self.window.args]))
-
-    # TODO: Remove.
-    def set_factor(self, factor):
-        self.factor = factor
-
-    def __eq__(self, other):
-        # TODO: This should probably be `isinstance`, not `type(__) ==`.
-        if (type(other) != DerivedLevel):
-            print("Attempted to compare a derived level to another type, " + str(type(other)))
-        # TODO: This works the same as SimpleLevel. Maybe one should subclass
-        #       the other?
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, type(self)):
+            return False
         return self.internal_name == other.internal_name
 
-    # TODO: Same comments as `SimpleLevel.__hash__`.
-    def __hash__(self):
-        return hash(self.internal_name)
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}<{self.name}>"
 
-    def __repr__(self):
-        # TODO: This should be `repr`, not `str`, probably.
-        # TODO: Not sure the pervasive use of `self.__dict__` is a good idea.
-        #       It's... everywhere in this module, though.
-        return str(self.__dict__)
-
-    def __str__(self):
-        return str(self.__dict__)
+    @property
+    def weight(self) -> int:
+        """The level's weight."""
+        return self._weight
 
 
-def derived_level(name, derivation) -> DerivedLevel:
-    """Creates a :class:`.DerivedLevel`, which depends on the levels of other
-    factors in a design.
+@dataclass(eq=False)
+class SimpleLevel(Level):
+    """A simple :class:`.Level`, which only has a name.
+
+    For example, in a simple :ref:`Stroop experiment
+    <guide_factorial_example>`, a ``color`` :class:`.Factor` may consist of a
+    few simple levels such as ``red``, ``blue``, and ``green``.
 
     :param name:
-        The level's name, which can be any printable value.
+        The name of the level.
+    """
+    weight: InitVar[int] = 1
+
+    # NOTE: The __post_init__ method is a special case where we can ignore the
+    #       Liskov substitution property. This is addressed in
+    #       python/mypy#9254:
+    #           https://github.com/python/mypy/issues/9254
+    def __post_init__(self, weight: int):  # type: ignore # pylint: disable=arguments-differ
+        super().__post_init__()
+        self._weight = weight
+
+
+@dataclass(eq=False)
+class DerivedLevel(Level):
+    """A :class:`.Level` representing the intersection of other levels,
+    potentially from different :class:`Factors <.Factor>`. These are produced
+    through use of :class:`Derivations <.Derivation>`, which are constraints on
+    level selection during trial sampling.
+
+    For more information on when to use derived levels, consult :ref:`the
+    Derivations section of the SweetPea guide <guide_factorial_derivations>`.
+
+    :param name:
+        The name of the level.
 
     :param derivation:
-        A condition on other factors' levels. See
-        :ref:`guide_factorial_derivations`.
-
-    :returns:
-        A :class:`.DerivedLevel` with the indicated ``name`` and
-        ``derivation``.
-    """
-    return DerivedLevel(name, derivation)
-
-
-# TODO: This name doesn't make sense. Replace it?
-# TODO: Actually, it seems that `ElseLevel`s are just eventually translated
-#       into `DerivedLevel`s. What's up with that?
-class ElseLevel():
-    def __init__(self, name):
-        self.name = name
-
-    # TODO: Remove.
-    def set_factor(self, factor):
-        self.factor = factor
-
-    # TODO: Wait, hang on, `ElseLevel` is callable? But... why? This seems like
-    #       an inconsistent API, which could lead to confusion.
-    def __call__(self, other_levels: List[DerivedLevel]) -> DerivedLevel:
-        if other_levels is None:
-            return DerivedLevel(self.name, WithinTrial(lambda: False, []))
-        some_level = other_levels[0]
-        # TODO: This... is never used?
-        other_functions = list(map(lambda dl: dl.window.fn, other_levels))
-        args = some_level.window.args[::some_level.window.width]
-        window = Window(lambda *args: not any(map(lambda l: l.window.fn(*args), other_levels)), args, *some_level.window.size())
-        return DerivedLevel(self.name, window)
-
-    # TODO: Why does ElseLevel not implement the other methods that SimpleLevel
-    #       and DerivedLevel do?
-
-
-def else_level(name) -> ElseLevel:
-    return ElseLevel(name)
-
-
-class Factor(__Primitive):
-    """In factorial experimental design, a *factor* is an independent variable
-    under examination. Factors have a ``name`` and are composed of *levels*,
-    where each level corresponds to a discrete value a factor can assume as
-    part of the experiment.
+        A :class:`.Derivation` used in producing a cross product of this level
     """
 
-    def __init__(self, name: str, levels):
+    #: The derivation corresponding to this level.
+    derivation: Derivation = field(compare=False)
+    weight: InitVar[int] = 1
+
+    # NOTE: The __post_init__ method is a special case where we can ignore the
+    #       Liskov substitution property. This is addressed in
+    #       python/mypy#9254:
+    #           https://github.com/python/mypy/issues/9254
+    def __post_init__(self, weight: int):  # type: ignore # pylint: disable=arguments-differ
+        super().__post_init__()
+        self._weight = weight
+        # Verify internal factors' strides.
+        for factor in self.derivation.factors:
+            if factor.has_complex_derivation and factor.first_level.derivation.stride > 1:
+                raise ValueError(f"{type(self).__name__} does not accept factors with stride > 1, but factor "
+                                 f"{factor.name} has derivation with stride {factor.first_level.derivation.stride}.")
+        # Expand the factors. Each factor gets duplicated according to the
+        # derivation width.
+        # TODO: Why is `DerivedLevel` manipulating the internal state of
+        #       `Derivation`? This should probably be moved to a
+        #       `Derivation` method.
+        # TODO: This could probably be handled a different way, too.
+        expanded_factors: List[Factor] = []
+        for factor in self.derivation.factors:
+            expanded_factors.extend([factor] * self.derivation.width)
+
+    def get_dependent_cross_product(self) -> List[Tuple[Tuple[Factor, Level], ...]]:
+        """Produces a list of n-tuples of pairs, where each pair consists of a
+        :class:`.Factor` with one of its possible :class:`Levels <.Level>`, and
+        each n-tuple represents a unique combination of such
+        :class:`.Factor`-:class:`.Level` selections among all possibilities.
+
+        For instance, if we have two :class:`Factors <.Factor>` each with some
+        :class:`Levels <.Level>`:
+
+        ======  ================
+        Factor  Levels
+        ======  ================
+        color   red, blue, green
+        value   1, 2
+        ======  ================
+
+        Then the following list of tuples of pairs is returned::
+
+          [((color, red),   (value, 1)),
+           ((color, red),   (value, 2)),
+           ((color, blue),  (value, 1)),
+           ((color, blue),  (value, 2)),
+           ((color, green), (value, 1)),
+           ((color, green), (value, 2))]
+
+        :rtype: typing.List[typing.Tuple[typing.Tuple[.Factor, .Level], ...]]
         """
-        :param name:
-            The name of the :class:`.Factor`.
+        # TODO: This seems like it could be rewritten with indexing of some
+        #       sort. The levels are already inside the factors, so returning
+        #       the factors paired with specific levels is redundant.
+        #           On the other hand, it wouldn't really be more efficient and
+        #       this may be considered more straightforward for users.
+        factor_level_pairs = [[(factor, level) for level in factor.levels] for factor in self.derivation.factors]
+        return list(product(*factor_level_pairs))
 
-        :param levels:
-            The possible values the :class:`.Factor` can assume. The ``levels``
-            can be given as an iterable of either elements produced by calls to
-            :func:`.derived_level` or just plain :class:`strs <str>`.
+    # TODO: REMOVE (backwards compatibility)
+    @property
+    def window(self) -> Derivation:
+        return self.derivation
 
-            When the levels are instances produced by :func:`.derived_level`,
-            they must all be distinct, mutually exclusive, and cover all cases.
-            This is the preferred mechanism for specifying levels.
 
-            When the levels are all :class:`strs <str>`, they will be
-            internally converted into levels like those produced by
-            :func:`.derived_level`. Multiple instances of equivalent strings
-            are considered as distinct levels.
+@dataclass(eq=False)
+class ElseLevel(Level):
+    # TODO: I'm honestly not sure what this kind of level is for, semantically.
+    """A :class:`.Level` for... something.
 
-            .. WARNING::
-                Because the resulting levels will have identical names, using
-                the name of those levels in constraints or deriving other
-                factors from this :class:`.Factor` will treat that name as an
-                accessor for all matching levels. Be careful!
+    :param name:
+        The name of the level.
+    """
+
+    def derive_level_from_levels(self, other_levels: List[DerivedLevel]) -> DerivedLevel:
+        """Converts the :class:`.ElseLevel` into a :class:`.DerivedLevel` by
+        combining it with other specified
+        :class:`DerivedLevels <.DerivedLevel>`.
+
+        :param other_levels:
+            A list of :class:`DerivedLevels <.DerivedLevel>` for use in
+            constructing the new level.
         """
-        self.factor_name = name
-        # TODO: Inline.
-        self.levels = self.__make_levels(levels)
-        # TODO: Inline.
-        self.__validate()
+        if not other_levels:
+            return DerivedLevel(self.name, WithinTrialDerivation(lambda: False, []))
+        first_level = other_levels[0]
+        # TODO: This is very odd. We only take every *n*th factor from the
+        #       derivation (where *n* is the derivation width). This is because
+        #       the initializer for `DerivedLevel`s expands the list of factors
+        #       to duplicate by the width.
+        #           It seems like this should be rethought. Why go through the
+        #       trouble of duplicating the factors only to de-duplicate them
+        #       later? Perhaps `DerivedLevel`s need a different internal
+        #       representation to avoid this real duplication.
+        factors = first_level.derivation.factors[::first_level.derivation.width]
+        # TODO: This exhibits the same issue as the preceding TODO.
+        derivation = WindowDerivation(lambda *args: not any(map(lambda l: l.derivation.predicate(*args), other_levels)),
+                                      factors,
+                                      first_level.derivation.width,
+                                      first_level.derivation.stride)
+        return DerivedLevel(self.name, derivation)
 
-    def __make_levels(self, levels):
-        out_levels = []
-        # TODO: Inline.
-        self.require_non_empty_list('Factor.levels', levels)
-        # TODO: I think we should re-evaluate the handling of `ElseLevel`. This
-        #       is super weird.
-        for level in levels:
-            if isinstance(level, ElseLevel):
-                out_levels.append(level(list(filter(lambda l: isinstance(l, DerivedLevel), levels))))
-            elif isinstance(level, DerivedLevel):
-                out_levels.append(level)
+
+###############################################################################
+##
+## Factors
+##
+
+
+LevelT = TypeVar('LevelT', bound=Level)
+
+
+@dataclass
+class Factor(Generic[LevelT]):
+    """An independent variable in a factorial experiment. Factors are composed
+    of :class:`Levels <.Level>` and come in two flavors:
+
+    - :class:`.SimpleFactor`
+    - :class:`.DerivedFactor`
+
+    However, both classes can be implicitly constructed by the base
+    :class:`.Factor` constructor, so we recommend you always use that for
+    creating factors.
+
+    See :ref:`the Factorial Experiment Design section of the SweetPea guide
+    <guide_factorial_design>` for more about factors, levels, and how to use
+    them.
+
+    :param name:
+        The name of this factor.
+
+    :param initial_levels:
+        The levels comprising this factor. The list can be made of anything,
+        but any values in the list that are not instances of :class:`.Level` or
+        one of its subclasses will be converted into :class:`.SimpleLevel`
+        instances by using their string representation, as determined by
+        ``SimpleLevel(str(value))``.
+    :type initial_levels: typing.Sequence[Any]
+
+    :rtype: .Factor
+    """
+
+    name: str
+    initial_levels: InitVar[Sequence[Any]]
+    levels: Sequence[LevelT] = field(init=False)
+    _level_map: Dict[str, LevelT] = field(init=False, default_factory=dict)
+
+    def __new__(cls, name: str, initial_levels: List[Any], *_, **__) -> Factor:
+        if not initial_levels:
+            raise ValueError(f"Expected at least one level for factor {name}.")
+        # Convert non-`Level` levels into `Level`s.
+        # NOTE: We rely on details of Python's implementation here. The
+        #       `__init__` and `__post_init__` methods will be passed the same
+        #       values as `__new__`, so you cannot generally change the values
+        #       in `__new__` to be passed along to the others.
+        #           However, Python passes all lists (and similar data
+        #       structures) by reference implicitly, so we can modify the list
+        #       in-place and the results will propagate to the other methods.
+        for i, level in enumerate(initial_levels):
+            if isinstance(level, Level):
+                continue
+            elif isinstance(level, str):
+                initial_levels[i] = SimpleLevel(level)
+            elif isinstance(level, tuple) and len(level) == 2 and isinstance(level[0], str) and isinstance(level[1], int):
+                initial_levels[i] = SimpleLevel(level[0], level[1])
             else:
-                out_levels.append(SimpleLevel(level))
-        for level in out_levels:
-            level.set_factor(self)
-        return out_levels
+                initial_levels[i] = SimpleLevel(str(level))
+        # Extract the first level to see what kind of `Factor` we expect to be.
+        # Then, create an instance of the appropriate subclass.
+        first_level = initial_levels[0]
+        if isinstance(first_level, SimpleLevel):
+            return super().__new__(SimpleFactor)
+        if isinstance(first_level, (DerivedLevel, ElseLevel)):
+            return super().__new__(DerivedFactor)
+        raise ValueError(f"Invalid first level in construction of factor {name}: {first_level}")
 
-    def __validate(self):
-        # TODO: Convert to type hint.
-        self.require_type('Factor.factor_name', str, self.factor_name)
-        # TODO: This is used elsewhere... so it should just be an attribute.
-        level_type = type(self.levels[0])
-        # TODO: Simplify.
-        if level_type not in [SimpleLevel, DerivedLevel]:
-            raise ValueError('Factor.levels must be either SimpleLevel or DerivedLevel')
+    def __post_init__(self, initial_levels: Sequence[Level]):
+        # First, we do any necessary post-processing of the levels.
+        self.levels = self._process_initial_levels(initial_levels)
+        # Ensure all the levels have distinct names.
+        for level in self.levels:
+            if level.name in self._level_map:
+                raise ValueError(f"Factor {self.name} instantiated with duplicate level {level.name}.")
+            self._level_map[level.name] = level
+            level.factor = self
 
-        # TODO: Simplify.
-        # TODO: Rename.
-        for l in self.levels:
-            if type(l) != level_type:
-                raise ValueError('Expected all levels to be ' + str(level_type) +
-                    ', but found ' + str(type(l)) + '.')
+    # NOTE: Subclasses of `Factor` must override this method!
+    # NOTE: This method cannot be decorated `@abstractmethod` because the
+    #       `abc.ABC` class does not play well with `@dataclass`. Additionally,
+    #       `Factor` is not actually an abstract base class because the custom
+    #       `__new__` implementation prevents it from ever being instantiated.
+    #       There is no way to express "a class which cannot be instantiated"
+    #       that I know of, so there's no way to get around this dynamic
+    #       `NotImplementedError` solution.
+    def _process_initial_levels(self, initial_levels: Sequence[Level]) -> Sequence[LevelT]:
+        raise NotImplementedError
 
-        # TODO: Don't love this.
-        if level_type == DerivedLevel:
-            window_size = self.levels[0].window.size()
-            for dl in self.levels:
-                if dl.window.size() != window_size:
-                    raise ValueError('Expected all DerivedLevel.window sizes to be ' +
-                        str(window_size) + ', but found ' + str(dl.window.size()) + '.')
-            window_args = self.levels[0].window.args
-            for dl in self.levels:
-                if dl.window.args != window_args:
-                    raise ValueError('Expected all DerivedLevel.window args to be ' +
-                            str(list(map(lambda x: x.factor_name, window_args))) + ', but found ' + str(list(map(lambda x:x.factor_name, dl.window.args))) + '.')
-
-    # TODO: Make this a property.
-    def is_derived(self) -> bool:
-        # TODO: Use new level type attribute.
-        return isinstance(self.levels[0], DerivedLevel)
-
-    def has_complex_window(self) -> bool:
-        if not self.is_derived():
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, type(self)):
             return False
+        return self.name == other.name and self.levels == other.levels
 
-        # TODO: We only check the window in the first level? Is that right?
-        window = self.levels[0].window
-        return window.width > 1 or window.stride > 1 or window.args[0].has_complex_window()
+    def __hash__(self) -> int:
+        return hash(self.name)
 
-    def get_level(self, level_name: str) -> Union[SimpleLevel, DerivedLevel]:
-        # TODO: Rename.
-        for l in self.levels:
-            if l.internal_name == level_name:
-                return l
-        # TODO: This cast makes no sense --- it undermines the type system.
-        return cast(SimpleLevel, None)
+    def __getitem__(self, name: str) -> LevelT:
+        value = self.get_level(name)
+        if value is None:
+            raise KeyError(f"Factor {self.name} has no level named {name}.")
+        return value
 
-    def has_level(self, level: Any) -> bool:
-        # TODO: Is this why all the levels are hashable? Is this it? I'd rather
-        #       have an explicit dictionary mapping level names to levels. This
-        #       would also admit an O(1) lookup in `Factor.get_level`, which
-        #       seems worth it.
-        return (level in self.levels)
+    def __contains__(self, name: str) -> bool:
+        return name in self._level_map
 
-    # TODO: Do `Factor`s need to be hashable?
-    def __hash__(self):
-        return(hash(self.factor_name))
+    def get_level(self, name: str) -> Optional[LevelT]:
+        """Returns a :class:`.Level` instance corresponding to the given name,
+        if it exists within this factor. Otherwise, returns ``None``.
+        """
+        return self._level_map.get(name)
+
+    # TODO: This should be made private.
+    @property
+    def first_level(self) -> LevelT:
+        """The first :class:`.Level` in this factor."""
+        return self.levels[0]
+
+    # TODO: Convert to a property. (backwards compatibility)
+    # NOTE: Alternatively, we should maybe instead prefer an actual type check
+    #       in most spots in the code since that will give accurate type
+    #       checking feedback.
+    def is_derived(self) -> bool:
+        """Whether this factor is derived.
+
+        .. admonition:: DEPRECATED
+            Instead of using this function, we recommend doing a dynamic type
+            check with :func:`isinstance`. This provides the same semantic
+            information to the programmer while also providing greater type
+            guarantees when using a static type checker, such as mypy.
+
+            .. code-block:: python
+                factor: Factor = ...
+                if isinstance(factor, DerivedFactor):
+                    # Code requiring a derived factor.
+                    ...
+                else:
+                    # Code if it's not a derived factor.
+                    ...
+        """
+        return isinstance(self, DerivedFactor)
+
+    @property
+    def has_complex_derivation(self) -> bool:
+        """Whether this factor has a complex derivation.
+
+        A complex derivation is a property of derived factors whose first-level
+        derivations are considered complex.
+        """
+        if not isinstance(self, DerivedFactor):
+            return False
+        # NOTE: mypy 0.812 has an issue with these `isinstance` checks for
+        #       subclasses of generic base classes. See python/mypy#8252:
+        #           https://github.com/python/mypy/issues/8252
+        derivation = self.first_level.derivation  # type: ignore
+        return (derivation.width > 1
+                or derivation.stride > 1
+                or derivation.is_complex)
 
     def applies_to_trial(self, trial_number: int) -> bool:
-        """Determines whether this :class:`.Factor` applies to the given trial
-        number. For example, :class:`Factors <.Factor>` with
-        :class:`.Transition` windows in derived levels do not apply to trial
-        ``1``, but do apply to all subsequent trials.
+        """Whether this factor applies to the given trial. For example, factors
+        with :class:`.TransitionDerivation` derivations in their levels do not
+        apply to trial number ``1``, but do apply to all subsequent trials.
 
         .. TIP::
             Trials start their numbering at ``1``.
         """
-        # TODO: Simplify this implementation.
         if trial_number <= 0:
-            raise ValueError('Trial numbers may not be less than 1')
-
-        if not self.is_derived():
+            raise ValueError(f"Trial numbers must be 1 or greater; got {trial_number}.")
+        if not isinstance(self, DerivedFactor):
             return True
 
-        def acc_width(w) -> int:
-            return w.width + (acc_width(w.args[0].levels[0].window)-1 if w.args[0].has_complex_window() else 0)
+        def acc_width(d: Derivation) -> int:
+            if isinstance(d.first_factor, DerivedFactor) and d.first_factor.has_complex_derivation:
+                return d.width + acc_width(d.first_factor.first_level.derivation) - 1
+            return d.width
 
-        window = self.levels[0].window
+        # NOTE: mypy 0.812 has an issue with these `isinstance` checks for
+        #       subclasses of generic base classes. See python/mypy#8252:
+        #           https://github.com/python/mypy/issues/8252
+        derivation = self.first_level.derivation  # type: ignore
+        return (trial_number >= acc_width(derivation)
+                and (trial_number - derivation.width) % derivation.stride == 0)
 
-        return trial_number >= acc_width(window) and (trial_number - window.width) % window.stride == 0
+    # TODO: REMOVE. (backwards compatibility)
+    @property
+    def factor_name(self) -> str:
+        """An alias for :attr:`.Factor.name` for backwards compatibility.
 
-    # TODO: Oh I really don't like this. Rewrite.
-    def __eq__(self, other):
-        return self.__dict__ == other.__dict__
+        .. admonition:: DEPRECATED
+            This property will be removed in favor of :attr:`.Factor.name`.
+        """
+        return self.name
 
-    def __repr__(self):
-        # TODO: This should probably be `repr`, not `str`.
-        return str(self.__dict__)
+    # TODO: REMOVE. (backwards compatibility)
+    def has_level(self, name: str) -> bool:
+        """Whether the given level name corresponds to a level in this factor.
 
-    def __str__(self):
-        return str(self.__dict__)
+        .. admonition:: DEPRECATED
+            This method will be removed in favor of straightforward membership
+            checks, such as:
+
+            .. code-block:: python
+                factor: Factor = ...
+                if 'level_name' in factor:
+                    ...
+        """
+        return name in self
+
+    # TODO: REMOVE. (backwards compatibility)
+    def has_complex_window(self) -> bool:
+        """A method alias for the :attr:`.Factor.has_complex_derivation`
+        property.
+
+        .. admonition:: DEPRECATED
+            This method will be removed in favor of
+            :attr:`.Factor.has_complex_derivation`.
+        """
+        return self.has_complex_derivation
 
 
-def factor(name: str, levels) -> Factor:
-    """Creates a plain :class:`.Factor` for use in an experimental design.
+@dataclass
+class SimpleFactor(Factor[SimpleLevel]):
+    """A :class:`.Factor` comprised of :class:`SimpleLevels <.SimpleLevel>`.
 
     :param name:
-        The name of the :class:`.Factor` to create.
+        The name of this factor.
 
-    :param levels:
-        The :class:`.Factor`'s possible values.
+    :param initial_levels:
+        The levels comprising this factor.
+    :type initial_levels: typing.Sequence[.SimpleLevel]
 
-    :returns:
-        A :class:`.Factor` with the indicated ``name`` and ``levels``.
-    """
-    return Factor(name, levels)
-
-
-# TODO: Maybe change this to `Derivation` for consistency?
-class __BaseWindow():
-    # TODO: Rename some of these fields.
-    def __init__(self, fn, args, width: int, stride: int) -> None:
-        self.fn = fn
-        self.args = args
-        self.argc = len(args)
-        self.width = width
-        self.stride = stride
-        # TODO: Inline.
-        self.__validate()
-
-    def __validate(self):
-        # TODO: I'm unsure about checking all these things. I'd rather leave
-        #       all this up to type annotations and mypy.
-        if not callable(self.fn):
-            raise ValueError('Derivation function should be callable, but found ' + str(self.fn) + '.')
-        for f in self.args:
-            if not isinstance(f, Factor):
-                raise ValueError('Derivation level should be derived from factors, but found ' + str(f) + '.')
-        if self.width < 1:
-            raise ValueError('Window width must be at least 1, but found ' + str(self.width) + '.')
-        if self.stride < 1:
-            raise ValueError('Window width must be at least 1, but found ' + str(self.stride) + '.')
-
-        if len(set(map(lambda f: f.factor_name, self.args))) != self.argc:
-            raise ValueError('Factors should not be repeated in the argument list to a derivation function.')
-
-
-# TODO: This is a bad name, honestly. It's not consistent with the other
-#       `__BaseWindow` subclass names.
-# TODO: Also, why do each of the `__BaseWindow` subclasses also inherit from
-#       `__Primitive` instead of just making `__BaseWindow` a subclass of
-#       `__Primitive` directly?
-class WithinTrial(__Primitive, __BaseWindow):
-    """A description of a level that is selected depending on levels from other
-    factors, all within the same trial.
+    :rtype: .SimpleFactor
     """
 
-    def __init__(self, fn, args):
-        super().__init__(fn, args, 1, 1)
+    def _process_initial_levels(self, initial_levels) -> Sequence[SimpleLevel]:
+        for level in initial_levels:
+            if not isinstance(level, SimpleLevel):
+                raise ValueError(f"{type(self).__name__} named {self.name} must contain only SimpleLevels, but level "
+                                 f"{level.name} has type {type(level).__name__}.")
+        return initial_levels
 
-    # TODO: This method should have a base implementation in the superclass.
-    def size(self):
-        return (1, 1)
+    def __hash__(self) -> int:
+        return super().__hash__()
 
-    # TODO: Don't love this. Rewrite.
-    def __eq__(self, other):
-        return self.__dict__ == other.__dict__
-
-    def __repr__(self):
-        # TODO: This should probably be `repr`, not `str`.
-        return str(self.__dict__)
-
-    def __str__(self):
-        return str(self.__dict__)
+    def __eq__(self, other) -> bool:
+        return super().__eq__(other)
 
 
-def within_trial(fn, args) -> WithinTrial:
-    """Creates a :class:`.WithinTrial` derivation. (See the guide's page on
-    :ref:`derivations <guide_factorial_derivations>`.)
+@dataclass
+class DerivedFactor(Factor[DerivedLevel]):
+    """A :class:`.Factor` composed of :class:`DerivedLevels <.DerivedLevel>`.
 
-    :param fn:
-        A function that takes as many level names as factors in ``args``. The
-        function should be a predicate that returns ``True`` if the combination
-        of levels implies the result derivation.
+    :param name:
+        The name of this factor.
 
-    :param args:
-        A list of factors whose levels determine whether a level with the
-        returned derivation is selected.
+    :param initial_levels:
+        The levels comprising this factor. The levels may be instances of
+        either :class:`DerivedLevels <.DerivedLevel>` or
+        :class:`ElseLevels <.ElseLevel>`.
 
-    :returns:
-        A :class:`.WithinTrial` derivation.
-    """
-    return WithinTrial(fn, args)
+        .. NOTE::
+            Any given :class:`.ElseLevel` will be converted to a
+            :class:`.DerivedLevel` by way of
+            :func:`.ElseLevel.derive_level_from_levels`, so that the
+            :attr:`.Factor.levels` list will only contain
+            :class:`DerivedLevels <DerivedLevel>`.
+    :type initial_levels: typing.Sequence[typing.Union[.DerivedLevel, .ElseLevel]]
 
-
-class Transition(__Primitive, __BaseWindow):
-    """A description of a level that is selected depending on a combination of
-    levels from other factors in the current trial and the immediately
-    preceding trial.
+    :rtype: .DerivedFactor
     """
 
-    def __init__(self, fn, args):
-        super().__init__(fn, args, 2, 1)
-
-    # TODO: Implement in superclass.
-    def size(self):
-        return (2, 1)
-
-    # TODO: Rewrite.
-    def __eq__(self, other):
-        return self.__dict__ == other.__dict__
-
-    def __repr__(self):
-        # TODO: This should probably be `repr`, not `str`.
-        return str(self.__dict__)
-
-    def __str__(self):
-        return str(self.__dict__)
+    def _process_initial_levels(self, initial_levels: Sequence[Level]) -> Sequence[DerivedLevel]:
+        adjusted_levels: List[DerivedLevel] = []
+        initial_derived_levels: List[DerivedLevel] = [level for level in initial_levels
+                                                      if isinstance(level, DerivedLevel)]
+        for level in initial_levels:
+            if isinstance(level, ElseLevel):
+                adjusted_levels.append(level.derive_level_from_levels(initial_derived_levels))
+            elif isinstance(level, DerivedLevel):
+                adjusted_levels.append(level)
+            else:
+                raise ValueError(f"Cannot use {type(level).__name__} to create a {type(self).__name__}. "
+                                 f"Only DerivedLevels and ElseLevels are allowed.")
+        return adjusted_levels
 
 
-def transition(fn, args) -> Transition:
-    """Creates a :class:`.Transition` derivation. (See the guide's page on
-    :ref:`derivations <guide_factorial_derivations>`.)
-
-    :param fn:
-        A function that takes as many level lists as factors in ``factors``. In
-        each list, the first element is the level value for the previous trial,
-        and the second element is the level value for the current trial. The
-        function should return ``True`` if the combination of levels implies
-        the result derivation, and ``False`` otherwise.
-
-    :param args:
-        A list of factors whose levels across trials determine whether a level
-        with the returned derivation is selected.
-
-    :returns:
-        A :class:`.Transition` derivation.
-    """
-    return Transition(fn, args)
+def make_factor(name: str, levels: Sequence[Any]) -> Union[SimpleFactor, DerivedFactor]:
+    factor: Factor = Factor(name, levels)
+    if isinstance(factor, (SimpleFactor, DerivedFactor)):
+        return factor
+    else:
+        raise ValueError
 
 
-class Window(__Primitive, __BaseWindow):
-    """Describes a level that is selected depending on a combination of levels
-    from other factors in the current trial and multiple preceding trials.
-
-    A :class:`.Window` is a generalization of a :class:`.Transition`
-    derivation that selects a level depending on multiple trials, and where
-    preceding trials are separated by ``stride - 1`` intervening trials.
-    """
-
-    def __init__(self, fn, args, width, stride):
-        super().__init__(fn, args, width, stride)
-
-    # TODO: Implement in superclass.
-    def size(self):
-        return (self.width, self.stride)
-
-    # TODO: Rewrite.
-    def __eq__(self, other):
-        return self.__dict__ == other.__dict__
-
-    def __repr__(self):
-        # TODO: This should probably be `repr` instead of `str.`
-        return str(self.__dict__)
-
-    def __str__(self):
-        return str(self.__dict__)
+###############################################################################
+##
+## Derivations
+##
 
 
-def window(fn, args, width, stride) -> Window:
-    """Creates a :class:`.Window` derivation. (See the guide's page on
-    :ref:`derivations <guide_factorial_derivations>`.)
+@dataclass
+class Derivation:
+    """A mechanism to specify the process of derivation. For detailed
+    information, see :ref:`the SweetPea guide's section on derivations
+    <guide_factorial_derivations>`.
 
-    The :func:`.window` function is a generalization of the :func:`.transition`
-    function that selects a level depending on multiple trials, and where
-    preceding trials are separated by ``stride - 1`` intervening trials.
+    .. NOTE::
+        The :class:`.Derivation` class cannot be directly instantiated. Use one
+        of the subclasses instead.
 
-    :param fn:
-        A function that takes as many level lists as factors in ``factors``. In
-        each list, the first element is the level value for the earliest of
-        ``width`` trials, and so on. The function should return ``True`` if
-        the combination of levels implies the result derivation, and ``False``
-        otherwise.
+    :param predicate:
+        A predicate function used during derivation. Different derivation
+        mechanisms require different forms of predicates.
 
-    :param args:
-        A list of factors whose levels across trials determine whether a level
-        with the returned derivation is selected.
+        .. WARNING::
+            The type of arguments passed to the ``predicate`` varies by
+            Derivation subclass. Read their documentation carefully!
+    :type predicate: typing.Callable[[Any, ....], bool]
+
+    :param factors:
+        The factors upon which this derivation depends.
+    :type factors: typing.Sequence[.Factor]
 
     :param width:
-        The number of trials of ``factors`` to consider when selecting the new,
-        derived level.
+        The number of trials that this derivation depends upon. The current
+        trial must be included, so the number must be greater than or equal to
+        ``1``.
+    :type width: int
 
     :param stride:
-        One more than the number of trials to skip between the trials that are
-        considered when selecting the new, derived level.
-
-    :returns:
-        A :class:`.Window` derivation.
+        TODO DOC
+    :type stride: int
     """
-    return Window(fn, args, width, stride)
+
+    # TODO: I think that, if possible, this should be changed to some other
+    #       managed data structure (like an enum that correlates cases to
+    #       predicates). That seems like it would be more robust and also
+    #       provide an easier API for users of SweetPea.
+    # TODO: Alternatively, we could just make this class-private and provide a
+    #       method that takes the arguments and returns the result.
+    #: The predicate used for producing this derivation.
+    predicate: Callable
+    #: The factors upon which this derivation depends.
+    factors: List[Factor]
+    # TODO: Rename this to something more clear.
+    #: The width of this derivation.
+    width: int
+    #: The stride of this derivation.
+    stride: int
+
+    def __new__(cls, *_, **__):
+        if cls == Derivation:
+            raise NotImplementedError(f"Cannot directly instantiate {cls.__name__}.")
+        return super().__new__(cls)
+
+    def __post_init__(self):
+        # TODO: Validate the predicate accepts the same number of arguments as
+        #       factors in `self.factors`.
+        if self.width < 1:
+            raise ValueError(f"A {type(self).__name__} derivation must have a width of at least 1.")
+        if self.stride < 1:
+            raise ValueError(f"A {type(self).__name__} derivation must have a stride of at least 1.")
+        found_factor_names = set()
+        for factor in self.factors:
+            if factor.name in found_factor_names:
+                raise ValueError(f"Derivations do not accept repeated factors. Factor repeated: {factor.name}.")
+
+    @property
+    def size(self) -> Tuple[int, int]:
+        """The width and stride of this derivation.
+
+        :rtype: typing.Tuple[int, int]
+        """
+        return (self.width, self.stride)
+
+    @property
+    def first_factor(self) -> Factor:
+        """The first :class:`.Factor` in the internal list of Factors.
+
+        :rtype: .Factor
+        """
+        return self.factors[0]
+
+    @property
+    def is_complex(self) -> bool:
+        """Whether this derivation is considered *complex*. A complex
+        derivation is one for which at least one of the following is true:
+
+        - The derivation's :attr:`.width` is greater than ``1``.
+        - The derivation's :attr:`.stride` is greater than ``1``.
+        - The derivation's :attr:`.first_factor` is a complex derived factor.
+
+        :rtype: bool
+        """
+        return (self.width > 1
+                or self.stride > 1
+                or self.first_factor.has_complex_derivation)
+
+    # TODO: REMOVE. (backwards compatibility)
+    @property
+    def args(self) -> List[Factor]:
+        return self.factors
+
+    # TODO: REMOVE. (backwards compatibility)
+    @property
+    def fn(self) -> Callable:
+        return self.predicate
+
+
+@dataclass
+class WithinTrialDerivation(Derivation):
+    """A derivation that depends on levels from other factors, all within the
+    same trial.
+
+    :param predicate:
+        A predicate that takes as many :class:`strs <str>` as factors in this
+        derivation, where each :class:`str` will be the name of a factor.
+    :type predicate: typing.Callable[[str, ....], bool]
+
+    :param factors:
+        The factors upon which this derivation depends.
+    :type factors: typing.Sequence[.Factor]
+    """
+
+    width: int = field(default=1, init=False)
+    stride: int = field(default=1, init=False)
+
+
+@dataclass
+class TransitionDerivation(Derivation):
+    """A derivation that depends on levels from other factors in the current
+    trial and the immediately preceding trial. :class:`TransitionDerivations
+    <.TransitionDerivation>` are used to constrain the transition points
+    between trials.
+
+    :param predicate:
+        A predicate that takes as many lists of factors as factors in this
+        derivation.
+    :type predicate: typing.Callable[[typing.Sequence[.Factor], ....], bool]
+
+    :param factors:
+        The factors upon which this derivation depends.
+    :type factors: typing.Sequence[.Factor]
+    """
+
+    width: int = field(default=2, init=False)
+    stride: int = field(default=1, init=False)
+
+
+@dataclass
+class WindowDerivation(Derivation):
+    """A derivation that depends on levels from other factors in the current
+    trial and multiple preceding trials.
+
+    :param predicate:
+        A predicate that takes as many lists of factors as factors in this
+        derivation.
+    :type predicate: typing.Callable[[typing.Sequence[.Factor], ....], bool]
+
+    :param factors:
+        The factors upon which this derivation depends.
+    :type factors: typing.Sequence[.Factor]
+
+    :param width:
+        The number of trials that this derivation depends upon. The current
+        trial must be included, so the number must be greater than or equal to
+        ``1``.
+    :type width: int
+
+    :param stride:
+        TODO DOC
+    :type stride: int
+    """
+    pass  # pylint: disable=unnecessary-pass
+
+
+###############################################################################
+##
+## Backwards Compatibility
+##
+## These functions are provided to maintain compatibility with the existing
+## SweetPea implementation.
+##
+## TODO: Rewrite SweetPea's internal implementation in order to remove these!
+
+
+def get_external_level_name(level: Level) -> str:
+    return level.name
+
+
+# TODO: This shouldn't be used in any other module anyway. Uses of this
+#       function should instead do `==` comparison of levels.
+def get_internal_level_name(level: Level) -> str:
+    return level.internal_name
+
+
+WithinTrial = WithinTrialDerivation
+Transition = TransitionDerivation
+Window = WindowDerivation
