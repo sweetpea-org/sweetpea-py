@@ -135,6 +135,11 @@ class Level:
         """The level's weight."""
         return self._weight
 
+    # TODO: REMOVE. (backwards compatibility)
+    @property
+    def external_name(self) -> str:
+        return self.name
+
 
 @dataclass(eq=False)
 class SimpleLevel(Level):
