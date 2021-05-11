@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import InitVar, dataclass, field
 from itertools import product
 from random import randint
-from typing import Any, Callable, Dict, Generic, List, Optional, Sequence, Tuple, TypeVar, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, TypeVar, Union, cast
 
 
 ###############################################################################
@@ -188,7 +188,7 @@ class DerivedLevel(Level):
         self._weight = weight
         # Verify internal factors' strides.
         for factor in self.derivation.factors:
-            if factor.has_complex_derivation and factor.first_level.derivation.stride > 1:
+            if isinstance(factor, DerivedFactor) and factor.has_complex_derivation and factor.levels[0].derivation.stride > 1:
                 raise ValueError(f"{type(self).__name__} does not accept factors with stride > 1, but factor "
                                  f"{factor.name} has derivation with stride {factor.first_level.derivation.stride}.")
         # Expand the factors. Each factor gets duplicated according to the
@@ -290,7 +290,7 @@ LevelT = TypeVar('LevelT', bound=Level)
 
 
 @dataclass
-class Factor(Generic[LevelT]):
+class Factor:
     """An independent variable in a factorial experiment. Factors are composed
     of :class:`Levels <.Level>` and come in two flavors:
 
@@ -321,8 +321,8 @@ class Factor(Generic[LevelT]):
 
     name: str
     initial_levels: InitVar[Sequence[Any]]
-    levels: Sequence[LevelT] = field(init=False)
-    _level_map: Dict[str, LevelT] = field(init=False, default_factory=dict)
+    levels: Sequence[Level] = field(init=False)
+    _level_map: Dict[str, Level] = field(init=False, default_factory=dict)
 
     def __new__(cls, name: str, initial_levels: List[Any], *_, **__) -> Factor:
         if not initial_levels:
@@ -371,7 +371,7 @@ class Factor(Generic[LevelT]):
     #       There is no way to express "a class which cannot be instantiated"
     #       that I know of, so there's no way to get around this dynamic
     #       `NotImplementedError` solution.
-    def _process_initial_levels(self, initial_levels: Sequence[Level]) -> Sequence[LevelT]:
+    def _process_initial_levels(self, initial_levels: Sequence[Level]) -> Sequence[Level]:
         raise NotImplementedError
 
     def __eq__(self, other) -> bool:
@@ -382,7 +382,7 @@ class Factor(Generic[LevelT]):
     def __hash__(self) -> int:
         return hash(self.name)
 
-    def __getitem__(self, name: str) -> LevelT:
+    def __getitem__(self, name: str) -> Level:
         value = self.get_level(name)
         if value is None:
             raise KeyError(f"Factor {self.name} has no level named {name}.")
@@ -391,7 +391,7 @@ class Factor(Generic[LevelT]):
     def __contains__(self, name: str) -> bool:
         return name in self._level_map
 
-    def get_level(self, name: str) -> Optional[LevelT]:
+    def get_level(self, name: str) -> Optional[Level]:
         """Returns a :class:`.Level` instance corresponding to the given name,
         if it exists within this factor. Otherwise, returns ``None``.
         """
@@ -399,7 +399,7 @@ class Factor(Generic[LevelT]):
 
     # TODO: This should be made private.
     @property
-    def first_level(self) -> LevelT:
+    def first_level(self) -> Level:
         """The first :class:`.Level` in this factor."""
         return self.levels[0]
 
@@ -436,10 +436,7 @@ class Factor(Generic[LevelT]):
         """
         if not isinstance(self, DerivedFactor):
             return False
-        # NOTE: mypy 0.812 has an issue with these `isinstance` checks for
-        #       subclasses of generic base classes. See python/mypy#8252:
-        #           https://github.com/python/mypy/issues/8252
-        derivation = self.first_level.derivation  # type: ignore
+        derivation = self.first_level.derivation
         return (derivation.width > 1
                 or derivation.stride > 1
                 or derivation.is_complex)
@@ -462,10 +459,7 @@ class Factor(Generic[LevelT]):
                 return d.width + acc_width(d.first_factor.first_level.derivation) - 1
             return d.width
 
-        # NOTE: mypy 0.812 has an issue with these `isinstance` checks for
-        #       subclasses of generic base classes. See python/mypy#8252:
-        #           https://github.com/python/mypy/issues/8252
-        derivation = self.first_level.derivation  # type: ignore
+        derivation = self.first_level.derivation
         return (trial_number >= acc_width(derivation)
                 and (trial_number - derivation.width) % derivation.stride == 0)
 
@@ -507,7 +501,7 @@ class Factor(Generic[LevelT]):
 
 
 @dataclass
-class SimpleFactor(Factor[SimpleLevel]):
+class SimpleFactor(Factor):
     """A :class:`.Factor` comprised of :class:`SimpleLevels <.SimpleLevel>`.
 
     :param name:
@@ -520,6 +514,8 @@ class SimpleFactor(Factor[SimpleLevel]):
     :rtype: .SimpleFactor
     """
 
+    levels: Sequence[SimpleLevel] = field(init=False)
+
     def _process_initial_levels(self, initial_levels) -> Sequence[SimpleLevel]:
         for level in initial_levels:
             if not isinstance(level, SimpleLevel):
@@ -527,15 +523,28 @@ class SimpleFactor(Factor[SimpleLevel]):
                                  f"{level.name} has type {type(level).__name__}.")
         return initial_levels
 
-    def __hash__(self) -> int:
+    # NOTE: Pylint incorrectly labels this as a "useless super delegation"
+    #       because it is unaware that dataclasses do not automatically inherit
+    #       __hash__, __eq__, etc in certain cases. This is addressed in
+    #       PyCQA/pylint#3934:
+    #           https://github.com/PyCQA/pylint/issues/3934
+    def __hash__(self) -> int:  # pylint: disable=useless-super-delegation
         return super().__hash__()
 
-    def __eq__(self, other) -> bool:
+    # NOTE: See note on `SimpleFactor.__hash__`.
+    def __eq__(self, other) -> bool:  # pylint: disable=useless-super-delegation
         return super().__eq__(other)
+
+    def get_level(self, name: str) -> Optional[SimpleLevel]:
+        return cast(Optional[SimpleLevel], super().get_level(name))
+
+    @property
+    def first_level(self) -> SimpleLevel:
+        return cast(SimpleLevel, self.levels[0])
 
 
 @dataclass
-class DerivedFactor(Factor[DerivedLevel]):
+class DerivedFactor(Factor):
     """A :class:`.Factor` composed of :class:`DerivedLevels <.DerivedLevel>`.
 
     :param name:
@@ -557,6 +566,8 @@ class DerivedFactor(Factor[DerivedLevel]):
     :rtype: .DerivedFactor
     """
 
+    levels: Sequence[DerivedLevel] = field(init=False)
+
     def _process_initial_levels(self, initial_levels: Sequence[Level]) -> Sequence[DerivedLevel]:
         adjusted_levels: List[DerivedLevel] = []
         initial_derived_levels: List[DerivedLevel] = [level for level in initial_levels
@@ -570,6 +581,21 @@ class DerivedFactor(Factor[DerivedLevel]):
                 raise ValueError(f"Cannot use {type(level).__name__} to create a {type(self).__name__}. "
                                  f"Only DerivedLevels and ElseLevels are allowed.")
         return adjusted_levels
+
+    # NOTE: See note on `SimpleFactor.__hash__`.
+    def __hash__(self) -> int:  # pylint: disable=useless-super-delegation
+        return super().__hash__()
+
+    # NOTE: See note on `SimpleFactor.__hash__`.
+    def __eq__(self, other) -> bool:  # pylint: disable=useless-super-delegation
+        return super().__eq__(other)
+
+    def get_level(self, name: str) -> Optional[DerivedLevel]:
+        return cast(Optional[DerivedLevel], super().get_level(name))
+
+    @property
+    def first_level(self) -> DerivedLevel:
+        return cast(DerivedLevel, self.levels[0])
 
 
 def make_factor(name: str, levels: Sequence[Any]) -> Union[SimpleFactor, DerivedFactor]:
