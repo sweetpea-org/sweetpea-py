@@ -7,7 +7,7 @@ from math import ceil
 
 from sweetpea.backend import BackendRequest
 from sweetpea.internal import get_all_levels
-from sweetpea.primitives import Factor, Transition, Window, SimpleLevel, DerivedLevel, get_external_level_name, get_internal_level_name
+from sweetpea.primitives import DerivedFactor, Factor, Transition, Window, SimpleLevel, DerivedLevel, get_external_level_name, get_internal_level_name
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.base_constraint import Constraint
 from sweetpea.design_graph import DesignGraph
@@ -40,7 +40,7 @@ class Block:
     def extract_basic_factor_names(self, level: DerivedLevel) -> set:
         included_factor_names = set()
         for factor in level.window.args:
-            if factor.is_derived():
+            if isinstance(factor, DerivedFactor):
                 for l in factor.levels:
                     included_factor_names.update(self.extract_basic_factor_names(l))
             else:
@@ -269,15 +269,17 @@ class Block:
     Given a specific level (factor + level pair), this method will return the list of variables
     that correspond to that level in each trial in the encoding.
     """
-    def build_variable_list(self, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]]) -> List[int]:
-        if (type(level[0]) is not Factor):
+    def build_variable_list(self, level_pair: Tuple[Factor, Union[SimpleLevel, DerivedLevel]]) -> List[int]:
+        factor = level_pair[0]
+        level = level_pair[1]
+        if not isinstance(factor, Factor):
             raise ValueError('First element in level argument to variable list builder must be a FACTOR.')
-        if (type(level[1]) is not SimpleLevel and type(level[1]) is not DerivedLevel):
+        if not isinstance(level, (SimpleLevel, DerivedLevel)):
             raise ValueError('Second element in level argument to variable list builder must be a SIMPLE LEVEL or a DERIVED LEVEL.')
-        if level[0].has_complex_window():
-            return self.__build_complex_variable_list(level)
+        if factor.has_complex_derivation:
+            return self.__build_complex_variable_list(level_pair)
         else:
-            return self.__build_simple_variable_list(level)
+            return self.__build_simple_variable_list(level_pair)
 
     def factor_in_crossing(self, factor):
         pass
@@ -286,6 +288,8 @@ class Block:
         first_variable = self.first_variable_for_level(level[0], level[1]) + 1
         design_var_count = self.variables_per_trial()
         num_trials = self.trials_per_sample()
+        # TODO: This should be reworked. It's an accumulating fold where the
+        #       folding function's second argument is just thrown away.
         return list(accumulate(repeat(first_variable, num_trials), lambda acc, _: acc + design_var_count))
 
     def __build_complex_variable_list(self, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]]) -> List[int]:
@@ -441,7 +445,7 @@ class FullyCrossBlock(Block):
             return res
         else:
             return results
-        
+
     """
     Given the complete crossing and an exclude constraint returns true if that combination results in the exclude level
     """
@@ -604,7 +608,7 @@ class MultipleCrossBlock(Block):
         return len(excluded_crossings)
 
     """
-    Given the complete crossing and an exclude constraint returns true if that combination results in the exclude level 
+    Given the complete crossing and an exclude constraint returns true if that combination results in the exclude level
     """
     def __excluded_derived(self, excluded_level, c):
         ret = []

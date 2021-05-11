@@ -2,7 +2,7 @@ import networkx as nx
 
 from typing import List
 
-from sweetpea.primitives import Factor
+from sweetpea.primitives import DerivedFactor, Factor
 
 
 """
@@ -22,7 +22,7 @@ class DesignGraph():
             g.add_node(f.factor_name)
 
             # Simple factors (not derived) are the leaves.
-            if not f.is_derived():
+            if not isinstance(f, DerivedFactor):
                 continue
 
             # Add directed edges between this factor and all factors that it depends on.

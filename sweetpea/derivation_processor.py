@@ -4,7 +4,8 @@ from typing import Dict, List, Tuple, Union, Any, cast
 from functools import reduce
 from itertools import product
 
-from sweetpea.primitives import DerivedLevel, WithinTrial, Transition, Window, get_external_level_name, SimpleLevel
+# TODO: Fix this Derivation name collision.
+from sweetpea.primitives import Derivation as DerivationPrimitive, DerivedFactor, DerivedLevel, WithinTrial, Transition, Window, get_external_level_name, SimpleLevel
 from sweetpea.blocks import Block
 from sweetpea.constraints import Derivation
 from sweetpea.internal import chunk_list, get_all_levels
@@ -41,12 +42,11 @@ class DerivationProcessor:
     """
     @staticmethod
     def generate_derivations(block: Block) -> List[Derivation]:
-        derived_factors = list(filter(lambda f: f.is_derived(), block.design))
+        derived_factors: List[DerivedFactor] = [factor for factor in block.design if isinstance(factor, DerivedFactor)]
         accum = []
 
         for fact in derived_factors:
-            according_level : Dict[Tuple[Any, ...], DerivedLevel] = {} 
-            # according_level = {}
+            according_level : Dict[Tuple[Any, ...], DerivedLevel] = {}
             for level in fact.levels:
                 level_index = block.first_variable_for_level(fact, level)
                 x_product = level.get_dependent_cross_product()
@@ -72,11 +72,11 @@ class DerivationProcessor:
                         if tup in according_level.keys():
                             raise ValueError('Factor={} matches both level={} and level={} with assignment={}'.format(
                                 fact.factor_name,
-                                according_level[tup],
+                                according_level[tup].name,
                                 get_external_level_name(level),
                                 args))
                         else:
-                            according_level[tup] = get_external_level_name(level)
+                            according_level[tup] = level
 
                 if not valid_tuples:
                     print('WARNING: There is no assignment that matches factor={} level={}'.format(fact.factor_name, get_external_level_name(level)))
@@ -108,14 +108,14 @@ class DerivationProcessor:
     """
     @staticmethod
     def shift_window(idxs: List[List[int]],
-                     window: Union[WithinTrial, Transition, Window],
+                     window: DerivationPrimitive,
                      trial_size:int) -> List[List[int]]:
         if window.width == 1:
             return idxs
 
         shifted_idxs = cast(List[List[int]], [])
         shifted_sublists = cast(List[List[int]], [])
-        argc = 1 if window.argc == None else window.argc
+        argc = len(window.factors)
         for idx_list in idxs:
             sublist_size = len(idx_list) // argc
             sublists = chunk_list(idx_list, sublist_size)

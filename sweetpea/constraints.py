@@ -10,7 +10,7 @@ from sweetpea.internal import chunk, chunk_list, pairwise
 from sweetpea.blocks import Block, FullyCrossBlock, MultipleCrossBlock
 from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import If, Iff, And, Or, Not, FormulaWithIff
-from sweetpea.primitives import Factor, get_internal_level_name, SimpleLevel, DerivedLevel, get_external_level_name
+from sweetpea.primitives import DerivedFactor, Factor, get_internal_level_name, SimpleLevel, DerivedLevel, get_external_level_name
 
 
 def validate_factor_and_level(block: Block, factor: Factor, level: Union[SimpleLevel, DerivedLevel]) -> None:
@@ -19,7 +19,7 @@ def validate_factor_and_level(block: Block, factor: Factor, level: Union[SimpleL
             "Are you sure the factor was included, and that the name is spelled " +\
             "correctly?").format(factor.factor_name))
 
-    if not factor.has_level(level):
+    if not factor.has_level(level.name):
         raise ValueError(("A level with name '{}' wasn't found in the '{}' factor, " +\
             "Are you sure the level name is spelled correctly?").format(get_internal_level_name(level), factor.factor_name))
 
@@ -35,10 +35,10 @@ So for instance in the experiment:
 
 The first trial is represented by the boolean vars [1, 2, 3, 4]
 
-    0 is true iff the trial is color:red
-    1 is true iff the trial is color:blue
-    2 is true iff the trial is text:red
-    3 is true iff the trial is text:blue
+    1 is true iff the trial is color:red
+    2 is true iff the trial is color:blue
+    3 is true iff the trial is text:red
+    4 is true iff the trial is text:blue
 
 The second trial is represented by the boolean vars [5-8], the third by [9-12],
 the fourth by [13-16]. So this desugaring applies the following constraints:
@@ -114,7 +114,7 @@ class FullyCross(Constraint):
         # Step 2: For each trial, cross all levels of all factors in the crossing.
         crossing_factors = list(map(lambda t: (list(product(*[block.factor_variables_for_trial(f, t) for f in block.crossing[0]]))), crossing_trials))
 
-        # Step 3: For each trial, cross all levels of all design-only factors in the crossing.    
+        # Step 3: For each trial, cross all levels of all design-only factors in the crossing.
         design_factors = cast(List[List[List[int]]], [])
         design_factors = list(map(lambda _: [], crossing_trials))
         for f in list(filter(lambda f: f not in block.crossing[0] and not f.has_complex_window(), block.design)):
@@ -123,11 +123,11 @@ class FullyCross(Constraint):
         design_combinations = cast(List[List[Tuple[int, ...]]], [])
         design_combinations = list(map(lambda l: list(product(*l)), design_factors))
 
-        # Step 4: For each trial, combine each of the crossing factors with all of the design-only factors.    
+        # Step 4: For each trial, combine each of the crossing factors with all of the design-only factors.
         crossings = cast(List[List[List[Tuple[int, ...]]]], [])
         for i, t in enumerate(crossing_trials):
             crossings.append(list(map(lambda c: [c] + design_combinations[i] ,crossing_factors[i])))
-        
+
         # Step 5: Remove crossings that are not possible.
         # From here on ignore all values other than the first in every list.
         crossings = block.filter_excluded_derived_levels(crossings)
@@ -174,7 +174,7 @@ class MultipleCross(Constraint):
             # Step 2: For each trial, cross all levels of all factors in the crossing.
             crossing_factors = list(map(lambda t: (list(product(*[block.factor_variables_for_trial(f, t) for f in c]))), crossing_trials))
 
-            # Step 3: For each trial, cross all levels of all design-only factors in the crossing.    
+            # Step 3: For each trial, cross all levels of all design-only factors in the crossing.
             design_factors = cast(List[List[List[int]]], [])
             design_factors = list(map(lambda _: [], crossing_trials))
             for f in list(filter(lambda f: f not in c and not f.has_complex_window(), block.design)):
@@ -183,11 +183,11 @@ class MultipleCross(Constraint):
             design_combinations = cast(List[List[Tuple[int, ...]]], [])
             design_combinations = list(map(lambda l: list(product(*l)), design_factors))
 
-            # Step 4: For each trial, combine each of the crossing factors with all of the design-only factors.    
+            # Step 4: For each trial, combine each of the crossing factors with all of the design-only factors.
             crossings = cast(List[List[List[Tuple[int, ...]]]], [])
             for i, t in enumerate(crossing_trials):
                 crossings.append(list(map(lambda c: [c] + design_combinations[i] ,crossing_factors[i])))
-            
+
             # Step 5: Remove crossings that are not possible.
             # From here on ignore all values other than the first in every list.
             crossings = block.filter_excluded_derived_levels(crossings)
@@ -265,7 +265,7 @@ class Derivation(Constraint):
     def __init__(self,
                  derived_idx: int,
                  dependent_idxs: List[List[int]],
-                 factor: Factor) -> None:
+                 factor: DerivedFactor) -> None:
         self.derived_idx = derived_idx
         self.dependent_idxs = dependent_idxs
         self.factor = factor
@@ -538,8 +538,9 @@ class Exclude(Constraint):
         for i in excluded:
             combos = cast(List[Dict[Factor, SimpleLevel]], [dict()])
             for j in i:
-                if type(j[1]) is DerivedLevel:
-                    result = self.extract_simplelevel(block, j[1])
+                excluded_level = j[1]
+                if isinstance(excluded_level, DerivedLevel):
+                    result = self.extract_simplelevel(block, excluded_level)
                     newcombos = []
                     valid = True
                     for r in result:
@@ -555,7 +556,7 @@ class Exclude(Constraint):
                     for c in combos:
                         if block.factor_in_crossing(j[0]) and block.require_complete_crossing:
                             block.errors.add("WARNING: Some combinations have been excluded, this crossing may not be complete!")
-                        c[j[0]] = j[1] 
+                        c[j[0]] = cast(SimpleLevel, excluded_level)
             excluded_levels.extend(combos)
         return excluded_levels
 
