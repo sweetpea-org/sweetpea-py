@@ -122,7 +122,7 @@ class Block:
     Determines whether a given factor is in this block.
     """
     def has_factor(self, factor: Factor) -> Factor:
-        if (type(factor) is not Factor):
+        if not isinstance(factor, Factor):
             raise ValueError('Non-factor argument to has_factor.')
         if factor in self.design:
             return factor
@@ -132,9 +132,9 @@ class Block:
     Returns the first index for this variable in a trial sequence representing the given factor and level.
     (0 based)
     """
-    def first_variable_for_level(self, factor: Factor, level: Any ) -> int:
-        if (type(level) is not SimpleLevel and type(level) is not DerivedLevel):
-            print("Attempt to find first variable for a non-level object " + str(level))
+    def first_variable_for_level(self, factor: Factor, level: Any) -> int:
+        if not isinstance(level, (SimpleLevel, DerivedLevel)):
+            raise ValueError(f"Attempted to find first variable of non-Level object: {level}.")
         if factor.has_complex_window():
             offset = 0
             complex_factors = filter(lambda f: f.has_complex_window(), self.design)
@@ -401,7 +401,7 @@ class FullyCrossBlock(Block):
             # Retrieve the derivation function that defines this exclusion.
             excluded_level = constraint.level
 
-            if type(excluded_level) is SimpleLevel:
+            if isinstance(excluded_level, SimpleLevel):
                 for c in all_crossings:
                     if excluded_level in c:
                         excluded_crossings.add(get_internal_level_name(c[0]) + ", " + get_internal_level_name(c[1]))
@@ -590,7 +590,7 @@ class MultipleCrossBlock(Block):
             # Retrieve the derivation function that defines this exclusion.
             excluded_level = constraint.level
 
-            if type(excluded_level) is SimpleLevel:
+            if isinstance(excluded_level, SimpleLevel):
                 for c in all_crossings:
                     if excluded_level in c:
                         excluded_crossings.add(get_internal_level_name(c[0]) + ", " + get_internal_level_name(c[1]))
