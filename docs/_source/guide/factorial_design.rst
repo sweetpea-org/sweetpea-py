@@ -23,6 +23,8 @@ decent introductory definition of a :term:`factorial experiment`:
     well as the effects of interactions between factors on the response
     variable.
 
+.. _guide_factorial_factors:
+
 Factors
 ^^^^^^^
 
@@ -37,12 +39,16 @@ multiple factors without issue, and SweetPea will help you plan this out.
    Experiments* by Ronald Fisher. The book is also credited with introducing the
    concept of the *null hypothesis*.
 
+.. _guide_factorial_levels:
+
 Levels
 ^^^^^^
 
 In a factorial experimental design, each factor can take on one of a finite
 number of discrete possible values, called :term:`levels <level>`. To make this
 more concrete, consider a simple example.
+
+.. _guide_factorial_example:
 
 Example
 ^^^^^^^

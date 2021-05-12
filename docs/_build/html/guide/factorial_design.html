@@ -199,7 +199,7 @@ well as the effects of interactions between factors on the response
 variable.</p>
 </div></blockquote>
 <div class="section" id="factors">
-<h2>Factors<a class="headerlink" href="#factors" title="Permalink to this headline">¶</a></h2>
+<span id="guide-factorial-factors"></span><h2>Factors<a class="headerlink" href="#factors" title="Permalink to this headline">¶</a></h2>
 <p>A <a class="reference internal" href="#term-factor"><span class="xref std std-term">factor</span></a> is an independent variable in your experiment. In simple
 experiments, there may be only one factor — in which case SweetPea is
 definitely overkill for you! But experiments can be successfully run with
@@ -212,13 +212,13 @@ concept of the <em>null hypothesis</em>.</p>
 </div>
 </div>
 <div class="section" id="levels">
-<h2>Levels<a class="headerlink" href="#levels" title="Permalink to this headline">¶</a></h2>
+<span id="guide-factorial-levels"></span><h2>Levels<a class="headerlink" href="#levels" title="Permalink to this headline">¶</a></h2>
 <p>In a factorial experimental design, each factor can take on one of a finite
 number of discrete possible values, called <a class="reference internal" href="#term-level"><span class="xref std std-term">levels</span></a>. To make this
 more concrete, consider a simple example.</p>
 </div>
 <div class="section" id="example">
-<h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<span id="guide-factorial-example"></span><h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
 <p>Imagine we are conducting an experiment to observe the <a class="reference external" href="https://en.wikipedia.org/wiki/Stroop_effect">Stroop effect</a>. In a simple Stroop experiment,
 we show a participant the name of a color, and we render the text of that word
 in a color other than that which was named. For this experiment, we identify our
@@ -251,26 +251,26 @@ combination of factors and levels. In other words, we must have <span class="mat
 <span id="guide-factorial-derivations"></span><h2>Derivations<a class="headerlink" href="#derivations" title="Permalink to this headline">¶</a></h2>
 <p>A <a class="reference internal" href="#term-derivation"><span class="xref std std-term">derivation</span></a> (or <a class="reference internal" href="#term-derived-level"><span class="xref std std-term">derived level</span></a>) is a new level produced by
 combining other <a class="reference internal" href="#term-level"><span class="xref std std-term">levels</span></a>. This combination of levels can be
-directly constructed with <a class="reference internal" href="../api/sweetpea.primitives.html#sweetpea.primitives.derived_level" title="sweetpea.primitives.derived_level"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweetpea.primitives.derived_level()</span></code></a>.</p>
+directly constructed with <code class="xref py py-func docutils literal notranslate"><span class="pre">sweetpea.primitives.derived_level()</span></code>.</p>
 <p>There are three variants of derivation: <a class="reference internal" href="#guide-factorial-derivations-windows"><span class="std std-ref">windows</span></a>, <a class="reference internal" href="#guide-factorial-derivations-transitions"><span class="std std-ref">transitions</span></a>, and
 <a class="reference internal" href="#guide-factorial-derivations-within-trials"><span class="std std-ref">within-trial specifications</span></a>,
 detailed below.</p>
 <div class="section" id="windows">
 <span id="guide-factorial-derivations-windows"></span><h3>Windows<a class="headerlink" href="#windows" title="Permalink to this headline">¶</a></h3>
-<p>A <a class="reference internal" href="#term-window"><span class="xref std std-term">window</span></a> (constructed with <a class="reference internal" href="../api/sweetpea.primitives.html#sweetpea.primitives.window" title="sweetpea.primitives.window"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweetpea.primitives.window()</span></code></a>) creates a
+<p>A <a class="reference internal" href="#term-window"><span class="xref std std-term">window</span></a> (constructed with <code class="xref py py-func docutils literal notranslate"><span class="pre">sweetpea.primitives.window()</span></code>) creates a
 level that is selected depending on a combination of levels from other factors
 in the current trial and multiple preceding trials.</p>
 </div>
 <div class="section" id="transitions">
 <span id="guide-factorial-derivations-transitions"></span><h3>Transitions<a class="headerlink" href="#transitions" title="Permalink to this headline">¶</a></h3>
-<p>A <a class="reference internal" href="#term-transition"><span class="xref std std-term">transition</span></a> (constructed with <a class="reference internal" href="../api/sweetpea.primitives.html#sweetpea.primitives.transition" title="sweetpea.primitives.transition"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweetpea.primitives.transition()</span></code></a>)
+<p>A <a class="reference internal" href="#term-transition"><span class="xref std std-term">transition</span></a> (constructed with <code class="xref py py-func docutils literal notranslate"><span class="pre">sweetpea.primitives.transition()</span></code>)
 describes a level that is selected depending on a combination of levels from
 other factors in the current trial and the immediately preceding trial.</p>
 </div>
 <div class="section" id="within-trials">
 <span id="guide-factorial-derivations-within-trials"></span><h3>Within-Trials<a class="headerlink" href="#within-trials" title="Permalink to this headline">¶</a></h3>
 <p>The <a class="reference internal" href="#term-within-trial-derivation"><span class="xref std std-term">within-trial derivations</span></a> (constructed with
-<a class="reference internal" href="../api/sweetpea.primitives.html#sweetpea.primitives.within_trial" title="sweetpea.primitives.within_trial"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweetpea.primitives.within_trial()</span></code></a>) describe a level that is selected
+<code class="xref py py-func docutils literal notranslate"><span class="pre">sweetpea.primitives.within_trial()</span></code>) describe a level that is selected
 depending on levels from other factors, all within the same trial.</p>
 </div>
 </div>
