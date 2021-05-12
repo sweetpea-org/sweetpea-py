@@ -333,34 +333,31 @@ class Factor:
         if not initial_levels:
             raise ValueError(f"Expected at least one level for factor {name}.")
         # Convert non-`Level` levels into `Level`s.
-        # NOTE: We rely on details of Python's implementation here. The
-        #       `__init__` and `__post_init__` methods will be passed the same
-        #       values as `__new__`, so you cannot generally change the values
-        #       in `__new__` to be passed along to the others.
-        #           However, Python passes all lists (and similar data
-        #       structures) by reference implicitly, so we can modify the list
-        #       in-place and the results will propagate to the other methods.
-        for i, level in enumerate(initial_levels):
-            if isinstance(level, Level):
-                continue
-            elif isinstance(level, str):
-                initial_levels[i] = SimpleLevel(level)
+        real_levels: List[Level] = []
+        for level in initial_levels:
+            if isinstance(level, str):
+                level = SimpleLevel(level)
             elif isinstance(level, tuple) and len(level) == 2 and isinstance(level[0], str) and isinstance(level[1], int):
-                initial_levels[i] = SimpleLevel(level[0], level[1])
-            else:
-                initial_levels[i] = SimpleLevel(str(level))
+                level = SimpleLevel(level[0], level[1])
+            elif not isinstance(level, Level):
+                level = SimpleLevel(str(level))
+            real_levels.append(level)
         # Extract the first level to see what kind of `Factor` we expect to be.
         # Then, create an instance of the appropriate subclass.
-        first_level = initial_levels[0]
+        first_level = real_levels[0]
         if isinstance(first_level, SimpleLevel):
-            return super().__new__(SimpleFactor)
-        if isinstance(first_level, (DerivedLevel, ElseLevel)):
-            return super().__new__(DerivedFactor)
-        raise ValueError(f"Invalid first level in construction of factor {name}: {first_level}")
+            instance = super().__new__(SimpleFactor)
+        elif isinstance(first_level, (DerivedLevel, ElseLevel)):
+            instance = super().__new__(DerivedFactor)
+        else:
+            raise ValueError(f"Invalid first level in construction of factor {name}: {first_level}")
+        instance._initial_levels = real_levels
+        return instance
 
-    def __post_init__(self, initial_levels: Sequence[Level]):
+    def __post_init__(self, _: Sequence[Level]):
         # First, we do any necessary post-processing of the levels.
-        self.levels = self._process_initial_levels(initial_levels)
+        self.levels = self._process_initial_levels(self._initial_levels)
+        del(self._initial_levels)
         # Ensure all the levels have distinct names.
         for level in self.levels:
             if level.name in self._level_map:
@@ -416,12 +413,14 @@ class Factor:
         """Whether this factor is derived.
 
         .. admonition:: DEPRECATED
+
             Instead of using this function, we recommend doing a dynamic type
             check with :func:`isinstance`. This provides the same semantic
             information to the programmer while also providing greater type
             guarantees when using a static type checker, such as mypy.
 
             .. code-block:: python
+
                 factor: Factor = ...
                 if isinstance(factor, DerivedFactor):
                     # Code requiring a derived factor.
@@ -474,6 +473,7 @@ class Factor:
         """An alias for :attr:`.Factor.name` for backwards compatibility.
 
         .. admonition:: DEPRECATED
+
             This property will be removed in favor of :attr:`.Factor.name`.
         """
         return self.name
@@ -483,10 +483,12 @@ class Factor:
         """Whether the given level name corresponds to a level in this factor.
 
         .. admonition:: DEPRECATED
+
             This method will be removed in favor of straightforward membership
             checks, such as:
 
             .. code-block:: python
+
                 factor: Factor = ...
                 if 'level_name' in factor:
                     ...
@@ -499,6 +501,7 @@ class Factor:
         property.
 
         .. admonition:: DEPRECATED
+
             This method will be removed in favor of
             :attr:`.Factor.has_complex_derivation`.
         """
