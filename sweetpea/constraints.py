@@ -526,7 +526,7 @@ class Exclude(Constraint):
 
         block.exclude.append((self.factor, self.level))
         # Store the basic factor-level combnations resulting in the derived excluded factor in the block
-        if type(self.level) is DerivedLevel and not self.factor.has_complex_window():
+        if isinstance(self.level, DerivedLevel) and not self.factor.has_complex_window():
             block.excluded_derived.extend(self.extract_simplelevel(block, self.level))
 
     """
