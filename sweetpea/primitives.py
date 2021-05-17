@@ -205,6 +205,7 @@ class DerivedLevel(Level):
         expanded_factors: List[Factor] = []
         for factor in self.derivation.factors:
             expanded_factors.extend([factor] * self.derivation.width)
+        self.derivation.factors = expanded_factors
 
     def get_dependent_cross_product(self) -> List[Tuple[Tuple[Factor, Level], ...]]:
         """Produces a list of n-tuples of pairs, where each pair consists of a
