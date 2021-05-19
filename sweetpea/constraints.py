@@ -10,7 +10,7 @@ from sweetpea.internal import chunk, chunk_list, pairwise
 from sweetpea.blocks import Block, FullyCrossBlock, MultipleCrossBlock
 from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import If, Iff, And, Or, Not, FormulaWithIff
-from sweetpea.primitives import DerivedFactor, Factor, get_internal_level_name, SimpleLevel, DerivedLevel, get_external_level_name
+from sweetpea.primitives import DerivedFactor, Factor, get_internal_level_name, Level, SimpleLevel, DerivedLevel, get_external_level_name
 
 
 def validate_factor_and_level(block: Block, factor: Factor, level: Union[SimpleLevel, DerivedLevel]) -> None:
@@ -534,11 +534,11 @@ class Exclude(Constraint):
     """
     def extract_simplelevel(self, block: Block, level: DerivedLevel) -> List[Dict[Factor, SimpleLevel]]:
         excluded_levels = []
-        excluded = list(filter(lambda c: level.window.fn(*list(map(lambda f: get_external_level_name(f[1]), c))), level.get_dependent_cross_product()))
-        for i in excluded:
-            combos = cast(List[Dict[Factor, SimpleLevel]], [dict()])
-            for j in i:
-                excluded_level = j[1]
+        excluded: List[Tuple[Level, ...]] = [cross for cross in level.get_dependent_cross_product()
+                                             if level.derivation.predicate(*[level.name for level in cross])]
+        for excluded_level_tuple in excluded:
+            combos: List[Dict[Factor, SimpleLevel]] = {}
+            for excluded_level in excluded_level_tuple:
                 if isinstance(excluded_level, DerivedLevel):
                     result = self.extract_simplelevel(block, excluded_level)
                     newcombos = []
@@ -554,9 +554,9 @@ class Exclude(Constraint):
                     combos = newcombos
                 else:
                     for c in combos:
-                        if block.factor_in_crossing(j[0]) and block.require_complete_crossing:
+                        if block.factor_in_crossing(excluded_level.factor) and block.require_complete_crossing:
                             block.errors.add("WARNING: Some combinations have been excluded, this crossing may not be complete!")
-                        c[j[0]] = cast(SimpleLevel, excluded_level)
+                        c[excluded_level.factor] = level
             excluded_levels.extend(combos)
         return excluded_levels
 
