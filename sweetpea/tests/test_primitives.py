@@ -28,18 +28,22 @@ color3_repeats_factor = Factor("color3 repeats?", [
 def test_factor_validation():
     Factor("factor name", ["level 1", "level 2"])
     Factor("name", [1, 2])
-    Factor("name", ["a", "b", "a"])
-    Factor("name", [
-        DerivedLevel("a", WithinTrial(op.eq, [color, text])),
-        ElseLevel("a")
-    ])
+
+    # Duplicated name
+    with pytest.raises(ValueError):
+        Factor("name", ["a", "b", "a"])
+    with pytest.raises(ValueError):
+        Factor("name", [
+            DerivedLevel("a", WithinTrial(op.eq, [color, text])),
+            ElseLevel("a")
+        ])
 
     # Non-string name
     with pytest.raises(ValueError):
         Factor(56, ["level "])
 
     # Non-list levels
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         Factor("name", 42)
 
     # Empty list
@@ -66,9 +70,9 @@ def test_factor_validation():
 
 
 def test_factor_get_level():
-    assert color.get_level(get_level_from_name(color, "red").internal_name).external_name == "red"
-    assert color_repeats_factor.get_level(get_level_from_name(color_repeats_factor, "yes").internal_name) == color_repeats_level
-    assert color.get_level("bogus") == None
+    assert color['red'].name == 'red'
+    assert color_repeats_factor['yes'] == color_repeats_level
+    assert color.get_level("bogus") is None
 
 
 def test_factor_is_derived():
@@ -110,7 +114,7 @@ def test_derived_level_validation():
     DerivedLevel("name", WithinTrial(lambda x: x, [color]))
 
     # Invalid Window
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         DerivedLevel("name", 42)
 
 def test_derived_level_argument_list_expansion():
@@ -120,8 +124,9 @@ def test_derived_level_argument_list_expansion():
 
 
 def test_derived_level_get_dependent_cross_product():
-    assert [((tup[0][0].factor_name, tup[0][1].external_name),
-    (tup[1][0].factor_name, tup[1][1].external_name))  for tup in con_level.get_dependent_cross_product()] == [
+    assert [((tup[0].factor.name, tup[0].name),
+             (tup[1].factor.name, tup[1].name))
+            for tup in con_level.get_dependent_cross_product()] == [
         (('color', 'red'), ('text', 'red')),
         (('color', 'red'), ('text', 'blue')),
         (('color', 'blue'), ('text', 'red')),
@@ -131,9 +136,10 @@ def test_derived_level_get_dependent_cross_product():
     numeral = Factor("numeral", ["I", "II"])
     text = Factor("text", ["one", "two"])
     two_con_level = DerivedLevel("twoCon", WithinTrial(lambda x: x, [integer, numeral, text]))
-    assert [((tup[0][0].factor_name, tup[0][1].external_name),
-    (tup[1][0].factor_name, tup[1][1].external_name),
-    (tup[2][0].factor_name, tup[2][1].external_name)) for tup in two_con_level.get_dependent_cross_product()] == [
+    assert [((tup[0].factor.name, tup[0].name),
+             (tup[1].factor.name, tup[1].name),
+             (tup[2].factor.name, tup[2].name))
+            for tup in two_con_level.get_dependent_cross_product()] == [
         (('integer', '1'), ('numeral', 'I'), ('text', 'one')),
         (('integer', '1'), ('numeral', 'I'), ('text', 'two')),
         (('integer', '1'), ('numeral', 'II'), ('text', 'one')),
@@ -147,8 +153,9 @@ def test_derived_level_get_dependent_cross_product():
         Factor("color", ["red", "blue", "green"]),
         Factor("boolean", ["true", "false"])
     ]))
-    assert [((tup[0][0].factor_name, tup[0][1].external_name),
-    (tup[1][0].factor_name, tup[1][1].external_name)) for tup in mixed_level.get_dependent_cross_product()] == [
+    assert [((tup[0].factor.name, tup[0].name),
+             (tup[1].factor.name, tup[1].name))
+            for tup in mixed_level.get_dependent_cross_product()] == [
         (('color', 'red'), ('boolean', 'true')),
         (('color', 'red'), ('boolean', 'false')),
         (('color', 'blue'), ('boolean', 'true')),
@@ -195,8 +202,9 @@ def __get_response_transition() -> Factor:
 def test_derived_level_get_dependent_cross_product_with_nesting():
     response_transition = __get_response_transition()
 
-    assert [((tup[0][0].factor_name, tup[0][1].external_name),
-    (tup[1][0].factor_name, tup[1][1].external_name)) for tup in response_transition.levels[0].get_dependent_cross_product()] == [
+    assert [((tup[0].factor.name, tup[0].name),
+             (tup[1].factor.name, tup[1].name))
+            for tup in response_transition.levels[0].get_dependent_cross_product()] == [
         (('response', 'left' ), ('response', 'left' )),
         (('response', 'left' ), ('response', 'right')),
         (('response', 'right'), ('response', 'left' )),
@@ -205,7 +213,7 @@ def test_derived_level_get_dependent_cross_product_with_nesting():
 
 def test_base_window_validation():
     # Nonfactor argument
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         WithinTrial(op.eq, [42])
 
     # Duplicated factors

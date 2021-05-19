@@ -83,7 +83,7 @@ def test_generate_derivations_should_produce_warning_if_some_level_is_unreachabl
     fully_cross_block([color, text, local_con_factor],
                       [color, text],
                       [])
-    assert capsys.readouterr().out == "WARNING: There is no assignment that matches factor=congruent? level=dum\n"
+    assert capsys.readouterr().out == "WARNING: There is no assignment that matches factor congruent? with level dum.\n"
 
 def test_generate_derivations_within_trial():
     assert DerivationProcessor.generate_derivations(blk) == [
