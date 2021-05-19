@@ -382,6 +382,10 @@ class Factor:
             return False
         return self.name == other.name and self.levels == other.levels
 
+    def __str__(self) -> str:
+        levels_string = '[' + ', '.join(map(str, self.levels)) + ']'
+        return f"{type(self).__name__}<{self.name} | {levels_string}>"
+
     def __hash__(self) -> int:
         return hash(self.name)
 
