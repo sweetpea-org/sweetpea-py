@@ -330,36 +330,45 @@ class Factor:
     levels: Sequence[Level] = field(init=False)
     _level_map: Dict[str, Level] = field(init=False, default_factory=dict)
 
-    def __new__(cls, name: str, initial_levels: List[Any], *_, **__) -> Factor:
+    def __new__(cls, name: str, initial_levels: Sequence[Any], *_, **__) -> Factor:
+        # Check if we're initializing this from `Factor` directly or one of its
+        # subclasses.
+        if cls != Factor:
+            # It's a subclass, so we do nothing special.
+            return super().__new__(cls)
+        # Otherwise, we have to check whether to return a subclass instance.
+        # This requires there to be at least 1 initial level.
         if not initial_levels:
             raise ValueError(f"Expected at least one level for factor {name}.")
-        # Convert non-`Level` levels into `Level`s.
-        real_levels: List[Level] = []
-        for level in initial_levels:
-            if isinstance(level, str):
-                level = SimpleLevel(level)
-            elif isinstance(level, tuple) and len(level) == 2 and isinstance(level[0], str) and isinstance(level[1], int):
-                level = SimpleLevel(level[0], level[1])
-            elif not isinstance(level, Level):
-                level = SimpleLevel(str(level))
-            real_levels.append(level)
-        # Extract the first level to see what kind of `Factor` we expect to be.
-        # Then, create an instance of the appropriate subclass.
-        first_level = real_levels[0]
-        if isinstance(first_level, SimpleLevel):
-            instance = super().__new__(SimpleFactor)
-        elif isinstance(first_level, (DerivedLevel, ElseLevel)):
+        first_level = initial_levels[0]
+        if isinstance(first_level, (DerivedLevel, ElseLevel)):
             instance = super().__new__(DerivedFactor)
         else:
-            raise ValueError(f"Invalid first level in construction of factor {name}: {first_level}")
-        instance._initial_levels = real_levels
+            instance = super().__new__(SimpleFactor)
         return instance
 
-    def __post_init__(self, _: Sequence[Level]):
-        # First, we do any necessary post-processing of the levels.
-        self.levels = self._process_initial_levels(self._initial_levels)
-        del(self._initial_levels)
-        # Ensure all the levels have distinct names.
+    def __post_init__(self, initial_levels: Sequence[Any]):
+        # First, we convert the given initial levels into actual `Level`s. To
+        # ensure the input list is untouched, we copy any levels that came in.
+        real_levels: List[Level] = []
+        for level in initial_levels:
+            if isinstance(level, Level):
+                pass
+            elif isinstance(level, str):
+                level = SimpleLevel(level)
+            elif (isinstance(level, (tuple, list))
+                  and len(level) == 2
+                  and isinstance(level[0], str)
+                  and isinstance(level[1], int)):
+                level = SimpleLevel(level[0], level[1])
+            else:
+                level = SimpleLevel(str(level))
+            real_levels.append(level)
+        # Then we do any necessary post-processing of the levels.
+        self.levels = self._process_initial_levels(real_levels)
+        # Lastly, ensure all the levels have distinct names. We also use this
+        # step to initialize the internal level map, which allows for constant-
+        # time lookup of levels by name.
         for level in self.levels:
             if level.name in self._level_map:
                 raise ValueError(f"Factor {self.name} instantiated with duplicate level {level.name}.")
