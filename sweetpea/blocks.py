@@ -63,8 +63,8 @@ class Block:
         undefined_factor_names = included_factor_names - basic_factor_names
         if undefined_factor_names:
             # The derived levels include factors that are not basic factors.
-            raise RuntimeError('Derived levels in experiment design include factors that are not '
-                               'listed as basic factors: ' + str(undefined_factor_names))
+            raise RuntimeError(f"Derived levels in experiment design include factors that are not listed as basic "
+                               f"factors: {', '.join(str(name) for name in undefined_factor_names)}.")
         # TODO: Make sure factor names are unique
         from sweetpea.constraints import MinimumTrials
         for c in self.constraints:
