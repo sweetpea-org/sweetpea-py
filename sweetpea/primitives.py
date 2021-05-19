@@ -210,6 +210,17 @@ class DerivedLevel(Level):
         #       `Derivation`? This should probably be moved to a
         #       `Derivation` method.
         # TODO: This could probably be handled a different way, too.
+        # FIXME: Okay, this is becoming a nuisance.
+        #        In the original code, this expansion modifies the
+        #        `window.args` --- but it does not modify the `window.argc`
+        #        that was set on object initialization. This `window.argc`
+        #        value is then used in `DerivationProcessor.shift_window`. This
+        #        means that we need to preserve the *initial* count of factors
+        #        when we expand the factor list.
+        #            The takeaway is that this is an awful way to handle this,
+        #        because we are clearly not meant to be *actually* expanding
+        #        the factors. We need a less confusing --- and more
+        #        semantically consistent --- way of managing this information.
         expanded_factors: List[Factor] = []
         for factor in self.derivation.factors:
             expanded_factors.extend([factor] * self.derivation.width)
@@ -717,6 +728,9 @@ class Derivation:
     width: int
     #: The stride of this derivation.
     stride: int
+    #: The number of factors that originally came in, disregarding any
+    #: expansion caused by a :class:`.DerivedLevel` changing things.
+    initial_factor_count: int = field(init=False)
 
     def __new__(cls, *_, **__):
         if cls == Derivation:
@@ -741,6 +755,8 @@ class Derivation:
         for factor in self.factors:
             if factor.name in found_factor_names:
                 raise ValueError(f"Derivations do not accept repeated factors. Factor repeated: {factor.name}.")
+            found_factor_names.add(factor.name)
+        self.initial_factor_count = len(self.factors)
 
     @property
     def size(self) -> Tuple[int, int]:
