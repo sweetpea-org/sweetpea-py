@@ -5,6 +5,7 @@ domain-specific language.
 # NOTE: This import allows for forward references in type annotations.
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import InitVar, dataclass, field
 from itertools import product
 from random import randint
@@ -385,6 +386,14 @@ class Factor:
     #       `NotImplementedError` solution.
     def _process_initial_levels(self, initial_levels: Sequence[Level]) -> Sequence[Level]:
         raise NotImplementedError
+
+    def __deepcopy__(self, memo: Dict):
+        cls = self.__class__
+        new_instance = cls.__new__(cls, self.name, [])
+        memo[id(self)] = new_instance
+        for attr, val in self.__dict__.items():
+            setattr(new_instance, attr, deepcopy(val, memo))
+        return new_instance
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, type(self)):
