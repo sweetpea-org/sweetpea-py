@@ -226,13 +226,11 @@ class DerivedLevel(Level):
             expanded_factors.extend([factor] * self.derivation.width)
         self.derivation.factors = expanded_factors
 
-    def get_dependent_cross_product(self) -> List[Tuple[Tuple[Factor, Level], ...]]:
-        """Produces a list of n-tuples of pairs, where each pair consists of a
-        :class:`.Factor` with one of its possible :class:`Levels <.Level>`, and
-        each n-tuple represents a unique combination of such
-        :class:`.Factor`-:class:`.Level` selections among all possibilities.
+    def get_dependent_cross_product(self) -> List[Tuple[Level, ...]]:
+        """Produces a list of n-tuples, where each tuple represents a unique
+        combination of :class:`.Level` selections among all possibilities.
 
-        For instance, if we have two :class:`Factors <.Factor>` each with some
+        For instance, if we have two :class:`Factors <.Factor>`, each with some
         :class:`Levels <.Level>`:
 
         ======  ================
@@ -242,24 +240,23 @@ class DerivedLevel(Level):
         value   1, 2
         ======  ================
 
-        Then the following list of tuples of pairs is returned::
+        Then the following list of tuples is returned::
 
-          [((color, red),   (value, 1)),
-           ((color, red),   (value, 2)),
-           ((color, blue),  (value, 1)),
-           ((color, blue),  (value, 2)),
-           ((color, green), (value, 1)),
-           ((color, green), (value, 2))]
+          [(red, 1),
+           (red, 2),
+           (blue, 1),
+           (blue, 2),
+           (green, 1),
+           (green, 2)]
 
-        :rtype: typing.List[typing.Tuple[typing.Tuple[.Factor, .Level], ...]]
+        .. HINT::
+
+            You can access a :class:`.Level`'s corresponding :class:`.Factor`
+            via the :attr:`.Level.factor` attribute.
+
+        :rtype: typing.List[typing.Tuple[.Level, ...]]
         """
-        # TODO: This seems like it could be rewritten with indexing of some
-        #       sort. The levels are already inside the factors, so returning
-        #       the factors paired with specific levels is redundant.
-        #           On the other hand, it wouldn't really be more efficient and
-        #       this may be considered more straightforward for users.
-        factor_level_pairs = [[(factor, level) for level in factor.levels] for factor in self.derivation.factors]
-        return list(product(*factor_level_pairs))
+        return list(product(*(factor.levels for factor in self.derivation.factors)))
 
     # TODO: REMOVE (backwards compatibility)
     @property
