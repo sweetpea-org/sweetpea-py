@@ -109,6 +109,9 @@ class Level:
         return super().__new__(cls)
 
     def __post_init__(self):
+        # NOTE: This conversion exists for backwards compatibility.
+        if not isinstance(self.name, str):
+            self.name = str(self.name)
         # TODO: Using random integers seems insecure. Perhaps use UUIDs or a
         #       global (module-level) incremented counter.
         # TODO: Alternatively, because this is only used for the `__eq__`
@@ -191,6 +194,10 @@ class DerivedLevel(Level):
     #           https://github.com/python/mypy/issues/9254
     def __post_init__(self, weight: int):  # type: ignore # pylint: disable=arguments-differ
         super().__post_init__()
+        # NOTE: This check is for backwards compatibility. It should instead be
+        #       handled by type-checking.
+        if not isinstance(self.derivation, Derivation):
+            raise TypeError(f"DerivedLevel must be given a Derivation; got {type(self.derivation).__name__}.")
         self._weight = weight
         # Verify internal factors' strides.
         for factor in self.derivation.factors:
@@ -332,6 +339,10 @@ class Factor:
     _level_map: Dict[str, Level] = field(init=False, default_factory=dict)
 
     def __new__(cls, name: str, initial_levels: Sequence[Any], *_, **__) -> Factor:
+        # Ensure we got a string for a name. This requirement is imposed for
+        # backwards compatibility, but it should be handled by type-checking.
+        if not isinstance(name, str):
+            raise ValueError(f"Factor name not a string: {name}.")
         # Check if we're initializing this from `Factor` directly or one of its
         # subclasses.
         if cls != Factor:
@@ -600,6 +611,7 @@ class DerivedFactor(Factor):
     levels: Sequence[DerivedLevel] = field(init=False)
 
     def _process_initial_levels(self, initial_levels: Sequence[Level]) -> Sequence[DerivedLevel]:
+        # First, we construct the list of `DerivedLevel`s.
         adjusted_levels: List[DerivedLevel] = []
         initial_derived_levels: List[DerivedLevel] = [level for level in initial_levels
                                                       if isinstance(level, DerivedLevel)]
@@ -611,6 +623,19 @@ class DerivedFactor(Factor):
             else:
                 raise ValueError(f"Cannot use {type(level).__name__} to create a {type(self).__name__}. "
                                  f"Only DerivedLevels and ElseLevels are allowed.")
+        # Then, we do some validation.
+        expected_size = adjusted_levels[0].derivation.size
+        for level in adjusted_levels[1:]:
+            if level.derivation.size != expected_size:
+                raise ValueError(f"Expected all DerivedLevels' derivations in factor {self.name} to have size "
+                                 f"{expected_size}, but level {level.name} has derivation of size "
+                                 f"{level.derivation.size}.")
+        expected_factors = adjusted_levels[0].derivation.factors
+        for level in adjusted_levels[1:]:
+            if level.derivation.factors != expected_factors:
+                raise ValueError(f"Expected all DerivedLevels' derivations in factor {self.name} to use factors "
+                                 f"{expected_factors}, but level {level.name}'s derivation uses factors "
+                                 f"{level.derivation.factors}.")
         return adjusted_levels
 
     # NOTE: See note on `SimpleFactor.__hash__`.
@@ -699,6 +724,13 @@ class Derivation:
         return super().__new__(cls)
 
     def __post_init__(self):
+        # NOTE: We check the types for backwards compatibility, but it should
+        #       be handled with type-checking.
+        if not callable(self.predicate):
+            raise TypeError(f"Derivation expected predicate function; got {self.predicate}.")
+        for factor in self.factors:
+            if not isinstance(factor, Factor):
+                raise TypeError(f"Derivation must be composed of Factors; got {factor}.")
         # TODO: Validate the predicate accepts the same number of arguments as
         #       factors in `self.factors`.
         if self.width < 1:
