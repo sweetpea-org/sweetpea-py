@@ -2,7 +2,7 @@
 import sys
 sys.path.append("..")
 
-from sweetpea.primitives import factor, derived_level, within_trial, transition
+from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.constraints import no_more_than_k_in_a_row
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
 import numpy as np
@@ -20,7 +20,7 @@ factors (levels):
 - coherence of motion (0.3 0.53, 0.76, 1.0)
 - response color (-1, 1)
 - response motion (-1, 1)
-- congruency (congruent, incongruent): factor dependent on dominant color and dominant motion.
+- congruency (congruent, incongruent): Factor dependent on dominant color and dominant motion.
 
 design:
 - counterbalancing dominant color x dominant motion x color coherence x motion coherence
@@ -31,10 +31,10 @@ print("GENERATING EXPERIMENT SEQUENCE WITH SWEETPEA...")
 
 # DEFINE STIMULUS FACTORS
 
-colorCoherence      = factor("color coherence",  ["0.3", "0.53", "0.76", "1.0"])
-motionCoherence     = factor("motion coherence", ["0.3", "0.53", "0.76", "1.0"])
-color      = factor("color direction", ["red", "blue"])
-motion      = factor("motion direction", ["up", "down"])
+colorCoherence      = Factor("color coherence",  ["0.3", "0.53", "0.76", "1.0"])
+motionCoherence     = Factor("motion coherence", ["0.3", "0.53", "0.76", "1.0"])
+color      = Factor("color direction", ["red", "blue"])
+motion      = Factor("motion direction", ["up", "down"])
 
 # DEFINE RESPONSE FACTORS
 
@@ -44,18 +44,18 @@ def leftResponse(stimulusDimension):
 def rightResponse(stimulusDimension):
     return (stimulusDimension == "blue" or stimulusDimension == "down")
 
-leftColorResponseLevel = derived_level("-1", within_trial(leftResponse,   [color]))
-rightColorResponseLevel = derived_level("1", within_trial(rightResponse,   [color]))
+leftColorResponseLevel = DerivedLevel("-1", WithinTrial(leftResponse,   [color]))
+rightColorResponseLevel = DerivedLevel("1", WithinTrial(rightResponse,   [color]))
 
-leftMotionResponseLevel = derived_level("-1", within_trial(leftResponse,   [motion]))
-rightMotionResponseLevel = derived_level("1", within_trial(rightResponse,   [motion]))
+leftMotionResponseLevel = DerivedLevel("-1", WithinTrial(leftResponse,   [motion]))
+rightMotionResponseLevel = DerivedLevel("1", WithinTrial(rightResponse,   [motion]))
 
-colorResponse = factor("correct color response", [
+colorResponse = Factor("correct color response", [
     leftColorResponseLevel,
     rightColorResponseLevel
 ])
 
-motionResponse = factor("correct motion response", [
+motionResponse = Factor("correct motion response", [
     leftMotionResponseLevel,
     rightMotionResponseLevel
 ])
@@ -70,10 +70,10 @@ def incongruent(colorResponse, motionResponse):
     return not congruent(colorResponse, motionResponse)
 
 
-conLevel = derived_level("con", within_trial(congruent,   [colorResponse, motionResponse]))
-incLevel = derived_level("inc", within_trial(incongruent,   [colorResponse, motionResponse]))
+conLevel = DerivedLevel("con", WithinTrial(congruent,   [colorResponse, motionResponse]))
+incLevel = DerivedLevel("inc", WithinTrial(incongruent,   [colorResponse, motionResponse]))
 
-congruency = factor("congruency", [
+congruency = Factor("congruency", [
     conLevel,
     incLevel
 ])

@@ -2,7 +2,7 @@
 import sys
 sys.path.append("..")
 
-from sweetpea.primitives import factor, derived_level, within_trial
+from sweetpea.primitives import Factor, DerivedLevel, WithinTrial
 from sweetpea import multiple_cross_block, synthesize_trials_non_uniform, print_experiments
 
 
@@ -12,8 +12,8 @@ Multiple Crossing Task (Multi-component vector matching)
 factors (levels):
 - left (0000, 0001 ......, 1111)
 - right (0000, 0001 ......, 1111)
-- congruent stimilus (congruent, incongruent): factor dependent on first and second letter of left and right.
-- congruent context (congruent, incongruent): factor dependent on third and fourth letter of left and right.
+- congruent stimilus (congruent, incongruent): Factor dependent on first and second letter of left and right.
+- congruent context (congruent, incongruent): Factor dependent on third and fourth letter of left and right.
 - four_case (stimulus, context)
 
 design:
@@ -23,8 +23,8 @@ design:
 
 # DEFINE FOUR FACTORS
 
-left    = factor("left", ["0000", "0001", "0010", "0011", "0100", "0101", "0110", "0111", "1000", "1001", "1010", "1011", "1100", "1101", "1110", "1111"])
-right    = factor("right", ["0000", "0001", "0010", "0011", "0100", "0101", "0110", "0111", "1000", "1001", "1010", "1011", "1100", "1101", "1110", "1111"])
+left    = Factor("left", ["0000", "0001", "0010", "0011", "0100", "0101", "0110", "0111", "1000", "1001", "1010", "1011", "1100", "1101", "1110", "1111"])
+right    = Factor("right", ["0000", "0001", "0010", "0011", "0100", "0101", "0110", "0111", "1000", "1001", "1010", "1011", "1100", "1101", "1110", "1111"])
 
 # ALL POSSIBLE COMBINATIONS
 
@@ -37,10 +37,10 @@ def congruent_stimulus(left, right):
 def incongruent_stimulus(left, right):
     return not congruent_stimulus(left, right)
 
-cong_stimulus = derived_level("cong_stimulus", within_trial(congruent_stimulus, [left, right]))
-incong_stimulus = derived_level("incong_stimulus", within_trial(incongruent_stimulus, [left, right]))
+cong_stimulus = DerivedLevel("cong_stimulus", WithinTrial(congruent_stimulus, [left, right]))
+incong_stimulus = DerivedLevel("incong_stimulus", WithinTrial(incongruent_stimulus, [left, right]))
 
-stimulus = factor("stimulus", [
+stimulus = Factor("stimulus", [
     cong_stimulus,
     incong_stimulus
 ])
@@ -54,10 +54,10 @@ def incongruent_context(left, right):
     return not congruent_context(left, right)
 
 
-cong_context = derived_level("cong_context", within_trial(congruent_context, [left, right]))
-incong_context = derived_level("incong_context", within_trial(incongruent_context, [left, right]))
+cong_context = DerivedLevel("cong_context", WithinTrial(congruent_context, [left, right]))
+incong_context = DerivedLevel("incong_context", WithinTrial(incongruent_context, [left, right]))
 
-context = factor("context", [
+context = Factor("context", [
     cong_context,
     incong_context
 ])
@@ -74,11 +74,11 @@ def inc_inc(left, right):
 def inc_con(left, right):
     return not congruent_stimulus(left, right) and congruent_context(left, right)
 
-four_case = factor("four_case", [
-    derived_level("con_con", within_trial(con_con, [left, right])),
-    derived_level("con_inc", within_trial(con_inc, [left, right])),
-    derived_level("inc_inc", within_trial(inc_inc, [left, right])),
-    derived_level("inc_con", within_trial(inc_con, [left, right]))
+four_case = Factor("four_case", [
+    DerivedLevel("con_con", WithinTrial(con_con, [left, right])),
+    DerivedLevel("con_inc", WithinTrial(con_inc, [left, right])),
+    DerivedLevel("inc_inc", WithinTrial(inc_inc, [left, right])),
+    DerivedLevel("inc_con", WithinTrial(inc_con, [left, right]))
 ])
 
 # DEFINE SEQUENCE CONSTRAINTS

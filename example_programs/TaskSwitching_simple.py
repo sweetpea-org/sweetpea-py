@@ -2,7 +2,7 @@
 import sys
 sys.path.append("..")
 
-from sweetpea.primitives import factor, derived_level, within_trial, transition
+from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.constraints import at_most_k_in_a_row
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
 
@@ -14,28 +14,28 @@ factors (levels):
 - current color (red, blue)
 - current motion (up, down)
 - current task (color, motion)
-- correct response (left, right): dependent factor.
-- congruency (congruent, incongruent): dependent factor.
-- task transition (repetition, switch). dependent factor of task:
-- response transition (repetition, switch). dependent factor of correct response:
+- correct response (left, right): dependent Factor.
+- congruency (congruent, incongruent): dependent Factor.
+- task Transition (repetition, switch). dependent Factor of task:
+- response Transition (repetition, switch). dependent Factor of correct response:
 
 constraints:
-- counterbalancing congruency x response x task x task-transition x response-transition x color x motion
+- counterbalancing congruency x response x task x task-Transition x response-Transition x color x motion
 - no more than 7 task repetitions in a row
 - no more than 7 task switches in a row
 - no more than 7 response repetitions in a row
 - no more than 7 response switches in a row
 
 vv --> does that come from the counterbalancing above?
-Total number of trials: we want to have at least 20 instances of each combination of task-transition x congruency
+Total number of trials: we want to have at least 20 instances of each combination of task-Transition x congruency
 """
 
-color  = factor("color",  ["red", "blue", "green"])
-motion = factor("motion", ["up", "down"])
-task   = factor("task",   ["color", "motion"])
+color  = Factor("color",  ["red", "blue", "green"])
+motion = Factor("motion", ["up", "down"])
+task   = Factor("task",   ["color", "motion"])
 
 """
-          correct response (left, right): dependent factor.
+          correct response (left, right): dependent Factor.
 if task == color & current color == red then correct response =  left
 if task == motion & current motion == up then correct response =  left
 .
@@ -58,14 +58,14 @@ def response_left(task, color, motion):
 def response_right(task, color, motion):
     return not response_left(task, color, motion)
 
-response = factor("response", [
-    derived_level("left",  within_trial(response_left,  [task, color, motion])),
-    derived_level("right", within_trial(response_right, [task, color, motion]))
+response = Factor("response", [
+    derived_level("left",  WithinTrial(response_left,  [task, color, motion])),
+    derived_level("right", WithinTrial(response_right, [task, color, motion]))
 ])
 
 
 """
-          congruency (congruent, incongruent): dependent factor.
+          congruency (congruent, incongruent): dependent Factor.
 if current color == red  & current motion == up then response = congruent
 if current color == blue & current motion == down then response = congruent
 .
@@ -79,19 +79,19 @@ def congruent(color, motion):
 def incongruent(color, motion):
     return not congruent(color, motion)
 
-congruency = factor("congruency", [
-    derived_level("con", within_trial(congruent,   [color, motion])),
-    derived_level("inc", within_trial(incongruent, [color, motion]))
+congruency = Factor("congruency", [
+    derived_level("con", WithinTrial(congruent,   [color, motion])),
+    derived_level("inc", WithinTrial(incongruent, [color, motion]))
 ])
 
 
 """   vvvv <-- does this *also* need a check of which task it is?
-task transition (repetition, switch). dependent factor of task:
-if color-color   then task transition = repetition
-if motion-motion then task transition = repetition
+task Transition (repetition, switch). dependent Factor of task:
+if color-color   then task Transition = repetition
+if motion-motion then task Transition = repetition
 .
-if color-motion then task transition = switch
-if motion-color then task transition = switch
+if color-motion then task Transition = switch
+if motion-color then task Transition = switch
 """
 
 def task_repeat(tasks):
@@ -100,18 +100,18 @@ def task_repeat(tasks):
 def task_switch(tasks):
     return not task_repeat(tasks)
 
-task_transition = factor("task_transition", [
-    derived_level("repeat", transition(task_repeat, [task])),
-    derived_level("switch", transition(task_switch, [task]))
+task_transition = Factor("task_transition", [
+    derived_level("repeat", Transition(task_repeat, [task])),
+    derived_level("switch", Transition(task_switch, [task]))
 ])
 
 """
-response transition (repetition, switch). dependent factor of correct response:
-if left-left then task transition = repetition
-if right-right then task transition = repetition
+response Transition (repetition, switch). dependent Factor of correct response:
+if left-left then task Transition = repetition
+if right-right then task Transition = repetition
 .
-if left-right then task transition = switch
-if right-left then task transition = switch
+if left-right then task Transition = switch
+if right-left then task Transition = switch
 """
 
 def response_repeat(responses):
@@ -120,9 +120,9 @@ def response_repeat(responses):
 def response_switch(responses):
     return not response_repeat(responses)
 
-resp_transition = factor("resp_transition", [
-    derived_level("repeat", transition(response_repeat, [response])),
-    derived_level("switch", transition(response_switch, [response]))
+resp_transition = Factor("resp_transition", [
+    derived_level("repeat", Transition(response_repeat, [response])),
+    derived_level("switch", Transition(response_switch, [response]))
 ])
 
 k = 7
