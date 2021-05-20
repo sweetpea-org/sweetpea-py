@@ -537,7 +537,7 @@ class Exclude(Constraint):
         excluded: List[Tuple[Level, ...]] = [cross for cross in level.get_dependent_cross_product()
                                              if level.derivation.predicate(*[level.name for level in cross])]
         for excluded_level_tuple in excluded:
-            combos: List[Dict[Factor, SimpleLevel]] = {}
+            combos: List[Dict[Factor, SimpleLevel]] = [{}]
             for excluded_level in excluded_level_tuple:
                 if isinstance(excluded_level, DerivedLevel):
                     result = self.extract_simplelevel(block, excluded_level)
@@ -553,10 +553,13 @@ class Exclude(Constraint):
                             newcombos.append({**r, **c})
                     combos = newcombos
                 else:
+                    if not isinstance(excluded_level, SimpleLevel):
+                        raise ValueError(f"Unexpected level type in exclusion: level {level.name} of type "
+                                         f"{type(level).__name__}.")
                     for c in combos:
                         if block.factor_in_crossing(excluded_level.factor) and block.require_complete_crossing:
                             block.errors.add("WARNING: Some combinations have been excluded, this crossing may not be complete!")
-                        c[excluded_level.factor] = level
+                        c[excluded_level.factor] = excluded_level
             excluded_levels.extend(combos)
         return excluded_levels
 
