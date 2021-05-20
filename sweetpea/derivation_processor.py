@@ -13,7 +13,8 @@ from sweetpea.internal import chunk_list, get_all_levels
 
 class DerivationProcessor:
     """
-    Useage::
+    Usage::
+
         >>> import operator as op
         >>> color = Factor("color", ["red", "blue"])
         >>> text  = Factor("text",  ["red", "blue"])
@@ -25,22 +26,26 @@ class DerivationProcessor:
         >>> __process_derivations(design, crossing)
         [Derivation(derivedIdx=4, dependentIdxs=[[0, 2], [1, 3]]), Derivation(derivedIdx=5, dependentIdxs=[[0, 3], [1, 2]])]
 
-    rtype: returns a list of tuples. Each tuple is structured as:
-            (index of the derived level, list of dependent levels)
+    :rtype:
+        returns a list of tuples. Each tuple is structured as:
+        ``(index of the derived level, list of dependent levels)``
 
     In the example above, the indicies of the design are:
-        idx: level:
-        0    color:red
-        1    color:blue
-        2    text:red
-        3    text:blue
-        4    conFactor:con
-        5    conFactor:inc
-    So the tuple (4, [[0,2], [1,3]]) represents the information that
-        the derivedLevel con is true iff
-            (color:red && text:red) ||
-            (color:blue && text:blue)
-        by pairing the relevant indicies together.
+
+    ===  =============
+    idx  level
+    ===  =============
+    0    color:red
+    1    color:blue
+    2    text:red
+    3    text:blue
+    4    conFactor:con
+    5    conFactor:inc
+    ===  =============
+
+    So the tuple (4, [[0,2], [1,3]]) represents the information that the
+    derivedLevel con is true iff ``(color:red && text:red) || (color:blue &&
+    text:blue)`` by pairing the relevant indicies together.
     """
     @staticmethod
     def generate_derivations(block: Block) -> List[Derivation]:
