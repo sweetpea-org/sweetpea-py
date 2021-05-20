@@ -55,7 +55,10 @@ class DerivationProcessor:
                 for level_tuple in cross_product:
                     names = [level.name for level in level_tuple]
                     if level.derivation.width != 1:
-                        names = list(chunk_list(names, level.derivation.width))
+                        # NOTE: mypy doesn't like this, but I'm not rewriting
+                        #       it right now. Need to replace `chunk_list` with
+                        #       a better version.
+                        names = list(chunk_list(names, level.derivation.width))  # type: ignore
                     result = level.derivation.predicate(*names)
                     if not isinstance(result, bool):
                         raise ValueError(f"Expected derivation predicate to return bool; got {type(result)}.")
