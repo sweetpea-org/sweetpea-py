@@ -2,14 +2,25 @@
 domain-specific language.
 """
 
+
 # NOTE: This import allows for forward references in type annotations.
 from __future__ import annotations
+
+
+__all__ = [
+    'Level', 'SimpleLevel', 'DerivedLevel', 'ElseLevel',
+    'Factor', 'SimpleFactor', 'DerivedFactor',
+    'Derivation', 'WithinTrialDerivation', 'TransitionDerivation', 'WindowDerivation',
+    'get_external_level_name', 'get_internal_level_name',
+    'WithinTrial', 'Transition', 'Window',
+]
+
 
 from copy import deepcopy
 from dataclasses import InitVar, dataclass, field
 from itertools import product
 from random import randint
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, TypeVar, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, TypeVar, cast
 
 
 ###############################################################################
@@ -662,14 +673,6 @@ class DerivedFactor(Factor):
         return cast(DerivedLevel, self.levels[0])
 
 
-def make_factor(name: str, levels: Sequence[Any]) -> Union[SimpleFactor, DerivedFactor]:
-    factor: Factor = Factor(name, levels)
-    if isinstance(factor, (SimpleFactor, DerivedFactor)):
-        return factor
-    else:
-        raise ValueError
-
-
 ###############################################################################
 ##
 ## Derivations
@@ -875,12 +878,25 @@ class WindowDerivation(Derivation):
 
 
 def get_external_level_name(level: Level) -> str:
+    """Returns :attr:`.Level.name`.
+
+    .. admonition:: DEPRECATED
+
+        This function will be removed in favor of :attr:`.Level.name`.
+    """
     return level.name
 
 
 # TODO: This shouldn't be used in any other module anyway. Uses of this
 #       function should instead do `==` comparison of levels.
 def get_internal_level_name(level: Level) -> str:
+    """Returns :attr:`.Level.internal_name`.
+
+    .. admonition: DEPRECATED
+
+        This function will be removed. It should not be used outside of this
+        module.
+    """
     return level.internal_name
 
 
