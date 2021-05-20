@@ -188,8 +188,8 @@
 <dt id="sweetpea.derivation_processor.DerivationProcessor">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.derivation_processor.</span></code><code class="sig-name descname"><span class="pre">DerivationProcessor</span></code><a class="headerlink" href="#sweetpea.derivation_processor.DerivationProcessor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.7/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<dl>
-<dt>Useage::</dt><dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">operator</span> <span class="k">as</span> <span class="nn">op</span>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">operator</span> <span class="k">as</span> <span class="nn">op</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">color</span> <span class="o">=</span> <span class="n">Factor</span><span class="p">(</span><span class="s2">&quot;color&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="s2">&quot;blue&quot;</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">text</span>  <span class="o">=</span> <span class="n">Factor</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">,</span>  <span class="p">[</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="s2">&quot;blue&quot;</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">conLevel</span>  <span class="o">=</span> <span class="n">DerivedLevel</span><span class="p">(</span><span class="s2">&quot;con&quot;</span><span class="p">,</span> <span class="n">WithinTrial</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">eq</span><span class="p">,</span> <span class="p">[</span><span class="n">color</span><span class="p">,</span> <span class="n">text</span><span class="p">]))</span>
@@ -201,25 +201,47 @@
 <span class="go">[Derivation(derivedIdx=4, dependentIdxs=[[0, 2], [1, 3]]), Derivation(derivedIdx=5, dependentIdxs=[[0, 3], [1, 2]])]</span>
 </pre></div>
 </div>
-</dd>
-<dt>rtype: returns a list of tuples. Each tuple is structured as:</dt><dd><p>(index of the derived level, list of dependent levels)</p>
-</dd>
-<dt>In the example above, the indicies of the design are:</dt><dd><p>idx: level:
-0    color:red
-1    color:blue
-2    text:red
-3    text:blue
-4    conFactor:con
-5    conFactor:inc</p>
-</dd>
-<dt>So the tuple (4, [[0,2], [1,3]]) represents the information that</dt><dd><dl class="simple">
-<dt>the derivedLevel con is true iff</dt><dd><p>(color:red &amp;&amp; text:red) ||
-(color:blue &amp;&amp; text:blue)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>returns a list of tuples. Each tuple is structured as:
+<code class="docutils literal notranslate"><span class="pre">(index</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">derived</span> <span class="pre">level,</span> <span class="pre">list</span> <span class="pre">of</span> <span class="pre">dependent</span> <span class="pre">levels)</span></code></p>
 </dd>
 </dl>
-<p>by pairing the relevant indicies together.</p>
-</dd>
-</dl>
+<p>In the example above, the indicies of the design are:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 19%" />
+<col style="width: 81%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>idx</p></th>
+<th class="head"><p>level</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>color:red</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>color:blue</p></td>
+</tr>
+<tr class="row-even"><td><p>2</p></td>
+<td><p>text:red</p></td>
+</tr>
+<tr class="row-odd"><td><p>3</p></td>
+<td><p>text:blue</p></td>
+</tr>
+<tr class="row-even"><td><p>4</p></td>
+<td><p>conFactor:con</p></td>
+</tr>
+<tr class="row-odd"><td><p>5</p></td>
+<td><p>conFactor:inc</p></td>
+</tr>
+</tbody>
+</table>
+<p>So the tuple (4, [[0,2], [1,3]]) represents the information that the
+derivedLevel con is true iff <code class="docutils literal notranslate"><span class="pre">(color:red</span> <span class="pre">&amp;&amp;</span> <span class="pre">text:red)</span> <span class="pre">||</span> <span class="pre">(color:blue</span> <span class="pre">&amp;&amp;</span>
+<span class="pre">text:blue)</span></code> by pairing the relevant indicies together.</p>
 <dl class="py method">
 <dt id="sweetpea.derivation_processor.DerivationProcessor.generate_derivations">
 <em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">generate_derivations</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.derivation_processor.DerivationProcessor.generate_derivations" title="Permalink to this definition">¶</a></dt>
@@ -240,7 +262,7 @@
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>level</strong> (<a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><em>sweetpea.primitives.DerivedLevel</em></a>) – </p></li>
-<li><p><strong>tup</strong> (<em>Tuple</em>) – </p></li>
+<li><p><strong>tup</strong> (<em>Tuple</em><em>[</em><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.Level" title="sweetpea.primitives.Level"><em>sweetpea.primitives.Level</em></a><em>, </em><em>..</em><em>]</em>) – </p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -251,12 +273,12 @@
 
 <dl class="py method">
 <dt id="sweetpea.derivation_processor.DerivationProcessor.shift_window">
-<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">shift_window</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">idxs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trial_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.derivation_processor.DerivationProcessor.shift_window" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">static</span> </em><code class="sig-name descname"><span class="pre">shift_window</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">derivation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trial_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.derivation_processor.DerivationProcessor.shift_window" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>idxs</strong> (<em>List</em><em>[</em><em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>window</strong> (<a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.Derivation" title="sweetpea.primitives.Derivation"><em>sweetpea.primitives.Derivation</em></a>) – </p></li>
+<li><p><strong>indices</strong> (<em>List</em><em>[</em><em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>derivation</strong> (<a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.Derivation" title="sweetpea.primitives.Derivation"><em>sweetpea.primitives.Derivation</em></a>) – </p></li>
 <li><p><strong>trial_size</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
 </ul>
 </dd>
