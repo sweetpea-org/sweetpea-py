@@ -20,7 +20,7 @@ from copy import deepcopy
 from dataclasses import InitVar, dataclass, field
 from itertools import product
 from random import randint
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, TypeVar, cast
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, cast
 
 
 ###############################################################################
@@ -69,6 +69,7 @@ class Level:
     """A discrete value that a :class:`.Factor` can hold.
 
     .. NOTE::
+
         Do not directly instantiate :class:`.Level`. Instead, construct one of
         the subclasses:
 
@@ -79,17 +80,25 @@ class Level:
     For more on levels, consult :ref:`the guide <guide_factorial_levels>`.
     """
 
-    #: The externally visible name of the level.
+    #: The name of the level.
     name: str
+
     # TODO: I think we can get rid of `Level.internal_name` and replace it with
     #       some other mechanism. See the TODO notes in `Level.__post_init__`.
     #: The internal name, which is meant to be unique among levels.
+    #:
+    #: .. admonition:: DEPRECATED
+    #:
+    #:     This attribute will be removed. It should not be used outside of
+    #:     this module.
     internal_name: str = field(init=False)
+
     # TODO: There is probably a way to make this smoother. As it stands,
     #       factors are responsible for registering themselves with their
     #       levels. Perhaps factors could be the only way to create levels?
     #: The factor to which this level belongs.
     factor: Factor = field(init=False)
+
     # NOTE: Because of the way dataclasses work, a base class (e.g., `Level`)
     #       cannot provide an attribute with a default value if a subclass
     #       (e.g., `DerivedLevel`) provides additional non-default values. This
@@ -153,6 +162,12 @@ class Level:
     # TODO: REMOVE. (backwards compatibility)
     @property
     def external_name(self) -> str:
+        """An alias for :attr:`.Level.name`.
+
+        .. admonition:: DEPRECATED
+
+            This property will be removed in favor of :attr:`.Level.name`.
+        """
         return self.name
 
 
@@ -167,6 +182,7 @@ class SimpleLevel(Level):
     :param name:
         The name of the level.
     """
+
     weight: InitVar[int] = 1
 
     # NOTE: The __post_init__ method is a special case where we can ignore the
@@ -197,6 +213,7 @@ class DerivedLevel(Level):
 
     #: The derivation corresponding to this level.
     derivation: Derivation = field(compare=False)
+
     weight: InitVar[int] = 1
 
     # NOTE: The __post_init__ method is a special case where we can ignore the
@@ -212,7 +229,9 @@ class DerivedLevel(Level):
         self._weight = weight
         # Verify internal factors' strides.
         for factor in self.derivation.factors:
-            if isinstance(factor, DerivedFactor) and factor.has_complex_derivation and factor.levels[0].derivation.stride > 1:
+            if (isinstance(factor, DerivedFactor)
+                and factor.has_complex_derivation
+                and factor.levels[0].derivation.stride > 1):
                 raise ValueError(f"{type(self).__name__} does not accept factors with stride > 1, but factor "
                                  f"{factor.name} has derivation with stride {factor.first_level.derivation.stride}.")
         # Expand the factors. Each factor gets duplicated according to the
@@ -272,6 +291,12 @@ class DerivedLevel(Level):
     # TODO: REMOVE (backwards compatibility)
     @property
     def window(self) -> Derivation:
+        """An alias for :attr:`.DerivedLevel.derivation`.
+
+        .. admonition:: DEPRECATED
+
+            This property will be removed in favor of
+            :attr:`.DerivedLevel.derivation`."""
         return self.derivation
 
 
@@ -319,9 +344,6 @@ class ElseLevel(Level):
 ##
 
 
-LevelT = TypeVar('LevelT', bound=Level)
-
-
 @dataclass
 class Factor:
     """An independent variable in a factorial experiment. Factors are composed
@@ -334,9 +356,32 @@ class Factor:
     :class:`.Factor` constructor, so we recommend you always use that for
     creating factors.
 
-    See :ref:`the Factorial Experiment Design section of the SweetPea guide
-    <guide_factorial_design>` for more about factors, levels, and how to use
-    them.
+    During :class:`.Factor` construction, the first :class:`.Level` in the
+    :attr:`~.Factor.initial_levels` is dynamically type-checked. If it's a
+    :class:`.DerivedLevel` or :class:`.ElseLevel`, a `.DerivedFactor` will be
+    initialized. Otherwise, a `.SimpleFactor` will be initialized.
+
+    In all cases, the :attr:`~.Factor.initial_levels` will be processed. This
+    step ensures that all of a factor's :attr:`~.Factor.levels` will always be
+    :class:`Levels <.Level>`. The levels are processed according to these
+    rules:
+
+    1. A :class:`.Level` instance is left alone.
+
+    2. A :class:`str` instance is converted into a :class:`.SimpleLevel`.
+
+    3. A :class:`tuple` or :class:`list` consisting of exactly one :class:`str`
+       followed by one :class:`int` will be converted into a
+       :class:`.SimpleLevel` with the :class:`str` as its name and the
+       :class:`int` as its weight.
+
+    4. Anything else is converted into a :class:`.SimpleLevel` by using its
+       string representation as a level name.
+
+    .. NOTE::
+
+        The :class:`.DerivedFactor` subclass does additional processing after
+        these steps.
 
     :param name:
         The name of this factor.
@@ -350,11 +395,24 @@ class Factor:
     :type initial_levels: typing.Sequence[Any]
 
     :rtype: .Factor
+
+    .. TIP::
+
+        See :ref:`the Factorial Experiment Design section of the SweetPea guide
+        <guide_factorial_design>` for more about factors, levels, and how to
+        use them.
     """
 
+    #: The name of this factor.
     name: str
+
+    #: The levels used during factor initialization.
     initial_levels: InitVar[Sequence[Any]]
+
+    #: The discrete values that this factor can have.
     levels: Sequence[Level] = field(init=False)
+
+    #: A mapping from level names to levels for constant-time lookup.
     _level_map: Dict[str, Level] = field(init=False, default_factory=dict)
 
     def __new__(cls, name: str, initial_levels: Sequence[Any], *_, **__) -> Factor:
@@ -563,7 +621,9 @@ class Factor:
 
 @dataclass
 class SimpleFactor(Factor):
-    """A :class:`.Factor` comprised of :class:`SimpleLevels <.SimpleLevel>`.
+    """A :class:`.Factor` comprised of :class:`SimpleLevels <.SimpleLevel>`. If
+    a subclass of :class:`.Level` is passed in that is not a
+    :class:`SimpleLevel`, an error is raised during initialization.
 
     :param name:
         The name of this factor.
@@ -607,6 +667,12 @@ class SimpleFactor(Factor):
 @dataclass
 class DerivedFactor(Factor):
     """A :class:`.Factor` composed of :class:`DerivedLevels <.DerivedLevel>`.
+
+    After doing the level processing described by :class:`.Factor`, an
+    additional step is taken: all :class:`ElseLevels <.ElseLevel>` are
+    converted into :class:`DerivedLevels <.DerivedLevel>`. This is done by
+    calling :func:`.ElseLevel.derive_level_from_levels`, supplying all the
+    natural :class:`DerivedLevels <.DerivedLevel>` that were passed in.
 
     :param name:
         The name of this factor.
@@ -721,13 +787,17 @@ class Derivation:
     #       method that takes the arguments and returns the result.
     #: The predicate used for producing this derivation.
     predicate: Callable
+
     #: The factors upon which this derivation depends.
     factors: List[Factor]
+
     # TODO: Rename this to something more clear.
     #: The width of this derivation.
     width: int
+
     #: The stride of this derivation.
     stride: int
+
     #: The number of factors that originally came in, disregarding any
     #: expansion caused by a :class:`.DerivedLevel` changing things.
     initial_factor_count: int = field(init=False)
@@ -792,11 +862,29 @@ class Derivation:
     # TODO: REMOVE. (backwards compatibility)
     @property
     def args(self) -> List[Factor]:
+        """An alias for :attr:`.Derivation.factors`.
+
+        :rtype: typing.List[.Factor]
+
+        .. admonition:: DEPRECATED
+
+            This property will be removed in favor of
+            :attr:`.Derivation.factors`.
+        """
         return self.factors
 
     # TODO: REMOVE. (backwards compatibility)
     @property
     def fn(self) -> Callable:
+        """An alias for :attr:`.Derivation.predicate`.
+
+        :rtype: Callable
+
+        .. admonition:: DEPRECATED
+
+            This property will be removed in favor of
+            :attr:`.Derivation.predicate`.
+        """
         return self.predicate
 
 
@@ -892,7 +980,7 @@ def get_external_level_name(level: Level) -> str:
 def get_internal_level_name(level: Level) -> str:
     """Returns :attr:`.Level.internal_name`.
 
-    .. admonition: DEPRECATED
+    .. admonition:: DEPRECATED
 
         This function will be removed. It should not be used outside of this
         module.
@@ -900,6 +988,23 @@ def get_internal_level_name(level: Level) -> str:
     return level.internal_name
 
 
+#: An alias for :class:`.WithinTrialDerivation`.
+#:
+#: .. admonition:: DEPRECATED
+#:
+#:     This class will be removed in favor of :class:`.WithinTrialDerivation`.
 WithinTrial = WithinTrialDerivation
+
+#: An alias for :class:`.TransitionDerivation`.
+#:
+#: .. admonition:: DEPRECATED
+#:
+#:     This class will be removed in favor of :class:`.TransitionDerivation`.
 Transition = TransitionDerivation
+
+#: An alias for :class:`.WindowDerivation`.
+#:
+#: .. admonition:: DEPRECATED
+#:
+#:     This class will be removed in favor of :class:`.WindowDerivation`.
 Window = WindowDerivation
