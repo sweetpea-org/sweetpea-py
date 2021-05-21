@@ -1,23 +1,32 @@
+"""This module provides the various kinds of blocks that can be used to create
+a factorial experimental design.
+"""
+
+
 from abc import abstractmethod
 from functools import reduce
-from itertools import combinations, accumulate, repeat, product, chain
-from networkx import has_path
+from itertools import accumulate, combinations, product, repeat
 from typing import List, Union, Tuple, cast, Any, Dict, Set
 from math import ceil
 
+from networkx import has_path
+
 from sweetpea.backend import BackendRequest
 from sweetpea.internal import get_all_levels
-from sweetpea.primitives import DerivedFactor, Factor, Transition, Window, SimpleLevel, DerivedLevel, get_external_level_name, get_internal_level_name
+from sweetpea.primitives import (
+    DerivedFactor, DerivedLevel, Factor, SimpleLevel,
+    get_external_level_name, get_internal_level_name)
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.base_constraint import Constraint
 from sweetpea.design_graph import DesignGraph
 
 
-"""
-Abstract class for Blocks. Contains the required data, and defines abstract
-methods that other blocks _must_ implement in order to work correctly.
-"""
 class Block:
+    """Abstract class for Blocks. Contains the required data, and defines
+    abstract methods that other blocks _must_ implement in order to work
+    correctly.
+    """
+
     def __init__(self,
                  design: List[Factor],
                  crossing: List[List[Factor]],
@@ -72,67 +81,60 @@ class Block:
             if isinstance(c, MinimumTrials):
                 c.apply(self, None)
 
-    """
-    Indicates the number of trials that are generated per sample for this block
-    configuration.
-
-    Analogous to the old __fully_cross_size function.
-    """
     @abstractmethod
     def trials_per_sample(self):
+        """Indicates the number of trials that are generated per sample for
+        this block configuration.
+
+        Analogous to the old ``__fully_cross_size`` function.
+        """
         pass
 
-    """
-    Indicates the number of variables that are present in each trial.
-
-    Analogous to the old __design_size function.
-    """
     @abstractmethod
     def variables_per_trial(self):
+        """Indicates the number of variables that are present in each trial.
+
+        Analogous to the old ``__design_size`` function.
+        """
         pass
 
-    """
-    Indicates the number of variables that are present in the core variable grid.
-    this does not include variables used to encode complex windows.
-
-    In a design _without_ complex windows, this is equivalent to variables_per_sample.
-    """
     @abstractmethod
     def grid_variables(self):
+        """Indicates the number of variables that are present in the core
+        variable grid. this does not include variables used to encode complex
+        windows.
+
+        In a design *without* complex windows, this is equivalent to
+        :func:`.Block.variables_per_sample`.
+        """
         pass
 
-    """
-    Indicates the total number of variables needed to encode the core experiment
-    description.
-
-    Alternatively stated, this returns the number of variables in the formula
-    that constitute the independent support.
-    """
     def variables_per_sample(self):
+        """Indicates the total number of variables needed to encode the core
+        experiment description.
+
+        Alternatively stated, this returns the number of variables in the
+        formula that constitute the independent support.
+        """
         return reduce(lambda sum, f: sum + self.variables_for_factor(f), self.design, 0)
 
-    """
-    Indicates the number of variables needed to encode this factor.
-    """
     def variables_for_factor(self, f: Factor) -> int:
+        """Indicates the number of variables needed to encode this factor."""
         trial_list = range(1, self.trials_per_sample() + 1)
         return reduce(lambda sum, t: sum + len(f.levels) if f.applies_to_trial(t) else sum, trial_list, 0)
 
-    """
-    Determines whether a given factor is in this block.
-    """
     def has_factor(self, factor: Factor) -> Factor:
+        """Determines whether a given factor is in this block."""
         if not isinstance(factor, Factor):
             raise ValueError('Non-factor argument to has_factor.')
         if factor in self.design:
             return factor
         return cast(Factor, None)
 
-    """
-    Returns the first index for this variable in a trial sequence representing the given factor and level.
-    (0 based)
-    """
     def first_variable_for_level(self, factor: Factor, level: Any) -> int:
+        """Returns the first index for this variable in a trial sequence
+        representing the given factor and level. (0-based.)
+        """
         if not isinstance(level, (SimpleLevel, DerivedLevel)):
             raise ValueError(f"Attempted to find first variable of non-Level object: {level}.")
         if factor.has_complex_window():
@@ -152,16 +154,18 @@ class Block:
             simple_levels = get_all_levels(simple_factors)
             return simple_levels.index((factor, level))
 
-    """
-    Given a factor and a trial number (1-based) this function will return a list of the variables
-    representing the levels of the given factor for that trial. The variable list is also 1 based.
-    """
     def factor_variables_for_trial(self, f: Factor, t: int) -> List[int]:
+        """Given a factor and a trial number (1-based) this function will
+        return a list of the variables representing the levels of the given
+        factor for that trial. The variable list is also 1-based.
+        """
         if not f.applies_to_trial(t):
             raise ValueError('Factor does not apply to trial #' + str(t) + ' f=' + str(f))
 
         previous_trials = sum(map(lambda trial: 1 if f.applies_to_trial(trial + 1) else 0, range(t))) - 1
-        initial_sequence = list(map(lambda l: self.first_variable_for_level(f, l), list(filter(lambda l: (f, l) not in self.exclude, f.levels))))
+        initial_sequence = list(map(lambda l: self.first_variable_for_level(f, l),
+                                    list(filter(lambda l: (f, l) not in self.exclude,
+                                                f.levels))))
         offset = 0
         if f.has_complex_window():
             offset = len(f.levels) * previous_trials
@@ -169,21 +173,20 @@ class Block:
             offset = self.variables_per_trial() * previous_trials
         return list(map(lambda n: n + offset + 1, initial_sequence))
 
-    """
-    Given a trial number (1-based) this function will return a list of lists of the variables
-    that pertain to that trial.
-
-    For example, for stroop-2 with a congruency level, this method would return the following
-    for trial #1:
-
-        [[1, 2], [3, 4], [5, 6]]
-
-    If a transition were involved, and it didn't apply to level one, then the factor would
-    have an empty list:
-
-        [[1, 2], [3, 4], []]
-    """
     def variable_list_for_trial(self, t: int) -> List[List[int]]:
+        """Given a trial number (1-based) this function will return a list of
+        lists of the variables that pertain to that trial.
+
+        For example, for stroop-2 with a congruency level, this method would
+        return the following for trial ``1``::
+
+          [[1, 2], [3, 4], [5, 6]]
+
+        If a transition were involved, and it didn't apply to level one, then
+        the factor would have an empty list::
+
+          [[1, 2], [3, 4], []]
+        """
         variables = cast(List[List[int]], [])
         for f in self.design:
             # Skip factors that don't apply.
@@ -194,11 +197,11 @@ class Block:
             variables.append(self.factor_variables_for_trial(f, t))
 
         return variables
-    """
-    Given a variable number from the SAT formula, this method will return
-    the associated factor and level name.
-    """
+
     def decode_variable(self, variable: int) -> Tuple[Factor, Union[SimpleLevel, DerivedLevel]]:
+        """Given a variable number from the SAT formula, this method will
+        return the associated factor and level name.
+        """
         # Shift to zero-based index
         variable -= 1
 
@@ -218,10 +221,10 @@ class Block:
 
         raise RuntimeError('Unable to find factor/level for variable!')
 
-    """
-    Given crossing and design-only variables and returns true if the combination meets any of the exclude contraints
-    """
     def is_excluded(self, c: Tuple[int, ...], d: Tuple[int, ...]) -> bool:
+        """Given crossing and design-only variables and returns true if the
+        combination meets any of the exclude contraints.
+        """
         di = {}
         for crossed in c:
             t = self.decode_variable(crossed)
@@ -231,17 +234,23 @@ class Block:
             di[t[0]] = t[1]
 
         return any(list(map(lambda e: all(list(map(lambda ex_level: e[ex_level] == di[ex_level], e))), self.excluded_derived)))
-    """
-    Given a list of trials, the function filters the trials invalid as per the exclude contraints
-    """
 
     def filter_excluded_derived_levels(self, l: List[List[List[Tuple[int, ...]]]]) -> List[List[List[Tuple[int, ...]]]]:
-        return list(filter(None, map(lambda j: list(filter(lambda li: len(li) > 1, map(lambda k: [k[0]] + list(filter(lambda c: not self.is_excluded(k[0], c), k[1:])), j))), l)))
+        """Given a list of trials, the function filters the trials invalid as
+        per the exclude contraints.
+        """
+        return list(filter(None,
+                           map(lambda j: list(filter(lambda li: len(li) > 1,
+                                                     map(lambda k: [k[0]]
+                                                         + list(filter(lambda c: not self.is_excluded(k[0], c),
+                                                                       k[1:])),
+                                                         j))),
+                               l)))
 
-    """
-    Apply all constraints to build a BackendRequest. Formerly known as __desugar in __init.py__
-    """
     def build_backend_request(self) -> BackendRequest:
+        """Apply all constraints to build a :class:`.BackendRequest`. Formerly
+        known as ``__desugar``.
+        """
         fresh = 1 + self.variables_per_sample()
         backend_request = BackendRequest(fresh)
 
@@ -253,29 +262,29 @@ class Block:
 
         return backend_request
 
-    """
-    Given a trial number (1 based), factor, and level, this method will return the SAT
-    variable that represents that selection. Only works for factors without complex windows at the
-    moment.
-    """
     def get_variable(self, trial_number: int, level: Tuple[Factor, Any]) -> int:
+        """Given a trial number (1-based), factor, and level, this method will
+        return the SAT variable that represents that selection. Only works for
+        factors without complex windows at the moment.
+        """
         f = level[0]
         if f.has_complex_window():
             raise ValueError("get_variable doens't handle complex windows yet! factor={}".format(f))
 
         return self.build_variable_list(level)[trial_number - 1]
 
-    """
-    Given a specific level (factor + level pair), this method will return the list of variables
-    that correspond to that level in each trial in the encoding.
-    """
     def build_variable_list(self, level_pair: Tuple[Factor, Union[SimpleLevel, DerivedLevel]]) -> List[int]:
+        """Given a specific level (factor + level pair), this method will
+        return the list of variables that correspond to that level in each
+        trial in the encoding.
+        """
         factor = level_pair[0]
         level = level_pair[1]
         if not isinstance(factor, Factor):
-            raise ValueError('First element in level argument to variable list builder must be a FACTOR.')
+            raise ValueError("First element in level argument to variable list builder must be a Factor.")
         if not isinstance(level, (SimpleLevel, DerivedLevel)):
-            raise ValueError('Second element in level argument to variable list builder must be a SIMPLE LEVEL or a DERIVED LEVEL.')
+            raise ValueError("Second element in level argument to variable list builder must be a SimpleLevel "
+                             "or a DERIVED LEVEL.")
         if factor.has_complex_derivation:
             return self.__build_complex_variable_list(level_pair)
         else:
@@ -305,11 +314,11 @@ class Block:
     def calculate_samples_required(self, samples):
         pass
 
-"""
-A fully-crossed block. This block generates as many trials as needed to fully
-cross all levels across all factors in the block's crossing.
-"""
 class FullyCrossBlock(Block):
+    """A fully-crossed block. This block generates as many trials as needed to
+    fully cross all levels across all factors in the block's crossing.
+    """
+
     def __init__(self, design, crossing, constraints, require_complete_crossing=True, cnf_fn=to_cnf_tseitin):
         super().__init__(design, crossing, constraints, require_complete_crossing, cnf_fn)
         if not self.require_complete_crossing:
@@ -335,18 +344,21 @@ class FullyCrossBlock(Block):
                 warnings.append(template.format(c[1].factor_name, c[0].factor_name))
 
         if warnings:
-            self.errors.add("WARNING: There are dependencies between factors in the crossing. This may lead to unsatisfiable designs.\n" + reduce(lambda accum, s: accum + s + "\n", warnings, ""))
+            self.errors.add("WARNING: There are dependencies between factors in the crossing. "
+                            "This may lead to unsatisfiable designs.\n"
+                            + reduce(lambda accum, s: accum + s + "\n", warnings, ""))
 
-    """
-    Given a factor f, and a crossing size, this function will compute the number of trials
-    required to fully cross f with the other factors.
-
-    For example, if f is a transition, it doesn't apply to trial 1. So when the crossing_size
-    is 4, we'd actually need 5 trials to fully cross with f.
-
-    This is a helper for trials_per_sample.
-    """
     def __trials_required_for_crossing(self, f: Factor, crossing_size: int) -> int:
+        """Given a factor ``f``, and a crossing size, this function will
+        compute the number of trials required to fully cross ``f`` with the
+        other factors.
+
+        For example, if ``f`` is a transition, it doesn't apply to trial 1. So
+        when the ``crossing_size`` is ``4``, we'd actually need 5 trials to
+        fully cross with ``f``.
+
+        This is a helper for :class:`.FullyCrossBlock.trials_per_sample`.
+        """
         trial = 0
         counter = 0
         while counter != crossing_size:
@@ -370,12 +382,13 @@ class FullyCrossBlock(Block):
     def grid_variables(self):
         return self.trials_per_sample() * self.variables_per_trial()
 
-    """
-    This method is responsible for determining the number of trials that should be excluded from the full
-    crossing, based on any `Exclude` constraints that the user provides.
-    A single `Exclude` constraint may prevent multiple crossings, depending on the derivation function used.
-    """
     def __count_exclusions(self):
+        """This method is responsible for determining the number of trials that
+        should be excluded from the full crossing, based on any
+        :class:`Exclude` constraints that the user provides. A single
+        :class:`Exclude` constraint may prevent multiple crossings, depending
+        on the derivation function used.
+        """
         from sweetpea.constraints import Exclude
 
         excluded_crossings = set()
@@ -446,10 +459,10 @@ class FullyCrossBlock(Block):
         else:
             return results
 
-    """
-    Given the complete crossing and an exclude constraint returns true if that combination results in the exclude level
-    """
     def __excluded_derived(self, excluded_level, c):
+        """Given the complete crossing and an exclude constraint returns true
+        if that combination results in the exclude level.
+        """
         ret = []
 
         for f in filter(lambda f: f.is_derived(), excluded_level.window.args):
@@ -491,11 +504,12 @@ class FullyCrossBlock(Block):
     def __str__(self):
         return str(self.__dict__)
 
-"""
-A multiple-crossed block. This block generates as many trials as needed to
-cross the levels across factors mentioned as lists in the block's crossing.
-"""
 class MultipleCrossBlock(Block):
+    """A multiple-crossed block. This block generates as many trials as needed
+    tocross the levels across factors mentioned as lists in the block's
+    crossing.
+    """
+
     def __init__(self, design, crossing, constraints, require_complete_crossing=True, cnf_fn=to_cnf_tseitin):
         print(require_complete_crossing)
         super().__init__(design, crossing, constraints, require_complete_crossing, cnf_fn)
@@ -523,18 +537,21 @@ class MultipleCrossBlock(Block):
                     warnings.append(template.format(c[1].factor_name, c[0].factor_name))
 
         if warnings:
-            self.errors.add("WARNING: There are dependencies between factors in the crossing. This may lead to unsatisfiable designs.\n" + reduce(lambda accum, s: accum + s + "\n", warnings, ""))
+            self.errors.add("WARNING: There are dependencies between factors in the crossing. "
+                            "This may lead to unsatisfiable designs.\n"
+                            + reduce(lambda accum, s: accum + s + "\n", warnings, ""))
 
-    """
-    Given a factor f, and a crossing size, this function will compute the number of trials
-    required to fully cross f with the other factors.
-
-    For example, if f is a transition, it doesn't apply to trial 1. So when the crossing_size
-    is 4, we'd actually need 5 trials to fully cross with f.
-
-    This is a helper for trials_per_sample.
-    """
     def __trials_required_for_crossing(self, f: Factor, crossing_size: int) -> int:
+        """Given a factor ``f``, and a crossing size, this function will
+        compute the number of trials required to fully cross ``f`` with the
+        other factors.
+
+        For example, if ``f`` is a transition, it doesn't apply to trial 1. So
+        when the ``crossing_size`` is ``4``, we'd actually need 5 trials to
+        fully cross with ``f``.
+
+        This is a helper for :class:`.MultipleCrossBlock.trials_per_sample`.
+        """
         trial = 0
         counter = 0
         while counter != crossing_size:
@@ -559,12 +576,13 @@ class MultipleCrossBlock(Block):
     def grid_variables(self):
         return self.trials_per_sample() * self.variables_per_trial()
 
-    """
-    This method is responsible for determining the number of trials that should be excluded from the full
-    crossing, based on any `Exclude` constraints that the user provides.
-    A single `Exclude` constraint may prevent multiple crossings, depending on the derivation function used.
-    """
     def __count_exclusions(self, num):
+        """This method is responsible for determining the number of trials that
+        should be excluded from the full crossing, based on any
+        :class:`Exclude` constraints that the user provides. A single
+        :class:`Exclude` constraint may prevent multiple crossings, depending
+        on the derivation function used.
+        """
         from sweetpea.constraints import Exclude
 
         excluded_crossings = set()
@@ -607,10 +625,10 @@ class MultipleCrossBlock(Block):
             self.errors.add(er)
         return len(excluded_crossings)
 
-    """
-    Given the complete crossing and an exclude constraint returns true if that combination results in the exclude level
-    """
     def __excluded_derived(self, excluded_level, c):
+        """Given the complete crossing and an exclude constraint returns true
+        if that combination results in the exclude level.
+        """
         ret = []
 
         for f in filter(lambda f: f.is_derived(), excluded_level.window.args):
@@ -649,7 +667,6 @@ class MultipleCrossBlock(Block):
             return res
         else:
             return results
-
 
     def crossing_size(self):
         if self.size:
