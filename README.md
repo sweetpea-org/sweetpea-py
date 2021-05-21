@@ -3,10 +3,10 @@ SweetPea
 
 | Build Status                                                                                                      |
 |-------------------------------------------------------------------------------------------------------------------|
-| ![typecheck](https://github.com/sweetpea-org/sweetpea-py/actions/workflows/typecheck.yml/badge.svg)               |
-| ![acceptance (fast)](https://github.com/sweetpea-org/sweetpea-py/actions/workflows/acceptance-fast.yml/badge.svg) |
-| ![acceptance (slow)](https://github.com/sweetpea-org/sweetpea-py/actions/workflows/acceptance-slow.yml/badge.svg) |
-| ![package](https://github.com/sweetpea-org/sweetpea-py/actions/workflows/test.yml/badge.svg)                      |
+| ![typecheck](../actions/workflows/typecheck.yml/badge.svg)               |
+| ![acceptance (fast)](../../actions/workflows/acceptance-fast.yml/badge.svg) |
+| ![acceptance (slow)](../workflows/acceptance-slow.yml/badge.svg) |
+| ![package](../../workflows/test.yml/badge.svg)                      |
 
 SweetPea is a language for declaratively specifying randomized experimental designs and synthesizing trial sequences generated from the design specification.
 An experimental design is a description of experimental factors, relationships between factors, sequential constraints, and how to map those factors onto a sequence of trials. Such a design is constructed by calling SweetPea functions such as `fully_cross_block`, `factor`, `derived_level`, and `at_most_k_in_a_row`.
