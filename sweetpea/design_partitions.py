@@ -1,11 +1,16 @@
+"""This module provides functionality for partitioning designs into subsets of
+factors.
+"""
+
+
 from sweetpea.blocks import Block
 
-"""
-Encapsulates the logic for partitioning a design into specific subsets of factors.
-For example, factors which are in the design, but not in the crossing, or not constrained
-by any derived levels, etc.
-"""
+
 class DesignPartitions():
+    """Encapsulates the logic for partitioning a design into specific subsets
+    of factors. For example, factors which are in the design, but not in the
+    crossing, or not constrained by any derived levels, etc.
+    """
 
     def __init__(self, block: Block) -> None:
         self._block = block
