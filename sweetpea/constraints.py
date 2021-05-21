@@ -450,15 +450,6 @@ class AtMostKInARow(_KInARow):
         return str(self.__dict__)
 
 
-def no_more_than_k_in_a_row(k, levels):
-    """Equivalent to AtMostKInARow."""
-    return NoMoreThanKInARow(k, levels)
-
-
-class NoMoreThanKInARow(Constraint):
-    def __new__(self, k, levels):
-        return AtMostKInARow(k, levels)
-
 """
 Requires that if the given level exists at all, it must exist in a trial exactly K times.
 """
