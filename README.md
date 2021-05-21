@@ -63,13 +63,14 @@ SweetPea's dependencies, and install SweetPea itself:
     $ pip install -r requirements.txt
     $ pip install .
 
+---
 
-#### :exclamation: Important!
-
-The `pip install .` command installs SweetPea locally, but it will not
-automatically check for updates. If you intend to manually update your local
-copy of SweetPea, you should instead do `pip install -e .` to tell `pip` to use
-the source dynamically.
+> #### :exclamation: Important!
+>
+> The `pip install .` command installs SweetPea locally, but it will not
+> automatically check for updates. If you intend to manually update your local
+> copy of SweetPea, you should instead do `pip install -e .` to tell `pip` to
+> use the source dynamically.
 
 ---
 
