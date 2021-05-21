@@ -64,7 +64,9 @@ SweetPea's dependencies, and install SweetPea itself:
     $ pip install .
 
 
-> ### :exclamation: Important!
+> #### :exclamation: Important!
+>
+> ---
 >
 > The `pip install .` command installs SweetPea locally, but it will not
 > automatically check for updates. If you intend to manually update your local
