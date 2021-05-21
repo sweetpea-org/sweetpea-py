@@ -1,3 +1,6 @@
+"""This module provides functionality for generating encoding diagrams."""
+
+
 from itertools import repeat
 from functools import reduce
 
@@ -6,20 +9,20 @@ from sweetpea.internal import get_all_external_level_names
 from sweetpea.blocks import Block
 
 
-"""
-Helper method to print a chart outlining the variable mappings, helpful for visualizing
-the formula space. For example, for the simple stroop test:
-----------------------------------------------
-|   Trial |  color   |   text   | congruent? |
-|       # | red blue | red blue |  con  inc  |
-----------------------------------------------
-|       1 |  1   2   |  3   4   |   5    6   |
-|       2 |  7   8   |  9   10  |  11    12  |
-|       3 | 13   14  | 15   16  |  17    18  |
-|       4 | 19   20  | 21   22  |  23    24  |
-----------------------------------------------
-"""
 def print_encoding_diagram(blk: Block) -> None:
+    """Helper method to print a chart outlining the variable mappings, helpful
+    for visualizing the formula space. For example, for the simple stroop test:
+
+    --------------------------------------------
+    | Trial |  color   |   text   | congruent? |
+    |     # | red blue | red blue |  con  inc  |
+    --------------------------------------------
+    |     1 |  1   2   |  3   4   |   5    6   |
+    |     2 |  7   8   |  9   10  |  11    12  |
+    |     3 | 13   14  | 15   16  |  17    18  |
+    |     4 | 19   20  | 21   22  |  23    24  |
+    --------------------------------------------
+    """
     print(__generate_encoding_diagram(blk))
 
 
@@ -39,7 +42,7 @@ def __generate_encoding_diagram(blk: Block) -> str:
         level_names = list(map(get_external_level_name, f.levels))
         level_name_widths = [max(largest_number_len, l) for l in list(map(len, level_names))]
 
-        level_names_width = sum(level_name_widths) + len(level_names) - 1 # Extra length for spaces in between names.
+        level_names_width = sum(level_name_widths) + len(level_names) - 1  # Extra length for spaces in between names.
         factor_header_width = max(len(f.factor_name), level_names_width)
         header_widths.append(factor_header_width)
 
@@ -102,7 +105,3 @@ def __generate_encoding_diagram(blk: Block) -> str:
     # Footer
     diagram_str += ('-' * row_width) + '\n'
     return diagram_str
-
-
-def __number_of_columns(block: Block):
-    return sum([len(factor.levels) for factor in block.design])
