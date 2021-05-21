@@ -450,15 +450,19 @@ class AtMostKInARow(_KInARow):
         return str(self.__dict__)
 
 
-"""
-Requires that if the given level exists at all, it must exist in a trial exactly K times.
-"""
-
 def exactly_k(k ,levels):
-    return ExactlyK(k ,levels)
+    """Requires that if the given level exists at all, it must exist in a trial
+    exactly ``k`` times.
+    """
+    return ExactlyK(k, levels)
+
 
 class ExactlyK(_KInARow):
-    def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], backend_request: BackendRequest) -> None:
+    def apply_to_backend_request(self,
+                                 block: Block,
+                                 level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]],
+                                 backend_request: BackendRequest
+                                 ) -> None:
         sublists = block.build_variable_list(level)
         backend_request.ll_requests.append(LowLevelRequest("EQ", self.k, sublists))
 
@@ -471,12 +475,13 @@ class ExactlyK(_KInARow):
     def __str__(self):
         return str(self.__dict__)
 
-"""
-Requires that if the given level exists at all, it must exist in a sequence of exactly K.
-"""
 
 def exactly_k_in_a_row(k, levels):
+    """Requires that if the given level exists at all, it must exist in a
+    sequence of exactly K.
+    """
     return ExactlyKInARow(k, levels)
+
 
 class ExactlyKInARow(_KInARow):
     def apply_to_backend_request(self,
