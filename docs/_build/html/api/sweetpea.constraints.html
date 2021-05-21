@@ -184,6 +184,7 @@
             
   <div class="section" id="module-sweetpea.constraints">
 <span id="sweetpea-constraints-module"></span><h1>sweetpea.constraints module<a class="headerlink" href="#module-sweetpea.constraints" title="Permalink to this headline">¶</a></h1>
+<p>This module provides constraints for CNF generation.</p>
 <dl class="py function">
 <dt id="sweetpea.constraints.validate_factor_and_level">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">validate_factor_and_level</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.validate_factor_and_level" title="Permalink to this definition">¶</a></dt>
@@ -205,10 +206,38 @@
 <dt id="sweetpea.constraints.Consistency">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">Consistency</span></code><a class="headerlink" href="#sweetpea.constraints.Consistency" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="sweetpea.base_constraint.html#sweetpea.base_constraint.Constraint" title="sweetpea.base_constraint.Constraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.base_constraint.Constraint</span></code></a></p>
+<p>This constraint ensures that only one level of each factor is ‘on’ at a
+time. So for instance in the experiment:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">color</span> <span class="o">=</span> <span class="n">Factor</span><span class="p">(</span><span class="s2">&quot;color&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="s2">&quot;blue&quot;</span><span class="p">])</span>
+<span class="n">text</span>  <span class="o">=</span> <span class="n">Factor</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">,</span>  <span class="p">[</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="s2">&quot;blue&quot;</span><span class="p">])</span>
+<span class="n">design</span> <span class="o">=</span> <span class="n">crossing</span> <span class="o">=</span> <span class="p">[</span><span class="n">color</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">conFactor</span><span class="p">]</span>
+<span class="n">experiment</span>   <span class="o">=</span> <span class="n">fully_cross_block</span><span class="p">(</span><span class="n">design</span><span class="p">,</span> <span class="n">crossing</span><span class="p">,</span> <span class="p">[])</span>
+</pre></div>
+</div>
+<p>The first trial is represented by the boolean vars <code class="docutils literal notranslate"><span class="pre">[1,</span> <span class="pre">2,</span> <span class="pre">3,</span> <span class="pre">4]</span></code>:</p>
+<ul class="simple">
+<li><p>1 is true iff the trial is color:red</p></li>
+<li><p>2 is true iff the trial is color:blue</p></li>
+<li><p>3 is true iff the trial is text:red</p></li>
+<li><p>4 is true iff the trial is text:blue</p></li>
+</ul>
+<p>The second trial is represented by the boolean vars <code class="docutils literal notranslate"><span class="pre">[5-8]</span></code>, the third by
+<code class="docutils literal notranslate"><span class="pre">[9-12]</span></code>, the fourth by <code class="docutils literal notranslate"><span class="pre">[13-16]</span></code>. So this desugaring applies the
+following constraints:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="n">EQ</span> <span class="mi">1</span>
+<span class="nb">sum</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span> <span class="n">EQ</span> <span class="mi">1</span>
+<span class="nb">sum</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span> <span class="n">EQ</span> <span class="mi">1</span>
+<span class="o">...</span>
+<span class="nb">sum</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span> <span class="n">EQ</span> <span class="mi">1</span>
+</pre></div>
+</div>
 <dl class="py method">
 <dt id="sweetpea.constraints.Consistency.validate">
 <code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.Consistency.validate" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Constraints can’t be completely validated in isolation. This
+function will be called on all constraints with the block during the
+block initialization to ensure all constraints are valid.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>block</strong> (<a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><em>sweetpea.blocks.Block</em></a>) – </p>
 </dd>
@@ -240,10 +269,50 @@
 <dt id="sweetpea.constraints.FullyCross">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">FullyCross</span></code><a class="headerlink" href="#sweetpea.constraints.FullyCross" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="sweetpea.base_constraint.html#sweetpea.base_constraint.Constraint" title="sweetpea.base_constraint.Constraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.base_constraint.Constraint</span></code></a></p>
+<p>We represent the fully crossed constraint by allocating additional
+boolean variables to represent each unique state. Only factors in crossing
+will contribute to the number of states (there may be factors in the design
+that aren’t in the crossing).</p>
+<p>Continuing with the example from <a class="reference internal" href="#sweetpea.constraints.Consistency" title="sweetpea.constraints.Consistency"><code class="xref py py-class docutils literal notranslate"><span class="pre">Consistency</span></code></a>, we will represent
+the states:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">color</span><span class="p">:</span><span class="n">red</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span><span class="n">red</span><span class="p">)</span>
+<span class="p">(</span><span class="n">color</span><span class="p">:</span><span class="n">red</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span><span class="n">blue</span><span class="p">)</span>
+<span class="p">(</span><span class="n">color</span><span class="p">:</span><span class="n">blue</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span><span class="n">red</span><span class="p">)</span>
+<span class="p">(</span><span class="n">color</span><span class="p">:</span><span class="n">blue</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span><span class="n">blue</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The steps taken are:</p>
+<ol class="arabic">
+<li><p>Generate intermediate vars</p>
+<blockquote>
+<div><p>Using the fresh var counter, allocate <code class="docutils literal notranslate"><span class="pre">numTrials</span> <span class="pre">*</span> <span class="pre">num_states</span></code> new
+vars</p>
+</div></blockquote>
+</li>
+<li><p>Entangle them with block vars</p>
+<blockquote>
+<div><p>Add to the CNF queue: <code class="docutils literal notranslate"><span class="pre">toCNF(Iff(newVar,</span> <span class="pre">And(levels)))</span></code>, e.g., if the
+variable <code class="docutils literal notranslate"><span class="pre">1</span></code> indicates <code class="docutils literal notranslate"><span class="pre">color:red</span></code>, the var <code class="docutils literal notranslate"><span class="pre">3</span></code> indicates
+<code class="docutils literal notranslate"><span class="pre">text:red</span></code>, and the var <code class="docutils literal notranslate"><span class="pre">25</span></code> represents <code class="docutils literal notranslate"><span class="pre">(color:red,</span> <span class="pre">text:red)</span></code>,
+do <code class="docutils literal notranslate"><span class="pre">toCNF(Iff(25,</span> <span class="pre">And([1,</span> <span class="pre">3])))</span></code></p>
+</div></blockquote>
+</li>
+<li><p>1 hot the <em>states</em> e.g., 1 red circle, etc</p>
+<blockquote>
+<div><p>Same as <a class="reference internal" href="#sweetpea.constraints.Consistency" title="sweetpea.constraints.Consistency"><code class="xref py py-class docutils literal notranslate"><span class="pre">Consistency</span></code></a> above, collect all the state vars that
+represent each state &amp; enforce that only one of those states is true,
+e.g., <code class="docutils literal notranslate"><span class="pre">sum(25,</span> <span class="pre">29,</span> <span class="pre">33,</span> <span class="pre">37)</span> <span class="pre">EQ</span> <span class="pre">1</span></code> (and 3 more of these for each of the
+other states).</p>
+</div></blockquote>
+</li>
+</ol>
 <dl class="py method">
 <dt id="sweetpea.constraints.FullyCross.validate">
 <code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.FullyCross.validate" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Constraints can’t be completely validated in isolation. This
+function will be called on all constraints with the block during the
+block initialization to ensure all constraints are valid.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>block</strong> (<a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><em>sweetpea.blocks.Block</em></a>) – </p>
 </dd>
@@ -278,7 +347,10 @@
 <dl class="py method">
 <dt id="sweetpea.constraints.MultipleCross.validate">
 <code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.MultipleCross.validate" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Constraints can’t be completely validated in isolation. This
+function will be called on all constraints with the block during the
+block initialization to ensure all constraints are valid.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>block</strong> (<a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><em>sweetpea.blocks.Block</em></a>) – </p>
 </dd>
@@ -310,6 +382,50 @@
 <dt id="sweetpea.constraints.Derivation">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">Derivation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">derived_idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dependent_idxs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.Derivation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="sweetpea.base_constraint.html#sweetpea.base_constraint.Constraint" title="sweetpea.base_constraint.Constraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.base_constraint.Constraint</span></code></a></p>
+<p>A derivation such as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Derivation</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]])</span>
+</pre></div>
+</div>
+<p>where the index of the derived level is <code class="docutils literal notranslate"><span class="pre">4</span></code>, and <code class="docutils literal notranslate"><span class="pre">[[0,</span> <span class="pre">2],</span> <span class="pre">[1,</span> <span class="pre">3]]</span></code> is
+the list of dependent indices, represents the logical formula:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">4</span> <span class="n">iff</span> <span class="p">(</span><span class="mi">0</span> <span class="ow">and</span> <span class="mi">2</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="mi">1</span> <span class="ow">and</span> <span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>These indicies are used the get the corresponding trial variables.
+Continuing from the example in of processDerivations, the first trial is
+represented by variables <code class="docutils literal notranslate"><span class="pre">[1-6]</span></code> (notice this feels like an off-by-one:
+the indicies start from <code class="docutils literal notranslate"><span class="pre">0</span></code>, but the boolean variables start from <code class="docutils literal notranslate"><span class="pre">1</span></code>).
+So we would use the indices to map onto the vars as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">5</span> <span class="n">iff</span> <span class="p">(</span><span class="mi">1</span> <span class="ow">and</span> <span class="mi">3</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="mi">2</span> <span class="ow">and</span> <span class="mi">4</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Then we convert to CNF directly, i.e.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">toCNF</span><span class="p">(</span><span class="n">Iff</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">Or</span><span class="p">(</span><span class="n">And</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span> <span class="n">And</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">4</span><span class="p">))))</span>
+</pre></div>
+</div>
+<p>This is then done for all window-sizes, taking into account strides (which
+are specified only in <a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">DerivedLevels</span></code></a> specified with
+a general <code class="xref py py-class docutils literal notranslate"><span class="pre">Window</span></code> rather than <code class="xref py py-class docutils literal notranslate"><span class="pre">Transition</span></code> or
+<code class="xref py py-class docutils literal notranslate"><span class="pre">WithinTrial</span></code>). We grab window-sized chunks of the variables that
+represent the trials, map the variables using the indices, and then convert
+to CNF. These chunks look like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">window1</span><span class="p">:</span> <span class="mi">1</span>  <span class="mi">2</span>  <span class="mi">3</span>  <span class="mi">4</span>  <span class="mi">5</span>  <span class="mi">6</span>
+<span class="n">window2</span><span class="p">:</span> <span class="mi">7</span>  <span class="mi">8</span>  <span class="mi">9</span>  <span class="mi">10</span> <span class="mi">11</span> <span class="mi">12</span>
+</pre></div>
+</div>
+<p>So, for the second trial (since the window size in this example is <code class="docutils literal notranslate"><span class="pre">1</span></code>)
+it would be:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">11</span> <span class="n">iff</span> <span class="p">(</span><span class="mi">7</span> <span class="ow">and</span> <span class="mi">9</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="mi">8</span> <span class="ow">and</span> <span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>90% sure this is the correct way to generalize to derivations involving 2+
+levels &amp; various windowsizes. One test is the experiment:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">color</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;g&quot;</span><span class="p">];</span>
+<span class="n">text</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">];</span>
+<span class="n">conFactor</span><span class="p">;</span>
+<span class="n">fullycross</span><span class="p">(</span><span class="n">color</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span> <span class="o">+</span> <span class="n">AtMostKInARow</span> <span class="mi">1</span> <span class="n">conLevel</span>
+</pre></div>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -325,7 +441,10 @@
 <dl class="py method">
 <dt id="sweetpea.constraints.Derivation.validate">
 <code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.Derivation.validate" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Constraints can’t be completely validated in isolation. This
+function will be called on all constraints with the block during the
+block initialization to ensure all constraints are valid.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>block</strong> (<a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><em>sweetpea.blocks.Block</em></a>) – </p>
 </dd>
@@ -366,7 +485,27 @@
 <dl class="py function">
 <dt id="sweetpea.constraints.at_most_k_in_a_row">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">at_most_k_in_a_row</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.at_most_k_in_a_row" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>This desugars pretty directly into the llrequests. The only thing to do
+here is to collect all the boolean vars that match the same level &amp; pair them up according to k.</p>
+<p>Continuing with the example from <a class="reference internal" href="#sweetpea.constraints.Consistency" title="sweetpea.constraints.Consistency"><code class="xref py py-class docutils literal notranslate"><span class="pre">Consistency</span></code></a>, say we want
+<code class="docutils literal notranslate"><span class="pre">AtMostKInARow</span> <span class="pre">1</span> <span class="pre">(&quot;color&quot;,</span> <span class="pre">&quot;red&quot;)</span></code>, then we need to grab all the vars
+which indicate color-red:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">19</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>and then wrap them up so that we’re making requests like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span>  <span class="n">LT</span> <span class="mi">2</span>
+<span class="nb">sum</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">13</span><span class="p">)</span>  <span class="n">LT</span> <span class="mi">2</span>
+<span class="nb">sum</span><span class="p">(</span><span class="mi">13</span><span class="p">,</span> <span class="mi">19</span><span class="p">)</span> <span class="n">LT</span> <span class="mi">2</span>
+</pre></div>
+</div>
+<p>If it had been <code class="docutils literal notranslate"><span class="pre">AtMostKInARow</span> <span class="pre">2</span> <span class="pre">(&quot;color&quot;,</span> <span class="pre">&quot;red&quot;)</span></code>, the reqs would have
+been:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">13</span><span class="p">)</span>  <span class="n">LT</span> <span class="mi">3</span>
+<span class="nb">sum</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">19</span><span class="p">)</span> <span class="n">LT</span> <span class="mi">3</span>
+</pre></div>
+</div>
+</dd></dl>
 
 <dl class="py class">
 <dt id="sweetpea.constraints.AtMostKInARow">
@@ -399,7 +538,8 @@
 <dl class="py function">
 <dt id="sweetpea.constraints.no_more_than_k_in_a_row">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">no_more_than_k_in_a_row</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.no_more_than_k_in_a_row" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Equivalent to AtMostKInARow.</p>
+</dd></dl>
 
 <dl class="py class">
 <dt id="sweetpea.constraints.NoMoreThanKInARow">
@@ -485,7 +625,10 @@
 <dl class="py method">
 <dt id="sweetpea.constraints.Exclude.validate">
 <code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.Exclude.validate" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Constraints can’t be completely validated in isolation. This
+function will be called on all constraints with the block during the
+block initialization to ensure all constraints are valid.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>block</strong> (<a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><em>sweetpea.blocks.Block</em></a>) – </p>
 </dd>
@@ -498,7 +641,9 @@
 <dl class="py method">
 <dt id="sweetpea.constraints.Exclude.extract_simplelevel">
 <code class="sig-name descname"><span class="pre">extract_simplelevel</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.Exclude.extract_simplelevel" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Recursively deciphers the excluded level to a list of combinations
+basic levels.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>block</strong> (<a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><em>sweetpea.blocks.Block</em></a>) – </p></li>
@@ -541,7 +686,10 @@
 <dl class="py method">
 <dt id="sweetpea.constraints.MinimumTrials.validate">
 <code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.MinimumTrials.validate" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Constraints can’t be completely validated in isolation. This
+function will be called on all constraints with the block during the
+block initialization to ensure all constraints are valid.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>block</strong> (<a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><em>sweetpea.blocks.Block</em></a>) – </p>
 </dd>

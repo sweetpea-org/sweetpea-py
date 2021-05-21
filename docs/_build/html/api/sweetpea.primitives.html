@@ -205,13 +205,18 @@ the subclasses:</p>
 <dl class="py attribute">
 <dt id="sweetpea.primitives.Level.name">
 <code class="sig-name descname"><span class="pre">name</span></code><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a></em><a class="headerlink" href="#sweetpea.primitives.Level.name" title="Permalink to this definition">¶</a></dt>
-<dd><p>The externally visible name of the level.</p>
+<dd><p>The name of the level.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt id="sweetpea.primitives.Level.internal_name">
 <code class="sig-name descname"><span class="pre">internal_name</span></code><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a></em><a class="headerlink" href="#sweetpea.primitives.Level.internal_name" title="Permalink to this definition">¶</a></dt>
 <dd><p>The internal name, which is meant to be unique among levels.</p>
+<div class="admonition-deprecated admonition">
+<p class="admonition-title">DEPRECATED</p>
+<p>This attribute will be removed. It should not be used outside of
+this module.</p>
+</div>
 </dd></dl>
 
 <dl class="py attribute">
@@ -229,7 +234,12 @@ the subclasses:</p>
 <dl class="py method">
 <dt id="sweetpea.primitives.Level.external_name">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">external_name</span></code><a class="headerlink" href="#sweetpea.primitives.Level.external_name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>An alias for <a class="reference internal" href="#sweetpea.primitives.Level.name" title="sweetpea.primitives.Level.name"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Level.name</span></code></a>.</p>
+<div class="admonition-deprecated admonition">
+<p class="admonition-title">DEPRECATED</p>
+<p>This property will be removed in favor of <a class="reference internal" href="#sweetpea.primitives.Level.name" title="sweetpea.primitives.Level.name"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Level.name</span></code></a>.</p>
+</div>
+</dd></dl>
 
 </dd></dl>
 
@@ -331,7 +341,13 @@ via the <a class="reference internal" href="#sweetpea.primitives.Level.factor" t
 <dl class="py method">
 <dt id="sweetpea.primitives.DerivedLevel.window">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">window</span></code><a class="headerlink" href="#sweetpea.primitives.DerivedLevel.window" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>An alias for <a class="reference internal" href="#sweetpea.primitives.DerivedLevel.derivation" title="sweetpea.primitives.DerivedLevel.derivation"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DerivedLevel.derivation</span></code></a>.</p>
+<div class="admonition-deprecated admonition">
+<p class="admonition-title">DEPRECATED</p>
+<p>This property will be removed in favor of
+<a class="reference internal" href="#sweetpea.primitives.DerivedLevel.derivation" title="sweetpea.primitives.DerivedLevel.derivation"><code class="xref py py-attr docutils literal notranslate"><span class="pre">DerivedLevel.derivation</span></code></a>.</p>
+</div>
+</dd></dl>
 
 </dd></dl>
 
@@ -365,13 +381,18 @@ constructing the new level.</p>
 <dl class="py attribute">
 <dt id="sweetpea.primitives.ElseLevel.name">
 <code class="sig-name descname"><span class="pre">name</span></code><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a></em><a class="headerlink" href="#sweetpea.primitives.ElseLevel.name" title="Permalink to this definition">¶</a></dt>
-<dd><p>The externally visible name of the level.</p>
+<dd><p>The name of the level.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt id="sweetpea.primitives.ElseLevel.internal_name">
 <code class="sig-name descname"><span class="pre">internal_name</span></code><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a></em><a class="headerlink" href="#sweetpea.primitives.ElseLevel.internal_name" title="Permalink to this definition">¶</a></dt>
 <dd><p>The internal name, which is meant to be unique among levels.</p>
+<div class="admonition-deprecated admonition">
+<p class="admonition-title">DEPRECATED</p>
+<p>This attribute will be removed. It should not be used outside of
+this module.</p>
+</div>
 </dd></dl>
 
 <dl class="py attribute">
@@ -395,8 +416,29 @@ of <a class="reference internal" href="#sweetpea.primitives.Level" title="sweetp
 <p>However, both classes can be implicitly constructed by the base
 <a class="reference internal" href="#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Factor</span></code></a> constructor, so we recommend you always use that for
 creating factors.</p>
-<p>See <a class="reference internal" href="../guide/factorial_design.html#guide-factorial-design"><span class="std std-ref">the Factorial Experiment Design section of the SweetPea guide</span></a> for more about factors, levels, and how to use
-them.</p>
+<p>During <a class="reference internal" href="#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Factor</span></code></a> construction, the first <a class="reference internal" href="#sweetpea.primitives.Level" title="sweetpea.primitives.Level"><code class="xref py py-class docutils literal notranslate"><span class="pre">Level</span></code></a> in the
+<a class="reference internal" href="#sweetpea.primitives.Factor.initial_levels" title="sweetpea.primitives.Factor.initial_levels"><code class="xref py py-attr docutils literal notranslate"><span class="pre">initial_levels</span></code></a> is dynamically type-checked. If it’s a
+<a class="reference internal" href="#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">DerivedLevel</span></code></a> or <a class="reference internal" href="#sweetpea.primitives.ElseLevel" title="sweetpea.primitives.ElseLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">ElseLevel</span></code></a>, a <cite>.DerivedFactor</cite> will be
+initialized. Otherwise, a <cite>.SimpleFactor</cite> will be initialized.</p>
+<p>In all cases, the <a class="reference internal" href="#sweetpea.primitives.Factor.initial_levels" title="sweetpea.primitives.Factor.initial_levels"><code class="xref py py-attr docutils literal notranslate"><span class="pre">initial_levels</span></code></a> will be processed. This
+step ensures that all of a factor’s <a class="reference internal" href="#sweetpea.primitives.Factor.levels" title="sweetpea.primitives.Factor.levels"><code class="xref py py-attr docutils literal notranslate"><span class="pre">levels</span></code></a> will always be
+<a class="reference internal" href="#sweetpea.primitives.Level" title="sweetpea.primitives.Level"><code class="xref py py-class docutils literal notranslate"><span class="pre">Levels</span></code></a>. The levels are processed according to these
+rules:</p>
+<ol class="arabic simple">
+<li><p>A <a class="reference internal" href="#sweetpea.primitives.Level" title="sweetpea.primitives.Level"><code class="xref py py-class docutils literal notranslate"><span class="pre">Level</span></code></a> instance is left alone.</p></li>
+<li><p>A <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> instance is converted into a <a class="reference internal" href="#sweetpea.primitives.SimpleLevel" title="sweetpea.primitives.SimpleLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleLevel</span></code></a>.</p></li>
+<li><p>A <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#tuple" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a> or <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#list" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> consisting of exactly one <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>
+followed by one <a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> will be converted into a
+<a class="reference internal" href="#sweetpea.primitives.SimpleLevel" title="sweetpea.primitives.SimpleLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleLevel</span></code></a> with the <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a> as its name and the
+<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> as its weight.</p></li>
+<li><p>Anything else is converted into a <a class="reference internal" href="#sweetpea.primitives.SimpleLevel" title="sweetpea.primitives.SimpleLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleLevel</span></code></a> by using its
+string representation as a level name.</p></li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <a class="reference internal" href="#sweetpea.primitives.DerivedFactor" title="sweetpea.primitives.DerivedFactor"><code class="xref py py-class docutils literal notranslate"><span class="pre">DerivedFactor</span></code></a> subclass does additional processing after
+these steps.</p>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -412,20 +454,28 @@ instances by using their string representation, as determined by
 <dd class="field-even"><p><a class="reference internal" href="#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor">Factor</a></p>
 </dd>
 </dl>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>See <a class="reference internal" href="../guide/factorial_design.html#guide-factorial-design"><span class="std std-ref">the Factorial Experiment Design section of the SweetPea guide</span></a> for more about factors, levels, and how to
+use them.</p>
+</div>
 <dl class="py attribute">
 <dt id="sweetpea.primitives.Factor.name">
 <code class="sig-name descname"><span class="pre">name</span></code><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a></em><a class="headerlink" href="#sweetpea.primitives.Factor.name" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The name of this factor.</p>
+</dd></dl>
 
 <dl class="py attribute">
 <dt id="sweetpea.primitives.Factor.initial_levels">
 <code class="sig-name descname"><span class="pre">initial_levels</span></code><em class="property"><span class="pre">:</span> <span class="pre">dataclasses.InitVar</span></em><a class="headerlink" href="#sweetpea.primitives.Factor.initial_levels" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The levels used during factor initialization.</p>
+</dd></dl>
 
 <dl class="py attribute">
 <dt id="sweetpea.primitives.Factor.levels">
 <code class="sig-name descname"><span class="pre">levels</span></code><em class="property"><span class="pre">:</span> <span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.primitives.Level" title="sweetpea.primitives.Level"><span class="pre">sweetpea.primitives.Level</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sweetpea.primitives.Factor.levels" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The discrete values that this factor can have.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.primitives.Factor.get_level">
@@ -560,7 +610,9 @@ property.</p>
 <dt id="sweetpea.primitives.SimpleFactor">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.primitives.</span></code><code class="sig-name descname"><span class="pre">SimpleFactor</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_levels</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">_</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">__</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.primitives.SimpleFactor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.primitives.Factor</span></code></a></p>
-<p>A <a class="reference internal" href="#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Factor</span></code></a> comprised of <a class="reference internal" href="#sweetpea.primitives.SimpleLevel" title="sweetpea.primitives.SimpleLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleLevels</span></code></a>.</p>
+<p>A <a class="reference internal" href="#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Factor</span></code></a> comprised of <a class="reference internal" href="#sweetpea.primitives.SimpleLevel" title="sweetpea.primitives.SimpleLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleLevels</span></code></a>. If
+a subclass of <a class="reference internal" href="#sweetpea.primitives.Level" title="sweetpea.primitives.Level"><code class="xref py py-class docutils literal notranslate"><span class="pre">Level</span></code></a> is passed in that is not a
+<a class="reference internal" href="#sweetpea.primitives.SimpleLevel" title="sweetpea.primitives.SimpleLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleLevel</span></code></a>, an error is raised during initialization.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -575,7 +627,8 @@ property.</p>
 <dl class="py attribute">
 <dt id="sweetpea.primitives.SimpleFactor.levels">
 <code class="sig-name descname"><span class="pre">levels</span></code><em class="property"><span class="pre">:</span> <span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.primitives.SimpleLevel" title="sweetpea.primitives.SimpleLevel"><span class="pre">sweetpea.primitives.SimpleLevel</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sweetpea.primitives.SimpleFactor.levels" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The discrete values that this factor can have.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.primitives.SimpleFactor.get_level">
@@ -605,6 +658,11 @@ if it exists within this factor. Otherwise, returns <code class="docutils litera
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.primitives.</span></code><code class="sig-name descname"><span class="pre">DerivedFactor</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_levels</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">_</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">__</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.primitives.DerivedFactor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.primitives.Factor</span></code></a></p>
 <p>A <a class="reference internal" href="#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Factor</span></code></a> composed of <a class="reference internal" href="#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">DerivedLevels</span></code></a>.</p>
+<p>After doing the level processing described by <a class="reference internal" href="#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Factor</span></code></a>, an
+additional step is taken: all <a class="reference internal" href="#sweetpea.primitives.ElseLevel" title="sweetpea.primitives.ElseLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">ElseLevels</span></code></a> are
+converted into <a class="reference internal" href="#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">DerivedLevels</span></code></a>. This is done by
+calling <code class="xref py py-func docutils literal notranslate"><span class="pre">ElseLevel.derive_level_from_levels()</span></code>, supplying all the
+natural <a class="reference internal" href="#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">DerivedLevels</span></code></a> that were passed in.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -630,7 +688,8 @@ either <a class="reference internal" href="#sweetpea.primitives.DerivedLevel" ti
 <dl class="py attribute">
 <dt id="sweetpea.primitives.DerivedFactor.levels">
 <code class="sig-name descname"><span class="pre">levels</span></code><em class="property"><span class="pre">:</span> <span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><span class="pre">sweetpea.primitives.DerivedLevel</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sweetpea.primitives.DerivedFactor.levels" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The discrete values that this factor can have.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.primitives.DerivedFactor.get_level">
@@ -758,12 +817,34 @@ derivation is one for which at least one of the following is true:</p>
 <dl class="py method">
 <dt id="sweetpea.primitives.Derivation.args">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">args</span></code><a class="headerlink" href="#sweetpea.primitives.Derivation.args" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>An alias for <a class="reference internal" href="#sweetpea.primitives.Derivation.factors" title="sweetpea.primitives.Derivation.factors"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Derivation.factors</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.7/library/typing.html#typing.List" title="(in Python v3.7)">typing.List</a>[<a class="reference internal" href="#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor">Factor</a>]</p>
+</dd>
+</dl>
+<div class="admonition-deprecated admonition">
+<p class="admonition-title">DEPRECATED</p>
+<p>This property will be removed in favor of
+<a class="reference internal" href="#sweetpea.primitives.Derivation.factors" title="sweetpea.primitives.Derivation.factors"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Derivation.factors</span></code></a>.</p>
+</div>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.primitives.Derivation.fn">
 <em class="property"><span class="pre">property</span> </em><code class="sig-name descname"><span class="pre">fn</span></code><a class="headerlink" href="#sweetpea.primitives.Derivation.fn" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>An alias for <a class="reference internal" href="#sweetpea.primitives.Derivation.predicate" title="sweetpea.primitives.Derivation.predicate"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Derivation.predicate</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Callable</p>
+</dd>
+</dl>
+<div class="admonition-deprecated admonition">
+<p class="admonition-title">DEPRECATED</p>
+<p>This property will be removed in favor of
+<a class="reference internal" href="#sweetpea.primitives.Derivation.predicate" title="sweetpea.primitives.Derivation.predicate"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Derivation.predicate</span></code></a>.</p>
+</div>
+</dd></dl>
 
 </dd></dl>
 
@@ -900,6 +981,11 @@ expansion caused by a <a class="reference internal" href="#sweetpea.primitives.D
 <dt id="sweetpea.primitives.get_internal_level_name">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.primitives.</span></code><code class="sig-name descname"><span class="pre">get_internal_level_name</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.primitives.get_internal_level_name" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns <a class="reference internal" href="#sweetpea.primitives.Level.internal_name" title="sweetpea.primitives.Level.internal_name"><code class="xref py py-attr docutils literal notranslate"><span class="pre">Level.internal_name</span></code></a>.</p>
+<div class="admonition-deprecated admonition">
+<p class="admonition-title">DEPRECATED</p>
+<p>This function will be removed. It should not be used outside of this
+module.</p>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>level</strong> (<a class="reference internal" href="#sweetpea.primitives.Level" title="sweetpea.primitives.Level"><em>sweetpea.primitives.Level</em></a>) – </p>
@@ -913,19 +999,34 @@ expansion caused by a <a class="reference internal" href="#sweetpea.primitives.D
 <dl class="py attribute">
 <dt id="sweetpea.primitives.WithinTrial">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.primitives.</span></code><code class="sig-name descname"><span class="pre">WithinTrial</span></code><a class="headerlink" href="#sweetpea.primitives.WithinTrial" title="Permalink to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#sweetpea.primitives.WithinTrialDerivation" title="sweetpea.primitives.WithinTrialDerivation"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.primitives.WithinTrialDerivation</span></code></a></p>
+<dd><p>An alias for <a class="reference internal" href="#sweetpea.primitives.WithinTrialDerivation" title="sweetpea.primitives.WithinTrialDerivation"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithinTrialDerivation</span></code></a>.</p>
+<div class="admonition-deprecated admonition">
+<p class="admonition-title">DEPRECATED</p>
+<p>This class will be removed in favor of <a class="reference internal" href="#sweetpea.primitives.WithinTrialDerivation" title="sweetpea.primitives.WithinTrialDerivation"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithinTrialDerivation</span></code></a>.</p>
+</div>
+<p>alias of <a class="reference internal" href="#sweetpea.primitives.WithinTrialDerivation" title="sweetpea.primitives.WithinTrialDerivation"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.primitives.WithinTrialDerivation</span></code></a></p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt id="sweetpea.primitives.Transition">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.primitives.</span></code><code class="sig-name descname"><span class="pre">Transition</span></code><a class="headerlink" href="#sweetpea.primitives.Transition" title="Permalink to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#sweetpea.primitives.TransitionDerivation" title="sweetpea.primitives.TransitionDerivation"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.primitives.TransitionDerivation</span></code></a></p>
+<dd><p>An alias for <a class="reference internal" href="#sweetpea.primitives.TransitionDerivation" title="sweetpea.primitives.TransitionDerivation"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransitionDerivation</span></code></a>.</p>
+<div class="admonition-deprecated admonition">
+<p class="admonition-title">DEPRECATED</p>
+<p>This class will be removed in favor of <a class="reference internal" href="#sweetpea.primitives.TransitionDerivation" title="sweetpea.primitives.TransitionDerivation"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransitionDerivation</span></code></a>.</p>
+</div>
+<p>alias of <a class="reference internal" href="#sweetpea.primitives.TransitionDerivation" title="sweetpea.primitives.TransitionDerivation"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.primitives.TransitionDerivation</span></code></a></p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt id="sweetpea.primitives.Window">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.primitives.</span></code><code class="sig-name descname"><span class="pre">Window</span></code><a class="headerlink" href="#sweetpea.primitives.Window" title="Permalink to this definition">¶</a></dt>
-<dd><p>alias of <a class="reference internal" href="#sweetpea.primitives.WindowDerivation" title="sweetpea.primitives.WindowDerivation"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.primitives.WindowDerivation</span></code></a></p>
+<dd><p>An alias for <a class="reference internal" href="#sweetpea.primitives.WindowDerivation" title="sweetpea.primitives.WindowDerivation"><code class="xref py py-class docutils literal notranslate"><span class="pre">WindowDerivation</span></code></a>.</p>
+<div class="admonition-deprecated admonition">
+<p class="admonition-title">DEPRECATED</p>
+<p>This class will be removed in favor of <a class="reference internal" href="#sweetpea.primitives.WindowDerivation" title="sweetpea.primitives.WindowDerivation"><code class="xref py py-class docutils literal notranslate"><span class="pre">WindowDerivation</span></code></a>.</p>
+</div>
+<p>alias of <a class="reference internal" href="#sweetpea.primitives.WindowDerivation" title="sweetpea.primitives.WindowDerivation"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.primitives.WindowDerivation</span></code></a></p>
 </dd></dl>
 
 </div>

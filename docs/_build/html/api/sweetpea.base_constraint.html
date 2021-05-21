@@ -184,17 +184,19 @@
             
   <div class="section" id="module-sweetpea.base_constraint">
 <span id="sweetpea-base-constraint-module"></span><h1>sweetpea.base_constraint module<a class="headerlink" href="#module-sweetpea.base_constraint" title="Permalink to this headline">¶</a></h1>
+<p>This module provides the base constraint class.</p>
 <dl class="py class">
 <dt id="sweetpea.base_constraint.Constraint">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.base_constraint.</span></code><code class="sig-name descname"><span class="pre">Constraint</span></code><a class="headerlink" href="#sweetpea.base_constraint.Constraint" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.7/library/abc.html#abc.ABC" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></a></p>
-<p>Constraints can’t be completely validated in isolation. This function will
-be called on all constraints with the block during the block initialization
-to ensure all constraints are valid.</p>
+<p>Generic interface for constraints.</p>
 <dl class="py method">
 <dt id="sweetpea.base_constraint.Constraint.validate">
 <em class="property"><span class="pre">abstract</span> </em><code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.base_constraint.Constraint.validate" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Constraints can’t be completely validated in isolation. This
+function will be called on all constraints with the block during the
+block initialization to ensure all constraints are valid.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)">None</a></p>
 </dd>
@@ -214,7 +216,13 @@ to ensure all constraints are valid.</p>
 <dl class="py method">
 <dt id="sweetpea.base_constraint.Constraint.desugar">
 <code class="sig-name descname"><span class="pre">desugar</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.base_constraint.Constraint.desugar" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Some constraints accept shorthand representations. (Like accepting a
+whole factor, rather than individual factor and level name pairs.)</p>
+<p><code class="xref py py-func docutils literal notranslate"><span class="pre">Constraint.desugar()</span></code> is responsible for returning the desugared
+representation of a constraint. When a block is constructed, it will
+desugar all constraints, replacing them with their desuagared versions
+before proceding.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>List</p>
 </dd>

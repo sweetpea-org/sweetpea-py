@@ -184,10 +184,25 @@
             
   <div class="section" id="module-sweetpea.encoding_diagram">
 <span id="sweetpea-encoding-diagram-module"></span><h1>sweetpea.encoding_diagram module<a class="headerlink" href="#module-sweetpea.encoding_diagram" title="Permalink to this headline">¶</a></h1>
+<p>This module provides functionality for generating encoding diagrams.</p>
 <dl class="py function">
 <dt id="sweetpea.encoding_diagram.print_encoding_diagram">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.encoding_diagram.</span></code><code class="sig-name descname"><span class="pre">print_encoding_diagram</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">blk</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.encoding_diagram.print_encoding_diagram" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Helper method to print a chart outlining the variable mappings, helpful
+for visualizing the formula space. For example, for the simple Stroop test,
+this would output:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>----------------------------------------------
+|   Trial |  color   |   text   | congruent? |
+|       # | red blue | red blue |  con  inc  |
+----------------------------------------------
+|       1 |  1   2   |  3   4   |   5    6   |
+|       2 |  7   8   |  9   10  |  11    12  |
+|       3 | 13   14  | 15   16  |  17    18  |
+|       4 | 19   20  | 21   22  |  23    24  |
+----------------------------------------------
+</pre></div>
+</div>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>blk</strong> (<a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><em>sweetpea.blocks.Block</em></a>) – </p>
 </dd>

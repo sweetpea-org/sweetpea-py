@@ -184,6 +184,7 @@
             
   <div class="section" id="module-sweetpea.logic">
 <span id="sweetpea-logic-module"></span><h1>sweetpea.logic module<a class="headerlink" href="#module-sweetpea.logic" title="Permalink to this headline">¶</a></h1>
+<p>This module provides functionality for handling logic formulas.</p>
 <dl class="py class">
 <dt id="sweetpea.logic.And">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.logic.</span></code><code class="sig-name descname"><span class="pre">And</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.logic.And" title="Permalink to this definition">¶</a></dt>
@@ -264,7 +265,13 @@
 <dl class="py function">
 <dt id="sweetpea.logic.to_cnf_naive">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.logic.</span></code><code class="sig-name descname"><span class="pre">to_cnf_naive</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">next_variable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.logic.to_cnf_naive" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Converts to CNF using the pattern described on
+<a class="reference external" href="https://en.wikipedia.org/wiki/Conjunctive_normal_form#Converting_from_first-order_logic">https://en.wikipedia.org/wiki/Conjunctive_normal_form#Converting_from_first-order_logic</a>.</p>
+<p>The conversion is naive, which means it is subject to an exponential
+explosion in the length of the formula. The upside is that it does not
+introduce any new variables, which constrains the overall size of the
+solution space. (#SAT)</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>f</strong> (<em>Union</em><em>[</em><a class="reference internal" href="#sweetpea.logic.And" title="sweetpea.logic.And"><em>sweetpea.logic.And</em></a><em>, </em><a class="reference internal" href="#sweetpea.logic.Or" title="sweetpea.logic.Or"><em>sweetpea.logic.Or</em></a><em>, </em><a class="reference internal" href="#sweetpea.logic.If" title="sweetpea.logic.If"><em>sweetpea.logic.If</em></a><em>, </em><a class="reference internal" href="#sweetpea.logic.Iff" title="sweetpea.logic.Iff"><em>sweetpea.logic.Iff</em></a><em>, </em><a class="reference internal" href="#sweetpea.logic.Not" title="sweetpea.logic.Not"><em>sweetpea.logic.Not</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em>) – </p></li>
@@ -280,7 +287,12 @@
 <dl class="py function">
 <dt id="sweetpea.logic.to_cnf_switching">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.logic.</span></code><code class="sig-name descname"><span class="pre">to_cnf_switching</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">next_variable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.logic.to_cnf_switching" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Converts to CNF using the pattern described on
+<a class="reference external" href="https://en.wikipedia.org/wiki/Conjunctive_normal_form#Converting_from_first-order_logic">https://en.wikipedia.org/wiki/Conjunctive_normal_form#Converting_from_first-order_logic</a>.</p>
+<p>However, distributing ORs over ANDs is done via switching variables, to
+keep the converted formula small, as described here at
+<a class="reference external" href="https://www.cs.jhu.edu/~jason/tutorials/convert-to-CNF.html">https://www.cs.jhu.edu/~jason/tutorials/convert-to-CNF.html</a>.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>f</strong> (<em>Union</em><em>[</em><a class="reference internal" href="#sweetpea.logic.And" title="sweetpea.logic.And"><em>sweetpea.logic.And</em></a><em>, </em><a class="reference internal" href="#sweetpea.logic.Or" title="sweetpea.logic.Or"><em>sweetpea.logic.Or</em></a><em>, </em><a class="reference internal" href="#sweetpea.logic.If" title="sweetpea.logic.If"><em>sweetpea.logic.If</em></a><em>, </em><a class="reference internal" href="#sweetpea.logic.Iff" title="sweetpea.logic.Iff"><em>sweetpea.logic.Iff</em></a><em>, </em><a class="reference internal" href="#sweetpea.logic.Not" title="sweetpea.logic.Not"><em>sweetpea.logic.Not</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em>) – </p></li>
@@ -296,7 +308,11 @@
 <dl class="py function">
 <dt id="sweetpea.logic.to_cnf_tseitin">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.logic.</span></code><code class="sig-name descname"><span class="pre">to_cnf_tseitin</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">next_variable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.logic.to_cnf_tseitin" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Converts to CNF using the Tseitin transformation. This will introduce
+addtional variables, which will increase #SAT, but provides a linear bound
+on the length increase of the new formula. See
+<a class="reference external" href="https://en.wikipedia.org/wiki/Tseytin_transformation">https://en.wikipedia.org/wiki/Tseytin_transformation</a>.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>f</strong> (<em>Union</em><em>[</em><a class="reference internal" href="#sweetpea.logic.And" title="sweetpea.logic.And"><em>sweetpea.logic.And</em></a><em>, </em><a class="reference internal" href="#sweetpea.logic.Or" title="sweetpea.logic.Or"><em>sweetpea.logic.Or</em></a><em>, </em><a class="reference internal" href="#sweetpea.logic.If" title="sweetpea.logic.If"><em>sweetpea.logic.If</em></a><em>, </em><a class="reference internal" href="#sweetpea.logic.Iff" title="sweetpea.logic.Iff"><em>sweetpea.logic.Iff</em></a><em>, </em><a class="reference internal" href="#sweetpea.logic.Not" title="sweetpea.logic.Not"><em>sweetpea.logic.Not</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em>) – </p></li>

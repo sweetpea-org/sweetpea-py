@@ -184,10 +184,12 @@
             
   <div class="section" id="module-sweetpea.backend">
 <span id="sweetpea-backend-module"></span><h1>sweetpea.backend module<a class="headerlink" href="#module-sweetpea.backend" title="Permalink to this headline">¶</a></h1>
+<p>This module provides functionality for making requests to the backend.</p>
 <dl class="py class">
 <dt id="sweetpea.backend.LowLevelRequest">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.backend.</span></code><code class="sig-name descname"><span class="pre">LowLevelRequest</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">comparison</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.backend.LowLevelRequest" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.7/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Represents an individual low-level request to the backend.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -208,7 +210,9 @@
 <dl class="py method">
 <dt id="sweetpea.backend.LowLevelRequest.to_dict">
 <code class="sig-name descname"><span class="pre">to_dict</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.backend.LowLevelRequest.to_dict" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Converts this request to a dict suitable for conversion to json and
+then the backend.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.backend.LowLevelRequest.to_generation_request">
@@ -221,6 +225,8 @@
 <dt id="sweetpea.backend.BackendRequest">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.backend.</span></code><code class="sig-name descname"><span class="pre">BackendRequest</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fresh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cnfs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ll_requests</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.backend.BackendRequest" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.7/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Represents a full request to the backend, including CNFs,
+LowLevelRequests, and unigen arguments.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">

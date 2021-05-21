@@ -184,10 +184,15 @@
             
   <div class="section" id="module-sweetpea.blocks">
 <span id="sweetpea-blocks-module"></span><h1>sweetpea.blocks module<a class="headerlink" href="#module-sweetpea.blocks" title="Permalink to this headline">¶</a></h1>
+<p>This module provides the various kinds of blocks that can be used to create
+a factorial experimental design.</p>
 <dl class="py class">
 <dt id="sweetpea.blocks.Block">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.blocks.</span></code><code class="sig-name descname"><span class="pre">Block</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">design</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crossing</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">require_complete_crossing</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cnf_fn</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.Block" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.7/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Abstract class for Blocks. Contains the required data, and defines
+abstract methods that other blocks _must_ implement in order to work
+correctly.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -216,27 +221,42 @@
 <dl class="py method">
 <dt id="sweetpea.blocks.Block.trials_per_sample">
 <em class="property"><span class="pre">abstract</span> </em><code class="sig-name descname"><span class="pre">trials_per_sample</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.Block.trials_per_sample" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Indicates the number of trials that are generated per sample for
+this block configuration.</p>
+<p>Analogous to the old <code class="docutils literal notranslate"><span class="pre">__fully_cross_size</span></code> function.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.blocks.Block.variables_per_trial">
 <em class="property"><span class="pre">abstract</span> </em><code class="sig-name descname"><span class="pre">variables_per_trial</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.Block.variables_per_trial" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Indicates the number of variables that are present in each trial.</p>
+<p>Analogous to the old <code class="docutils literal notranslate"><span class="pre">__design_size</span></code> function.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.blocks.Block.grid_variables">
 <em class="property"><span class="pre">abstract</span> </em><code class="sig-name descname"><span class="pre">grid_variables</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.Block.grid_variables" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Indicates the number of variables that are present in the core
+variable grid. this does not include variables used to encode complex
+windows.</p>
+<p>In a design <em>without</em> complex windows, this is equivalent to
+<code class="xref py py-func docutils literal notranslate"><span class="pre">Block.variables_per_sample()</span></code>.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.blocks.Block.variables_per_sample">
 <code class="sig-name descname"><span class="pre">variables_per_sample</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.Block.variables_per_sample" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Indicates the total number of variables needed to encode the core
+experiment description.</p>
+<p>Alternatively stated, this returns the number of variables in the
+formula that constitute the independent support.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.blocks.Block.variables_for_factor">
 <code class="sig-name descname"><span class="pre">variables_for_factor</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.Block.variables_for_factor" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Indicates the number of variables needed to encode this factor.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>f</strong> (<a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><em>sweetpea.primitives.Factor</em></a>) – </p>
 </dd>
@@ -249,7 +269,8 @@
 <dl class="py method">
 <dt id="sweetpea.blocks.Block.has_factor">
 <code class="sig-name descname"><span class="pre">has_factor</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.Block.has_factor" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Determines whether a given factor is in this block.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>factor</strong> (<a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><em>sweetpea.primitives.Factor</em></a>) – </p>
 </dd>
@@ -262,7 +283,9 @@
 <dl class="py method">
 <dt id="sweetpea.blocks.Block.first_variable_for_level">
 <code class="sig-name descname"><span class="pre">first_variable_for_level</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">factor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.Block.first_variable_for_level" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Returns the first index for this variable in a trial sequence
+representing the given factor and level. (0-based.)</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>factor</strong> (<a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><em>sweetpea.primitives.Factor</em></a>) – </p></li>
@@ -278,7 +301,10 @@
 <dl class="py method">
 <dt id="sweetpea.blocks.Block.factor_variables_for_trial">
 <code class="sig-name descname"><span class="pre">factor_variables_for_trial</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.Block.factor_variables_for_trial" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Given a factor and a trial number (1-based) this function will
+return a list of the variables representing the levels of the given
+factor for that trial. The variable list is also 1-based.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>f</strong> (<a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><em>sweetpea.primitives.Factor</em></a>) – </p></li>
@@ -294,7 +320,19 @@
 <dl class="py method">
 <dt id="sweetpea.blocks.Block.variable_list_for_trial">
 <code class="sig-name descname"><span class="pre">variable_list_for_trial</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.Block.variable_list_for_trial" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Given a trial number (1-based) this function will return a list of
+lists of the variables that pertain to that trial.</p>
+<p>For example, for stroop-2 with a congruency level, this method would
+return the following for trial <code class="docutils literal notranslate"><span class="pre">1</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]]</span>
+</pre></div>
+</div>
+<p>If a transition were involved, and it didn’t apply to level one, then
+the factor would have an empty list:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[]]</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>t</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p>
 </dd>
@@ -307,7 +345,9 @@
 <dl class="py method">
 <dt id="sweetpea.blocks.Block.decode_variable">
 <code class="sig-name descname"><span class="pre">decode_variable</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.Block.decode_variable" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Given a variable number from the SAT formula, this method will
+return the associated factor and level name.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>variable</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p>
 </dd>
@@ -320,7 +360,9 @@
 <dl class="py method">
 <dt id="sweetpea.blocks.Block.is_excluded">
 <code class="sig-name descname"><span class="pre">is_excluded</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">c</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.Block.is_excluded" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Given crossing and design-only variables and returns true if the
+combination meets any of the exclude contraints.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>c</strong> (<em>Tuple</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><em>..</em><em>]</em>) – </p></li>
@@ -336,7 +378,9 @@
 <dl class="py method">
 <dt id="sweetpea.blocks.Block.filter_excluded_derived_levels">
 <code class="sig-name descname"><span class="pre">filter_excluded_derived_levels</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.Block.filter_excluded_derived_levels" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Given a list of trials, the function filters the trials invalid as
+per the exclude contraints.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>l</strong> (<em>List</em><em>[</em><em>List</em><em>[</em><em>List</em><em>[</em><em>Tuple</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><em>..</em><em>]</em><em>]</em><em>]</em><em>]</em>) – </p>
 </dd>
@@ -349,7 +393,9 @@
 <dl class="py method">
 <dt id="sweetpea.blocks.Block.build_backend_request">
 <code class="sig-name descname"><span class="pre">build_backend_request</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.Block.build_backend_request" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Apply all constraints to build a <a class="reference internal" href="sweetpea.backend.html#sweetpea.backend.BackendRequest" title="sweetpea.backend.BackendRequest"><code class="xref py py-class docutils literal notranslate"><span class="pre">BackendRequest</span></code></a>. Formerly
+known as <code class="docutils literal notranslate"><span class="pre">__desugar</span></code>.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p><a class="reference internal" href="sweetpea.backend.html#sweetpea.backend.BackendRequest" title="sweetpea.backend.BackendRequest">sweetpea.backend.BackendRequest</a></p>
 </dd>
@@ -359,7 +405,10 @@
 <dl class="py method">
 <dt id="sweetpea.blocks.Block.get_variable">
 <code class="sig-name descname"><span class="pre">get_variable</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">trial_number</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.Block.get_variable" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Given a trial number (1-based), factor, and level, this method will
+return the SAT variable that represents that selection. Only works for
+factors without complex windows at the moment.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>trial_number</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
@@ -375,7 +424,10 @@
 <dl class="py method">
 <dt id="sweetpea.blocks.Block.build_variable_list">
 <code class="sig-name descname"><span class="pre">build_variable_list</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">level_pair</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.Block.build_variable_list" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Given a specific level (factor + level pair), this method will
+return the list of variables that correspond to that level in each
+trial in the encoding.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>level_pair</strong> (<em>Tuple</em><em>[</em><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><em>sweetpea.primitives.Factor</em></a><em>, </em><em>Union</em><em>[</em><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.SimpleLevel" title="sweetpea.primitives.SimpleLevel"><em>sweetpea.primitives.SimpleLevel</em></a><em>, </em><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><em>sweetpea.primitives.DerivedLevel</em></a><em>]</em><em>]</em>) – </p>
 </dd>
@@ -406,20 +458,32 @@
 <dt id="sweetpea.blocks.FullyCrossBlock">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.blocks.</span></code><code class="sig-name descname"><span class="pre">FullyCrossBlock</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="pre">design</span></em>, <em class="sig-param"><span class="pre">crossing</span></em>, <em class="sig-param"><span class="pre">constraints</span></em>, <em class="sig-param"><span class="pre">require_complete_crossing=True</span></em>, <em class="sig-param"><span class="pre">cnf_fn=&lt;function</span> <span class="pre">to_cnf_tseitin&gt;</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.FullyCrossBlock" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.blocks.Block</span></code></a></p>
+<p>A fully-crossed block. This block generates as many trials as needed to
+fully cross all levels across all factors in the block’s crossing.</p>
 <dl class="py method">
 <dt id="sweetpea.blocks.FullyCrossBlock.trials_per_sample">
 <code class="sig-name descname"><span class="pre">trials_per_sample</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.FullyCrossBlock.trials_per_sample" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Indicates the number of trials that are generated per sample for
+this block configuration.</p>
+<p>Analogous to the old <code class="docutils literal notranslate"><span class="pre">__fully_cross_size</span></code> function.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.blocks.FullyCrossBlock.variables_per_trial">
 <code class="sig-name descname"><span class="pre">variables_per_trial</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.FullyCrossBlock.variables_per_trial" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Indicates the number of variables that are present in each trial.</p>
+<p>Analogous to the old <code class="docutils literal notranslate"><span class="pre">__design_size</span></code> function.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.blocks.FullyCrossBlock.grid_variables">
 <code class="sig-name descname"><span class="pre">grid_variables</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.FullyCrossBlock.grid_variables" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Indicates the number of variables that are present in the core
+variable grid. this does not include variables used to encode complex
+windows.</p>
+<p>In a design <em>without</em> complex windows, this is equivalent to
+<code class="xref py py-func docutils literal notranslate"><span class="pre">Block.variables_per_sample()</span></code>.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.blocks.FullyCrossBlock.calculate_samples_required">
@@ -457,20 +521,33 @@
 <dt id="sweetpea.blocks.MultipleCrossBlock">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.blocks.</span></code><code class="sig-name descname"><span class="pre">MultipleCrossBlock</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="pre">design</span></em>, <em class="sig-param"><span class="pre">crossing</span></em>, <em class="sig-param"><span class="pre">constraints</span></em>, <em class="sig-param"><span class="pre">require_complete_crossing=True</span></em>, <em class="sig-param"><span class="pre">cnf_fn=&lt;function</span> <span class="pre">to_cnf_tseitin&gt;</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.MultipleCrossBlock" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.blocks.Block</span></code></a></p>
+<p>A multiple-crossed block. This block generates as many trials as needed
+tocross the levels across factors mentioned as lists in the block’s
+crossing.</p>
 <dl class="py method">
 <dt id="sweetpea.blocks.MultipleCrossBlock.trials_per_sample">
 <code class="sig-name descname"><span class="pre">trials_per_sample</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.MultipleCrossBlock.trials_per_sample" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Indicates the number of trials that are generated per sample for
+this block configuration.</p>
+<p>Analogous to the old <code class="docutils literal notranslate"><span class="pre">__fully_cross_size</span></code> function.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.blocks.MultipleCrossBlock.variables_per_trial">
 <code class="sig-name descname"><span class="pre">variables_per_trial</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.MultipleCrossBlock.variables_per_trial" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Indicates the number of variables that are present in each trial.</p>
+<p>Analogous to the old <code class="docutils literal notranslate"><span class="pre">__design_size</span></code> function.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.blocks.MultipleCrossBlock.grid_variables">
 <code class="sig-name descname"><span class="pre">grid_variables</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.MultipleCrossBlock.grid_variables" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Indicates the number of variables that are present in the core
+variable grid. this does not include variables used to encode complex
+windows.</p>
+<p>In a design <em>without</em> complex windows, this is equivalent to
+<code class="xref py py-func docutils literal notranslate"><span class="pre">Block.variables_per_sample()</span></code>.</p>
+</dd></dl>
 
 <dl class="py method">
 <dt id="sweetpea.blocks.MultipleCrossBlock.calculate_samples_required">

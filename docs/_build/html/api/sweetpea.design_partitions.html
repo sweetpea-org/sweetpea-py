@@ -184,10 +184,15 @@
             
   <div class="section" id="module-sweetpea.design_partitions">
 <span id="sweetpea-design-partitions-module"></span><h1>sweetpea.design_partitions module<a class="headerlink" href="#module-sweetpea.design_partitions" title="Permalink to this headline">¶</a></h1>
+<p>This module provides functionality for partitioning designs into subsets of
+factors.</p>
 <dl class="py class">
 <dt id="sweetpea.design_partitions.DesignPartitions">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.design_partitions.</span></code><code class="sig-name descname"><span class="pre">DesignPartitions</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.design_partitions.DesignPartitions" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.7/library/functions.html#object" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Encapsulates the logic for partitioning a design into specific subsets
+of factors. For example, factors which are in the design, but not in the
+crossing, or not constrained by any derived levels, etc.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>block</strong> (<a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><em>sweetpea.blocks.Block</em></a>) – </p>

@@ -32,6 +32,7 @@
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     
     <script type="text/javascript" src="../_static/js/theme.js"></script>
 
@@ -184,10 +185,17 @@
             
   <div class="section" id="module-sweetpea.combinatorics">
 <span id="sweetpea-combinatorics-module"></span><h1>sweetpea.combinatorics module<a class="headerlink" href="#module-sweetpea.combinatorics" title="Permalink to this headline">¶</a></h1>
+<p>This module provides combinatoric functionality.</p>
 <dl class="py function">
 <dt id="sweetpea.combinatorics.extract_components">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.combinatorics.</span></code><code class="sig-name descname"><span class="pre">extract_components</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.combinatorics.extract_components" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Given a list of dimension sizes, and an integer less than the product of
+the sizes, this function will extract the component value for each
+dimension from the total.</p>
+<p>For example, if <code class="docutils literal notranslate"><span class="pre">sizes</span></code> is <code class="docutils literal notranslate"><span class="pre">[3,</span> <span class="pre">4,</span> <span class="pre">2]</span></code>, there are 24 possible
+combinations of the three. If <code class="docutils literal notranslate"><span class="pre">0</span> <span class="pre">&lt;=</span> <span class="pre">n</span> <span class="pre">&lt;</span> <span class="pre">24</span></code>, this function will return
+the selections for each dimension for that <code class="docutils literal notranslate"><span class="pre">n</span></code>.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>sizes</strong> (<em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em>) – </p></li>
@@ -203,12 +211,22 @@
 <dl class="py function">
 <dt id="sweetpea.combinatorics.compute_jth_inversion_sequence">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.combinatorics.</span></code><code class="sig-name descname"><span class="pre">compute_jth_inversion_sequence</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.combinatorics.compute_jth_inversion_sequence" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>The are <code class="docutils literal notranslate"><span class="pre">n!</span></code> permutations of <code class="docutils literal notranslate"><span class="pre">n</span></code> elements. Each permutation can be
+uniquely identified by and constructed from its “inversion sequence”. This
+function will compute the <code class="docutils literal notranslate"><span class="pre">j``th</span> <span class="pre">inversion</span> <span class="pre">sequence</span> <span class="pre">for</span> <span class="pre">a</span> <span class="pre">set</span> <span class="pre">of</span> <span class="pre">``n</span></code>
+elements.</p>
+<p>Information on inversion sequences can be found:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="http://mathonline.wikidot.com/the-inversion-sequence-of-a-permutation">MathOnline</a></p></li>
+<li><p>“Introductory Combinatorics” by Richard A. Brualdi, ISBN 978-0136020400.</p></li>
+</ul>
+</dd></dl>
 
 <dl class="py function">
 <dt id="sweetpea.combinatorics.construct_permutation">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.combinatorics.</span></code><code class="sig-name descname"><span class="pre">construct_permutation</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inversion_sequence</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.combinatorics.construct_permutation" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="field-list simple">
+<dd><p>Given an inversion sequence, construct the permutation.</p>
+<dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>inversion_sequence</strong> (<em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em>) – </p>
 </dd>
@@ -221,7 +239,10 @@
 <dl class="py function">
 <dt id="sweetpea.combinatorics.compute_jth_combination">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.combinatorics.</span></code><code class="sig-name descname"><span class="pre">compute_jth_combination</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">l</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">j</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.combinatorics.compute_jth_combination" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>In a sequence of <code class="docutils literal notranslate"><span class="pre">l</span></code> items, where there are <code class="docutils literal notranslate"><span class="pre">n</span></code> choices for each
+item, this will compute the <code class="docutils literal notranslate"><span class="pre">jth</span></code> combination, out of all <span class="math notranslate nohighlight">\(n^l\)</span>
+possibilities.</p>
+</dd></dl>
 
 </div>
 
