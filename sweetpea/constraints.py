@@ -1,55 +1,59 @@
-from collections import namedtuple
+"""This module provides constraints for CNF generation."""
+
+
 from abc import abstractmethod
 from copy import deepcopy
 from typing import List, Tuple, Any, Union, cast, Dict
-from itertools import product, chain, accumulate, repeat, combinations
-from functools import reduce
+from itertools import chain, product
 
 from sweetpea.base_constraint import Constraint
-from sweetpea.internal import chunk, chunk_list, pairwise
+from sweetpea.internal import chunk, chunk_list
 from sweetpea.blocks import Block, FullyCrossBlock, MultipleCrossBlock
 from sweetpea.backend import LowLevelRequest, BackendRequest
-from sweetpea.logic import If, Iff, And, Or, Not, FormulaWithIff
-from sweetpea.primitives import DerivedFactor, Factor, get_internal_level_name, Level, SimpleLevel, DerivedLevel, get_external_level_name
+from sweetpea.logic import If, Iff, And, Or, Not
+from sweetpea.primitives import DerivedFactor, DerivedLevel, Factor, Level, SimpleLevel, get_internal_level_name
 
 
 def validate_factor_and_level(block: Block, factor: Factor, level: Union[SimpleLevel, DerivedLevel]) -> None:
     if not block.has_factor(factor):
-        raise ValueError(("A factor with name '{}' wasn't found in the design. " +\
-            "Are you sure the factor was included, and that the name is spelled " +\
-            "correctly?").format(factor.factor_name))
+        raise ValueError(("A factor with name '{}' wasn't found in the design. "
+                          "Are you sure the factor was included, and that the name is spelled "
+                          "correctly?").format(factor.factor_name))
 
     if not factor.has_level(level.name):
-        raise ValueError(("A level with name '{}' wasn't found in the '{}' factor, " +\
-            "Are you sure the level name is spelled correctly?").format(get_internal_level_name(level), factor.factor_name))
+        raise ValueError(("A level with name '{}' wasn't found in the '{}' factor, "
+                          "Are you sure the level name is spelled correctly?").format(
+                              get_internal_level_name(level),
+                              factor.factor_name))
 
 
-"""
-This constraint ensures that only one level of each factor is 'on' at a time.
-So for instance in the experiment:
-
-    color = Factor("color", ["red", "blue"])
-    text  = Factor("text",  ["red", "blue"])
-    design = crossing = [color, text, conFactor]
-    experiment   = fully_cross_block(design, crossing, [])
-
-The first trial is represented by the boolean vars [1, 2, 3, 4]
-
-    1 is true iff the trial is color:red
-    2 is true iff the trial is color:blue
-    3 is true iff the trial is text:red
-    4 is true iff the trial is text:blue
-
-The second trial is represented by the boolean vars [5-8], the third by [9-12],
-the fourth by [13-16]. So this desugaring applies the following constraints:
-
-    sum(1, 2) EQ 1
-    sum(3, 4) EQ 1
-    sum(5, 6) EQ 1
-    ...
-    sum(15, 16) EQ 1
-"""
 class Consistency(Constraint):
+    """This constraint ensures that only one level of each factor is 'on' at a
+    time. So for instance in the experiment::
+
+        color = Factor("color", ["red", "blue"])
+        text  = Factor("text",  ["red", "blue"])
+        design = crossing = [color, text, conFactor]
+        experiment   = fully_cross_block(design, crossing, [])
+
+    The first trial is represented by the boolean vars ``[1, 2, 3, 4]``:
+
+    - 1 is true iff the trial is color:red
+    - 2 is true iff the trial is color:blue
+    - 3 is true iff the trial is text:red
+    - 4 is true iff the trial is text:blue
+
+    The second trial is represented by the boolean vars ``[5-8]``, the third by
+    ``[9-12]``, the fourth by ``[13-16]``. So this desugaring applies the
+    following constraints::
+
+        sum(1, 2) EQ 1
+        sum(3, 4) EQ 1
+        sum(5, 6) EQ 1
+        ...
+        sum(15, 16) EQ 1
+    """
+
     def validate(self, block: Block) -> None:
         pass
 
@@ -71,34 +75,42 @@ class Consistency(Constraint):
             next_var += variables_for_factor
 
 
-
-"""
-We represent the fully crossed constraint by allocating additional boolean
-variables to represent each unique state. Only factors in crossing will
-contribute to the number of states (there may be factors in the design that
-aren't in the crossing).
-
-Continuing with example from __desugar_consistency we will represent the states:
-
-    (color:red, text:red)
-    (color:red, text:blue)
-    (color:blue, text:red)
-    (color:blue, text:blue)
-
--- 1. Generate Intermediate Vars:
-      Using the fresh var counter, allocate numTrials * num_states new vars
--- 2. Entangle them w/ block vars
-      Add to the CNF queue: toCNF(Iff(newVar, And(levels)))
-      ie, if the variable 1 indicates color:red, the var 3 indicates text:red,
-      and the var 25 represents (color:red, text:red):
-        toCNF(Iff(25, And([1, 3])))
--- 3. 1 hot the *states* ie, 1 red circle, etc
-      same as __desugar_consistency above, collect all the state vars that
-      represent each state & enforce that only one of those states is true, ie
-      sum(25, 29, 33, 37) EQ 1
-      (and 3 more of these for each of the other states).
-"""
 class FullyCross(Constraint):
+    """We represent the fully crossed constraint by allocating additional
+    boolean variables to represent each unique state. Only factors in crossing
+    will contribute to the number of states (there may be factors in the design
+    that aren't in the crossing).
+
+    Continuing with the example from :class:`.Consistency`, we will represent
+    the states::
+
+        (color:red, text:red)
+        (color:red, text:blue)
+        (color:blue, text:red)
+        (color:blue, text:blue)
+
+    The steps taken are:
+
+    1. Generate intermediate vars
+
+        Using the fresh var counter, allocate ``numTrials * num_states`` new
+        vars
+
+    2. Entangle them with block vars
+
+        Add to the CNF queue: ``toCNF(Iff(newVar, And(levels)))``, e.g., if the
+        variable ``1`` indicates ``color:red``, the var ``3`` indicates
+        ``text:red``, and the var ``25`` represents ``(color:red, text:red)``,
+        do ``toCNF(Iff(25, And([1, 3])))``
+
+    3. 1 hot the *states* e.g., 1 red circle, etc
+
+        Same as :class:`.Consistency` above, collect all the state vars that
+        represent each state & enforce that only one of those states is true,
+        e.g., ``sum(25, 29, 33, 37) EQ 1`` (and 3 more of these for each of the
+        other states).
+    """
+
     def validate(self, block: Block) -> None:
         pass
 
@@ -108,11 +120,15 @@ class FullyCross(Constraint):
 
         # Step 1: Get a list of the trials that are involved in the crossing.
         crossing_size = max(block.min_trials, block.crossing_size())
-        crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t), block.crossing[0])), range(1, block.trials_per_sample() + 1)))
+        crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t),
+                                                        block.crossing[0])),
+                                      range(1, block.trials_per_sample() + 1)))
         crossing_trials = crossing_trials[:crossing_size]
 
         # Step 2: For each trial, cross all levels of all factors in the crossing.
-        crossing_factors = list(map(lambda t: (list(product(*[block.factor_variables_for_trial(f, t) for f in block.crossing[0]]))), crossing_trials))
+        crossing_factors = list(map(lambda t: (list(product(*[block.factor_variables_for_trial(f, t)
+                                                              for f in block.crossing[0]]))),
+                                    crossing_trials))
 
         # Step 3: For each trial, cross all levels of all design-only factors in the crossing.
         design_factors = cast(List[List[List[int]]], [])
@@ -168,7 +184,9 @@ class MultipleCross(Constraint):
 
             # Step 1: Get a list of the trials that are involved in the crossing.
             crossing_size = max(block.min_trials, block.crossing_size())
-            crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t), c)), range(1, block.trials_per_sample() + 1)))
+            crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t),
+                                                            c)),
+                                          range(1, block.trials_per_sample() + 1)))
             crossing_trials = crossing_trials[:crossing_size]
 
             # Step 2: For each trial, cross all levels of all factors in the crossing.
@@ -186,7 +204,7 @@ class MultipleCross(Constraint):
             # Step 4: For each trial, combine each of the crossing factors with all of the design-only factors.
             crossings = cast(List[List[List[Tuple[int, ...]]]], [])
             for i, t in enumerate(crossing_trials):
-                crossings.append(list(map(lambda c: [c] + design_combinations[i] ,crossing_factors[i])))
+                crossings.append(list(map(lambda c: [c] + design_combinations[i], crossing_factors[i])))
 
             # Step 5: Remove crossings that are not possible.
             # From here on ignore all values other than the first in every list.
@@ -216,52 +234,52 @@ class MultipleCross(Constraint):
             backend_request.fresh = new_fresh
 
 
-"""
-The derivations come in looking likeL:
-
-    Derivation(4, [[0, 2], [1, 3]])
-    (derivedLevel index; list of indicies that are dependent)
-
-This represents:
-
-    4 iff (0 and 2) or (1 and 3)
-
-These indicies are used the get the corresponding trial variables. Continuing
-from the example in of processDerivations, the first trial is represented by
-variables [1-6] (notice this feels like an off-by-one: the indicies start from
-0, but the boolean variables start from 1). So we would use the idxs to map onto
-the vars as:
-
-    5 iff (1 and 3) or (2 and 4)
-
-Then we convert to CNF directly, ie
-
-    toCNF(Iff(5, Or(And(1,3), And(2,4))))
-
-This is then done for all window-sizes, taking into account strides (which are
-specified only in DerivedLevels specified with a general Window rather than
-Transition or WithinTrial). We grab window-sized chunks of the variables that
-represent the trials, map the variables using the indices, and then convert to
-CNF. These chunks look like:
-
-    window1: 1  2  3  4  5  6
-    window2: 7  8  9  10 11 12
-
-So, for the second trial (since the window size in this example is 1) it would
-be:
-
-    11 iff (7 and 9) or (8 and 10)
-
-90% sure this is the correct way to generalize to derivations involving 2+
-levels & various windowsizes. One test is the experiment:
-
-    color = ["r", "b", "g"];
-    text = ["r", "b"];
-    conFactor;
-    fullycross(color, text) + AtMostKInARow 1 conLevel
-
-"""
 class Derivation(Constraint):
+    """A derivation such as::
+
+        Derivation(4, [[0, 2], [1, 3]])
+
+    where the index of the derived level is ``4``, and ``[[0, 2], [1, 3]]`` is
+    the list of dependent indices, represents the logical formula::
+
+        4 iff (0 and 2) or (1 and 3)
+
+    These indicies are used the get the corresponding trial variables.
+    Continuing from the example in of processDerivations, the first trial is
+    represented by variables ``[1-6]`` (notice this feels like an off-by-one:
+    the indicies start from ``0``, but the boolean variables start from ``1``).
+    So we would use the indices to map onto the vars as::
+
+        5 iff (1 and 3) or (2 and 4)
+
+    Then we convert to CNF directly, i.e.::
+
+        toCNF(Iff(5, Or(And(1,3), And(2,4))))
+
+    This is then done for all window-sizes, taking into account strides (which
+    are specified only in :class:`DerivedLevels <.DerivedLevel>` specified with
+    a general :class:`.Window` rather than :class:`.Transition` or
+    :class:`.WithinTrial`). We grab window-sized chunks of the variables that
+    represent the trials, map the variables using the indices, and then convert
+    to CNF. These chunks look like::
+
+        window1: 1  2  3  4  5  6
+        window2: 7  8  9  10 11 12
+
+    So, for the second trial (since the window size in this example is ``1``)
+    it would be::
+
+        11 iff (7 and 9) or (8 and 10)
+
+    90% sure this is the correct way to generalize to derivations involving 2+
+    levels & various windowsizes. One test is the experiment::
+
+        color = ["r", "b", "g"];
+        text = ["r", "b"];
+        conFactor;
+        fullycross(color, text) + AtMostKInARow 1 conLevel
+    """
+
     def __init__(self,
                  derived_idx: int,
                  dependent_idxs: List[List[int]],
@@ -341,7 +359,8 @@ class _KInARow(Constraint):
             raise ValueError("k must be an integer.")
 
         if self.k <= 0:
-            raise ValueError("k must be greater than 0. If you're trying to exclude a particular level, please use the 'Exclude' constraint.")
+            raise ValueError("k must be greater than 0. If you're trying to exclude a particular level, "
+                             "please use the 'Exclude' constraint.")
 
         if not (isinstance(self.level, Factor) or \
                 (isinstance(self.level, tuple) and \
@@ -389,30 +408,30 @@ class _KInARow(Constraint):
         pass
 
 
-"""
-This desugars pretty directly into the llrequests.
-The only thing to do here is to collect all the boolean vars that match the same
-level & pair them up according to k.
-
-Continuing with the example from __desugar_consistency, say we want
-AtMostKInARow 1 ("color", "red"), then we need to grab all the vars which
-indicate color-red:
-
-    [1, 7, 13, 19]
-
-and then wrap them up so that we're making requests like:
-
-    sum(1, 7)  LT 2
-    sum(7, 13)  LT 2
-    sum(13, 19) LT 2
-
-If it had been AtMostKInARow 2 ("color", "red"), the reqs would have been:
-
-    sum(1, 7, 13)  LT 3
-    sum(7, 13, 19) LT 3
-"""
 def at_most_k_in_a_row(k, levels):
+    """This desugars pretty directly into the llrequests. The only thing to do
+    here is to collect all the boolean vars that match the same level & pair them up according to k.
+
+    Continuing with the example from :class:`.Consistency`, say we want
+    ``AtMostKInARow 1 ("color", "red")``, then we need to grab all the vars
+    which indicate color-red::
+
+        [1, 7, 13, 19]
+
+    and then wrap them up so that we're making requests like::
+
+        sum(1, 7)  LT 2
+        sum(7, 13)  LT 2
+        sum(13, 19) LT 2
+
+    If it had been ``AtMostKInARow 2 ("color", "red")``, the reqs would have
+    been::
+
+        sum(1, 7, 13)  LT 3
+        sum(7, 13, 19) LT 3
+    """
     return AtMostKInARow(k, levels)
+
 
 class AtMostKInARow(_KInARow):
     def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], backend_request: BackendRequest) -> None:
@@ -431,11 +450,10 @@ class AtMostKInARow(_KInARow):
         return str(self.__dict__)
 
 
-"""
-Equivalent to AtMostKInARow.
-"""
 def no_more_than_k_in_a_row(k, levels):
+    """Equivalent to AtMostKInARow."""
     return NoMoreThanKInARow(k, levels)
+
 
 class NoMoreThanKInARow(Constraint):
     def __new__(self, k, levels):
@@ -470,7 +488,11 @@ def exactly_k_in_a_row(k, levels):
     return ExactlyKInARow(k, levels)
 
 class ExactlyKInARow(_KInARow):
-    def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], backend_request: BackendRequest) -> None:
+    def apply_to_backend_request(self,
+                                 block: Block,
+                                 level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]],
+                                 backend_request: BackendRequest
+                                 ) -> None:
         sublists = self._build_variable_sublists(block, level, self.k)
         implications = []
 
@@ -515,6 +537,7 @@ class ExactlyKInARow(_KInARow):
 def exclude(factor, levels):
     return Exclude(factor, levels)
 
+
 class Exclude(Constraint):
     def __init__(self, factor, level):
         self.factor = factor
@@ -529,10 +552,9 @@ class Exclude(Constraint):
         if isinstance(self.level, DerivedLevel) and not self.factor.has_complex_window():
             block.excluded_derived.extend(self.extract_simplelevel(block, self.level))
 
-    """
-        Recusrcively deciphers the excluded level to a list of combinations basic levels.
-    """
     def extract_simplelevel(self, block: Block, level: DerivedLevel) -> List[Dict[Factor, SimpleLevel]]:
+        """Recursively deciphers the excluded level to a list of combinations
+        basic levels."""
         excluded_levels = []
         excluded: List[Tuple[Level, ...]] = [cross for cross in level.get_dependent_cross_product()
                                              if level.derivation.predicate(*[level.name for level in cross])]
@@ -576,8 +598,10 @@ class Exclude(Constraint):
     def __str__(self):
         return str(self.__dict__)
 
+
 def minimum_trials(trials):
     return MinimumTrials(trials)
+
 
 class MinimumTrials(Constraint):
     def __init__(self, trials):
