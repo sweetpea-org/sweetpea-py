@@ -5,7 +5,7 @@ SweetPea
 |-------------------------------------------------------------------------------------------------------------------|
 | ![typecheck](../../actions/workflows/typecheck.yml/badge.svg)               |
 | ![acceptance (fast)](../../actions/workflows/acceptance-fast.yml/badge.svg) |
-| ![acceptance (slow)](../actions/workflows/acceptance-slow.yml/badge.svg) |
+| ![acceptance (slow)](../../actions/workflows/acceptance-slow.yml/badge.svg) |
 | ![package](../../actions/workflows/test.yml/badge.svg)                      |
 
 SweetPea is a language for declaratively specifying randomized experimental designs and synthesizing trial sequences generated from the design specification.
