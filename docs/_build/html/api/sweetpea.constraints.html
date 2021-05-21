@@ -536,21 +536,11 @@ been:</p>
 </dd></dl>
 
 <dl class="py function">
-<dt id="sweetpea.constraints.no_more_than_k_in_a_row">
-<code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">no_more_than_k_in_a_row</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.no_more_than_k_in_a_row" title="Permalink to this definition">¶</a></dt>
-<dd><p>Equivalent to AtMostKInARow.</p>
-</dd></dl>
-
-<dl class="py class">
-<dt id="sweetpea.constraints.NoMoreThanKInARow">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">NoMoreThanKInARow</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.NoMoreThanKInARow" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="sweetpea.base_constraint.html#sweetpea.base_constraint.Constraint" title="sweetpea.base_constraint.Constraint"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.base_constraint.Constraint</span></code></a></p>
-</dd></dl>
-
-<dl class="py function">
 <dt id="sweetpea.constraints.exactly_k">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">exactly_k</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.exactly_k" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Requires that if the given level exists at all, it must exist in a trial
+exactly <code class="docutils literal notranslate"><span class="pre">k</span></code> times.</p>
+</dd></dl>
 
 <dl class="py class">
 <dt id="sweetpea.constraints.ExactlyK">
@@ -583,7 +573,9 @@ been:</p>
 <dl class="py function">
 <dt id="sweetpea.constraints.exactly_k_in_a_row">
 <code class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></code><code class="sig-name descname"><span class="pre">exactly_k_in_a_row</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.exactly_k_in_a_row" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Requires that if the given level exists at all, it must exist in a
+sequence of exactly K.</p>
+</dd></dl>
 
 <dl class="py class">
 <dt id="sweetpea.constraints.ExactlyKInARow">
