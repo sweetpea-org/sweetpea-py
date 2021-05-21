@@ -1,15 +1,21 @@
-import networkx as nx
+"""This module provides functionality for building graphs representing the
+relationships between factors in a given design.
+"""
+
 
 from typing import List
+
+import networkx as nx
 
 from sweetpea.primitives import DerivedFactor, Factor
 
 
-"""
-Builds a directed graph representing the relationship between all factors in the design.
-Primary intent is to facilitate preventing invalid crossings.
-"""
 class DesignGraph():
+    """Builds a directed graph representing the relationship between all
+    factors in the design. Primary intent is to facilitate preventing invalid
+    crossings.
+    """
+
     def __init__(self, design: List[Factor]) -> None:
         self.design = design
         self.graph = self.__build_graph(design)
