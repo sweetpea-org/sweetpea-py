@@ -1,19 +1,19 @@
-import operator as op
+"""This module provides functionality for collecting metrics about a specific
+block in an experimental design.
+"""
 
-from functools import reduce
+
 from math import factorial
 from typing import Dict
 
 from sweetpea.blocks import Block
-from sweetpea.constraints import ExactlyKInARow, AtMostKInARow
 from sweetpea import __generate_cnf
 
 
-"""
-Given a block, this function will collect various metrics pertaining to the block
-and return them in a dictionary.
-"""
 def collect_design_metrics(block: Block) -> Dict:
+    """Given a block, this function will collect various metrics pertaining to
+    the block and return them in a dictionary.
+    """
     backend_request = block.build_backend_request()
     dimacs_header = __generate_cnf(block).split('\n')[0].split(' ')
 
