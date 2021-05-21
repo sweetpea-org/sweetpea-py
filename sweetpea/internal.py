@@ -8,7 +8,9 @@ from sweetpea.primitives import Factor, DerivedLevel, get_internal_level_name, S
 
 
 def get_all_external_level_names(design: List[Factor]) -> List[Tuple[str, str]]:
-    """Usage::
+    """Usage
+
+    ::
 
         >>> color = Factor("color", ["red", "blue"])
         >>> text  = Factor("text",  ["red", "blue"])

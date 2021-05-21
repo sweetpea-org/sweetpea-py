@@ -62,7 +62,7 @@ def construct_permutation(inversion_sequence: List[int]) -> List[int]:
 
 def compute_jth_combination(l, n, j):
     """In a sequence of ``l`` items, where there are ``n`` choices for each
-    item, this will compute the ``j``th combination, out of all :math:`n^l`
+    item, this will compute the ``jth`` combination, out of all :math:`n^l`
     possibilities.
     """
     combination = [None] * l

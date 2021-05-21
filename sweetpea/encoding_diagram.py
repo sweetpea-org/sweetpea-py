@@ -11,17 +11,18 @@ from sweetpea.blocks import Block
 
 def print_encoding_diagram(blk: Block) -> None:
     """Helper method to print a chart outlining the variable mappings, helpful
-    for visualizing the formula space. For example, for the simple stroop test:
+    for visualizing the formula space. For example, for the simple Stroop test,
+    this would output::
 
-    --------------------------------------------
-    | Trial |  color   |   text   | congruent? |
-    |     # | red blue | red blue |  con  inc  |
-    --------------------------------------------
-    |     1 |  1   2   |  3   4   |   5    6   |
-    |     2 |  7   8   |  9   10  |  11    12  |
-    |     3 | 13   14  | 15   16  |  17    18  |
-    |     4 | 19   20  | 21   22  |  23    24  |
-    --------------------------------------------
+        ----------------------------------------------
+        |   Trial |  color   |   text   | congruent? |
+        |       # | red blue | red blue |  con  inc  |
+        ----------------------------------------------
+        |       1 |  1   2   |  3   4   |   5    6   |
+        |       2 |  7   8   |  9   10  |  11    12  |
+        |       3 | 13   14  | 15   16  |  17    18  |
+        |       4 | 19   20  | 21   22  |  23    24  |
+        ----------------------------------------------
     """
     print(__generate_encoding_diagram(blk))
 
