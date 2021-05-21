@@ -48,9 +48,7 @@ Index](https://pypi.org) (PyPI), or from source.
 
 SweetPea can be installed from PyPI via `pip`:
 
-```
-$ pip install sweetpea
-```
+    $ pip install sweetpea
 
 This version may lag behind the current development version.
 
@@ -60,15 +58,14 @@ This version may lag behind the current development version.
 To get the most up-to-date version of SweetPea, clone this repository, install
 SweetPea's dependencies, and install SweetPea itself:
 
-```
-$ git clone https://github.com/sweetpea-org/sweetpea-py.git
-$ cd sweetpea-py
-$ pip install -r requirements.txt
-$ pip install .
-```
+    $ git clone https://github.com/sweetpea-org/sweetpea-py.git
+    $ cd sweetpea-py
+    $ pip install -r requirements.txt
+    $ pip install .
 
-> :exclamation: **Important**
->
+| :exclamation: **Important** |
+|-----------------------------|
+
 > The `pip install .` command installs SweetPea locally, but it will not
 > automatically check for updates. If you intend to manually update your local
 > copy of SweetPea, you should instead do `pip install -e .` to tell `pip` to
