@@ -24,6 +24,7 @@ decent introductory definition of a :term:`factorial experiment`:
     well as the effects of interactions between factors on the response
     variable.
 
+
 .. _guide_factorial_factors:
 
 Factors
@@ -40,6 +41,7 @@ multiple factors without issue, and SweetPea will help you plan this out.
    Experiments* by Ronald Fisher. The book is also credited with introducing the
    concept of the *null hypothesis*.
 
+
 .. _guide_factorial_levels:
 
 Levels
@@ -48,6 +50,7 @@ Levels
 In a factorial experimental design, each factor can take on one of a finite
 number of discrete possible values, called :term:`levels <level>`. To make this
 more concrete, consider a simple example.
+
 
 .. _guide_factorial_example:
 
@@ -72,6 +75,7 @@ If this is a :term:`full factorial experiment` (also said that the experiment is
 combination of factors and levels. In other words, we must have :math:`4 \times
 4 = 16` distinct trials to fully cross the above example experiment.
 
+
 .. _guide_factorial_derivations:
 
 Derivations
@@ -87,6 +91,7 @@ There are three variants of derivation: :ref:`windows
 :ref:`within-trial specifications <guide_factorial_derivations_within-trials>`,
 detailed below.
 
+
 .. _guide_factorial_derivations_windows:
 
 Windows
@@ -95,6 +100,7 @@ Windows
 A :term:`window` (constructed with :func:`sweetpea.primitives.window`) creates a
 level that is selected depending on a combination of levels from other factors
 in the current trial and multiple preceding trials.
+
 
 .. _guide_factorial_derivations_transitions:
 
@@ -105,6 +111,7 @@ A :term:`transition` (constructed with :func:`sweetpea.primitives.transition`)
 describes a level that is selected depending on a combination of levels from
 other factors in the current trial and the immediately preceding trial.
 
+
 .. _guide_factorial_derivations_within-trials:
 
 Within-Trials
@@ -113,6 +120,7 @@ Within-Trials
 The :term:`within-trial derivations <within-trial derivation>` (constructed with
 :func:`sweetpea.primitives.within_trial`) describe a level that is selected
 depending on levels from other factors, all within the same trial.
+
 
 .. _guide_factorial_glossary:
 

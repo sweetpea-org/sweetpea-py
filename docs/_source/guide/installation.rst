@@ -14,6 +14,7 @@ manually.
    tests for this), but it will likely not work for earlier versions. Please
    ensure you are using at least Python 3.7.9 before installing SweetPea!
 
+
 Automated Installation from the Python Package Index
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -22,6 +23,7 @@ To install SweetPea from the Python Package Index (PyPI), simply do::
   $ pip install sweetpea
 
 This will automatically install the most recent published release of SweetPea.
+
 
 Manual Installation from Source
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -37,6 +39,7 @@ You can clone the repository, the SweetPea dependencies, and make the
   $ cd sweetpea-py
   $ pip install -r requirements.txt
   $ pip install -e .
+
 
 Contributing to SweetPea Development
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
