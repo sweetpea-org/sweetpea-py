@@ -22,6 +22,15 @@ The `/docs/` directory contains:
       * Contains the inputs to the documentation generator.
 
 
+## Reading
+
+The documentation for the current published version of SweetPea is available
+[online](https://sweetpea-org.github.io). However, you can build a local copy by
+following the [Building](#building) instructions below, and then opening the
+file [`./_build/html/index.html`](./_build/html/index.html) in your web
+browser.
+
+
 ## Building
 
 To build the documentation, install the necessary dependencies and then invoke
@@ -105,13 +114,10 @@ sphinx-apidoc [as explained above](#automatic-documentation).
 ### reStructuredText (reST)
 
 reStructuredText, or reST, is the markup language used by the Sphinx
-documentation build system.
-
-There is a *lot* to learn to be proficient with reST, but this section will give
-a brief overview of most of the important forms used in the SweetPea
-documentation. There will also be links to additional resources at the end.
-
-...
+documentation build system. An explanation of reST is beyond the scope of this
+README, but information about SweetPea's particular usage can be found in the
+SweetPea Guide section on [Contributing to the
+Documentation](https://sweetpea-org.github.io/guide/contributing/documentation).
 
 
 ### Guide Documentation
