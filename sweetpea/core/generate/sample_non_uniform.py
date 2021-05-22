@@ -1,7 +1,8 @@
 """This module provides non-uniform CNF sampling functionality through the
 :func:`sample_non_uniform` function.
 
-.. NOTE::
+.. note::
+
     For compatibility with older testing mechanisms, there is also the
     :func:`sample_non_uniform_from_specification` function, which takes a
     :class:`.ProblemSpecification` as input. The :class:`.ProblemSpecification`
@@ -42,7 +43,8 @@ def sample_non_uniform_from_specification(spec: ProblemSpecification) -> List[So
     """Samples solutions to a CNF problem non-uniformly, using a
     :class:`.ProblemSpecification`.
 
-    .. NOTE::
+    .. note::
+
         This function exists for easier legacy compatibility from when
         SweetPea's input was given as JSON files. This should no longer be
         necessary.

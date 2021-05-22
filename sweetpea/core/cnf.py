@@ -197,7 +197,8 @@ class CNF(SimpleSequence[Clause]):
         """Returns an empty :class:`CNF` with the given number of fresh
         :class:`Vars <.Var>` already allocated.
 
-        .. NOTE::
+        .. note::
+
             This method probably shouldn't exist! The number of fresh variables
             should be deduced from the formulas themselves. This exists for
             legacy compatibility and should eventually be removed.
@@ -240,7 +241,8 @@ class CNF(SimpleSequence[Clause]):
     def xnor_vars(a: Union[int, Var], b: Union[int, Var]) -> CNF:
         """Returns a CNF formula encoding (a ⊙ b) as ((a ∨ ¬b) ∧ (¬a ∨ b)).
 
-        .. NOTE::
+        .. note::
+
             (a ⊙ b) is logically equivalent to (a ⇔ b), so this function
             replaces the original Haskell version's |doubleImpliesLink|_.
 
@@ -353,7 +355,8 @@ class CNF(SimpleSequence[Clause]):
         is the :class:`CNF` represented as a :class:`list` of
         :class:`lists <list>` of :class:`ints <int>`.
 
-        .. NOTE::
+        .. note::
+
             This is the way CNF formulas were encoded in the original Haskell
             code. It only exists for consistency checks across the two code
             bases.

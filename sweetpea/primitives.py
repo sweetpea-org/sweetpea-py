@@ -68,7 +68,7 @@ with the integers.
 class Level:
     """A discrete value that a :class:`.Factor` can hold.
 
-    .. NOTE::
+    .. note::
 
         Do not directly instantiate :class:`.Level`. Instead, construct one of
         the subclasses:
@@ -87,7 +87,7 @@ class Level:
     #       some other mechanism. See the TODO notes in `Level.__post_init__`.
     #: The internal name, which is meant to be unique among levels.
     #:
-    #: .. admonition:: DEPRECATED
+    #: .. deprecated:: 0.1.0
     #:
     #:     This attribute will be removed. It should not be used outside of
     #:     this module.
@@ -164,7 +164,7 @@ class Level:
     def external_name(self) -> str:
         """An alias for :attr:`.Level.name`.
 
-        .. admonition:: DEPRECATED
+        .. deprecated:: 0.1.0
 
             This property will be removed in favor of :attr:`.Level.name`.
         """
@@ -279,7 +279,7 @@ class DerivedLevel(Level):
            (green, 1),
            (green, 2)]
 
-        .. HINT::
+        .. tip::
 
             You can access a :class:`.Level`'s corresponding :class:`.Factor`
             via the :attr:`.Level.factor` attribute.
@@ -293,7 +293,7 @@ class DerivedLevel(Level):
     def window(self) -> Derivation:
         """An alias for :attr:`.DerivedLevel.derivation`.
 
-        .. admonition:: DEPRECATED
+        .. deprecated:: 0.1.0
 
             This property will be removed in favor of
             :attr:`.DerivedLevel.derivation`."""
@@ -378,7 +378,7 @@ class Factor:
     4. Anything else is converted into a :class:`.SimpleLevel` by using its
        string representation as a level name.
 
-    .. NOTE::
+    .. note::
 
         The :class:`.DerivedFactor` subclass does additional processing after
         these steps.
@@ -396,7 +396,7 @@ class Factor:
 
     :rtype: .Factor
 
-    .. TIP::
+    .. tip::
 
         See :ref:`the Factorial Experiment Design section of the SweetPea guide
         <guide_factorial_design>` for more about factors, levels, and how to
@@ -523,7 +523,7 @@ class Factor:
     def is_derived(self) -> bool:
         """Whether this factor is derived.
 
-        .. admonition:: DEPRECATED
+        .. deprecated:: 0.1.0
 
             Instead of using this function, we recommend doing a dynamic type
             check with :func:`isinstance`. This provides the same semantic
@@ -561,7 +561,8 @@ class Factor:
         with :class:`.TransitionDerivation` derivations in their levels do not
         apply to trial number ``1``, but do apply to all subsequent trials.
 
-        .. TIP::
+        .. tip::
+
             Trials start their numbering at ``1``.
         """
         if trial_number <= 0:
@@ -583,7 +584,7 @@ class Factor:
     def factor_name(self) -> str:
         """An alias for :attr:`.Factor.name` for backwards compatibility.
 
-        .. admonition:: DEPRECATED
+        .. deprecated:: 0.1.0
 
             This property will be removed in favor of :attr:`.Factor.name`.
         """
@@ -593,7 +594,7 @@ class Factor:
     def has_level(self, name: str) -> bool:
         """Whether the given level name corresponds to a level in this factor.
 
-        .. admonition:: DEPRECATED
+        .. deprecated:: 0.1.0
 
             This method will be removed in favor of straightforward membership
             checks, such as:
@@ -611,7 +612,7 @@ class Factor:
         """A method alias for the :attr:`.Factor.has_complex_derivation`
         property.
 
-        .. admonition:: DEPRECATED
+        .. deprecated:: 0.1.0
 
             This method will be removed in favor of
             :attr:`.Factor.has_complex_derivation`.
@@ -682,7 +683,8 @@ class DerivedFactor(Factor):
         either :class:`DerivedLevels <.DerivedLevel>` or
         :class:`ElseLevels <.ElseLevel>`.
 
-        .. NOTE::
+        .. note::
+
             Any given :class:`.ElseLevel` will be converted to a
             :class:`.DerivedLevel` by way of
             :func:`.ElseLevel.derive_level_from_levels`, so that the
@@ -751,7 +753,8 @@ class Derivation:
     information, see :ref:`the SweetPea guide's section on derivations
     <guide_factorial_derivations>`.
 
-    .. NOTE::
+    .. note::
+
         The :class:`.Derivation` class cannot be directly instantiated. Use one
         of the subclasses instead.
 
@@ -759,7 +762,8 @@ class Derivation:
         A predicate function used during derivation. Different derivation
         mechanisms require different forms of predicates.
 
-        .. WARNING::
+        .. warning::
+
             The type of arguments passed to the ``predicate`` varies by
             Derivation subclass. Read their documentation carefully!
     :type predicate: typing.Callable[[Any, ....], bool]
@@ -866,7 +870,7 @@ class Derivation:
 
         :rtype: typing.List[.Factor]
 
-        .. admonition:: DEPRECATED
+        .. deprecated:: 0.1.0
 
             This property will be removed in favor of
             :attr:`.Derivation.factors`.
@@ -880,7 +884,7 @@ class Derivation:
 
         :rtype: Callable
 
-        .. admonition:: DEPRECATED
+        .. deprecated:: 0.1.0
 
             This property will be removed in favor of
             :attr:`.Derivation.predicate`.
@@ -968,7 +972,7 @@ class WindowDerivation(Derivation):
 def get_external_level_name(level: Level) -> str:
     """Returns :attr:`.Level.name`.
 
-    .. admonition:: DEPRECATED
+    .. deprecated:: 0.1.0
 
         This function will be removed in favor of :attr:`.Level.name`.
     """
@@ -980,7 +984,7 @@ def get_external_level_name(level: Level) -> str:
 def get_internal_level_name(level: Level) -> str:
     """Returns :attr:`.Level.internal_name`.
 
-    .. admonition:: DEPRECATED
+    .. deprecated:: 0.1.0
 
         This function will be removed. It should not be used outside of this
         module.
@@ -990,21 +994,21 @@ def get_internal_level_name(level: Level) -> str:
 
 #: An alias for :class:`.WithinTrialDerivation`.
 #:
-#: .. admonition:: DEPRECATED
+#: .. deprecated:: 0.1.0
 #:
 #:     This class will be removed in favor of :class:`.WithinTrialDerivation`.
 WithinTrial = WithinTrialDerivation
 
 #: An alias for :class:`.TransitionDerivation`.
 #:
-#: .. admonition:: DEPRECATED
+#: .. deprecated:: 0.1.0
 #:
 #:     This class will be removed in favor of :class:`.TransitionDerivation`.
 Transition = TransitionDerivation
 
 #: An alias for :class:`.WindowDerivation`.
 #:
-#: .. admonition:: DEPRECATED
+#: .. deprecated:: 0.1.0
 #:
 #:     This class will be removed in favor of :class:`.WindowDerivation`.
 Window = WindowDerivation

@@ -171,13 +171,15 @@ def tabulate_experiments(experiments: List[Dict],
     :param factors:
         An optional :class:`list` of :class:`Factors <.Factor>`...
 
-        .. TODO::
+        .. todo::
+
             Finish specification of this parameter.
 
     :param trials:
         An optional :class:`list` of :class:`ints <int>`...
 
-        .. TODO::
+        .. todo::
+
             Finish specification of this parameter.
     """
     if factors is None:
@@ -290,7 +292,8 @@ def synthesize_trials_non_uniform(block: Block, samples: int) -> List[dict]:
     """Synthesizes experimental trials with non-uniform sampling. See
     :func:`.synthesize_trials` for more information.
 
-    .. NOTE::
+    .. note::
+
         This function is built to circumvent some shortcomings in the Unigen
         solving engine. Specifically, it works by taking the following steps:
 
@@ -359,7 +362,8 @@ def synthesize_trials(block: Block,
     then decoded into something that is both human-readable and compatible with
     `PsyNeuLink <https://princetonuniversity.github.io/PsyNeuLink/>`_.
 
-    .. WARNING::
+    .. warning::
+
         Effective uniform sampling is a work in progress, so straightforward
         use of this function may result in non-termination. If this happens,
         you can try to get some initial results via

@@ -1,7 +1,8 @@
 """This module makes it easy to set up the Unigen and CryptoMiniSAT executables
 as needed by Sweetpea. It can also be run as a script.
 
-.. NOTE::
+.. note::
+
     SweetPea Core only makes use of the automated download of the current
     system and machine-type's executables from the latest release. The rest of
     the code accommodates other use cases and is not strictly necessary, but it
