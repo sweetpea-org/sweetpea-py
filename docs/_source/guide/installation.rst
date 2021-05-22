@@ -7,7 +7,8 @@ There are two ways to get SweetPea installed on your computer: through the
 Python Package Index (via ``pip``) or by cloning the repository and installing
 manually.
 
-.. ATTENTION::
+.. attention::
+
    SweetPea is developed with Python 3.7.9. It should work in any
    backwards-compatible Python version later than 3.7.9 (and we have integration
    tests for this), but it will likely not work for earlier versions. Please
@@ -41,4 +42,4 @@ Contributing to SweetPea Development
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 We also accept contributions to SweetPea. See the :ref:`Contributing to SweetPea
-<contributing>` section of the guide for more information.
+<guide_contributing>` section of the guide for more information.

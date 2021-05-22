@@ -7,7 +7,8 @@ SweetPea is a domain-specific programming language for creating factorial
 experimental designs. Our goal is to make it easy to specify and set up all of
 the factors and levels needed for your experiment.
 
-.. HINT::
+.. hint::
+
    There's a :ref:`glossary <guide_factorial_glossary>` at the bottom of this
    page for a brief overview of the most important terms.
 

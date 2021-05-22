@@ -1,7 +1,7 @@
 .. _guide:
 
-SweetPea Guide and Information
-==============================
+SweetPea Guide
+==============
 
 This page will provide a brief overview of the purpose of SweetPea and provide
 information on how to get it, use it, and consult the documentation.
