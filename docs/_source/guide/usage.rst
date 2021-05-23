@@ -9,4 +9,4 @@ Using SweetPea
     information on how to use SweetPea. Until then, please refer to the `example
     programs
     <https://github.com/sweetpea-org/sweetpea-py/tree/master/example_programs>`_,
-    located in the `example_programs/` directory of the SweetPea repository.
+    located in the ``example_programs/`` directory of the SweetPea repository.
