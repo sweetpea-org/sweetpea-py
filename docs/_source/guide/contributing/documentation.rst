@@ -18,6 +18,8 @@ documentation::
     $ pip install sphinx sphinx-rtd-theme
 
 
+.. _building_the_documentation:
+
 Building the Documentation
 --------------------------
 

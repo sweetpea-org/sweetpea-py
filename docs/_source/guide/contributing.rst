@@ -11,7 +11,7 @@ can contribute to SweetPea's development.
    :maxdepth: 1
    :caption: Contents:
 
-   contributing/bugs
+   contributing/issues
    contributing/development
    contributing/documentation
    contributing/rest_style_guide

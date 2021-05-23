@@ -1,7 +1,7 @@
 .. _py_style_guide:
 
-SweetPea Python Style Guide
-===========================
+Python Style Guide
+==================
 
 This section documents the specifics of the Python style preferred in the
 SweetPea code.

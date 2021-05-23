@@ -1,7 +1,7 @@
 .. _rest_style_guide:
 
-SweetPea reStructuredText Style Guide
-=====================================
+reStructuredText Style Guide
+============================
 
 SweetPea's documentation is written in a consistent style of reStructredText
 (reST). This helps with managing contributions and makes it easier to read in
