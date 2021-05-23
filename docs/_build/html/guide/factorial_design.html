@@ -102,9 +102,9 @@
 <li class="toctree-l3"><a class="reference internal" href="#levels">Levels</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#example">Example</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#derivations">Derivations</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#windows">Windows</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#transitions">Transitions</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#within-trials">Within-Trials</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#basic-windows">Basic Windows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#transition-windows">Transition Windows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#within-trial-windows">Within-Trial Windows</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#glossary">Glossary</a></li>
@@ -321,27 +321,38 @@ combination of factors and levels. In other words, we must have <span class="mat
 <span id="guide-factorial-derivations"></span><h2>Derivations<a class="headerlink" href="#derivations" title="Permalink to this headline">¶</a></h2>
 <p>A <a class="reference internal" href="#term-derivation"><span class="xref std std-term">derivation</span></a> (or <a class="reference internal" href="#term-derived-level"><span class="xref std std-term">derived level</span></a>) is a new level produced by
 combining other <a class="reference internal" href="#term-level"><span class="xref std std-term">levels</span></a>. This combination of levels can be
-directly constructed with <code class="xref py py-func docutils literal notranslate"><span class="pre">sweetpea.primitives.derived_level()</span></code>.</p>
-<p>There are three variants of derivation: <a class="reference internal" href="#guide-factorial-derivations-windows"><span class="std std-ref">windows</span></a>, <a class="reference internal" href="#guide-factorial-derivations-transitions"><span class="std std-ref">transitions</span></a>, and
-<a class="reference internal" href="#guide-factorial-derivations-within-trials"><span class="std std-ref">within-trial specifications</span></a>,
-detailed below.</p>
-<div class="section" id="windows">
-<span id="guide-factorial-derivations-windows"></span><h3>Windows<a class="headerlink" href="#windows" title="Permalink to this headline">¶</a></h3>
-<p>A <a class="reference internal" href="#term-window"><span class="xref std std-term">window</span></a> (constructed with <code class="xref py py-func docutils literal notranslate"><span class="pre">sweetpea.primitives.window()</span></code>) creates a
-level that is selected depending on a combination of levels from other factors
-in the current trial and multiple preceding trials.</p>
+directly constructed with <a class="reference internal" href="../api/sweetpea.primitives.html#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweetpea.primitives.DerivedLevel()</span></code></a>.</p>
+<p>Derivations can also be constrained by <a class="reference internal" href="#term-derivation-window"><span class="xref std std-term">derivation windows</span></a>, which allow for specifying specific manners in which different levels
+from multiple factors can interact across trial boundaries. There are three
+kinds of derivation windows:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#guide-factorial-derivations-basic-windows"><span class="std std-ref">Basic windows</span></a>, from which
+other windows are made.</p></li>
+<li><p><a class="reference internal" href="#guide-factorial-derivations-transition-windows"><span class="std std-ref">Transition windows</span></a>,
+which constrain derivations across trial transition points.</p></li>
+<li><p><a class="reference internal" href="#guide-factorial-derivations-within-trial-windows"><span class="std std-ref">Within-trial windows</span></a>, which provide windows
+that look only within a single given trial.</p></li>
+</ul>
+<p>These are explained more below.</p>
+<div class="section" id="basic-windows">
+<span id="guide-factorial-derivations-basic-windows"></span><h3>Basic Windows<a class="headerlink" href="#basic-windows" title="Permalink to this headline">¶</a></h3>
+<p>A basic <a class="reference internal" href="#term-derivation-window"><span class="xref std std-term">derivation window</span></a>
+(<a class="reference internal" href="../api/sweetpea.primitives.html#sweetpea.primitives.DerivationWindow" title="sweetpea.primitives.DerivationWindow"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.primitives.DerivationWindow</span></code></a>) creates a level that is selected
+depending on a combination of levels from other factors in the current trial and
+zero or more preceding trials.</p>
 </div>
-<div class="section" id="transitions">
-<span id="guide-factorial-derivations-transitions"></span><h3>Transitions<a class="headerlink" href="#transitions" title="Permalink to this headline">¶</a></h3>
-<p>A <a class="reference internal" href="#term-transition"><span class="xref std std-term">transition</span></a> (constructed with <code class="xref py py-func docutils literal notranslate"><span class="pre">sweetpea.primitives.transition()</span></code>)
-describes a level that is selected depending on a combination of levels from
-other factors in the current trial and the immediately preceding trial.</p>
+<div class="section" id="transition-windows">
+<span id="guide-factorial-derivations-transition-windows"></span><h3>Transition Windows<a class="headerlink" href="#transition-windows" title="Permalink to this headline">¶</a></h3>
+<p>A <a class="reference internal" href="#term-derivation-window-transition"><span class="xref std std-term">transition window</span></a>
+(<a class="reference internal" href="../api/sweetpea.primitives.html#sweetpea.primitives.TransitionDerivationWindow" title="sweetpea.primitives.TransitionDerivationWindow"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.primitives.TransitionDerivationWindow</span></code></a>) describes a level that
+is selected depending on a combination of levels from other factors in the
+current trial and the immediately preceding trial.</p>
 </div>
-<div class="section" id="within-trials">
-<span id="guide-factorial-derivations-within-trials"></span><h3>Within-Trials<a class="headerlink" href="#within-trials" title="Permalink to this headline">¶</a></h3>
-<p>The <a class="reference internal" href="#term-within-trial-derivation"><span class="xref std std-term">within-trial derivations</span></a> (constructed with
-<code class="xref py py-func docutils literal notranslate"><span class="pre">sweetpea.primitives.within_trial()</span></code>) describe a level that is selected
-depending on levels from other factors, all within the same trial.</p>
+<div class="section" id="within-trial-windows">
+<span id="guide-factorial-derivations-within-trial-windows"></span><h3>Within-Trial Windows<a class="headerlink" href="#within-trial-windows" title="Permalink to this headline">¶</a></h3>
+<p>The <a class="reference internal" href="#term-derivation-window-within-trial"><span class="xref std std-term">within-trial windows</span></a>
+(<a class="reference internal" href="../api/sweetpea.primitives.html#sweetpea.primitives.WithinTrialDerivationWindow" title="sweetpea.primitives.WithinTrialDerivationWindow"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.primitives.WithinTrialDerivationWindow</span></code></a>) describe a level that
+is selected depending on levels from other factors, all within the same trial.</p>
 </div>
 </div>
 <div class="section" id="glossary">
@@ -349,6 +360,16 @@ depending on levels from other factors, all within the same trial.</p>
 <dl class="glossary simple">
 <dt id="term-derivation">derivation<a class="headerlink" href="#term-derivation" title="Permalink to this term">¶</a></dt><dd><p>An artificial <a class="reference internal" href="#term-level"><span class="xref std std-term">level</span></a> that results from the combination of other
 levels. Also called a <a class="reference internal" href="#term-derived-level"><span class="xref std std-term">derived level</span></a>.</p>
+</dd>
+<dt id="term-derivation-window">derivation window<a class="headerlink" href="#term-derivation-window" title="Permalink to this term">¶</a></dt><dd><p>A window constraining a <a class="reference internal" href="#term-derivation"><span class="xref std std-term">derivation</span></a> that depends on a combination
+of <a class="reference internal" href="#term-level"><span class="xref std std-term">levels</span></a> from other <a class="reference internal" href="#term-factor"><span class="xref std std-term">factors</span></a> in the
+current trial and zero or more preceding trials.</p>
+</dd>
+<dt id="term-derivation-window-transition">derivation window, transition<a class="headerlink" href="#term-derivation-window-transition" title="Permalink to this term">¶</a></dt><dd><p>A <a class="reference internal" href="#term-derivation-window"><span class="xref std std-term">derivation window</span></a> that depends on a combination of <a class="reference internal" href="#term-level"><span class="xref std std-term">levels</span></a> from other <a class="reference internal" href="#term-factor"><span class="xref std std-term">factors</span></a> in the current trial and the
+immediately preceding trial.</p>
+</dd>
+<dt id="term-derivation-window-within-trial">derivation window, within-trial<a class="headerlink" href="#term-derivation-window-within-trial" title="Permalink to this term">¶</a></dt><dd><p>A <a class="reference internal" href="#term-derivation-window"><span class="xref std std-term">derivation window</span></a> that depends on <a class="reference internal" href="#term-level"><span class="xref std std-term">levels</span></a> from
+other <a class="reference internal" href="#term-factor"><span class="xref std std-term">factors</span></a>, all within the same trial.</p>
 </dd>
 <dt id="term-derived-level">derived level<a class="headerlink" href="#term-derived-level" title="Permalink to this term">¶</a></dt><dd><p>See <a class="reference internal" href="#term-derivation"><span class="xref std std-term">derivation</span></a>.</p>
 </dd>
@@ -379,19 +400,16 @@ nature is said to be <a class="reference internal" href="#term-fully-crossed"><s
 </dd>
 <dt id="term-partially-crossed">partially crossed<a class="headerlink" href="#term-partially-crossed" title="Permalink to this term">¶</a></dt><dd><p>See <a class="reference internal" href="#term-fractional-factorial-experiment"><span class="xref std std-term">fractional factorial experiment</span></a>.</p>
 </dd>
-<dt id="term-transition">transition<a class="headerlink" href="#term-transition" title="Permalink to this term">¶</a></dt><dd><p>A <a class="reference internal" href="#term-derivation"><span class="xref std std-term">derivation</span></a> that depends on a combination of <a class="reference internal" href="#term-level"><span class="xref std std-term">levels</span></a> from other <a class="reference internal" href="#term-factor"><span class="xref std std-term">factors</span></a> in the current trial and the
-immediately preceding trial.</p>
+<dt id="term-transition-window">transition window<a class="headerlink" href="#term-transition-window" title="Permalink to this term">¶</a></dt><dd><p>See <a class="reference internal" href="#term-derivation-window-transition"><span class="xref std std-term">derivation window, transition</span></a>.</p>
 </dd>
 <dt id="term-trial">trial<a class="headerlink" href="#term-trial" title="Permalink to this term">¶</a></dt><dd><p>An individual repetition of an experiment. A minimum number of trials must
 be run to obtain sufficient evidence to draw conclusions, and this number
 is determined in part by the number of <a class="reference internal" href="#term-factor"><span class="xref std std-term">factors</span></a> and
 <a class="reference internal" href="#term-level"><span class="xref std std-term">levels</span></a>.</p>
 </dd>
-<dt id="term-window">window<a class="headerlink" href="#term-window" title="Permalink to this term">¶</a></dt><dd><p>A <a class="reference internal" href="#term-derivation"><span class="xref std std-term">derivation</span></a> that depends on a combination of <a class="reference internal" href="#term-level"><span class="xref std std-term">levels</span></a> from other <a class="reference internal" href="#term-factor"><span class="xref std std-term">factors</span></a> in the current trial and
-multiple preceding trials.</p>
+<dt id="term-window">window<a class="headerlink" href="#term-window" title="Permalink to this term">¶</a></dt><dd><p>See <a class="reference internal" href="#term-derivation-window"><span class="xref std std-term">derivation window</span></a>.</p>
 </dd>
-<dt id="term-within-trial-derivation">within-trial derivation<a class="headerlink" href="#term-within-trial-derivation" title="Permalink to this term">¶</a></dt><dd><p>A <a class="reference internal" href="#term-derivation"><span class="xref std std-term">derivation</span></a> that depends on <a class="reference internal" href="#term-level"><span class="xref std std-term">levels</span></a> from other
-<a class="reference internal" href="#term-factor"><span class="xref std std-term">factors</span></a>, all within the same trial.</p>
+<dt id="term-within-trial-derivation">within-trial derivation<a class="headerlink" href="#term-within-trial-derivation" title="Permalink to this term">¶</a></dt><dd><p>See <a class="reference internal" href="#term-derivation-window-within-trial"><span class="xref std std-term">derivation window, within-trial</span></a>.</p>
 </dd>
 </dl>
 </div>

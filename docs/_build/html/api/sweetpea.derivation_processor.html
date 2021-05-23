@@ -101,9 +101,9 @@
 <li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#levels">Levels</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#example">Example</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#derivations">Derivations</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../guide/factorial_design.html#windows">Windows</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../guide/factorial_design.html#transitions">Transitions</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../guide/factorial_design.html#within-trials">Within-Trials</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/factorial_design.html#basic-windows">Basic Windows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/factorial_design.html#transition-windows">Transition Windows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/factorial_design.html#within-trial-windows">Within-Trial Windows</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#glossary">Glossary</a></li>
@@ -335,7 +335,7 @@ the derivedLevel con is true iff <code class="docutils literal notranslate"><spa
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sweetpea.derivation_processor.DerivationProcessor.shift_window">
-<em class="property"><span class="pre">static</span> </em><span class="sig-name descname"><span class="pre">shift_window</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">derivation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trial_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.derivation_processor.DerivationProcessor.shift_window" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">static</span> </em><span class="sig-name descname"><span class="pre">shift_window</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">indices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trial_size</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.derivation_processor.DerivationProcessor.shift_window" title="Permalink to this definition">¶</a></dt>
 <dd><p>This is a helper function that shifts the indices of
 <code class="xref py py-func docutils literal notranslate"><span class="pre">DerivationProcessor.generate_derivations()</span></code>.</p>
 <p>E.g., if it’s a <code class="docutils literal notranslate"><span class="pre">Transition(op.eq,</span> <span class="pre">[color,</span> <span class="pre">color])</span></code> (i.e., “repeat”
@@ -349,7 +349,7 @@ interpreted as being in a subsequent trial.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>indices</strong> (<em>List</em><em>[</em><em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em><em>]</em>) – </p></li>
-<li><p><strong>derivation</strong> (<a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.Derivation" title="sweetpea.primitives.Derivation"><em>sweetpea.primitives.Derivation</em></a>) – </p></li>
+<li><p><strong>window</strong> (<a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.DerivationWindow" title="sweetpea.primitives.DerivationWindow"><em>sweetpea.primitives.DerivationWindow</em></a>) – </p></li>
 <li><p><strong>trial_size</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
 </ul>
 </dd>

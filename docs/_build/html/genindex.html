@@ -99,9 +99,9 @@
 <li class="toctree-l3"><a class="reference internal" href="guide/factorial_design.html#levels">Levels</a></li>
 <li class="toctree-l3"><a class="reference internal" href="guide/factorial_design.html#example">Example</a></li>
 <li class="toctree-l3"><a class="reference internal" href="guide/factorial_design.html#derivations">Derivations</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="guide/factorial_design.html#windows">Windows</a></li>
-<li class="toctree-l4"><a class="reference internal" href="guide/factorial_design.html#transitions">Transitions</a></li>
-<li class="toctree-l4"><a class="reference internal" href="guide/factorial_design.html#within-trials">Within-Trials</a></li>
+<li class="toctree-l4"><a class="reference internal" href="guide/factorial_design.html#basic-windows">Basic Windows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="guide/factorial_design.html#transition-windows">Transition Windows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="guide/factorial_design.html#within-trial-windows">Within-Trial Windows</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="guide/factorial_design.html#glossary">Glossary</a></li>
@@ -307,7 +307,7 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Derivation.args">args (sweetpea.primitives.Derivation property)</a>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivationWindow.args">args (sweetpea.primitives.DerivationWindow property)</a>
 </li>
       <li><a href="api/sweetpea.core.cnf.html#sweetpea.core.cnf.CNF.as_dimacs_string">as_dimacs_string() (sweetpea.core.cnf.CNF method)</a>
 </li>
@@ -460,14 +460,16 @@
       <li><a href="guide/factorial_design.html#term-derivation"><strong>derivation</strong></a>
 </li>
       <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.Derivation">Derivation (class in sweetpea.constraints)</a>
-
-      <ul>
-        <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Derivation">(class in sweetpea.primitives)</a>
 </li>
-      </ul></li>
-      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivedLevel.derivation">derivation (sweetpea.primitives.DerivedLevel attribute)</a>
+      <li><a href="guide/factorial_design.html#term-derivation-window"><strong>derivation window</strong></a>
+</li>
+      <li><a href="guide/factorial_design.html#term-derivation-window-transition"><strong>derivation window, transition</strong></a>
+</li>
+      <li><a href="guide/factorial_design.html#term-derivation-window-within-trial"><strong>derivation window, within-trial</strong></a>
 </li>
       <li><a href="api/sweetpea.derivation_processor.html#sweetpea.derivation_processor.DerivationProcessor">DerivationProcessor (class in sweetpea.derivation_processor)</a>
+</li>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivationWindow">DerivationWindow (class in sweetpea.primitives)</a>
 </li>
       <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.ElseLevel.derive_level_from_levels">derive_level_from_levels() (sweetpea.primitives.ElseLevel method)</a>
 </li>
@@ -475,10 +477,10 @@
 </li>
       <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivedFactor">DerivedFactor (class in sweetpea.primitives)</a>
 </li>
-      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivedLevel">DerivedLevel (class in sweetpea.primitives)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivedLevel">DerivedLevel (class in sweetpea.primitives)</a>
+</li>
       <li><a href="api/sweetpea.design_graph.html#sweetpea.design_graph.DesignGraph">DesignGraph (class in sweetpea.design_graph)</a>
 </li>
       <li><a href="api/sweetpea.design_partitions.html#sweetpea.design_partitions.DesignPartitions">DesignPartitions (class in sweetpea.design_partitions)</a>
@@ -571,15 +573,11 @@
 </li>
       <li><a href="guide/factorial_design.html#term-factorial-experiment"><strong>factorial experiment</strong></a>
 </li>
-      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Derivation.factors">factors (sweetpea.primitives.Derivation attribute)</a>
-
-      <ul>
-        <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.WindowDerivation.factors">(sweetpea.primitives.WindowDerivation attribute)</a>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivationWindow.factors">factors (sweetpea.primitives.DerivationWindow attribute)</a>
 </li>
-      </ul></li>
       <li><a href="api/sweetpea.blocks.html#sweetpea.blocks.Block.filter_excluded_derived_levels">filter_excluded_derived_levels() (sweetpea.blocks.Block method)</a>
 </li>
-      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Derivation.first_factor">first_factor (sweetpea.primitives.Derivation property)</a>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivationWindow.first_factor">first_factor (sweetpea.primitives.DerivationWindow property)</a>
 </li>
       <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivedFactor.first_level">first_level (sweetpea.primitives.DerivedFactor property)</a>
 
@@ -595,7 +593,7 @@
 </li>
       <li><a href="api/sweetpea.sampling_strategies.guided.html#sweetpea.sampling_strategies.guided.Flamegraph">Flamegraph (class in sweetpea.sampling_strategies.guided)</a>
 </li>
-      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Derivation.fn">fn (sweetpea.primitives.Derivation property)</a>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivationWindow.fn">fn (sweetpea.primitives.DerivationWindow property)</a>
 </li>
       <li><a href="guide/factorial_design.html#term-fractional-factorial-experiment"><strong>fractional factorial experiment</strong></a>
 </li>
@@ -723,9 +721,7 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sweetpea.core.cnf.html#sweetpea.core.cnf.CNF.half_adder">half_adder() (sweetpea.core.cnf.CNF method)</a>
 </li>
-      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Factor.has_complex_derivation">has_complex_derivation (sweetpea.primitives.Factor property)</a>
-</li>
-      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Factor.has_complex_window">has_complex_window() (sweetpea.primitives.Factor method)</a>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Factor.has_complex_window">has_complex_window (sweetpea.primitives.Factor property)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -745,12 +741,8 @@
 </li>
       <li><a href="api/sweetpea.logic.html#sweetpea.logic.Iff">Iff (class in sweetpea.logic)</a>
 </li>
-      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Derivation.initial_factor_count">initial_factor_count (sweetpea.primitives.Derivation attribute)</a>
-
-      <ul>
-        <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.WindowDerivation.initial_factor_count">(sweetpea.primitives.WindowDerivation attribute)</a>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivationWindow.initial_factor_count">initial_factor_count (sweetpea.primitives.DerivationWindow attribute)</a>
 </li>
-      </ul></li>
       <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Factor.initial_levels">initial_levels (sweetpea.primitives.Factor attribute)</a>
 </li>
       <li><a href="api/sweetpea.logic.html#sweetpea.logic.And.input_list">input_list (sweetpea.logic.And property)</a>
@@ -775,7 +767,7 @@
 </li>
       <li><a href="api/sweetpea.server.html#sweetpea.server.is_cnf_still_sat">is_cnf_still_sat() (in module sweetpea.server)</a>
 </li>
-      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Derivation.is_complex">is_complex (sweetpea.primitives.Derivation property)</a>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivationWindow.is_complex">is_complex (sweetpea.primitives.DerivationWindow property)</a>
 </li>
       <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.Derivation.is_complex">is_complex() (sweetpea.constraints.Derivation method)</a>
 </li>
@@ -1026,18 +1018,14 @@
 </li>
       <li><a href="api/sweetpea.core.tests.html#sweetpea.core.tests.pop_count_all_k_less_than_n_dimacs">pop_count_all_k_less_than_n_dimacs() (in module sweetpea.core.tests)</a>
 </li>
-      <li><a href="api/sweetpea.core.tests.html#sweetpea.core.tests.pop_count_dimacs">pop_count_dimacs() (in module sweetpea.core.tests)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sweetpea.core.tests.html#sweetpea.core.tests.pop_count_dimacs">pop_count_dimacs() (in module sweetpea.core.tests)</a>
+</li>
       <li><a href="api/sweetpea.core.tests.html#sweetpea.core.tests.pop_count_k_less_than_n_dimacs">pop_count_k_less_than_n_dimacs() (in module sweetpea.core.tests)</a>
 </li>
-      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Derivation.predicate">predicate (sweetpea.primitives.Derivation attribute)</a>
-
-      <ul>
-        <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.WindowDerivation.predicate">(sweetpea.primitives.WindowDerivation attribute)</a>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivationWindow.predicate">predicate (sweetpea.primitives.DerivationWindow attribute)</a>
 </li>
-      </ul></li>
       <li><a href="api/sweetpea.core.cnf.html#sweetpea.core.cnf.CNF.prepend">prepend() (sweetpea.core.cnf.CNF method)</a>
 </li>
       <li><a href="api/sweetpea.encoding_diagram.html#sweetpea.encoding_diagram.print_encoding_diagram">print_encoding_diagram() (in module sweetpea.encoding_diagram)</a>
@@ -1142,7 +1130,7 @@
 </li>
       <li><a href="api/sweetpea.core.simple_sequence.html#sweetpea.core.simple_sequence.SimpleSequence">SimpleSequence (class in sweetpea.core.simple_sequence)</a>
 </li>
-      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Derivation.size">size (sweetpea.primitives.Derivation property)</a>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivationWindow.size">size (sweetpea.primitives.DerivationWindow property)</a>
 </li>
       <li><a href="api/sweetpea.core.tests.html#sweetpea.core.tests.soln_full_adder">soln_full_adder() (in module sweetpea.core.tests)</a>
 </li>
@@ -1150,14 +1138,12 @@
 </li>
       <li><a href="api/sweetpea.sampling_strategies.uniform_combinatoric.html#sweetpea.sampling_strategies.uniform_combinatoric.UCSolutionEnumerator.solution_count">solution_count() (sweetpea.sampling_strategies.uniform_combinatoric.UCSolutionEnumerator method)</a>
 </li>
-      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Derivation.stride">stride (sweetpea.primitives.Derivation attribute)</a>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivationWindow.stride">stride (sweetpea.primitives.DerivationWindow attribute)</a>
 
       <ul>
-        <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.TransitionDerivation.stride">(sweetpea.primitives.TransitionDerivation attribute)</a>
+        <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.TransitionDerivationWindow.stride">(sweetpea.primitives.TransitionDerivationWindow attribute)</a>
 </li>
-        <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.WindowDerivation.stride">(sweetpea.primitives.WindowDerivation attribute)</a>
-</li>
-        <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.WithinTrialDerivation.stride">(sweetpea.primitives.WithinTrialDerivation attribute)</a>
+        <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.WithinTrialDerivationWindow.stride">(sweetpea.primitives.WithinTrialDerivationWindow attribute)</a>
 </li>
       </ul></li>
       <li><a href="api/sweetpea.core.generate.utility.html#sweetpea.core.generate.utility.ProblemSpecification.support">support (sweetpea.core.generate.utility.ProblemSpecification property)</a>
@@ -1882,11 +1868,11 @@
 </li>
       <li><a href="api/sweetpea.core.generate.tools.tool_error.html#sweetpea.core.generate.tools.tool_error.ToolError">ToolError</a>
 </li>
-      <li><a href="guide/factorial_design.html#term-transition"><strong>transition</strong></a>
-</li>
       <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Transition">Transition (in module sweetpea.primitives)</a>
 </li>
-      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.TransitionDerivation">TransitionDerivation (class in sweetpea.primitives)</a>
+      <li><a href="guide/factorial_design.html#term-transition-window"><strong>transition window</strong></a>
+</li>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.TransitionDerivationWindow">TransitionDerivationWindow (class in sweetpea.primitives)</a>
 </li>
       <li><a href="guide/factorial_design.html#term-trial"><strong>trial</strong></a>
 </li>
@@ -1980,14 +1966,12 @@
         <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.SimpleLevel.weight">(sweetpea.primitives.SimpleLevel attribute)</a>
 </li>
       </ul></li>
-      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Derivation.width">width (sweetpea.primitives.Derivation attribute)</a>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivationWindow.width">width (sweetpea.primitives.DerivationWindow attribute)</a>
 
       <ul>
-        <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.TransitionDerivation.width">(sweetpea.primitives.TransitionDerivation attribute)</a>
+        <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.TransitionDerivationWindow.width">(sweetpea.primitives.TransitionDerivationWindow attribute)</a>
 </li>
-        <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.WindowDerivation.width">(sweetpea.primitives.WindowDerivation attribute)</a>
-</li>
-        <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.WithinTrialDerivation.width">(sweetpea.primitives.WithinTrialDerivation attribute)</a>
+        <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.WithinTrialDerivationWindow.width">(sweetpea.primitives.WithinTrialDerivationWindow attribute)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -1996,15 +1980,13 @@
 </li>
       <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Window">Window (in module sweetpea.primitives)</a>
 </li>
-      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivedLevel.window">window (sweetpea.primitives.DerivedLevel property)</a>
-</li>
-      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.WindowDerivation">WindowDerivation (class in sweetpea.primitives)</a>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivedLevel.window">window (sweetpea.primitives.DerivedLevel attribute)</a>
 </li>
       <li><a href="guide/factorial_design.html#term-within-trial-derivation"><strong>within-trial derivation</strong></a>
 </li>
       <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.WithinTrial">WithinTrial (in module sweetpea.primitives)</a>
 </li>
-      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.WithinTrialDerivation">WithinTrialDerivation (class in sweetpea.primitives)</a>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.WithinTrialDerivationWindow">WithinTrialDerivationWindow (class in sweetpea.primitives)</a>
 </li>
   </ul></td>
 </tr></table>
