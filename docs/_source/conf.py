@@ -25,7 +25,7 @@ author = 'SweetPea Research Group'
 # -- General configuration ---------------------------------------------------
 
 # We use the Read the Docs theme for our Sphinx build.
-import sphinx_rtd_theme  # noqa
+import sphinx_rtd_theme
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -63,6 +63,11 @@ exclude_patterns = []
 # a list of builtin themes.
 #
 html_theme = 'sphinx_rtd_theme'
+
+# Configure the Read the Docs theme.
+html_theme_options = {
+    'collapse_navigation': False,
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
