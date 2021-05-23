@@ -1,7 +1,7 @@
 .. _guide_factorial_design:
 
 Factorial Experiment Design
----------------------------
+===========================
 
 SweetPea is a domain-specific programming language for creating factorial
 experimental designs. Our goal is to make it easy to specify and set up all of
@@ -28,7 +28,7 @@ decent introductory definition of a :term:`factorial experiment`:
 .. _guide_factorial_factors:
 
 Factors
-^^^^^^^
+-------
 
 A :term:`factor` is an independent variable in your experiment. In simple
 experiments, there may be only one factor --- in which case SweetPea is
@@ -45,7 +45,7 @@ multiple factors without issue, and SweetPea will help you plan this out.
 .. _guide_factorial_levels:
 
 Levels
-^^^^^^
+------
 
 In a factorial experimental design, each factor can take on one of a finite
 number of discrete possible values, called :term:`levels <level>`. To make this
@@ -55,7 +55,7 @@ more concrete, consider a simple example.
 .. _guide_factorial_example:
 
 Example
-^^^^^^^
+-------
 
 Imagine we are conducting an experiment to observe the `Stroop effect
 <https://en.wikipedia.org/wiki/Stroop_effect>`_. In a simple Stroop experiment,
@@ -79,7 +79,7 @@ combination of factors and levels. In other words, we must have :math:`4 \times
 .. _guide_factorial_derivations:
 
 Derivations
-^^^^^^^^^^^
+-----------
 
 A :term:`derivation` (or :term:`derived level`) is a new level produced by
 combining other :term:`levels <level>`. This combination of levels can be
@@ -95,7 +95,7 @@ detailed below.
 .. _guide_factorial_derivations_windows:
 
 Windows
-"""""""
+^^^^^^^
 
 A :term:`window` (constructed with :func:`sweetpea.primitives.window`) creates a
 level that is selected depending on a combination of levels from other factors
@@ -105,7 +105,7 @@ in the current trial and multiple preceding trials.
 .. _guide_factorial_derivations_transitions:
 
 Transitions
-"""""""""""
+^^^^^^^^^^^
 
 A :term:`transition` (constructed with :func:`sweetpea.primitives.transition`)
 describes a level that is selected depending on a combination of levels from
@@ -115,7 +115,7 @@ other factors in the current trial and the immediately preceding trial.
 .. _guide_factorial_derivations_within-trials:
 
 Within-Trials
-"""""""""""""
+^^^^^^^^^^^^^
 
 The :term:`within-trial derivations <within-trial derivation>` (constructed with
 :func:`sweetpea.primitives.within_trial`) describe a level that is selected
@@ -125,7 +125,7 @@ depending on levels from other factors, all within the same trial.
 .. _guide_factorial_glossary:
 
 Glossary
-^^^^^^^^
+--------
 
 .. glossary::
 
