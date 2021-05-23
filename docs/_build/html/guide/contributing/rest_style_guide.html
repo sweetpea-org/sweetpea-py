@@ -1,0 +1,640 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reStructuredText Style Guide &mdash; SweetPea  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Python Style Guide" href="py_style_guide.html" />
+    <link rel="prev" title="Contributing to the Documentation" href="documentation.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> SweetPea
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../guide.html">SweetPea Guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../installation.html">Installation and Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#automated-installation-from-the-python-package-index">Automated Installation from the Python Package Index</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#manual-installation-from-source">Manual Installation from Source</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#contributing-to-sweetpea-development">Contributing to SweetPea Development</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../factorial_design.html">Factorial Experiment Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../factorial_design.html#factors">Factors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../factorial_design.html#levels">Levels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../factorial_design.html#example">Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../factorial_design.html#derivations">Derivations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../factorial_design.html#windows">Windows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../factorial_design.html#transitions">Transitions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../factorial_design.html#within-trials">Within-Trials</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../factorial_design.html#glossary">Glossary</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html">Using SweetPea</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../contributing.html">Contributing to SweetPea</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="issues.html">Using the GitHub Issue Tracker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="development.html">Developing SweetPea</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="development.html#configuring-your-development-environment">Configuring Your Development Environment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="development.html#repository-organization">Repository Organization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="development.html#workflows">Workflows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="development.html#pull-requests">Pull Requests</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="documentation.html">Contributing to the Documentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="documentation.html#installing-dependencies">Installing Dependencies</a></li>
+<li class="toctree-l4"><a class="reference internal" href="documentation.html#building-the-documentation">Building the Documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="documentation.html#automatic-vs-manual-documentation">Automatic vs Manual Documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="documentation.html#contributing-to-the-automatic-documentation">Contributing to the Automatic Documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="documentation.html#style-guides">Style Guides</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">reStructuredText Style Guide</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#general">General</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#docstrings">Docstrings</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="py_style_guide.html">Python Style Guide</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="py_style_guide.html#note-on-pep-8">Note on PEP 8</a></li>
+<li class="toctree-l4"><a class="reference internal" href="py_style_guide.html#maximum-line-length">Maximum Line Length</a></li>
+<li class="toctree-l4"><a class="reference internal" href="py_style_guide.html#blank-lines">Blank Lines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="py_style_guide.html#imports">Imports</a></li>
+<li class="toctree-l4"><a class="reference internal" href="py_style_guide.html#string-quotes">String Quotes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="py_style_guide.html#trailing-commas">Trailing Commas</a></li>
+<li class="toctree-l4"><a class="reference internal" href="py_style_guide.html#comments">Comments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="py_style_guide.html#type-checking-or-linting-overrides">Type-Checking or Linting Overrides</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">SweetPea API Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../api/sweetpea.html">sweetpea package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sweetpea.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.core.html">sweetpea.core package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.sampling_strategies.html">sweetpea.sampling_strategies package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.tests.html">sweetpea.tests package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sweetpea.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.backend.html">sweetpea.backend module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.base_constraint.html">sweetpea.base_constraint module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.blocks.html">sweetpea.blocks module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.combinatorics.html">sweetpea.combinatorics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.constraints.html">sweetpea.constraints module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.derivation_processor.html">sweetpea.derivation_processor module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.design_graph.html">sweetpea.design_graph module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.design_partitions.html">sweetpea.design_partitions module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.encoding_diagram.html">sweetpea.encoding_diagram module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.internal.html">sweetpea.internal module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.logic.html">sweetpea.logic module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.metrics.html">sweetpea.metrics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.primitives.html">sweetpea.primitives module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.server.html">sweetpea.server module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">SweetPea</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../guide.html">SweetPea Guide</a> &raquo;</li>
+        
+          <li><a href="../contributing.html">Contributing to SweetPea</a> &raquo;</li>
+        
+      <li>reStructuredText Style Guide</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../_sources/guide/contributing/rest_style_guide.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="restructuredtext-style-guide">
+<span id="rest-style-guide"></span><h1>reStructuredText Style Guide<a class="headerlink" href="#restructuredtext-style-guide" title="Permalink to this headline">¶</a></h1>
+<p>SweetPea’s documentation is written in a consistent style of reStructredText
+(reST). This helps with managing contributions and makes it easier to read in
+code. This section details the specifics of SweetPea’s reST style.</p>
+<div class="section" id="general">
+<h2>General<a class="headerlink" href="#general" title="Permalink to this headline">¶</a></h2>
+<p>We restrict reST documentation to not go past the 80th character of a line,
+except where absolutely necessary due to potential formatting errors. (For
+example, a long hyperlink may extend past the 80th column, but additional text
+within the same sentence as that hyperlink should be put on separate lines to
+accommodate this rule to the greatest extent possible.)</p>
+<div class="section" id="roles">
+<h3>Roles<a class="headerlink" href="#roles" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="https://www.sphinx-doc.org/en/master/usage/restructuredtext/roles.html">Roles</a> (reST
+items surrounded by colons, like <code class="docutils literal notranslate"><span class="pre">:role:</span></code>) are each preceded by one empty
+line.</p>
+<p>If the role has an argument, such as <code class="docutils literal notranslate"><span class="pre">:class:`MyClass`</span></code>, then it immediately
+follows the role’s declaration. If the role offsets some additional text, such
+as the <code class="docutils literal notranslate"><span class="pre">:returns:</span></code> role used in documenting function return values, then the
+body text is set on the immediately following line, indented by 4 spaces.</p>
+</div>
+<div class="section" id="directives">
+<h3>Directives<a class="headerlink" href="#directives" title="Permalink to this headline">¶</a></h3>
+<p>Like roles, <a class="reference external" href="https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html">directives</a>
+(reST items preceded by double-dots and followed by double-colons, like <code class="docutils literal notranslate"><span class="pre">..</span>
+<span class="pre">directive::</span></code>) are each preceded by one empty line.</p>
+<p>Directives are then followed by one empty line, and the content text begins on
+the next line after that. Content text is indented by 4 spaces.</p>
+</div>
+<div class="section" id="commonly-used-roles-and-directives">
+<h3>Commonly Used Roles and Directives<a class="headerlink" href="#commonly-used-roles-and-directives" title="Permalink to this headline">¶</a></h3>
+<p>You may use any roles or directives you find useful, but there are a number of
+them that we already make frequent use of:</p>
+<div class="section" id="id3">
+<h4>Roles<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">:math:`&lt;LaTeX</span> <span class="pre">math</span> <span class="pre">code&gt;`</span></code></dt><dd><p>Renders the given <code class="docutils literal notranslate"><span class="pre">&lt;LaTeX</span> <span class="pre">math</span> <span class="pre">code&gt;</span></code>. See the <a class="reference external" href="https://www.sphinx-doc.org/en/master/usage/extensions/math.html">Sphinx documentation on
+how to do math</a>.</p>
+</dd>
+</dl>
+<div class="section" id="linking-roles">
+<h5>Linking Roles<a class="headerlink" href="#linking-roles" title="Permalink to this headline">¶</a></h5>
+<p>There are a number of roles that form hyperlinks. These can link within the same
+documentation, to other documentation (via InterSphinx), or to external
+websites. All of these roles can be used in two ways:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">:&lt;role&gt;:`&lt;link&gt;`</span></code></dt><dd><p>Creates a hyperlink to resource <code class="docutils literal notranslate"><span class="pre">&lt;link&gt;</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">:&lt;role&gt;:`link</span> <span class="pre">text</span> <span class="pre">&lt;link&gt;`</span></code></dt><dd><p>Creates a hyperlink to resource <code class="docutils literal notranslate"><span class="pre">&lt;link&gt;</span></code>, but displays as <code class="docutils literal notranslate"><span class="pre">link</span> <span class="pre">text</span></code>.</p>
+</dd>
+</dl>
+<p>We omit the second variety in the following documentation, but it is equally
+valid in all cases.</p>
+<dl>
+<dt><code class="docutils literal notranslate"><span class="pre">:ref:`&lt;reference_link&gt;`</span></code></dt><dd><p>Creates a cross-referencing link to the reST section titled
+<code class="docutils literal notranslate"><span class="pre">&lt;reference_link&gt;</span></code> within the same documentation.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">:mod:`&lt;module_name&gt;`</span></code></dt><dd><p>Links to the documentation on the Python module <code class="docutils literal notranslate"><span class="pre">&lt;module_name&gt;</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">:class:`&lt;class_name&gt;`</span></code></dt><dd><p>Links to the documentation on the Python class <code class="docutils literal notranslate"><span class="pre">&lt;class_name&gt;</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">:func:`&lt;func_name&gt;`</span></code></dt><dd><p>Links to the documentation on the Python function <code class="docutils literal notranslate"><span class="pre">&lt;func_name&gt;</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">:func:</span></code> role is also used for documenting methods within classes!</p>
+</div>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">:attr:`&lt;attr_name&gt;`</span></code></dt><dd><p>Links to the documentation on the Python attribute <code class="docutils literal notranslate"><span class="pre">&lt;attr_name&gt;</span></code>.
+Attributes are parts of classes that include fields and methods. Prefer
+<code class="docutils literal notranslate"><span class="pre">:func:</span></code> for linking to methods, though, unless they are decorated with
+the <code class="docutils literal notranslate"><span class="pre">&#64;property</span></code> decorator, in which case use <code class="docutils literal notranslate"><span class="pre">:attr:</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">:term:`&lt;term_name&gt;`</span></code></dt><dd><p>Links to the glossary entry to the term <code class="docutils literal notranslate"><span class="pre">&lt;term_name&gt;</span></code> on the same page.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">:term:</span></code> role can only be used in conjunction with the
+<code class="docutils literal notranslate"><span class="pre">glossary</span></code> directive (documented below).</p>
+</div>
+</dd>
+</dl>
+</div>
+<div class="section" id="in-function-and-class-docstrings">
+<h5>In Function and Class Docstrings<a class="headerlink" href="#in-function-and-class-docstrings" title="Permalink to this headline">¶</a></h5>
+<p>These are roles that are only used inside docstrings for functions and classes.</p>
+<dl>
+<dt><code class="docutils literal notranslate"><span class="pre">:param</span> <span class="pre">&lt;param_name&gt;:</span></code></dt><dd><p>Documents parameter <code class="docutils literal notranslate"><span class="pre">&lt;param_name&gt;</span></code> of the function being documented. This
+is also used in class docstrings, which implicitly document the <code class="docutils literal notranslate"><span class="pre">__init__</span></code>
+method. The description should begin on the next line, indented by four
+spaces.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">:type</span> <span class="pre">&lt;param_name&gt;:</span> <span class="pre">&lt;type&gt;</span></code></dt><dd><p>Documents the type of parameter <code class="docutils literal notranslate"><span class="pre">&lt;param_name&gt;</span></code> as being <code class="docutils literal notranslate"><span class="pre">&lt;type&gt;</span></code>.
+Usually only necessary in class docstrings. The type should go on the same
+line, unless it is very long (in which case it goes on the next line,
+indented by four spaces).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You may put <code class="docutils literal notranslate"><span class="pre">:type:</span></code> roles on the line immediately following a
+<code class="docutils literal notranslate"><span class="pre">:param:</span></code>’s description, instead of separating with a line as would
+usually be done. There should still be a blank line after the <code class="docutils literal notranslate"><span class="pre">:type:</span></code>
+line, though.</p>
+</div>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">:returns:</span></code></dt><dd><p>Documents the return value of a function. The description should begin on
+the next line, indented by four spaces.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">:rtype:</span> <span class="pre">&lt;type&gt;</span></code></dt><dd><p>Documents the return type of a function as being <code class="docutils literal notranslate"><span class="pre">&lt;type&gt;</span></code>. Follows the
+same conventions as <code class="docutils literal notranslate"><span class="pre">:type:</span></code>, documented above.</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="id4">
+<h4>Directives<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h4>
+<dl>
+<dt><code class="docutils literal notranslate"><span class="pre">..</span> <span class="pre">code-block::</span> <span class="pre">&lt;optional_language_specification&gt;</span></code></dt><dd><p>Begins a literal code block. If a language is specified, syntax highlighting
+will be used. (We only use <code class="docutils literal notranslate"><span class="pre">python</span></code> and <code class="docutils literal notranslate"><span class="pre">rest</span></code> so far.)</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">code-block</span></code> directive is smart and can handle multiple line breaks.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">..</span> <span class="pre">glossary::</span></code></dt><dd><p>Creates a glossary of terms where each term has a definition and can be
+linked to with the <code class="docutils literal notranslate"><span class="pre">:term:</span></code> role.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">..</span> <span class="pre">toctree::</span></code></dt><dd><p>Creates a table of contents tree. The <code class="docutils literal notranslate"><span class="pre">toctree</span></code> directive is used on any
+page that collects other pages of documentation, such as
+<cite>docs/_source/index.rst</cite>.</p>
+</dd>
+</dl>
+<div class="section" id="in-the-python-code">
+<h5>In the Python Code<a class="headerlink" href="#in-the-python-code" title="Permalink to this headline">¶</a></h5>
+<p>There is generally not need for use of directives within the Python docstrings,
+but we do make regular use of admonitions. Admonitions are directives which get
+styled as a colored box of text and are useful for making warnings or pointing
+out particularly noteworthy bits of information. The common admonitions are:</p>
+<dl>
+<dt><code class="docutils literal notranslate"><span class="pre">..</span> <span class="pre">deprecated::</span> <span class="pre">&lt;deprecated_version&gt;</span></code></dt><dd><p>Documents when the code has been deprecated. The <code class="docutils literal notranslate"><span class="pre">&lt;deprecated_version&gt;</span></code> is
+a required argument, and should indicate the version of SweetPea in which
+the code was deprecated. The description on the next line is optional, but
+if present should be short and tell what to use instead.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">..</span> <span class="pre">note::</span></code></dt><dd><p>Generally used to document information for a user of the code. Notes should
+convey interesting information, including behavior that may be slightly
+unintuitive or mildly surprising. Notes can also be used for clarification
+when that seems useful.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Notes should not be used for behavior that is potentially dangerous or
+especially misleading. Prefer the <code class="docutils literal notranslate"><span class="pre">warning</span></code> directive for those cases.</p>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">note</span></code> directive is for documentation. Prefer <code class="docutils literal notranslate"><span class="pre">#</span> <span class="pre">NOTE:</span> <span class="pre">...</span></code> block
+comments for notes about the code itself.</p>
+</div>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">..</span> <span class="pre">tip::</span></code></dt><dd><p>A handy tip about using the code being discussed. These are generally gentle
+reminders of something a user may have forgotten, but should not contain
+critical information.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">..</span> <span class="pre">todo::</span></code></dt><dd><p>Incomplete code or documentation. We generally prefer block comments for
+code to-dos, but a <code class="docutils literal notranslate"><span class="pre">todo</span></code> directive is more appropriate when it’s marking
+documentation that needs to be finished in the middle of a larger docstring.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">..</span> <span class="pre">warning::</span></code></dt><dd><p>Similar to <code class="docutils literal notranslate"><span class="pre">note</span></code>, but more severe. Warnings should be used to document
+cases where the code may behave surprisingly, such as unexpected
+side-effects.</p>
+</dd>
+</dl>
+<p>Note that there are more admonitions than these, and custom admonitions can be
+written with the <code class="docutils literal notranslate"><span class="pre">admonition</span></code> directive, but these are the ones we currently
+use in the Python code.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="docstrings">
+<h2>Docstrings<a class="headerlink" href="#docstrings" title="Permalink to this headline">¶</a></h2>
+<p>Python docstrings are triple-quoted strings that are inserted immediately
+<em>after</em> the construct they document. For example, if we wanted to document a
+function <code class="docutils literal notranslate"><span class="pre">foo</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">foo</span><span class="p">(</span><span class="n">arg1</span><span class="p">:</span> <span class="n">Type1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">:</span> <span class="n">Type2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReturnType</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Returns the result of fooing ``arg1`` with ``arg2``.</span>
+
+<span class="sd">    :param arg1:</span>
+<span class="sd">        A good argument.</span>
+
+<span class="sd">    :param arg2:</span>
+<span class="sd">        Another good argument.</span>
+
+<span class="sd">    :returns:</span>
+<span class="sd">        Some nifty thing or other.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># This is the actual function implementation.</span>
+    <span class="k">return</span> <span class="n">do_a_foo</span><span class="p">(</span><span class="n">arg1</span><span class="p">,</span> <span class="n">arg2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Even in docstrings, we restrict reST code to go no further than the 80th column
+in a line.</p>
+<div class="section" id="functions">
+<span id="rest-style-guide-functions"></span><h3>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h3>
+<p>Function docstrings should be written in the present tense with active voice,
+giving the function agency. For example, a function that adds two numbers might
+be documented as:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="n">lhs</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">rhs</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Adds ``lhs`` to ``rhs`` and returns the result.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        This function is just a big wrapper for ``+``.</span>
+
+<span class="sd">    :param lhs:</span>
+<span class="sd">        The left-hand side of the addition.</span>
+
+<span class="sd">    :param rhs:</span>
+<span class="sd">        The right-hand side of the addition.</span>
+
+<span class="sd">    :returns:</span>
+<span class="sd">        The result of adding the numbers.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">lhs</span> <span class="o">+</span> <span class="n">rhs</span>
+</pre></div>
+</div>
+<div class="section" id="style-notes">
+<h4>Style Notes<a class="headerlink" href="#style-notes" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li><p>We use the double quotation mark <code class="docutils literal notranslate"><span class="pre">&quot;</span></code>.</p></li>
+<li><p>The documentation begins on the same line as the initial triple quote <code class="docutils literal notranslate"><span class="pre">&quot;&quot;&quot;</span></code>.</p></li>
+<li><p>If the content is short enough to fit on one line and also fit the closing
+triple quote within the 80-character line length limit, the closing triple
+quote goes on the same line.</p></li>
+<li><p>If the content itself fits within the 80-character line length limit but the
+closing triple quote does not, the closing triple quote is placed on its own
+line.</p></li>
+<li><p>In all other cases, the closing triple quote goes on its own line.</p></li>
+<li><p>The function body begins on the line immediately after the closing triple
+quote in every case. (Note that code comments beginning with <code class="docutils literal notranslate"><span class="pre">#</span></code> are counted
+as part of the function body.)</p></li>
+</ul>
+</div>
+<div class="section" id="content-notes">
+<h4>Content Notes<a class="headerlink" href="#content-notes" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li><p>The description of the function should be thorough enough to fully explain the
+function’s purpose and how to use it, but it should not degrade into examples
+or detailed explanations of experimental designs unless such examples are
+absolutely necessary. Broader discussion of experimental design should be
+relegated to <a class="reference internal" href="../../guide.html#guide"><span class="std std-ref">the guide</span></a>.</p></li>
+<li><p>Parameters are documented <em>after</em> the function description.</p></li>
+<li><p>All parameters are explicitly documented separately with <code class="docutils literal notranslate"><span class="pre">:param</span> <span class="pre">___:</span></code>.</p></li>
+<li><p>The function’s return value is documented with <code class="docutils literal notranslate"><span class="pre">:returns:</span></code> <em>after</em> the
+parameters.</p></li>
+<li><p>All reST <a class="reference external" href="https://www.sphinx-doc.org/en/master/usage/restructuredtext/roles.html">roles</a>
+(such as <code class="docutils literal notranslate"><span class="pre">:param</span> <span class="pre">___:</span></code> and <code class="docutils literal notranslate"><span class="pre">:returns:</span></code>) are preceded by an empty line.</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Permalink to this headline">¶</a></h3>
+<p>Class docstrings begin just after the class definition begins, and should
+describe what an abstract instance of that class is for. Note that the rules for
+placing the closing triple quote are the same as those for <a class="reference internal" href="#rest-style-guide-functions"><span class="std std-ref">functions</span></a>.</p>
+<p>Class docstrings should be written in place of docstrings on <code class="docutils literal notranslate"><span class="pre">__init__</span></code>
+methods, because many classes are written <em>without</em> an <code class="docutils literal notranslate"><span class="pre">__init__</span></code> (such as
+those made with <a class="reference external" href="https://docs.python.org/3.7/library/dataclasses.html#dataclasses.dataclass" title="(in Python v3.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">dataclasses.dataclass()</span></code></a>). The class docstrings should
+document all of the parameters to the initialization process, including
+<code class="xref py py-class docutils literal notranslate"><span class="pre">InitVars</span></code> and the like.</p>
+<p>Unlike docstrings for functions, class docstrings should <em>always</em> be followed by
+an empty line.</p>
+<div class="section" id="attributes">
+<h4>Attributes<a class="headerlink" href="#attributes" title="Permalink to this headline">¶</a></h4>
+<p>In most cases, <em>all</em> public attributes (fields and methods) should be
+documented.</p>
+<p>Fields cannot be documented with docstrings, and instead are documented with a
+modified form of the Python line comment using <code class="docutils literal notranslate"><span class="pre">#:</span></code> instead of <code class="docutils literal notranslate"><span class="pre">#</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">FieldExample</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;An example for documenting a field.</span>
+
+<span class="sd">    :param field:</span>
+<span class="sd">        The field we&#39;re making an example of.</span>
+<span class="sd">    :type field: int</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1">#: An integer field in the :class:`.FieldExample`.</span>
+    <span class="n">field</span><span class="p">:</span> <span class="nb">int</span>
+</pre></div>
+</div>
+<p>The style of these comments is identical to that of docstrings, except that each
+line must begin with <code class="docutils literal notranslate"><span class="pre">#:</span></code>. If you want to include a regular (non-reST) comment
+about a field, it must go <em>before</em> the <code class="docutils literal notranslate"><span class="pre">#:</span></code> or else Sphinx will not build the
+documentation correctly.</p>
+<p>If a field is overriding some default value set by a superclass, the child
+class’s field does not necessarily need to be documented. Consider the following
+example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">Parent</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;The parent class in this example.</span>
+
+<span class="sd">    :param field:</span>
+<span class="sd">        The field we&#39;re making an example of.</span>
+<span class="sd">    :type field: int</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1">#: An integer field for example.</span>
+    <span class="n">field</span><span class="p">:</span> <span class="nb">int</span>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">Child</span><span class="p">(</span><span class="n">Parent</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The child class in this example. Note that the :attr:`.field` field</span>
+<span class="sd">    does not have a ``#:`` reST comment accompanying it.</span>
+
+<span class="sd">    :param field:</span>
+<span class="sd">        The field we&#39;re making an example of. Note the nifty new default</span>
+<span class="sd">        value!</span>
+<span class="sd">    :type field: int</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">field</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">42</span>
+</pre></div>
+</div>
+<p>Though not required, it is also encouraged to document atypical non-public
+attributes in the same manner as if they were public. By this we mean that you
+can omit documentation for common non-public attributes, like double-underscore
+methods (e.g., <code class="docutils literal notranslate"><span class="pre">__str__</span></code>), but we encourage documentation for custom or unique
+non-public fields.</p>
+</div>
+</div>
+<div class="section" id="modules">
+<h3>Modules<a class="headerlink" href="#modules" title="Permalink to this headline">¶</a></h3>
+<p>Modules should also have docstrings that explain the purpose and use of the
+module. Module docstrings are written beginning on the very first line of the
+module. All modules should have a module docstring.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="py_style_guide.html" class="btn btn-neutral float-right" title="Python Style Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="documentation.html" class="btn btn-neutral float-left" title="Contributing to the Documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, SweetPea Research Group.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
