@@ -10,7 +10,7 @@ from __future__ import annotations
 __all__ = [
     'Level', 'SimpleLevel', 'DerivedLevel', 'ElseLevel',
     'Factor', 'SimpleFactor', 'DerivedFactor',
-    'Derivation', 'WithinTrialDerivation', 'TransitionDerivation', 'WindowDerivation',
+    'DerivationWindow', 'WithinTrialDerivationWindow', 'TransitionDerivationWindow',
     'get_external_level_name', 'get_internal_level_name',
     'WithinTrial', 'Transition', 'Window',
 ]
@@ -198,8 +198,8 @@ class SimpleLevel(Level):
 class DerivedLevel(Level):
     """A :class:`.Level` representing the intersection of other levels,
     potentially from different :class:`Factors <.Factor>`. These are produced
-    through use of :class:`Derivations <.Derivation>`, which are constraints on
-    level selection during trial sampling.
+    through use of :class:`DerivationWindows <.DerivationWindow>`, which are
+    constraints on level selection during trial sampling.
 
     For more information on when to use derived levels, consult :ref:`the
     Derivations section of the SweetPea guide <guide_factorial_derivations>`.
@@ -207,12 +207,13 @@ class DerivedLevel(Level):
     :param name:
         The name of the level.
 
-    :param derivation:
-        A :class:`.Derivation` used in producing a cross product of this level
+    :param window:
+        A :class:`.DerivationWindow` used in producing a cross product of this
+        level.
     """
 
-    #: The derivation corresponding to this level.
-    derivation: Derivation = field(compare=False)
+    #: The derivation window corresponding to this level.
+    window: DerivationWindow = field(compare=False)
 
     weight: InitVar[int] = 1
 
@@ -224,21 +225,21 @@ class DerivedLevel(Level):
         super().__post_init__()
         # NOTE: This check is for backwards compatibility. It should instead be
         #       handled by type-checking.
-        if not isinstance(self.derivation, Derivation):
-            raise TypeError(f"DerivedLevel must be given a Derivation; got {type(self.derivation).__name__}.")
+        if not isinstance(self.window, DerivationWindow):
+            raise TypeError(f"DerivedLevel must be given a DerivationWindow; got {type(self.window).__name__}.")
         self._weight = weight
         # Verify internal factors' strides.
-        for factor in self.derivation.factors:
+        for factor in self.window.factors:
             if (isinstance(factor, DerivedFactor)
-                and factor.has_complex_derivation
-                and factor.levels[0].derivation.stride > 1):
+                and factor.has_complex_window
+                and factor.levels[0].window.stride > 1):
                 raise ValueError(f"{type(self).__name__} does not accept factors with stride > 1, but factor "
-                                 f"{factor.name} has derivation with stride {factor.first_level.derivation.stride}.")
+                                 f"{factor.name} has window with stride {factor.first_level.window.stride}.")
         # Expand the factors. Each factor gets duplicated according to the
-        # derivation width.
+        # derivation window width.
         # TODO: Why is `DerivedLevel` manipulating the internal state of
-        #       `Derivation`? This should probably be moved to a
-        #       `Derivation` method.
+        #       `DerivationWindow`? This should probably be moved to a
+        #       `DerivationWindow` method.
         # TODO: This could probably be handled a different way, too.
         # FIXME: Okay, this is becoming a nuisance.
         #        In the original code, this expansion modifies the
@@ -252,9 +253,9 @@ class DerivedLevel(Level):
         #        the factors. We need a less confusing --- and more
         #        semantically consistent --- way of managing this information.
         expanded_factors: List[Factor] = []
-        for factor in self.derivation.factors:
-            expanded_factors.extend([factor] * self.derivation.width)
-        self.derivation.factors = expanded_factors
+        for factor in self.window.factors:
+            expanded_factors.extend([factor] * self.window.width)
+        self.window.factors = expanded_factors
 
     def get_dependent_cross_product(self) -> List[Tuple[Level, ...]]:
         """Produces a list of n-tuples, where each tuple represents a unique
@@ -286,18 +287,7 @@ class DerivedLevel(Level):
 
         :rtype: typing.List[typing.Tuple[.Level, ...]]
         """
-        return list(product(*(factor.levels for factor in self.derivation.factors)))
-
-    # TODO: REMOVE (backwards compatibility)
-    @property
-    def window(self) -> Derivation:
-        """An alias for :attr:`.DerivedLevel.derivation`.
-
-        .. deprecated:: 0.1.0
-
-            This property will be removed in favor of
-            :attr:`.DerivedLevel.derivation`."""
-        return self.derivation
+        return list(product(*(factor.levels for factor in self.window.factors)))
 
 
 @dataclass(eq=False)
@@ -319,23 +309,23 @@ class ElseLevel(Level):
             constructing the new level.
         """
         if not other_levels:
-            return DerivedLevel(self.name, WithinTrialDerivation(lambda: False, []))
+            return DerivedLevel(self.name, WithinTrialDerivationWindow(lambda: False, []))
         first_level = other_levels[0]
         # TODO: This is very odd. We only take every *n*th factor from the
-        #       derivation (where *n* is the derivation width). This is because
-        #       the initializer for `DerivedLevel`s expands the list of factors
-        #       to duplicate by the width.
+        #       derivation window (where *n* is the window's width). This is
+        #       because the initializer for `DerivedLevel`s expands the list of
+        #       factors to duplicate by the width.
         #           It seems like this should be rethought. Why go through the
         #       trouble of duplicating the factors only to de-duplicate them
         #       later? Perhaps `DerivedLevel`s need a different internal
         #       representation to avoid this real duplication.
-        factors = first_level.derivation.factors[::first_level.derivation.width]
+        factors = first_level.window.factors[::first_level.window.width]
         # TODO: This exhibits the same issue as the preceding TODO.
-        derivation = WindowDerivation(lambda *args: not any(map(lambda l: l.derivation.predicate(*args), other_levels)),
-                                      factors,
-                                      first_level.derivation.width,
-                                      first_level.derivation.stride)
-        return DerivedLevel(self.name, derivation)
+        window = DerivationWindow(lambda *args: not any(map(lambda l: l.window.predicate(*args), other_levels)),
+                                  factors,
+                                  first_level.window.width,
+                                  first_level.window.stride)
+        return DerivedLevel(self.name, window)
 
 
 ###############################################################################
@@ -543,18 +533,18 @@ class Factor:
         return isinstance(self, DerivedFactor)
 
     @property
-    def has_complex_derivation(self) -> bool:
-        """Whether this factor has a complex derivation.
+    def has_complex_window(self) -> bool:
+        """Whether this factor has a complex derivation window.
 
-        A complex derivation is a property of derived factors whose first-level
-        derivations are considered complex.
+        A complex derivation window is a window  of derived factors whose
+        first-level derivations are themselves considered complex.
         """
         if not isinstance(self, DerivedFactor):
             return False
-        derivation = self.first_level.derivation
-        return (derivation.width > 1
-                or derivation.stride > 1
-                or derivation.is_complex)
+        window = self.first_level.window
+        return (window.width > 1
+                or window.stride > 1
+                or window.is_complex)
 
     def applies_to_trial(self, trial_number: int) -> bool:
         """Whether this factor applies to the given trial. For example, factors
@@ -570,14 +560,14 @@ class Factor:
         if not isinstance(self, DerivedFactor):
             return True
 
-        def acc_width(d: Derivation) -> int:
-            if isinstance(d.first_factor, DerivedFactor) and d.first_factor.has_complex_derivation:
-                return d.width + acc_width(d.first_factor.first_level.derivation) - 1
+        def acc_width(d: DerivationWindow) -> int:
+            if isinstance(d.first_factor, DerivedFactor) and d.first_factor.has_complex_window:
+                return d.width + acc_width(d.first_factor.first_level.window) - 1
             return d.width
 
-        derivation = self.first_level.derivation
-        return (trial_number >= acc_width(derivation)
-                and (trial_number - derivation.width) % derivation.stride == 0)
+        window = self.first_level.window
+        return (trial_number >= acc_width(window)
+                and (trial_number - window.width) % window.stride == 0)
 
     # TODO: REMOVE. (backwards compatibility)
     @property
@@ -606,18 +596,6 @@ class Factor:
                     ...
         """
         return name in self
-
-    # TODO: REMOVE. (backwards compatibility)
-    def has_complex_window(self) -> bool:
-        """A method alias for the :attr:`.Factor.has_complex_derivation`
-        property.
-
-        .. deprecated:: 0.1.0
-
-            This method will be removed in favor of
-            :attr:`.Factor.has_complex_derivation`.
-        """
-        return self.has_complex_derivation
 
 
 @dataclass
@@ -711,18 +689,18 @@ class DerivedFactor(Factor):
                 raise ValueError(f"Cannot use {type(level).__name__} to create a {type(self).__name__}. "
                                  f"Only DerivedLevels and ElseLevels are allowed.")
         # Then, we do some validation.
-        expected_size = adjusted_levels[0].derivation.size
+        expected_size = adjusted_levels[0].window.size
         for level in adjusted_levels[1:]:
-            if level.derivation.size != expected_size:
+            if level.window.size != expected_size:
                 raise ValueError(f"Expected all DerivedLevels' derivations in factor {self.name} to have size "
-                                 f"{expected_size}, but level {level.name} has derivation of size "
-                                 f"{level.derivation.size}.")
-        expected_factors = adjusted_levels[0].derivation.factors
+                                 f"{expected_size}, but level {level.name} has a derivation window of size "
+                                 f"{level.window.size}.")
+        expected_factors = adjusted_levels[0].window.factors
         for level in adjusted_levels[1:]:
-            if level.derivation.factors != expected_factors:
+            if level.window.factors != expected_factors:
                 raise ValueError(f"Expected all DerivedLevels' derivations in factor {self.name} to use factors "
-                                 f"{expected_factors}, but level {level.name}'s derivation uses factors "
-                                 f"{level.derivation.factors}.")
+                                 f"{expected_factors}, but level {level.name}'s derivation window uses factors "
+                                 f"{level.window.factors}.")
         return adjusted_levels
 
     # NOTE: See note on `SimpleFactor.__hash__`.
@@ -743,24 +721,22 @@ class DerivedFactor(Factor):
 
 ###############################################################################
 ##
-## Derivations
+## Derivation Windows
 ##
 
 
 @dataclass
-class Derivation:
-    """A mechanism to specify the process of derivation. For detailed
-    information, see :ref:`the SweetPea guide's section on derivations
-    <guide_factorial_derivations>`.
+class DerivationWindow:
+    """A mechanism to specify the window of a derivation. Derivation windows
+    are used to inform a derivation based on levels from other factors in the
+    current trial and, potentially, multiple preceding trials.
 
-    .. note::
-
-        The :class:`.Derivation` class cannot be directly instantiated. Use one
-        of the subclasses instead.
+    For detailed information, see the SweetPea guide's :ref:`section on
+    derivation windows <guide_factorial_derivation_windows>`.
 
     :param predicate:
         A predicate function used during derivation. Different derivation
-        mechanisms require different forms of predicates.
+        windows require different forms of predicates.
 
         .. warning::
 
@@ -769,13 +745,13 @@ class Derivation:
     :type predicate: typing.Callable[[Any, ....], bool]
 
     :param factors:
-        The factors upon which this derivation depends.
+        The factors upon which this derivation window depends.
     :type factors: typing.Sequence[.Factor]
 
     :param width:
-        The number of trials that this derivation depends upon. The current
-        trial must be included, so the number must be greater than or equal to
-        ``1``.
+        The number of trials that this derivation window depends upon. The
+        current trial must be included, so the number must be greater than or
+        equal to ``1``.
     :type width: int
 
     :param stride:
@@ -789,42 +765,37 @@ class Derivation:
     #       provide an easier API for users of SweetPea.
     # TODO: Alternatively, we could just make this class-private and provide a
     #       method that takes the arguments and returns the result.
-    #: The predicate used for producing this derivation.
+    #: The predicate used during derivation with this window.
     predicate: Callable
 
     #: The factors upon which this derivation depends.
     factors: List[Factor]
 
     # TODO: Rename this to something more clear.
-    #: The width of this derivation.
+    #: The width of this window.
     width: int
 
-    #: The stride of this derivation.
+    #: The stride of this window.
     stride: int
 
     #: The number of factors that originally came in, disregarding any
     #: expansion caused by a :class:`.DerivedLevel` changing things.
     initial_factor_count: int = field(init=False)
 
-    def __new__(cls, *_, **__):
-        if cls == Derivation:
-            raise NotImplementedError(f"Cannot directly instantiate {cls.__name__}.")
-        return super().__new__(cls)
-
     def __post_init__(self):
         # NOTE: We check the types for backwards compatibility, but it should
         #       be handled with type-checking.
         if not callable(self.predicate):
-            raise TypeError(f"Derivation expected predicate function; got {self.predicate}.")
+            raise TypeError(f"DerivationWindow expected predicate function; got {self.predicate}.")
         for factor in self.factors:
             if not isinstance(factor, Factor):
-                raise TypeError(f"Derivation must be composed of Factors; got {factor}.")
+                raise TypeError(f"DerivationWindow must be composed of Factors; got {factor}.")
         # TODO: Validate the predicate accepts the same number of arguments as
         #       factors in `self.factors`.
         if self.width < 1:
-            raise ValueError(f"A {type(self).__name__} derivation must have a width of at least 1.")
+            raise ValueError(f"A {type(self).__name__} derivation window must have a width of at least 1.")
         if self.stride < 1:
-            raise ValueError(f"A {type(self).__name__} derivation must have a stride of at least 1.")
+            raise ValueError(f"A {type(self).__name__} derivation window must have a stride of at least 1.")
         found_factor_names = set()
         for factor in self.factors:
             if factor.name in found_factor_names:
@@ -834,7 +805,7 @@ class Derivation:
 
     @property
     def size(self) -> Tuple[int, int]:
-        """The width and stride of this derivation.
+        """The width and stride of this derivation window as a pair.
 
         :rtype: typing.Tuple[int, int]
         """
@@ -850,60 +821,62 @@ class Derivation:
 
     @property
     def is_complex(self) -> bool:
-        """Whether this derivation is considered *complex*. A complex
-        derivation is one for which at least one of the following is true:
+        """Whether this derivation window is considered *complex*. A complex
+        derivation windowis one for which at least one of the following is
+        true:
 
-        - The derivation's :attr:`.width` is greater than ``1``.
-        - The derivation's :attr:`.stride` is greater than ``1``.
-        - The derivation's :attr:`.first_factor` is a complex derived factor.
+        - The window's :attr:`.width` is greater than ``1``.
+        - The window's :attr:`.stride` is greater than ``1``.
+        - The window's :attr:`.first_factor` is a complex derived factor.
 
         :rtype: bool
         """
         return (self.width > 1
                 or self.stride > 1
-                or self.first_factor.has_complex_derivation)
+                or self.first_factor.has_complex_window)
 
     # TODO: REMOVE. (backwards compatibility)
     @property
     def args(self) -> List[Factor]:
-        """An alias for :attr:`.Derivation.factors`.
+        """An alias for :attr:`.DerivationWindow.factors`.
 
         :rtype: typing.List[.Factor]
 
         .. deprecated:: 0.1.0
 
             This property will be removed in favor of
-            :attr:`.Derivation.factors`.
+            :attr:`.DerivationWindow.factors`.
         """
         return self.factors
 
     # TODO: REMOVE. (backwards compatibility)
     @property
     def fn(self) -> Callable:
-        """An alias for :attr:`.Derivation.predicate`.
+        """An alias for :attr:`.DerivationWindow.predicate`.
 
         :rtype: Callable
 
         .. deprecated:: 0.1.0
 
             This property will be removed in favor of
-            :attr:`.Derivation.predicate`.
+            :attr:`.DerivationWindow.predicate`.
         """
         return self.predicate
 
 
 @dataclass
-class WithinTrialDerivation(Derivation):
-    """A derivation that depends on levels from other factors, all within the
-    same trial.
+class WithinTrialDerivationWindow(DerivationWindow):
+    """A derivation window that depends on levels from other factors, all
+    within the same trial.
 
     :param predicate:
         A predicate that takes as many :class:`strs <str>` as factors in this
-        derivation, where each :class:`str` will be the name of a factor.
+        derivation window, where each :class:`str` will be the name of a
+        factor.
     :type predicate: typing.Callable[[str, ....], bool]
 
     :param factors:
-        The factors upon which this derivation depends.
+        The factors upon which this derivation window depends.
     :type factors: typing.Sequence[.Factor]
     """
 
@@ -912,51 +885,25 @@ class WithinTrialDerivation(Derivation):
 
 
 @dataclass
-class TransitionDerivation(Derivation):
-    """A derivation that depends on levels from other factors in the current
-    trial and the immediately preceding trial. :class:`TransitionDerivations
-    <.TransitionDerivation>` are used to constrain the transition points
-    between trials.
+class TransitionDerivationWindow(DerivationWindow):
+    """A derivation window that depends on levels from other factors in the
+    current trial and the immediately preceding trial.
+    :class:`TransitionDerivations <.TransitionDerivation>` are used to
+    constrain the transition points between trials.
 
     :param predicate:
         A predicate that takes as many lists of factors as factors in this
-        derivation.
+        derivation window.
     :type predicate: typing.Callable[[typing.Sequence[.Factor], ....], bool]
 
     :param factors:
-        The factors upon which this derivation depends.
+        The factors upon which this derivation window depends.
     :type factors: typing.Sequence[.Factor]
+
     """
 
     width: int = field(default=2, init=False)
     stride: int = field(default=1, init=False)
-
-
-@dataclass
-class WindowDerivation(Derivation):
-    """A derivation that depends on levels from other factors in the current
-    trial and multiple preceding trials.
-
-    :param predicate:
-        A predicate that takes as many lists of factors as factors in this
-        derivation.
-    :type predicate: typing.Callable[[typing.Sequence[.Factor], ....], bool]
-
-    :param factors:
-        The factors upon which this derivation depends.
-    :type factors: typing.Sequence[.Factor]
-
-    :param width:
-        The number of trials that this derivation depends upon. The current
-        trial must be included, so the number must be greater than or equal to
-        ``1``.
-    :type width: int
-
-    :param stride:
-        TODO DOC
-    :type stride: int
-    """
-    pass  # pylint: disable=unnecessary-pass
 
 
 ###############################################################################
@@ -992,23 +939,26 @@ def get_internal_level_name(level: Level) -> str:
     return level.internal_name
 
 
-#: An alias for :class:`.WithinTrialDerivation`.
+#: An alias for :class:`.WithinTrialDerivationWindow`.
 #:
 #: .. deprecated:: 0.1.0
 #:
-#:     This class will be removed in favor of :class:`.WithinTrialDerivation`.
-WithinTrial = WithinTrialDerivation
+#:     This class will be removed in favor of
+#:     :class:`.WithinTrialDerivationWindow`.
+WithinTrial = WithinTrialDerivationWindow
 
-#: An alias for :class:`.TransitionDerivation`.
+#: An alias for :class:`.TransitionDerivationWindow`.
 #:
 #: .. deprecated:: 0.1.0
 #:
-#:     This class will be removed in favor of :class:`.TransitionDerivation`.
-Transition = TransitionDerivation
+#:     This class will be removed in favor of
+#:     :class:`.TransitionDerivationWindow`.
+Transition = TransitionDerivationWindow
 
-#: An alias for :class:`.WindowDerivation`.
+#: An alias for :class:`.DerivationWindow`.
 #:
 #: .. deprecated:: 0.1.0
 #:
-#:     This class will be removed in favor of :class:`.WindowDerivation`.
-Window = WindowDerivation
+#:     This class will be removed in favor of
+#:     :class:`.DerivationWindow`.
+Window = DerivationWindow

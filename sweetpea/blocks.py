@@ -137,9 +137,9 @@ class Block:
         """
         if not isinstance(level, (SimpleLevel, DerivedLevel)):
             raise ValueError(f"Attempted to find first variable of non-Level object: {level}.")
-        if factor.has_complex_window():
+        if factor.has_complex_window:
             offset = 0
-            complex_factors = filter(lambda f: f.has_complex_window(), self.design)
+            complex_factors = filter(lambda f: f.has_complex_window, self.design)
             for f in complex_factors:
                 if f == factor:
                     offset += f.levels.index(level)
@@ -150,7 +150,7 @@ class Block:
             return self.grid_variables() + offset
 
         else:
-            simple_factors = list(filter(lambda f: not f.has_complex_window(), self.design))
+            simple_factors = list(filter(lambda f: not f.has_complex_window, self.design))
             simple_levels = get_all_levels(simple_factors)
             return simple_levels.index((factor, level))
 
@@ -167,7 +167,7 @@ class Block:
                                     list(filter(lambda l: (f, l) not in self.exclude,
                                                 f.levels))))
         offset = 0
-        if f.has_complex_window():
+        if f.has_complex_window:
             offset = len(f.levels) * previous_trials
         else:
             offset = self.variables_per_trial() * previous_trials
@@ -207,11 +207,11 @@ class Block:
 
         if variable < self.grid_variables():
             variable = variable % self.variables_per_trial()
-            simple_factors = list(filter(lambda f: not f.has_complex_window(), self.design))
+            simple_factors = list(filter(lambda f: not f.has_complex_window, self.design))
             simple_tuples = get_all_levels(simple_factors)
             return simple_tuples[variable]
         else:
-            complex_factors = list(filter(lambda f: f.has_complex_window(), self.design))
+            complex_factors = list(filter(lambda f: f.has_complex_window, self.design))
             for f in complex_factors:
                 start = self.first_variable_for_level(f, f.levels[0])
                 end = start + self.variables_for_factor(f)
@@ -268,7 +268,7 @@ class Block:
         factors without complex windows at the moment.
         """
         f = level[0]
-        if f.has_complex_window():
+        if f.has_complex_window:
             raise ValueError("get_variable doens't handle complex windows yet! factor={}".format(f))
 
         return self.build_variable_list(level)[trial_number - 1]
@@ -285,7 +285,7 @@ class Block:
         if not isinstance(level, (SimpleLevel, DerivedLevel)):
             raise ValueError("Second element in level argument to variable list builder must be a SimpleLevel "
                              "or a DERIVED LEVEL.")
-        if factor.has_complex_derivation:
+        if factor.has_complex_window:
             return self.__build_complex_variable_list(level_pair)
         else:
             return self.__build_simple_variable_list(level_pair)
@@ -376,7 +376,7 @@ class FullyCrossBlock(Block):
     def variables_per_trial(self):
         # Factors with complex windows are excluded because we don't want variables allocated
         # in every trial when the window spans multiple trials.
-        grid_factors = filter(lambda f: not f.has_complex_window(), self.design)
+        grid_factors = filter(lambda f: not f.has_complex_window, self.design)
         return sum([len(factor.levels) for factor in grid_factors])
 
     def grid_variables(self):
@@ -404,7 +404,7 @@ class FullyCrossBlock(Block):
         all_crossings = list(product(*levels_lists))
 
         for constraint in exclusions:
-            if constraint.factor.has_complex_window():
+            if constraint.factor.has_complex_window:
                 # If the excluded factor has a complex window, then we don't need
                 # to reduce the sequence length. What if the transition being excluded
                 # is in the crossing? If it is, then they shouldn't be excluding it.
@@ -570,7 +570,7 @@ class MultipleCrossBlock(Block):
     def variables_per_trial(self):
         # Factors with complex windows are excluded because we don't want variables allocated
         # in every trial when the window spans multiple trials.
-        grid_factors = filter(lambda f: not f.has_complex_window(), self.design)
+        grid_factors = filter(lambda f: not f.has_complex_window, self.design)
         return sum([len(factor.levels) for factor in grid_factors])
 
     def grid_variables(self):
@@ -598,7 +598,7 @@ class MultipleCrossBlock(Block):
         all_crossings = list(product(*levels_lists))
 
         for constraint in exclusions:
-            if constraint.factor.has_complex_window():
+            if constraint.factor.has_complex_window:
                 # If the excluded factor has a complex window, then we don't need
                 # to reduce the sequence length. What if the transition being excluded
                 # is in the crossing? If it is, then they shouldn't be excluding it.

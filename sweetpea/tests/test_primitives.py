@@ -1,8 +1,7 @@
 import operator as op
 import pytest
 
-from sweetpea.primitives import Factor, DerivedLevel, ElseLevel, WithinTrial, Transition, Window, get_external_level_name, SimpleLevel
-from sweetpea.tests.test_utils import get_level_from_name
+from sweetpea.primitives import Factor, DerivedLevel, ElseLevel, WithinTrial, Transition, Window
 
 color = Factor("color", ["red", "blue"])
 text = Factor("text", ["red", "blue"])
@@ -81,9 +80,9 @@ def test_factor_is_derived():
 
 
 def test_factor_has_complex_window():
-	assert color.has_complex_window() == False
-	assert con_factor.has_complex_window() == False
-	assert color_repeats_factor.has_complex_window() == True
+	assert color.has_complex_window == False
+	assert con_factor.has_complex_window == False
+	assert color_repeats_factor.has_complex_window == True
 
 
 def test_factor_applies_to_trial():

@@ -61,13 +61,13 @@ class Consistency(Constraint):
     def apply(block: Block, backend_request: BackendRequest) -> None:
         next_var = 1
         for _ in range(block.trials_per_sample()):
-            for f in filter(lambda f: not f.has_complex_window(), block.design):
+            for f in filter(lambda f: not f.has_complex_window, block.design):
                 number_of_levels = len(f.levels)
                 new_request = LowLevelRequest("EQ", 1, list(range(next_var, next_var + number_of_levels)))
                 backend_request.ll_requests.append(new_request)
                 next_var += number_of_levels
 
-        for f in filter(lambda f: f.has_complex_window(), block.design):
+        for f in filter(lambda f: f.has_complex_window, block.design):
             variables_for_factor = block.variables_for_factor(f)
             var_list = list(map(lambda n: n + next_var, range(variables_for_factor)))
             chunks = list(chunk_list(var_list, len(f.levels)))
@@ -133,7 +133,7 @@ class FullyCross(Constraint):
         # Step 3: For each trial, cross all levels of all design-only factors in the crossing.
         design_factors = cast(List[List[List[int]]], [])
         design_factors = list(map(lambda _: [], crossing_trials))
-        for f in list(filter(lambda f: f not in block.crossing[0] and not f.has_complex_window(), block.design)):
+        for f in list(filter(lambda f: f not in block.crossing[0] and not f.has_complex_window, block.design)):
             for i, t in enumerate(crossing_trials):
                 design_factors[i].append(block.factor_variables_for_trial(f, t))
         design_combinations = cast(List[List[Tuple[int, ...]]], [])
@@ -195,7 +195,7 @@ class MultipleCross(Constraint):
             # Step 3: For each trial, cross all levels of all design-only factors in the crossing.
             design_factors = cast(List[List[List[int]]], [])
             design_factors = list(map(lambda _: [], crossing_trials))
-            for f in list(filter(lambda f: f not in c and not f.has_complex_window(), block.design)):
+            for f in list(filter(lambda f: f not in c and not f.has_complex_window, block.design)):
                 for i, t in enumerate(crossing_trials):
                     design_factors[i].append(block.factor_variables_for_trial(f, t))
             design_combinations = cast(List[List[Tuple[int, ...]]], [])
@@ -545,7 +545,7 @@ class Exclude(Constraint):
 
         block.exclude.append((self.factor, self.level))
         # Store the basic factor-level combnations resulting in the derived excluded factor in the block
-        if isinstance(self.level, DerivedLevel) and not self.factor.has_complex_window():
+        if isinstance(self.level, DerivedLevel) and not self.factor.has_complex_window:
             block.excluded_derived.extend(self.extract_simplelevel(block, self.level))
 
     def extract_simplelevel(self, block: Block, level: DerivedLevel) -> List[Dict[Factor, SimpleLevel]]:
@@ -553,7 +553,7 @@ class Exclude(Constraint):
         basic levels."""
         excluded_levels = []
         excluded: List[Tuple[Level, ...]] = [cross for cross in level.get_dependent_cross_product()
-                                             if level.derivation.predicate(*[level.name for level in cross])]
+                                             if level.window.predicate(*[level.name for level in cross])]
         for excluded_level_tuple in excluded:
             combos: List[Dict[Factor, SimpleLevel]] = [{}]
             for excluded_level in excluded_level_tuple:

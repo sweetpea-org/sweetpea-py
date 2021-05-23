@@ -86,9 +86,9 @@ def __generate_encoding_diagram(blk: Block) -> str:
         for f in blk.design:
             if f.applies_to_trial(t + 1):
                 variables = [blk.first_variable_for_level(f, l) + 1 for l in f.levels]
-                if isinstance(f, DerivedFactor) and f.has_complex_window():
+                if isinstance(f, DerivedFactor) and f.has_complex_window:
                     def acc_width(w) -> int:
-                        return w.width + (acc_width(w.args[0].levels[0].window)-1 if w.args[0].has_complex_window() else 0)
+                        return w.width + (acc_width(w.args[0].levels[0].window)-1 if w.args[0].has_complex_window else 0)
                     width = acc_width(f.levels[0].window)
                     stride = f.levels[0].window.stride
                     stride_offset = (stride - 1) * int(t / stride)
