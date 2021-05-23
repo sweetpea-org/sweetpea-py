@@ -732,7 +732,7 @@ class DerivationWindow:
     current trial and, potentially, multiple preceding trials.
 
     For detailed information, see the SweetPea guide's :ref:`section on
-    derivation windows <guide_factorial_derivation_windows>`.
+    derivation <guide_factorial_derivations>`.
 
     :param predicate:
         A predicate function used during derivation. Different derivation

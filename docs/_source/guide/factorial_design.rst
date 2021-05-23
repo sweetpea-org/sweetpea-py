@@ -83,43 +83,54 @@ Derivations
 
 A :term:`derivation` (or :term:`derived level`) is a new level produced by
 combining other :term:`levels <level>`. This combination of levels can be
-directly constructed with :func:`sweetpea.primitives.derived_level`.
+directly constructed with :func:`sweetpea.primitives.DerivedLevel`.
 
-There are three variants of derivation: :ref:`windows
-<guide_factorial_derivations_windows>`, :ref:`transitions
-<guide_factorial_derivations_transitions>`, and
-:ref:`within-trial specifications <guide_factorial_derivations_within-trials>`,
-detailed below.
+Derivations can also be constrained by :term:`derivation windows <derivation
+window>`, which allow for specifying specific manners in which different levels
+from multiple factors can interact across trial boundaries. There are three
+kinds of derivation windows:
 
+- :ref:`Basic windows <guide_factorial_derivations_basic_windows>`, from which
+  other windows are made.
+- :ref:`Transition windows <guide_factorial_derivations_transition_windows>`,
+  which constrain derivations across trial transition points.
+- :ref:`Within-trial windows
+  <guide_factorial_derivations_within-trial_windows>`, which provide windows
+  that look only within a single given trial.
 
-.. _guide_factorial_derivations_windows:
-
-Windows
-^^^^^^^
-
-A :term:`window` (constructed with :func:`sweetpea.primitives.window`) creates a
-level that is selected depending on a combination of levels from other factors
-in the current trial and multiple preceding trials.
-
-
-.. _guide_factorial_derivations_transitions:
-
-Transitions
-^^^^^^^^^^^
-
-A :term:`transition` (constructed with :func:`sweetpea.primitives.transition`)
-describes a level that is selected depending on a combination of levels from
-other factors in the current trial and the immediately preceding trial.
+These are explained more below.
 
 
-.. _guide_factorial_derivations_within-trials:
+.. _guide_factorial_derivations_basic_windows:
 
-Within-Trials
+Basic Windows
 ^^^^^^^^^^^^^
 
-The :term:`within-trial derivations <within-trial derivation>` (constructed with
-:func:`sweetpea.primitives.within_trial`) describe a level that is selected
-depending on levels from other factors, all within the same trial.
+A basic :term:`derivation window`
+(:class:`sweetpea.primitives.DerivationWindow`) creates a level that is selected
+depending on a combination of levels from other factors in the current trial and
+zero or more preceding trials.
+
+
+.. _guide_factorial_derivations_transition_windows:
+
+Transition Windows
+^^^^^^^^^^^^^^^^^^
+
+A :term:`transition window <derivation window, transition>`
+(:class:`sweetpea.primitives.TransitionDerivationWindow`) describes a level that
+is selected depending on a combination of levels from other factors in the
+current trial and the immediately preceding trial.
+
+
+.. _guide_factorial_derivations_within-trial_windows:
+
+Within-Trial Windows
+^^^^^^^^^^^^^^^^^^^^
+
+The :term:`within-trial windows <derivation window, within-trial>`
+(:class:`sweetpea.primitives.WithinTrialDerivationWindow`) describe a level that
+is selected depending on levels from other factors, all within the same trial.
 
 
 .. _guide_factorial_glossary:
@@ -132,6 +143,20 @@ Glossary
     derivation
       An artificial :term:`level` that results from the combination of other
       levels. Also called a :term:`derived level`.
+
+    derivation window
+      A window constraining a :term:`derivation` that depends on a combination
+      of :term:`levels <level>` from other :term:`factors <factor>` in the
+      current trial and zero or more preceding trials.
+
+    derivation window, transition
+      A :term:`derivation window` that depends on a combination of :term:`levels
+      <level>` from other :term:`factors <factor>` in the current trial and the
+      immediately preceding trial.
+
+    derivation window, within-trial
+      A :term:`derivation window` that depends on :term:`levels <level>` from
+      other :term:`factors <factor>`, all within the same trial.
 
     derived level
       See :term:`derivation`.
@@ -172,10 +197,8 @@ Glossary
     partially crossed
       See :term:`fractional factorial experiment`.
 
-    transition
-      A :term:`derivation` that depends on a combination of :term:`levels
-      <level>` from other :term:`factors <factor>` in the current trial and the
-      immediately preceding trial.
+    transition window
+      See :term:`derivation window, transition`.
 
     trial
       An individual repetition of an experiment. A minimum number of trials must
@@ -184,10 +207,7 @@ Glossary
       :term:`levels <level>`.
 
     window
-      A :term:`derivation` that depends on a combination of :term:`levels
-      <level>` from other :term:`factors <factor>` in the current trial and
-      multiple preceding trials.
+      See :term:`derivation window`.
 
     within-trial derivation
-      A :term:`derivation` that depends on :term:`levels <level>` from other
-      :term:`factors <factor>`, all within the same trial.
+      See :term:`derivation window, within-trial`.
