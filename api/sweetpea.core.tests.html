@@ -1,0 +1,478 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>sweetpea.core.tests module &mdash; SweetPea  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="sweetpea.sampling_strategies package" href="sweetpea.sampling_strategies.html" />
+    <link rel="prev" title="sweetpea.core.simple_sequence module" href="sweetpea.core.simple_sequence.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> SweetPea
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guide.html">SweetPea Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guide/installation.html">Installation and Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guide/installation.html#automated-installation-from-the-python-package-index">Automated Installation from the Python Package Index</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/installation.html#manual-installation-from-source">Manual Installation from Source</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/installation.html#contributing-to-sweetpea-development">Contributing to SweetPea Development</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/factorial_design.html">Factorial Experiment Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#factors">Factors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#levels">Levels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#example">Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#derivations">Derivations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/factorial_design.html#basic-windows">Basic Windows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/factorial_design.html#transition-windows">Transition Windows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/factorial_design.html#within-trial-windows">Within-Trial Windows</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#glossary">Glossary</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/usage.html">Using SweetPea</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/contributing.html">Contributing to SweetPea</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guide/contributing/issues.html">Using the GitHub Issue Tracker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/contributing/development.html">Developing SweetPea</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/development.html#configuring-your-development-environment">Configuring Your Development Environment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/development.html#repository-organization">Repository Organization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/development.html#workflows">Workflows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/development.html#pull-requests">Pull Requests</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/contributing/documentation.html">Contributing to the Documentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/documentation.html#installing-dependencies">Installing Dependencies</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/documentation.html#building-the-documentation">Building the Documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/documentation.html#automatic-vs-manual-documentation">Automatic vs Manual Documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/documentation.html#contributing-to-the-automatic-documentation">Contributing to the Automatic Documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/documentation.html#style-guides">Style Guides</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/contributing/rest_style_guide.html">reStructuredText Style Guide</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/rest_style_guide.html#general">General</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/rest_style_guide.html#docstrings">Docstrings</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/contributing/py_style_guide.html">Python Style Guide</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#note-on-pep-8">Note on PEP 8</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#maximum-line-length">Maximum Line Length</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#blank-lines">Blank Lines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#imports">Imports</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#string-quotes">String Quotes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#trailing-commas">Trailing Commas</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#comments">Comments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#type-checking-or-linting-overrides">Type-Checking or Linting Overrides</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">SweetPea API Documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="sweetpea.html">sweetpea package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="sweetpea.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="sweetpea.core.html">sweetpea.core package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.sampling_strategies.html">sweetpea.sampling_strategies package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.tests.html">sweetpea.tests package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sweetpea.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.backend.html">sweetpea.backend module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.base_constraint.html">sweetpea.base_constraint module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.blocks.html">sweetpea.blocks module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.combinatorics.html">sweetpea.combinatorics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.constraints.html">sweetpea.constraints module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.derivation_processor.html">sweetpea.derivation_processor module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.design_graph.html">sweetpea.design_graph module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.design_partitions.html">sweetpea.design_partitions module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.encoding_diagram.html">sweetpea.encoding_diagram module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.internal.html">sweetpea.internal module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.logic.html">sweetpea.logic module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.metrics.html">sweetpea.metrics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.primitives.html">sweetpea.primitives module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.server.html">sweetpea.server module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SweetPea</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../api.html">SweetPea API Documentation</a> &raquo;</li>
+        
+          <li><a href="sweetpea.html">sweetpea package</a> &raquo;</li>
+        
+          <li><a href="sweetpea.core.html">sweetpea.core package</a> &raquo;</li>
+        
+      <li>sweetpea.core.tests module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/api/sweetpea.core.tests.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-sweetpea.core.tests">
+<span id="sweetpea-core-tests-module"></span><h1>sweetpea.core.tests module<a class="headerlink" href="#module-sweetpea.core.tests" title="Permalink to this headline">¶</a></h1>
+<p>This module provides tests for SweetPea’s Core framework.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.core.tests.sequence">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.core.tests.</span></span><span class="sig-name descname"><span class="pre">sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">xss</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.tests.sequence" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>xss</strong> (<em>List</em><em>[</em><em>List</em><em>[</em><em>sweetpea.core.tests.T</em><em>]</em><em>]</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>List[List[sweetpea.core.tests.T]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.core.tests.test_half_adder_dimacs">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.core.tests.</span></span><span class="sig-name descname"><span class="pre">test_half_adder_dimacs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.tests.test_half_adder_dimacs" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>List[<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)">str</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.core.tests.test_full_adder_dimacs">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.core.tests.</span></span><span class="sig-name descname"><span class="pre">test_full_adder_dimacs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.tests.test_full_adder_dimacs" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>List[<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)">str</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.core.tests.soln_full_adder">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.core.tests.</span></span><span class="sig-name descname"><span class="pre">soln_full_adder</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.tests.soln_full_adder" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>List[<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)">str</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.core.tests.compute_soln_full_adder">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.core.tests.</span></span><span class="sig-name descname"><span class="pre">compute_soln_full_adder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">incoming</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_index</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.tests.compute_soln_full_adder" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>incoming</strong> (<em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em>) – </p></li>
+<li><p><strong>c_index</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+<li><p><strong>s_index</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>List[<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)">int</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.core.tests.ripple_carry_dimacs">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.core.tests.</span></span><span class="sig-name descname"><span class="pre">ripple_carry_dimacs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_digits</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.tests.ripple_carry_dimacs" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>num_digits</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>List[<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)">str</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.core.tests.pop_count_dimacs">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.core.tests.</span></span><span class="sig-name descname"><span class="pre">pop_count_dimacs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_digits</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.tests.pop_count_dimacs" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>num_digits</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>List[<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)">str</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.core.tests.permute_complements">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.core.tests.</span></span><span class="sig-name descname"><span class="pre">permute_complements</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="pre">xs</span></em>, <em class="sig-param"><span class="pre">to_position=None</span></em>, <em class="sig-param"><span class="pre">complement_func=&lt;built-in</span> <span class="pre">function</span> <span class="pre">invert&gt;</span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.tests.permute_complements" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a list of elements, computes a list of each possible permutation
+of that list with complements. That is, given a list like:</p>
+<blockquote>
+<div><p>[1, 2, 3]</p>
+</div></blockquote>
+<p>permute_complements will return:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>[[1, 2, 3], [-1, 2, 3], [1, -2, 3], [-1, -2, 3],</dt><dd><p>[1, 2, -3], [-1, 2, -3], [1, -2, -3], [-1, -2, -3]]</p>
+</dd>
+</dl>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>xs</strong> (<em>List</em><em>[</em><em>sweetpea.core.tests.T</em><em>]</em>) – </p></li>
+<li><p><strong>to_position</strong> (<em>Optional</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em>) – </p></li>
+<li><p><strong>complement_func</strong> (<em>Callable</em><em>[</em><em>[</em><em>sweetpea.core.tests.T</em><em>]</em><em>, </em><em>sweetpea.core.tests.T</em><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>List[List[sweetpea.core.tests.T]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.core.tests.assert_k_of_n_dimacs">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.core.tests.</span></span><span class="sig-name descname"><span class="pre">assert_k_of_n_dimacs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_digits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.tests.assert_k_of_n_dimacs" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_digits</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+<li><p><strong>k</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.core.tests.assert_all_k_of_n_dimacs">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.core.tests.</span></span><span class="sig-name descname"><span class="pre">assert_all_k_of_n_dimacs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_digits</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.tests.assert_all_k_of_n_dimacs" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>num_digits</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>List[<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)">str</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.core.tests.pop_count_k_less_than_n_dimacs">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.core.tests.</span></span><span class="sig-name descname"><span class="pre">pop_count_k_less_than_n_dimacs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_digits</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.tests.pop_count_k_less_than_n_dimacs" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_digits</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+<li><p><strong>k</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.core.tests.pop_count_all_k_less_than_n_dimacs">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.core.tests.</span></span><span class="sig-name descname"><span class="pre">pop_count_all_k_less_than_n_dimacs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_digits</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.tests.pop_count_all_k_less_than_n_dimacs" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>num_digits</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>List[<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)">str</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="sweetpea.sampling_strategies.html" class="btn btn-neutral float-right" title="sweetpea.sampling_strategies package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="sweetpea.core.simple_sequence.html" class="btn btn-neutral float-left" title="sweetpea.core.simple_sequence module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, SweetPea Research Group.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

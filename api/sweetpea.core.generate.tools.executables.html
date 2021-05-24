@@ -1,0 +1,400 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>sweetpea.core.generate.tools.executables module &mdash; SweetPea  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="sweetpea.core.generate.tools.return_code module" href="sweetpea.core.generate.tools.return_code.html" />
+    <link rel="prev" title="sweetpea.core.generate.tools.docker_utility module" href="sweetpea.core.generate.tools.docker_utility.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> SweetPea
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guide.html">SweetPea Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guide/installation.html">Installation and Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guide/installation.html#automated-installation-from-the-python-package-index">Automated Installation from the Python Package Index</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/installation.html#manual-installation-from-source">Manual Installation from Source</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/installation.html#contributing-to-sweetpea-development">Contributing to SweetPea Development</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/factorial_design.html">Factorial Experiment Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#factors">Factors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#levels">Levels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#example">Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#derivations">Derivations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/factorial_design.html#basic-windows">Basic Windows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/factorial_design.html#transition-windows">Transition Windows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/factorial_design.html#within-trial-windows">Within-Trial Windows</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#glossary">Glossary</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/usage.html">Using SweetPea</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/contributing.html">Contributing to SweetPea</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guide/contributing/issues.html">Using the GitHub Issue Tracker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/contributing/development.html">Developing SweetPea</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/development.html#configuring-your-development-environment">Configuring Your Development Environment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/development.html#repository-organization">Repository Organization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/development.html#workflows">Workflows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/development.html#pull-requests">Pull Requests</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/contributing/documentation.html">Contributing to the Documentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/documentation.html#installing-dependencies">Installing Dependencies</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/documentation.html#building-the-documentation">Building the Documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/documentation.html#automatic-vs-manual-documentation">Automatic vs Manual Documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/documentation.html#contributing-to-the-automatic-documentation">Contributing to the Automatic Documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/documentation.html#style-guides">Style Guides</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/contributing/rest_style_guide.html">reStructuredText Style Guide</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/rest_style_guide.html#general">General</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/rest_style_guide.html#docstrings">Docstrings</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/contributing/py_style_guide.html">Python Style Guide</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#note-on-pep-8">Note on PEP 8</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#maximum-line-length">Maximum Line Length</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#blank-lines">Blank Lines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#imports">Imports</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#string-quotes">String Quotes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#trailing-commas">Trailing Commas</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#comments">Comments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#type-checking-or-linting-overrides">Type-Checking or Linting Overrides</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">SweetPea API Documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="sweetpea.html">sweetpea package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="sweetpea.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="sweetpea.core.html">sweetpea.core package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.sampling_strategies.html">sweetpea.sampling_strategies package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.tests.html">sweetpea.tests package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sweetpea.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.backend.html">sweetpea.backend module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.base_constraint.html">sweetpea.base_constraint module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.blocks.html">sweetpea.blocks module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.combinatorics.html">sweetpea.combinatorics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.constraints.html">sweetpea.constraints module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.derivation_processor.html">sweetpea.derivation_processor module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.design_graph.html">sweetpea.design_graph module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.design_partitions.html">sweetpea.design_partitions module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.encoding_diagram.html">sweetpea.encoding_diagram module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.internal.html">sweetpea.internal module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.logic.html">sweetpea.logic module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.metrics.html">sweetpea.metrics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.primitives.html">sweetpea.primitives module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.server.html">sweetpea.server module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SweetPea</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../api.html">SweetPea API Documentation</a> &raquo;</li>
+        
+          <li><a href="sweetpea.html">sweetpea package</a> &raquo;</li>
+        
+          <li><a href="sweetpea.core.html">sweetpea.core package</a> &raquo;</li>
+        
+          <li><a href="sweetpea.core.generate.html">sweetpea.core.generate package</a> &raquo;</li>
+        
+          <li><a href="sweetpea.core.generate.tools.html">sweetpea.core.generate.tools package</a> &raquo;</li>
+        
+      <li>sweetpea.core.generate.tools.executables module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/api/sweetpea.core.generate.tools.executables.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-sweetpea.core.generate.tools.executables">
+<span id="sweetpea-core-generate-tools-executables-module"></span><h1>sweetpea.core.generate.tools.executables module<a class="headerlink" href="#module-sweetpea.core.generate.tools.executables" title="Permalink to this headline">¶</a></h1>
+<p>This module makes it easy to set up the Unigen and CryptoMiniSAT executables
+as needed by Sweetpea. It can also be run as a script.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>SweetPea Core only makes use of the automated download of the current
+system and machine-type’s executables from the latest release. The rest of
+the code accommodates other use cases and is not strictly necessary, but it
+took a bit of reading to suss out GitHub’s API so I figured I’d leave it in
+place for future use if necessary. But perhaps it should be removed at some
+point.</p>
+</div>
+<div class="section" id="using-this-module-as-a-script">
+<h2>Using This Module As a Script<a class="headerlink" href="#using-this-module-as-a-script" title="Permalink to this headline">¶</a></h2>
+<p>To use this module as a script, do <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">executables.py</span></code> (specifying the
+full path as needed). A number of options are supported:</p>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show a help message and exit.</p>
+</dd>
+<dt><kbd><span class="option">-d <var>BIN_DIR</var></span>, <span class="option">--bin-dir <var>BIN_DIR</var></span></kbd></dt>
+<dd><p>The directory into which to install the executables.</p>
+<p>The default is determined by <code class="xref py py-func docutils literal notranslate"><span class="pre">appdirs.user_data_dir()</span></code> +
+<code class="docutils literal notranslate"><span class="pre">SweetPea/Executables</span></code>.</p>
+</dd>
+<dt><kbd><span class="option">-s <var>SYSTEM</var></span>, <span class="option">--system <var>SYSTEM</var></span></kbd></dt>
+<dd><p>The target system. Valid options are <code class="docutils literal notranslate"><span class="pre">None</span></code>, <code class="docutils literal notranslate"><span class="pre">Darwin</span></code>, <code class="docutils literal notranslate"><span class="pre">Linux</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">Windows</span></code>. When <code class="docutils literal notranslate"><span class="pre">None</span></code> is given, the system will be automatically
+deduced by <a class="reference external" href="https://docs.python.org/3.7/library/platform.html#platform.system" title="(in Python v3.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">platform.system()</span></code></a>.</p>
+<p>The default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt><kbd><span class="option">-m <var>MACHINE</var></span>, <span class="option">--machine <var>MACHINE</var></span></kbd></dt>
+<dd><p>The target machine type. Valid options are <code class="docutils literal notranslate"><span class="pre">None</span></code>, <code class="docutils literal notranslate"><span class="pre">arm64</span></code>, <code class="docutils literal notranslate"><span class="pre">x86_64</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">AMD64</span></code>. When <code class="docutils literal notranslate"><span class="pre">None</span></code> is given, the machine type will be
+automatically deduced by <a class="reference external" href="https://docs.python.org/3.7/library/platform.html#platform.machine" title="(in Python v3.7)"><code class="xref py py-func docutils literal notranslate"><span class="pre">platform.machine()</span></code></a>.</p>
+<p>The default is <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt><kbd><span class="option">-t <var>TAG</var></span>, <span class="option">--tag <var>TAG</var></span></kbd></dt>
+<dd><p>The <a class="reference external" href="https://github.com/sweetpea-org/unigen-exe">sweetpea-org/unigen-exe</a>
+release tag to target for downloading.</p>
+<p>The default is to use the latest available release tag.</p>
+</dd>
+<dt><kbd><span class="option">--asset-string</span></kbd></dt>
+<dd><p>Prints out the asset string for the indicated system+machine combination.
+This is provided mostly for debugging.</p>
+</dd>
+</dl>
+<dl class="py data">
+<dt class="sig sig-object py" id="sweetpea.core.generate.tools.executables.DOWNLOAD_UNIGEN_ENV_VAR">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.executables.</span></span><span class="sig-name descname"><span class="pre">DOWNLOAD_UNIGEN_ENV_VAR</span></span><em class="property"> <span class="pre">=</span> <span class="pre">'UNIGEN_DOWNLOAD_IF_MISSING'</span></em><a class="headerlink" href="#sweetpea.core.generate.tools.executables.DOWNLOAD_UNIGEN_ENV_VAR" title="Permalink to this definition">¶</a></dt>
+<dd><p>The name of the environment variable that can be used to specify whether the
+bundled executables should be downloaded. The default value is <code class="docutils literal notranslate"><span class="pre">True</span></code>.
+Valid options are:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 67%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>Download executables if missing</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">True</span></code>, <code class="docutils literal notranslate"><span class="pre">true</span></code>, <code class="docutils literal notranslate"><span class="pre">T</span></code>, <code class="docutils literal notranslate"><span class="pre">t</span></code>, <code class="docutils literal notranslate"><span class="pre">Yes</span></code>, <code class="docutils literal notranslate"><span class="pre">yes</span></code>, <code class="docutils literal notranslate"><span class="pre">Y</span></code>, <code class="docutils literal notranslate"><span class="pre">y</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Do not download executables</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">False</span></code>, <code class="docutils literal notranslate"><span class="pre">false</span></code>, <code class="docutils literal notranslate"><span class="pre">F</span></code>, <code class="docutils literal notranslate"><span class="pre">f</span></code>, <code class="docutils literal notranslate"><span class="pre">No</span></code>, <code class="docutils literal notranslate"><span class="pre">no</span></code>, <code class="docutils literal notranslate"><span class="pre">N</span></code>, <code class="docutils literal notranslate"><span class="pre">n</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sweetpea.core.generate.tools.executables.UNIGEN_EXE_ENV_VAR">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.executables.</span></span><span class="sig-name descname"><span class="pre">UNIGEN_EXE_ENV_VAR</span></span><em class="property"> <span class="pre">=</span> <span class="pre">'UNIGEN_EXE_DIR'</span></em><a class="headerlink" href="#sweetpea.core.generate.tools.executables.UNIGEN_EXE_ENV_VAR" title="Permalink to this definition">¶</a></dt>
+<dd><p>The folder in which executables will be stored if they are going to be
+downloaded. The default is an automatically generated directory in the
+user’s data directory as determined by <code class="xref py py-func docutils literal notranslate"><span class="pre">appdirs.user_data_dir()</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.core.generate.tools.executables.ensure_executable_available">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.executables.</span></span><span class="sig-name descname"><span class="pre">ensure_executable_available</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">executable_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download_if_missing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.tools.executables.ensure_executable_available" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks whether a given necessary executable is available and, if not,
+downloads it (and its companions) automatically.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>executable_path</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/pathlib.html#pathlib.Path" title="(in Python v3.7)"><em>pathlib.Path</em></a>) – </p></li>
+<li><p><strong>download_if_missing</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="sweetpea.core.generate.tools.return_code.html" class="btn btn-neutral float-right" title="sweetpea.core.generate.tools.return_code module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="sweetpea.core.generate.tools.docker_utility.html" class="btn btn-neutral float-left" title="sweetpea.core.generate.tools.docker_utility module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, SweetPea Research Group.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

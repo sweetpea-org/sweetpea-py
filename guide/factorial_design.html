@@ -1,0 +1,466 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Factorial Experiment Design &mdash; SweetPea  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Using SweetPea" href="usage.html" />
+    <link rel="prev" title="Installation and Setup" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> SweetPea
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../guide.html">SweetPea Guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation and Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#automated-installation-from-the-python-package-index">Automated Installation from the Python Package Index</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#manual-installation-from-source">Manual Installation from Source</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#contributing-to-sweetpea-development">Contributing to SweetPea Development</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Factorial Experiment Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#factors">Factors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#levels">Levels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#example">Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#derivations">Derivations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#basic-windows">Basic Windows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#transition-windows">Transition Windows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#within-trial-windows">Within-Trial Windows</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#glossary">Glossary</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="usage.html">Using SweetPea</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing.html">Contributing to SweetPea</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="contributing/issues.html">Using the GitHub Issue Tracker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="contributing/development.html">Developing SweetPea</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="contributing/development.html#configuring-your-development-environment">Configuring Your Development Environment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contributing/development.html#repository-organization">Repository Organization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contributing/development.html#workflows">Workflows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contributing/development.html#pull-requests">Pull Requests</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="contributing/documentation.html">Contributing to the Documentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="contributing/documentation.html#installing-dependencies">Installing Dependencies</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contributing/documentation.html#building-the-documentation">Building the Documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contributing/documentation.html#automatic-vs-manual-documentation">Automatic vs Manual Documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contributing/documentation.html#contributing-to-the-automatic-documentation">Contributing to the Automatic Documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contributing/documentation.html#style-guides">Style Guides</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="contributing/rest_style_guide.html">reStructuredText Style Guide</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="contributing/rest_style_guide.html#general">General</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contributing/rest_style_guide.html#docstrings">Docstrings</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="contributing/py_style_guide.html">Python Style Guide</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="contributing/py_style_guide.html#note-on-pep-8">Note on PEP 8</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contributing/py_style_guide.html#maximum-line-length">Maximum Line Length</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contributing/py_style_guide.html#blank-lines">Blank Lines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contributing/py_style_guide.html#imports">Imports</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contributing/py_style_guide.html#string-quotes">String Quotes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contributing/py_style_guide.html#trailing-commas">Trailing Commas</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contributing/py_style_guide.html#comments">Comments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="contributing/py_style_guide.html#type-checking-or-linting-overrides">Type-Checking or Linting Overrides</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">SweetPea API Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/sweetpea.html">sweetpea package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../api/sweetpea.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/sweetpea.core.html">sweetpea.core package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/sweetpea.sampling_strategies.html">sweetpea.sampling_strategies package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/sweetpea.tests.html">sweetpea.tests package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../api/sweetpea.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../api/sweetpea.backend.html">sweetpea.backend module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/sweetpea.base_constraint.html">sweetpea.base_constraint module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/sweetpea.blocks.html">sweetpea.blocks module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/sweetpea.combinatorics.html">sweetpea.combinatorics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/sweetpea.constraints.html">sweetpea.constraints module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/sweetpea.derivation_processor.html">sweetpea.derivation_processor module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/sweetpea.design_graph.html">sweetpea.design_graph module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/sweetpea.design_partitions.html">sweetpea.design_partitions module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/sweetpea.encoding_diagram.html">sweetpea.encoding_diagram module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/sweetpea.internal.html">sweetpea.internal module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/sweetpea.logic.html">sweetpea.logic module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/sweetpea.metrics.html">sweetpea.metrics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/sweetpea.primitives.html">sweetpea.primitives module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../api/sweetpea.server.html">sweetpea.server module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SweetPea</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../guide.html">SweetPea Guide</a> &raquo;</li>
+        
+      <li>Factorial Experiment Design</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/guide/factorial_design.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="factorial-experiment-design">
+<span id="guide-factorial-design"></span><h1>Factorial Experiment Design<a class="headerlink" href="#factorial-experiment-design" title="Permalink to this headline">¶</a></h1>
+<p>SweetPea is a domain-specific programming language for creating factorial
+experimental designs. Our goal is to make it easy to specify and set up all of
+the factors and levels needed for your experiment.</p>
+<div class="admonition hint">
+<p class="admonition-title">Hint</p>
+<p>There’s a <a class="reference internal" href="#guide-factorial-glossary"><span class="std std-ref">glossary</span></a> at the bottom of this
+page for a brief overview of the most important terms.</p>
+</div>
+<p><a class="reference external" href="https://en.wikipedia.org/wiki/Factorial_experiment">Wikipedia gives</a> a
+decent introductory definition of a <a class="reference internal" href="#term-factorial-experiment"><span class="xref std std-term">factorial experiment</span></a>:</p>
+<blockquote>
+<div><p>In statistics, a full <strong>factorial experiment</strong> is an experiment whose design
+consists of two or more factors, each with discrete possible values or
+“levels”, and whose experimental units take on all possible combinations of
+these levels across all such factors. A full <strong>factorial design</strong> may also
+be called a <strong>fully crossed design</strong>. Such an experiment allows the
+investigator to study the effect of each factor on the response variable, as
+well as the effects of interactions between factors on the response
+variable.</p>
+</div></blockquote>
+<div class="section" id="factors">
+<span id="guide-factorial-factors"></span><h2>Factors<a class="headerlink" href="#factors" title="Permalink to this headline">¶</a></h2>
+<p>A <a class="reference internal" href="#term-factor"><span class="xref std std-term">factor</span></a> is an independent variable in your experiment. In simple
+experiments, there may be only one factor — in which case SweetPea is
+definitely overkill for you! But experiments can be successfully run with
+multiple factors without issue, and SweetPea will help you plan this out.</p>
+<div class="admonition-fun-fact admonition">
+<p class="admonition-title">Fun Fact</p>
+<p>The term <em>factorial</em> likely first appeared in the 1935 text <em>The Design of
+Experiments</em> by Ronald Fisher. The book is also credited with introducing the
+concept of the <em>null hypothesis</em>.</p>
+</div>
+</div>
+<div class="section" id="levels">
+<span id="guide-factorial-levels"></span><h2>Levels<a class="headerlink" href="#levels" title="Permalink to this headline">¶</a></h2>
+<p>In a factorial experimental design, each factor can take on one of a finite
+number of discrete possible values, called <a class="reference internal" href="#term-level"><span class="xref std std-term">levels</span></a>. To make this
+more concrete, consider a simple example.</p>
+</div>
+<div class="section" id="example">
+<span id="guide-factorial-example"></span><h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<p>Imagine we are conducting an experiment to observe the <a class="reference external" href="https://en.wikipedia.org/wiki/Stroop_effect">Stroop effect</a>. In a simple Stroop experiment,
+we show a participant the name of a color, and we render the text of that word
+in a color other than that which was named. For this experiment, we identify our
+factors and levels:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 29%" />
+<col style="width: 71%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Factor</p></th>
+<th class="head"><p>Levels</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Color Name</p></td>
+<td><p>red, blue, green, yellow</p></td>
+</tr>
+<tr class="row-odd"><td><p>Text Color</p></td>
+<td><p>red, blue, green, yellow</p></td>
+</tr>
+</tbody>
+</table>
+<p>If this is a <a class="reference internal" href="#term-full-factorial-experiment"><span class="xref std std-term">full factorial experiment</span></a> (also said that the experiment is
+<a class="reference internal" href="#term-fully-crossed"><span class="xref std std-term">fully crossed</span></a>), then we must conduct one <a class="reference internal" href="#term-trial"><span class="xref std std-term">trial</span></a> for each possible
+combination of factors and levels. In other words, we must have <span class="math notranslate nohighlight">\(4 \times
+4 = 16\)</span> distinct trials to fully cross the above example experiment.</p>
+</div>
+<div class="section" id="derivations">
+<span id="guide-factorial-derivations"></span><h2>Derivations<a class="headerlink" href="#derivations" title="Permalink to this headline">¶</a></h2>
+<p>A <a class="reference internal" href="#term-derivation"><span class="xref std std-term">derivation</span></a> (or <a class="reference internal" href="#term-derived-level"><span class="xref std std-term">derived level</span></a>) is a new level produced by
+combining other <a class="reference internal" href="#term-level"><span class="xref std std-term">levels</span></a>. This combination of levels can be
+directly constructed with <a class="reference internal" href="../api/sweetpea.primitives.html#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweetpea.primitives.DerivedLevel()</span></code></a>.</p>
+<p>Derivations can also be constrained by <a class="reference internal" href="#term-derivation-window"><span class="xref std std-term">derivation windows</span></a>, which allow for specifying specific manners in which different levels
+from multiple factors can interact across trial boundaries. There are three
+kinds of derivation windows:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#guide-factorial-derivations-basic-windows"><span class="std std-ref">Basic windows</span></a>, from which
+other windows are made.</p></li>
+<li><p><a class="reference internal" href="#guide-factorial-derivations-transition-windows"><span class="std std-ref">Transition windows</span></a>,
+which constrain derivations across trial transition points.</p></li>
+<li><p><a class="reference internal" href="#guide-factorial-derivations-within-trial-windows"><span class="std std-ref">Within-trial windows</span></a>, which provide windows
+that look only within a single given trial.</p></li>
+</ul>
+<p>These are explained more below.</p>
+<div class="section" id="basic-windows">
+<span id="guide-factorial-derivations-basic-windows"></span><h3>Basic Windows<a class="headerlink" href="#basic-windows" title="Permalink to this headline">¶</a></h3>
+<p>A basic <a class="reference internal" href="#term-derivation-window"><span class="xref std std-term">derivation window</span></a>
+(<a class="reference internal" href="../api/sweetpea.primitives.html#sweetpea.primitives.DerivationWindow" title="sweetpea.primitives.DerivationWindow"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.primitives.DerivationWindow</span></code></a>) creates a level that is selected
+depending on a combination of levels from other factors in the current trial and
+zero or more preceding trials.</p>
+</div>
+<div class="section" id="transition-windows">
+<span id="guide-factorial-derivations-transition-windows"></span><h3>Transition Windows<a class="headerlink" href="#transition-windows" title="Permalink to this headline">¶</a></h3>
+<p>A <a class="reference internal" href="#term-derivation-window-transition"><span class="xref std std-term">transition window</span></a>
+(<a class="reference internal" href="../api/sweetpea.primitives.html#sweetpea.primitives.TransitionDerivationWindow" title="sweetpea.primitives.TransitionDerivationWindow"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.primitives.TransitionDerivationWindow</span></code></a>) describes a level that
+is selected depending on a combination of levels from other factors in the
+current trial and the immediately preceding trial.</p>
+</div>
+<div class="section" id="within-trial-windows">
+<span id="guide-factorial-derivations-within-trial-windows"></span><h3>Within-Trial Windows<a class="headerlink" href="#within-trial-windows" title="Permalink to this headline">¶</a></h3>
+<p>The <a class="reference internal" href="#term-derivation-window-within-trial"><span class="xref std std-term">within-trial windows</span></a>
+(<a class="reference internal" href="../api/sweetpea.primitives.html#sweetpea.primitives.WithinTrialDerivationWindow" title="sweetpea.primitives.WithinTrialDerivationWindow"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.primitives.WithinTrialDerivationWindow</span></code></a>) describe a level that
+is selected depending on levels from other factors, all within the same trial.</p>
+</div>
+</div>
+<div class="section" id="glossary">
+<span id="guide-factorial-glossary"></span><h2>Glossary<a class="headerlink" href="#glossary" title="Permalink to this headline">¶</a></h2>
+<dl class="glossary simple">
+<dt id="term-derivation">derivation<a class="headerlink" href="#term-derivation" title="Permalink to this term">¶</a></dt><dd><p>An artificial <a class="reference internal" href="#term-level"><span class="xref std std-term">level</span></a> that results from the combination of other
+levels. Also called a <a class="reference internal" href="#term-derived-level"><span class="xref std std-term">derived level</span></a>.</p>
+</dd>
+<dt id="term-derivation-window">derivation window<a class="headerlink" href="#term-derivation-window" title="Permalink to this term">¶</a></dt><dd><p>A window constraining a <a class="reference internal" href="#term-derivation"><span class="xref std std-term">derivation</span></a> that depends on a combination
+of <a class="reference internal" href="#term-level"><span class="xref std std-term">levels</span></a> from other <a class="reference internal" href="#term-factor"><span class="xref std std-term">factors</span></a> in the
+current trial and zero or more preceding trials.</p>
+</dd>
+<dt id="term-derivation-window-transition">derivation window, transition<a class="headerlink" href="#term-derivation-window-transition" title="Permalink to this term">¶</a></dt><dd><p>A <a class="reference internal" href="#term-derivation-window"><span class="xref std std-term">derivation window</span></a> that depends on a combination of <a class="reference internal" href="#term-level"><span class="xref std std-term">levels</span></a> from other <a class="reference internal" href="#term-factor"><span class="xref std std-term">factors</span></a> in the current trial and the
+immediately preceding trial.</p>
+</dd>
+<dt id="term-derivation-window-within-trial">derivation window, within-trial<a class="headerlink" href="#term-derivation-window-within-trial" title="Permalink to this term">¶</a></dt><dd><p>A <a class="reference internal" href="#term-derivation-window"><span class="xref std std-term">derivation window</span></a> that depends on <a class="reference internal" href="#term-level"><span class="xref std std-term">levels</span></a> from
+other <a class="reference internal" href="#term-factor"><span class="xref std std-term">factors</span></a>, all within the same trial.</p>
+</dd>
+<dt id="term-derived-level">derived level<a class="headerlink" href="#term-derived-level" title="Permalink to this term">¶</a></dt><dd><p>See <a class="reference internal" href="#term-derivation"><span class="xref std std-term">derivation</span></a>.</p>
+</dd>
+<dt id="term-factor">factor<a class="headerlink" href="#term-factor" title="Permalink to this term">¶</a></dt><dd><p>An independent variable in a factorial experiment, composed of finitely
+many <a class="reference internal" href="#term-level"><span class="xref std std-term">levels</span></a>.</p>
+</dd>
+<dt id="term-factorial-experiment">factorial experiment<a class="headerlink" href="#term-factorial-experiment" title="Permalink to this term">¶</a></dt><dd><p>An experimental design measuring multiple independent variables (called
+<a class="reference internal" href="#term-factor"><span class="xref std std-term">factors</span></a>) consisting of finitely many discrete possible
+values (called <a class="reference internal" href="#term-level"><span class="xref std std-term">levels</span></a>). A factorial experiment can either
+be classified as a <a class="reference internal" href="#term-full-factorial-experiment"><span class="xref std std-term">full factorial experiment</span></a> or a
+<a class="reference internal" href="#term-fractional-factorial-experiment"><span class="xref std std-term">fractional factorial experiment</span></a>.</p>
+</dd>
+<dt id="term-fractional-factorial-experiment">fractional factorial experiment<a class="headerlink" href="#term-fractional-factorial-experiment" title="Permalink to this term">¶</a></dt><dd><p>A <a class="reference internal" href="#term-factorial-experiment"><span class="xref std std-term">factorial experiment</span></a> consisting of a specific subset of possible
+<a class="reference internal" href="#term-trial"><span class="xref std std-term">trials</span></a> that together expose meaningful information about
+important features of the problem without the resources or redundancy of a
+<a class="reference internal" href="#term-full-factorial-experiment"><span class="xref std std-term">full factorial experiment</span></a>. An experiment of this nature is said to
+only be <a class="reference internal" href="#term-partially-crossed"><span class="xref std std-term">partially crossed</span></a>.</p>
+</dd>
+<dt id="term-full-factorial-experiment">full factorial experiment<a class="headerlink" href="#term-full-factorial-experiment" title="Permalink to this term">¶</a></dt><dd><p>A <a class="reference internal" href="#term-factorial-experiment"><span class="xref std std-term">factorial experiment</span></a> consisting of enough distinct <a class="reference internal" href="#term-trial"><span class="xref std std-term">trials</span></a> to independently observe each possible combination of
+<a class="reference internal" href="#term-factor"><span class="xref std std-term">factors</span></a> and <a class="reference internal" href="#term-level"><span class="xref std std-term">levels</span></a>. An experiment of this
+nature is said to be <a class="reference internal" href="#term-fully-crossed"><span class="xref std std-term">fully crossed</span></a>. Contrasts with a
+<a class="reference internal" href="#term-fractional-factorial-experiment"><span class="xref std std-term">fractional factorial experiment</span></a>.</p>
+</dd>
+<dt id="term-fully-crossed">fully crossed<a class="headerlink" href="#term-fully-crossed" title="Permalink to this term">¶</a></dt><dd><p>A <a class="reference internal" href="#term-factorial-experiment"><span class="xref std std-term">factorial experiment</span></a> run with enough distinct <a class="reference internal" href="#term-trial"><span class="xref std std-term">trials</span></a> to be able to distinguish the effects of each <a class="reference internal" href="#term-factor"><span class="xref std std-term">factor</span></a> and
+<a class="reference internal" href="#term-level"><span class="xref std std-term">level</span></a> from one another.</p>
+</dd>
+<dt id="term-level">level<a class="headerlink" href="#term-level" title="Permalink to this term">¶</a></dt><dd><p>A discrete possible value that a <a class="reference internal" href="#term-factor"><span class="xref std std-term">factor</span></a> can have.</p>
+</dd>
+<dt id="term-partially-crossed">partially crossed<a class="headerlink" href="#term-partially-crossed" title="Permalink to this term">¶</a></dt><dd><p>See <a class="reference internal" href="#term-fractional-factorial-experiment"><span class="xref std std-term">fractional factorial experiment</span></a>.</p>
+</dd>
+<dt id="term-transition-window">transition window<a class="headerlink" href="#term-transition-window" title="Permalink to this term">¶</a></dt><dd><p>See <a class="reference internal" href="#term-derivation-window-transition"><span class="xref std std-term">derivation window, transition</span></a>.</p>
+</dd>
+<dt id="term-trial">trial<a class="headerlink" href="#term-trial" title="Permalink to this term">¶</a></dt><dd><p>An individual repetition of an experiment. A minimum number of trials must
+be run to obtain sufficient evidence to draw conclusions, and this number
+is determined in part by the number of <a class="reference internal" href="#term-factor"><span class="xref std std-term">factors</span></a> and
+<a class="reference internal" href="#term-level"><span class="xref std std-term">levels</span></a>.</p>
+</dd>
+<dt id="term-window">window<a class="headerlink" href="#term-window" title="Permalink to this term">¶</a></dt><dd><p>See <a class="reference internal" href="#term-derivation-window"><span class="xref std std-term">derivation window</span></a>.</p>
+</dd>
+<dt id="term-within-trial-derivation">within-trial derivation<a class="headerlink" href="#term-within-trial-derivation" title="Permalink to this term">¶</a></dt><dd><p>See <a class="reference internal" href="#term-derivation-window-within-trial"><span class="xref std std-term">derivation window, within-trial</span></a>.</p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="usage.html" class="btn btn-neutral float-right" title="Using SweetPea" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation and Setup" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, SweetPea Research Group.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

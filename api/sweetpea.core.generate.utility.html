@@ -1,0 +1,604 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>sweetpea.core.generate.utility module &mdash; SweetPea  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="sweetpea.core.binary module" href="sweetpea.core.binary.html" />
+    <link rel="prev" title="sweetpea.core.generate.sample_uniform module" href="sweetpea.core.generate.sample_uniform.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> SweetPea
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guide.html">SweetPea Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guide/installation.html">Installation and Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guide/installation.html#automated-installation-from-the-python-package-index">Automated Installation from the Python Package Index</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/installation.html#manual-installation-from-source">Manual Installation from Source</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/installation.html#contributing-to-sweetpea-development">Contributing to SweetPea Development</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/factorial_design.html">Factorial Experiment Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#factors">Factors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#levels">Levels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#example">Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#derivations">Derivations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/factorial_design.html#basic-windows">Basic Windows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/factorial_design.html#transition-windows">Transition Windows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/factorial_design.html#within-trial-windows">Within-Trial Windows</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#glossary">Glossary</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/usage.html">Using SweetPea</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/contributing.html">Contributing to SweetPea</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guide/contributing/issues.html">Using the GitHub Issue Tracker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/contributing/development.html">Developing SweetPea</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/development.html#configuring-your-development-environment">Configuring Your Development Environment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/development.html#repository-organization">Repository Organization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/development.html#workflows">Workflows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/development.html#pull-requests">Pull Requests</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/contributing/documentation.html">Contributing to the Documentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/documentation.html#installing-dependencies">Installing Dependencies</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/documentation.html#building-the-documentation">Building the Documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/documentation.html#automatic-vs-manual-documentation">Automatic vs Manual Documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/documentation.html#contributing-to-the-automatic-documentation">Contributing to the Automatic Documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/documentation.html#style-guides">Style Guides</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/contributing/rest_style_guide.html">reStructuredText Style Guide</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/rest_style_guide.html#general">General</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/rest_style_guide.html#docstrings">Docstrings</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/contributing/py_style_guide.html">Python Style Guide</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#note-on-pep-8">Note on PEP 8</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#maximum-line-length">Maximum Line Length</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#blank-lines">Blank Lines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#imports">Imports</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#string-quotes">String Quotes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#trailing-commas">Trailing Commas</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#comments">Comments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#type-checking-or-linting-overrides">Type-Checking or Linting Overrides</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">SweetPea API Documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="sweetpea.html">sweetpea package</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="sweetpea.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="sweetpea.core.html">sweetpea.core package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.sampling_strategies.html">sweetpea.sampling_strategies package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.tests.html">sweetpea.tests package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sweetpea.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.backend.html">sweetpea.backend module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.base_constraint.html">sweetpea.base_constraint module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.blocks.html">sweetpea.blocks module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.combinatorics.html">sweetpea.combinatorics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.constraints.html">sweetpea.constraints module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.derivation_processor.html">sweetpea.derivation_processor module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.design_graph.html">sweetpea.design_graph module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.design_partitions.html">sweetpea.design_partitions module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.encoding_diagram.html">sweetpea.encoding_diagram module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.internal.html">sweetpea.internal module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.logic.html">sweetpea.logic module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.metrics.html">sweetpea.metrics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.primitives.html">sweetpea.primitives module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sweetpea.server.html">sweetpea.server module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SweetPea</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../api.html">SweetPea API Documentation</a> &raquo;</li>
+        
+          <li><a href="sweetpea.html">sweetpea package</a> &raquo;</li>
+        
+          <li><a href="sweetpea.core.html">sweetpea.core package</a> &raquo;</li>
+        
+          <li><a href="sweetpea.core.generate.html">sweetpea.core.generate package</a> &raquo;</li>
+        
+      <li>sweetpea.core.generate.utility module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/api/sweetpea.core.generate.utility.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-sweetpea.core.generate.utility">
+<span id="sweetpea-core-generate-utility-module"></span><h1>sweetpea.core.generate.utility module<a class="headerlink" href="#module-sweetpea.core.generate.utility" title="Permalink to this headline">¶</a></h1>
+<p>This module provides the types and common functions that are used across the
+various submodules of <a class="reference internal" href="sweetpea.core.generate.html#module-sweetpea.core.generate" title="sweetpea.core.generate"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sweetpea.core.generate</span></code></a>.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.AssertionType">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.utility.</span></span><span class="sig-name descname"><span class="pre">AssertionType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.utility.AssertionType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.7/library/enum.html#enum.Enum" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></a></p>
+<p>The three supported variants of CNF assertion.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.AssertionType.EQ">
+<span class="sig-name descname"><span class="pre">EQ</span></span><em class="property"> <span class="pre">=</span> <span class="pre">1</span></em><a class="headerlink" href="#sweetpea.core.generate.utility.AssertionType.EQ" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assert k == n.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.AssertionType.LT">
+<span class="sig-name descname"><span class="pre">LT</span></span><em class="property"> <span class="pre">=</span> <span class="pre">2</span></em><a class="headerlink" href="#sweetpea.core.generate.utility.AssertionType.LT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assert k &lt; n.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.AssertionType.GT">
+<span class="sig-name descname"><span class="pre">GT</span></span><em class="property"> <span class="pre">=</span> <span class="pre">3</span></em><a class="headerlink" href="#sweetpea.core.generate.utility.AssertionType.GT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assert k &gt; n.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.AssertionType.from_json">
+<em class="property"><span class="pre">static</span> </em><span class="sig-name descname"><span class="pre">from_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.utility.AssertionType.from_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a JSON string to an <a class="reference internal" href="#sweetpea.core.generate.utility.AssertionType" title="sweetpea.core.generate.utility.AssertionType"><code class="xref py py-class docutils literal notranslate"><span class="pre">AssertionType</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>s</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#sweetpea.core.generate.utility.AssertionType" title="sweetpea.core.generate.utility.AssertionType">sweetpea.core.generate.utility.AssertionType</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.GenerationRequest">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.utility.</span></span><span class="sig-name descname"><span class="pre">GenerationRequest</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">assertion_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">boolean_values</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.utility.GenerationRequest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#tuple" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a></p>
+<p>A request to generate a CNF.</p>
+<p>Create new instance of GenerationRequest(assertion_type, k, boolean_values)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>assertion_type</strong> (<a class="reference internal" href="#sweetpea.core.generate.utility.AssertionType" title="sweetpea.core.generate.utility.AssertionType"><em>sweetpea.core.generate.utility.AssertionType</em></a>) – </p></li>
+<li><p><strong>k</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+<li><p><strong>boolean_values</strong> (<em>List</em><em>[</em><a class="reference internal" href="sweetpea.core.cnf.html#sweetpea.core.cnf.Var" title="sweetpea.core.cnf.Var"><em>sweetpea.core.cnf.Var</em></a><em>]</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.GenerationRequest.assertion_type">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">assertion_type</span></span><a class="headerlink" href="#sweetpea.core.generate.utility.GenerationRequest.assertion_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>The variant of assertion to make.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.GenerationRequest.k">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">k</span></span><a class="headerlink" href="#sweetpea.core.generate.utility.GenerationRequest.k" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <code class="docutils literal notranslate"><span class="pre">k</span></code> value.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.GenerationRequest.boolean_values">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">boolean_values</span></span><a class="headerlink" href="#sweetpea.core.generate.utility.GenerationRequest.boolean_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of variables to use in generation.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.GenerationRequest.from_json">
+<em class="property"><span class="pre">static</span> </em><span class="sig-name descname"><span class="pre">from_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.utility.GenerationRequest.from_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a JSON object to a <a class="reference internal" href="#sweetpea.core.generate.utility.GenerationRequest" title="sweetpea.core.generate.utility.GenerationRequest"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenerationRequest</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>Dict</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a><em>, </em><em>Any</em><em>]</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#sweetpea.core.generate.utility.GenerationRequest" title="sweetpea.core.generate.utility.GenerationRequest">sweetpea.core.generate.utility.GenerationRequest</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.SampleType">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.utility.</span></span><span class="sig-name descname"><span class="pre">SampleType</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.utility.SampleType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.7/library/enum.html#enum.Enum" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">enum.Enum</span></code></a></p>
+<p>The supported methods of interacting with SweetPea core.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.SampleType.Uniform">
+<span class="sig-name descname"><span class="pre">Uniform</span></span><em class="property"> <span class="pre">=</span> <span class="pre">1</span></em><a class="headerlink" href="#sweetpea.core.generate.utility.SampleType.Uniform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uniform sampling of a CNF formula.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.SampleType.NonUniform">
+<span class="sig-name descname"><span class="pre">NonUniform</span></span><em class="property"> <span class="pre">=</span> <span class="pre">2</span></em><a class="headerlink" href="#sweetpea.core.generate.utility.SampleType.NonUniform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Non-uniform sampling of a CNF formula.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.SampleType.IsSatisfiable">
+<span class="sig-name descname"><span class="pre">IsSatisfiable</span></span><em class="property"> <span class="pre">=</span> <span class="pre">3</span></em><a class="headerlink" href="#sweetpea.core.generate.utility.SampleType.IsSatisfiable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test whether a CNF formula is satisfiable.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.SampleType.from_json">
+<em class="property"><span class="pre">static</span> </em><span class="sig-name descname"><span class="pre">from_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.utility.SampleType.from_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a JSON string to a <a class="reference internal" href="#sweetpea.core.generate.utility.SampleType" title="sweetpea.core.generate.utility.SampleType"><code class="xref py py-class docutils literal notranslate"><span class="pre">SampleType</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>s</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#sweetpea.core.generate.utility.SampleType" title="sweetpea.core.generate.utility.SampleType">sweetpea.core.generate.utility.SampleType</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.ProblemSpecification">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.utility.</span></span><span class="sig-name descname"><span class="pre">ProblemSpecification</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_count</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fresh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cnf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requests</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.utility.ProblemSpecification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#tuple" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a></p>
+<p>A specification of a complete SweetPea problem to be solved.</p>
+<p>Create new instance of ProblemSpecification(sample_type, sample_count, fresh, support, cnf, requests)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_type</strong> (<a class="reference internal" href="#sweetpea.core.generate.utility.SampleType" title="sweetpea.core.generate.utility.SampleType"><em>sweetpea.core.generate.utility.SampleType</em></a>) – </p></li>
+<li><p><strong>sample_count</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+<li><p><strong>fresh</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+<li><p><strong>support</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+<li><p><strong>cnf</strong> (<a class="reference internal" href="sweetpea.core.cnf.html#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><em>sweetpea.core.cnf.CNF</em></a>) – </p></li>
+<li><p><strong>requests</strong> (<em>List</em><em>[</em><a class="reference internal" href="#sweetpea.core.generate.utility.GenerationRequest" title="sweetpea.core.generate.utility.GenerationRequest"><em>sweetpea.core.generate.utility.GenerationRequest</em></a><em>]</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.ProblemSpecification.sample_type">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">sample_type</span></span><a class="headerlink" href="#sweetpea.core.generate.utility.ProblemSpecification.sample_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>The type of sample to produce.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.ProblemSpecification.sample_count">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">sample_count</span></span><a class="headerlink" href="#sweetpea.core.generate.utility.ProblemSpecification.sample_count" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of samples to take.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.ProblemSpecification.fresh">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">fresh</span></span><a class="headerlink" href="#sweetpea.core.generate.utility.ProblemSpecification.fresh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.ProblemSpecification.support">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">support</span></span><a class="headerlink" href="#sweetpea.core.generate.utility.ProblemSpecification.support" title="Permalink to this definition">¶</a></dt>
+<dd><p>The length of the support set.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.ProblemSpecification.cnf">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">cnf</span></span><a class="headerlink" href="#sweetpea.core.generate.utility.ProblemSpecification.cnf" title="Permalink to this definition">¶</a></dt>
+<dd><p>The CNF formula to sample.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.ProblemSpecification.requests">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">requests</span></span><a class="headerlink" href="#sweetpea.core.generate.utility.ProblemSpecification.requests" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of requests to make with regard to the CNF formula.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.ProblemSpecification.from_json">
+<em class="property"><span class="pre">static</span> </em><span class="sig-name descname"><span class="pre">from_json</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.utility.ProblemSpecification.from_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a JSON object to a <a class="reference internal" href="#sweetpea.core.generate.utility.ProblemSpecification" title="sweetpea.core.generate.utility.ProblemSpecification"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProblemSpecification</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data</strong> (<em>Dict</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a><em>, </em><em>Any</em><em>]</em>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#sweetpea.core.generate.utility.ProblemSpecification" title="sweetpea.core.generate.utility.ProblemSpecification">sweetpea.core.generate.utility.ProblemSpecification</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.Solution">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.utility.</span></span><span class="sig-name descname"><span class="pre">Solution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">assignment</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frequency</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.utility.Solution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#tuple" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a></p>
+<p>The result of a generation.</p>
+<p>Create new instance of Solution(assignment, frequency)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>assignment</strong> (<em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em>) – </p></li>
+<li><p><strong>frequency</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py property">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.Solution.assignment">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">assignment</span></span><a class="headerlink" href="#sweetpea.core.generate.utility.Solution.assignment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.Solution.frequency">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">frequency</span></span><a class="headerlink" href="#sweetpea.core.generate.utility.Solution.frequency" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.combine_and_save_cnf">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.utility.</span></span><span class="sig-name descname"><span class="pre">combine_and_save_cnf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_cnf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fresh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generation_requests</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.utility.combine_and_save_cnf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Combines a base CNF formula with the augmentations specified by the
+<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#list" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference internal" href="#sweetpea.core.generate.utility.GenerationRequest" title="sweetpea.core.generate.utility.GenerationRequest"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenerationRequests</span></code></a>, merges
+those formulas, then saves the result to a file at the given path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/pathlib.html#pathlib.Path" title="(in Python v3.7)"><em>pathlib.Path</em></a>) – </p></li>
+<li><p><strong>initial_cnf</strong> (<a class="reference internal" href="sweetpea.core.cnf.html#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><em>sweetpea.core.cnf.CNF</em></a>) – </p></li>
+<li><p><strong>fresh</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+<li><p><strong>support</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+<li><p><strong>generation_requests</strong> (<em>List</em><em>[</em><a class="reference internal" href="#sweetpea.core.generate.utility.GenerationRequest" title="sweetpea.core.generate.utility.GenerationRequest"><em>sweetpea.core.generate.utility.GenerationRequest</em></a><em>]</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.combine_cnf_with_requests">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.utility.</span></span><span class="sig-name descname"><span class="pre">combine_cnf_with_requests</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_cnf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fresh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">generation_requests</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.utility.combine_cnf_with_requests" title="Permalink to this definition">¶</a></dt>
+<dd><p>Combines a base <code class="xref py py-class docutils literal notranslate"><span class="pre">CNF</span></code> with a new <code class="xref py py-class docutils literal notranslate"><span class="pre">CNF</span></code> formed from the
+given <a class="reference internal" href="#sweetpea.core.generate.utility.GenerationRequest" title="sweetpea.core.generate.utility.GenerationRequest"><code class="xref py py-class docutils literal notranslate"><span class="pre">GenerationRequests</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>initial_cnf</strong> (<a class="reference internal" href="sweetpea.core.cnf.html#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><em>sweetpea.core.cnf.CNF</em></a>) – </p></li>
+<li><p><strong>fresh</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+<li><p><strong>support</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
+<li><p><strong>generation_requests</strong> (<em>List</em><em>[</em><a class="reference internal" href="#sweetpea.core.generate.utility.GenerationRequest" title="sweetpea.core.generate.utility.GenerationRequest"><em>sweetpea.core.generate.utility.GenerationRequest</em></a><em>]</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="sweetpea.core.cnf.html#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF">sweetpea.core.cnf.CNF</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.save_cnf">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.utility.</span></span><span class="sig-name descname"><span class="pre">save_cnf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cnf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fresh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">support</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.utility.save_cnf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes a CNF formula to a file at the given path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filename</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/pathlib.html#pathlib.Path" title="(in Python v3.7)"><em>pathlib.Path</em></a>) – </p></li>
+<li><p><strong>cnf</strong> (<a class="reference internal" href="sweetpea.core.cnf.html#sweetpea.core.cnf.CNF" title="sweetpea.core.cnf.CNF"><em>sweetpea.core.cnf.CNF</em></a>) – </p></li>
+<li><p><strong>fresh</strong> (<em>Optional</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em>) – </p></li>
+<li><p><strong>support</strong> (<em>Optional</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.core.generate.utility.temporary_cnf_file">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.utility.</span></span><span class="sig-name descname"><span class="pre">temporary_cnf_file</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">PosixPath('.')</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.utility.temporary_cnf_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a <a class="reference external" href="https://docs.python.org/3.7/library/pathlib.html#pathlib.Path" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a> to a new, local file in the directory of
+the given path with a <code class="docutils literal notranslate"><span class="pre">.cnf</span></code> suffix. When used as a context manager
+(recommended), the file will be deleted when it leaves the context scope.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>base_path</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/pathlib.html#pathlib.Path" title="(in Python v3.7)"><em>pathlib.Path</em></a>) – </p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>Iterator[<a class="reference external" href="https://docs.python.org/3.7/library/pathlib.html#pathlib.Path" title="(in Python v3.7)">pathlib.Path</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="sweetpea.core.binary.html" class="btn btn-neutral float-right" title="sweetpea.core.binary module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="sweetpea.core.generate.sample_uniform.html" class="btn btn-neutral float-left" title="sweetpea.core.generate.sample_uniform module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, SweetPea Research Group.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
