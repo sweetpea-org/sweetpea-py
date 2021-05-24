@@ -1,0 +1,433 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Developing SweetPea &mdash; SweetPea  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Contributing to the Documentation" href="documentation.html" />
+    <link rel="prev" title="Using the GitHub Issue Tracker" href="issues.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> SweetPea
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../../guide.html">SweetPea Guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../installation.html">Installation and Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#automated-installation-from-the-python-package-index">Automated Installation from the Python Package Index</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#manual-installation-from-source">Manual Installation from Source</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../installation.html#contributing-to-sweetpea-development">Contributing to SweetPea Development</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../factorial_design.html">Factorial Experiment Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../factorial_design.html#factors">Factors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../factorial_design.html#levels">Levels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../factorial_design.html#example">Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../factorial_design.html#derivations">Derivations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../factorial_design.html#windows">Windows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../factorial_design.html#transitions">Transitions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../factorial_design.html#within-trials">Within-Trials</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../factorial_design.html#glossary">Glossary</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../usage.html">Using SweetPea</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../contributing.html">Contributing to SweetPea</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="issues.html">Using the GitHub Issue Tracker</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Developing SweetPea</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#configuring-your-development-environment">Configuring Your Development Environment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#repository-organization">Repository Organization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#workflows">Workflows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pull-requests">Pull Requests</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="documentation.html">Contributing to the Documentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="documentation.html#installing-dependencies">Installing Dependencies</a></li>
+<li class="toctree-l4"><a class="reference internal" href="documentation.html#building-the-documentation">Building the Documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="documentation.html#automatic-vs-manual-documentation">Automatic vs Manual Documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="documentation.html#contributing-to-the-automatic-documentation">Contributing to the Automatic Documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="documentation.html#style-guides">Style Guides</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="rest_style_guide.html">reStructuredText Style Guide</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="rest_style_guide.html#general">General</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rest_style_guide.html#docstrings">Docstrings</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="py_style_guide.html">Python Style Guide</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="py_style_guide.html#note-on-pep-8">Note on PEP 8</a></li>
+<li class="toctree-l4"><a class="reference internal" href="py_style_guide.html#maximum-line-length">Maximum Line Length</a></li>
+<li class="toctree-l4"><a class="reference internal" href="py_style_guide.html#blank-lines">Blank Lines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="py_style_guide.html#imports">Imports</a></li>
+<li class="toctree-l4"><a class="reference internal" href="py_style_guide.html#string-quotes">String Quotes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="py_style_guide.html#trailing-commas">Trailing Commas</a></li>
+<li class="toctree-l4"><a class="reference internal" href="py_style_guide.html#comments">Comments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="py_style_guide.html#type-checking-or-linting-overrides">Type-Checking or Linting Overrides</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">SweetPea API Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../api/sweetpea.html">sweetpea package</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sweetpea.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.core.html">sweetpea.core package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.sampling_strategies.html">sweetpea.sampling_strategies package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.tests.html">sweetpea.tests package</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../api/sweetpea.html#submodules">Submodules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.backend.html">sweetpea.backend module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.base_constraint.html">sweetpea.base_constraint module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.blocks.html">sweetpea.blocks module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.combinatorics.html">sweetpea.combinatorics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.constraints.html">sweetpea.constraints module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.derivation_processor.html">sweetpea.derivation_processor module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.design_graph.html">sweetpea.design_graph module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.design_partitions.html">sweetpea.design_partitions module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.encoding_diagram.html">sweetpea.encoding_diagram module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.internal.html">sweetpea.internal module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.logic.html">sweetpea.logic module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.metrics.html">sweetpea.metrics module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.primitives.html">sweetpea.primitives module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.server.html">sweetpea.server module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">SweetPea</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../guide.html">SweetPea Guide</a> &raquo;</li>
+        
+          <li><a href="../contributing.html">Contributing to SweetPea</a> &raquo;</li>
+        
+      <li>Developing SweetPea</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../_sources/guide/contributing/development.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="developing-sweetpea">
+<span id="development"></span><h1>Developing SweetPea<a class="headerlink" href="#developing-sweetpea" title="Permalink to this headline">¶</a></h1>
+<p>This section of the guide explains how to work on development of the SweetPea
+domain-specific language.</p>
+<div class="section" id="configuring-your-development-environment">
+<span id="configuring-development-environment"></span><h2>Configuring Your Development Environment<a class="headerlink" href="#configuring-your-development-environment" title="Permalink to this headline">¶</a></h2>
+<p>SweetPea is developed on Python 3.7.9. Unless a backwards-incompatible version
+of Python is released, SweetPea should run without issue on newer versions, but
+we <em>require</em> compatibility with 3.7.9, so we recommend using that for all
+SweetPea development.</p>
+<p>Like with development of any Python package, use of a <a class="reference external" href="https://docs.python.org/3/tutorial/venv.html">virtual environment</a> is recommended.</p>
+<div class="section" id="installing-dependencies">
+<h3>Installing Dependencies<a class="headerlink" href="#installing-dependencies" title="Permalink to this headline">¶</a></h3>
+<p>SweetPea’s required third-party libraries are recorded in the
+<code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code> file at the root of the repository. You can install the
+needed libraries with <code class="docutils literal notranslate"><span class="pre">pip</span></code> by doing:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pip install -r requirements.txt
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="repository-organization">
+<h2>Repository Organization<a class="headerlink" href="#repository-organization" title="Permalink to this headline">¶</a></h2>
+<p>The repository follows a particular structure:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 44%" />
+<col style="width: 56%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Directory</p></th>
+<th class="head"><p>Purpose of Contents</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">/</span></code></p></td>
+<td><p>Various top-level files.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">/.github/workflows/</span></code></p></td>
+<td><p>GitHub Workflows for continuous integration.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">/acceptance/</span></code></p></td>
+<td><p>Specialized regression tests.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">/docs/</span></code></p></td>
+<td><p>All documentation.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">/docs/_build/</span></code></p></td>
+<td><p>Where documentation gets built to.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">/docs/_source/</span></code></p></td>
+<td><p>Sources for documentation generation.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">/example_programs/</span></code></p></td>
+<td><p>Examples of using SweetPea in code.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">/sweetpea/</span></code></p></td>
+<td><p>Actual SweetPea implementation code.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">/sweetpea/core/</span></code></p></td>
+<td><p>Back-end core implementation code.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">/sweetpea/sampling_strategies/</span></code></p></td>
+<td><p>Code for various sampling strategies.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">/sweetpea/tests/</span></code></p></td>
+<td><p>The test suite.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In the rest of the documentation, we leave out the initial <code class="docutils literal notranslate"><span class="pre">/</span></code> of paths
+when discussing code in the SweetPea repository.</p>
+</div>
+</div>
+<div class="section" id="workflows">
+<h2>Workflows<a class="headerlink" href="#workflows" title="Permalink to this headline">¶</a></h2>
+<p>SweetPea uses <a class="reference external" href="https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions">GitHub Workflows</a>
+to perform continuous integration testing and handle other jobs. The workflows
+are written in YAML and their specifications live in <code class="docutils literal notranslate"><span class="pre">.github/workflows/</span></code>. The
+workflows we currently use are:</p>
+<dl>
+<dt><code class="docutils literal notranslate"><span class="pre">acceptance-fast.yml</span></code></dt><dd><p>Runs the default (non-slow) tests in <code class="docutils literal notranslate"><span class="pre">acceptance/</span></code>. This usually takes
+around 10 minutes to complete if there are no failures.</p>
+<p>Triggers whenever a push includes changes in the following paths:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">.github/workflows/acceptance-fast.yml</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">acceptance/**</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sweetpea/**</span></code></p></li>
+</ul>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">acceptance-slow.yml</span></code></dt><dd><p>Runs all tests in <code class="docutils literal notranslate"><span class="pre">acceptance/</span></code>. This usually takes close to 20 minutes to
+complete if there are no failures.</p>
+<p>Triggers on pull requests or whenever a push modifies the
+<code class="docutils literal notranslate"><span class="pre">.github/workflows/acceptance-slow.yml</span></code> file.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">gh-pages.yml</span></code></dt><dd><p>Publishes the GitHub Pages website.</p>
+<p>Triggers when a push includes changes in the <code class="docutils literal notranslate"><span class="pre">docs/_build/html/**</span></code> path.
+This means that to trigger an update in the GitHub Pages, you must
+<a class="reference internal" href="documentation.html#building-the-documentation"><span class="std std-ref">build the documentation</span></a> and push the
+resulting changes to that directory.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">platform-report.yml</span></code></dt><dd><p>Provides information about the platforms used when running the workflows.</p>
+<p>This workflow never runs automatically. It must be run manually, either
+through the web interface or by using the GitHub Actions API. (You probably
+never need to run it, though.)</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">tests.yml</span></code></dt><dd><p>Runs the test suite in <code class="docutils literal notranslate"><span class="pre">sweetpea/tests/</span></code>.</p>
+<p>Triggers on pull requests and whenever a push includes changes in the
+following paths:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">.github/workflows/test.yml</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sweetpea/**</span></code></p></li>
+</ul>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">typecheck.yml</span></code></dt><dd><p>Runs the mypy static type checker to inspect the code for type correctness.</p>
+<p>Triggers on pull requests and whenever a push includes changes in the
+following paths:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">.github/workflows/typecheck.yml</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sweetpea/**</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</div>
+<div class="section" id="pull-requests">
+<h2>Pull Requests<a class="headerlink" href="#pull-requests" title="Permalink to this headline">¶</a></h2>
+<p>We will review all good-faith pull requests. For information on creating a pull
+requests, see <a class="reference external" href="https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request">GitHub’s documentation on the matter</a>.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="documentation.html" class="btn btn-neutral float-right" title="Contributing to the Documentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="issues.html" class="btn btn-neutral float-left" title="Using the GitHub Issue Tracker" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, SweetPea Research Group.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

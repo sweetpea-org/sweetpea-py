@@ -2,7 +2,7 @@
 import sys
 sys.path.append("..")
 
-from sweetpea.primitives import factor, derived_level, within_trial, transition
+from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.constraints import at_most_k_in_a_row
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
 
@@ -13,12 +13,12 @@ Stroop Task
 factors (levels):
 - current color (red, blue, green, brown)
 - current word (red, blue, green, brown)
-- congruency (congruent, incongruent): factor dependent on color and word.
-- correct response (up, down, left right): factor dependent on color.
-- response transition (repetition, switch). factor dependent on response:
+- congruency (congruent, incongruent): Factor dependent on color and word.
+- correct response (up, down, left right): Factor dependent on color.
+- response Transition (repetition, switch). Factor dependent on response:
 
 design:
-- counterbalancing color x congruency x response transition
+- counterbalancing color x congruency x response Transition
 - no more than 7 response repetitions in a row
 - no more than 7 response switches in a row
 
@@ -26,8 +26,8 @@ design:
 
 # DEFINE COLOR AND WORD factorS
 
-color      = factor("color",  ["red", "blue", "green", "brown"])
-word       = factor("motion", ["red", "blue", "green", "brown"])
+color      = Factor("color",  ["red", "blue", "green", "brown"])
+word       = Factor("motion", ["red", "blue", "green", "brown"])
 
 # DEFINE CONGRUENCY FACTOR
 
@@ -38,10 +38,10 @@ def incongruent(color, word):
     return not congruent(color, word)
 
 
-conLevel = derived_level("con", within_trial(congruent,   [color, word]))
-incLevel = derived_level("inc", within_trial(incongruent,   [color, word]))
+conLevel = DerivedLevel("con", WithinTrial(congruent,   [color, word]))
+incLevel = DerivedLevel("inc", WithinTrial(incongruent,   [color, word]))
 
-congruency = factor("congruency", [
+congruency = Factor("congruency", [
     conLevel,
     incLevel
 ])
@@ -57,14 +57,14 @@ def response_left(color):
 def response_right(color):
     return color == "brown"
 
-response = factor("response", [
-    derived_level("up", within_trial(response_up,   [color])),
-    derived_level("down", within_trial(response_down,   [color])),
-    derived_level("left", within_trial(response_left,   [color])),
-    derived_level("right", within_trial(response_right,   [color])),
+response = Factor("response", [
+    DerivedLevel("up", WithinTrial(response_up,   [color])),
+    DerivedLevel("down", WithinTrial(response_down,   [color])),
+    DerivedLevel("left", WithinTrial(response_left,   [color])),
+    DerivedLevel("right", WithinTrial(response_right,   [color])),
 ])
 
-# DEFINE RESPONSE transition FACTOR
+# DEFINE RESPONSE Transition FACTOR
 
 def response_repeat(response):
     return response[0] == response[1]
@@ -72,9 +72,9 @@ def response_repeat(response):
 def response_switch(response):
     return not response_repeat(response)
 
-resp_transition = factor("response_transition", [
-    derived_level("repeat", transition(response_repeat, [response])),
-    derived_level("switch", transition(response_switch, [response]))
+resp_transition = Factor("response_transition", [
+    DerivedLevel("repeat", Transition(response_repeat, [response])),
+    DerivedLevel("switch", Transition(response_switch, [response]))
 ])
 
 # DEFINE SEQUENCE CONSTRAINTS

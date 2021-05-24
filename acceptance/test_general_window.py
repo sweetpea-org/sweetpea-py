@@ -5,20 +5,20 @@ from itertools import permutations
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
 from sweetpea.constraints import at_most_k_in_a_row, exclude
 from sweetpea.encoding_diagram import print_encoding_diagram
-from sweetpea.primitives import factor, derived_level, window
+from sweetpea.primitives import Factor, DerivedLevel, Window
 from sweetpea.tests.test_utils import get_level_from_name
 from sweetpea.server import build_cnf
 from acceptance import path_to_cnf_files
 
 # Basic setup
 color_list = ["red", "blue"]
-color = factor("color", color_list)
-text  = factor("text",  color_list)
+color = Factor("color", color_list)
+text  = Factor("text",  color_list)
 
-# congruent 'bookend' factor. (color and text in first and last trial are congruent)
-congruent_bookend = factor("congruent bookend?", [
-    derived_level("yes", window(lambda color, text: color == text, [color, text], 1, 3)),
-    derived_level("no",  window(lambda color, text: color != text, [color, text], 1, 3))
+# congruent 'bookend' Factor. (color and text in first and last trial are congruent)
+congruent_bookend = Factor("congruent bookend?", [
+    DerivedLevel("yes", Window(lambda color, text: color == text, [color, text], 1, 3)),
+    DerivedLevel("no",  Window(lambda color, text: color != text, [color, text], 1, 3))
 ])
 
 

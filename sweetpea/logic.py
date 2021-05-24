@@ -1,7 +1,11 @@
+"""This module provides functionality for handling logic formulas."""
+
+
 from collections import namedtuple
 from functools import reduce
 from itertools import product
 from typing import Any, Dict, List, Tuple, Union, cast
+
 
 And = namedtuple('And', 'input_list')
 Or  = namedtuple('Or',  'input_list')
@@ -33,13 +37,15 @@ class _Cache:
         return self.next_variable
 
 
-"""
-Converts to CNF using the pattern described on https://en.wikipedia.org/wiki/Conjunctive_normal_form#Converting_from_first-order_logic
-The conversion is naive, which means it is subject to an exponential explosion
-in the length of the formula. The upside is that it does not introduce any new
-variables, which constrains the overall size of the solution space. (#SAT)
-"""
 def to_cnf_naive(f: FormulaWithIff, next_variable: int) -> Tuple[And, int]:
+    """Converts to CNF using the pattern described on
+    https://en.wikipedia.org/wiki/Conjunctive_normal_form#Converting_from_first-order_logic.
+
+    The conversion is naive, which means it is subject to an exponential
+    explosion in the length of the formula. The upside is that it does not
+    introduce any new variables, which constrains the overall size of the
+    solution space. (#SAT)
+    """
     formula = __eliminate_iff(f)
     formula = __apply_demorgan(formula)
     formula = __distribute_ors_naive(formula)
@@ -48,13 +54,14 @@ def to_cnf_naive(f: FormulaWithIff, next_variable: int) -> Tuple[And, int]:
     return (formula, next_variable)
 
 
-"""
-Converts to CNF using the pattern described on https://en.wikipedia.org/wiki/Conjunctive_normal_form#Converting_from_first-order_logic
-However, distributing ORs over ANDs is done via switching variables, to keep the
-converted formula small, as described here: https://www.cs.jhu.edu/~jason/tutorials/convert-to-CNF.html
-"""
 def to_cnf_switching(f: FormulaWithIff, next_variable: int) -> Tuple[And, int]:
-    # https://en.wikipedia.org/wiki/Conjunctive_normal_form#Converting_from_first-order_logic
+    """Converts to CNF using the pattern described on
+    https://en.wikipedia.org/wiki/Conjunctive_normal_form#Converting_from_first-order_logic.
+
+    However, distributing ORs over ANDs is done via switching variables, to
+    keep the converted formula small, as described here at
+    https://www.cs.jhu.edu/~jason/tutorials/convert-to-CNF.html.
+    """
     formula = __eliminate_iff(f)
     formula = __apply_demorgan(formula)
     (formula, fresh) = __distribute_ors_switching(formula, next_variable)
@@ -63,13 +70,12 @@ def to_cnf_switching(f: FormulaWithIff, next_variable: int) -> Tuple[And, int]:
     return (formula, fresh)
 
 
-"""
-Converts to CNF using the Tseitin transformation. This will introduce addtional
-variables, which will increase #SAT, but provides a linear bound on the length
-increase of the new formula.
-https://en.wikipedia.org/wiki/Tseytin_transformation
-"""
 def to_cnf_tseitin(f: FormulaWithIff, next_variable: int) -> Tuple[And, int]:
+    """Converts to CNF using the Tseitin transformation. This will introduce
+    addtional variables, which will increase #SAT, but provides a linear bound
+    on the length increase of the new formula. See
+    https://en.wikipedia.org/wiki/Tseytin_transformation.
+    """
     clauses = cast(List[Formula], [])
     cache = _Cache(next_variable)
 

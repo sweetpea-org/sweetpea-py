@@ -1,5 +1,5 @@
 from acceptance import assert_no_repetition, path_to_cnf_files
-from sweetpea.primitives import factor, derived_level, within_trial, transition
+from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.constraints import exclude
 from sweetpea.encoding_diagram import print_encoding_diagram
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
@@ -7,8 +7,8 @@ from sweetpea.tests.test_utils import get_level_from_name
 from sweetpea.server import build_cnf
 from sweetpea.server import build_cnf
 
-color      = factor("color",  ["red", "blue", "green"])
-word       = factor("motion", ["red", "blue"])
+color      = Factor("color",  ["red", "blue", "green"])
+word       = Factor("motion", ["red", "blue"])
 
 def illegal_stimulus(color, word):
     return color == "green" and word == "blue"
@@ -16,9 +16,9 @@ def illegal_stimulus(color, word):
 def legal_stimulus(color, word):
     return not illegal_stimulus(color, word)
 
-stimulus_configuration = factor("stimulus configuration", [
-    derived_level("legal",   within_trial(legal_stimulus, [color, word])),
-    derived_level("illegal", within_trial(illegal_stimulus, [color, word]))
+stimulus_configuration = Factor("stimulus configuration", [
+    DerivedLevel("legal",   WithinTrial(legal_stimulus, [color, word])),
+    DerivedLevel("illegal", WithinTrial(illegal_stimulus, [color, word]))
 ])
 
 constraints = [exclude(stimulus_configuration, get_level_from_name(stimulus_configuration, "illegal"))]
@@ -42,7 +42,7 @@ def test_correct_solution_count_with_override_flag():
 
     assert block.crossing_size() == 5
     assert len(experiments) == 120
-    assert_no_repetition(experiments)
+    assert_no_repetition(experiments)  # FIXME
 
 
 def test_correct_solution_count_with_override_flag_and_multiple_trials_excluded():
@@ -67,4 +67,4 @@ def test_correct_solution_count_with_override_flag_and_multiple_trials_excluded_
     with open(path_to_cnf_files+'/test_correct_solution_count_with_override_flag_and_multiple_trials_excluded.cnf', 'r') as f:
         old_cnf = f.read()
 
-    assert old_cnf == cnf.as_unigen_string()
+    assert old_cnf == cnf.as_unigen_string()  # FIXME

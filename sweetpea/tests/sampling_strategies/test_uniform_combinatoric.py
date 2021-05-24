@@ -6,7 +6,7 @@ import re
 
 from sweetpea import fully_cross_block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
-from sweetpea.constraints import Exclude, ExactlyKInARow, NoMoreThanKInARow
+from sweetpea.constraints import Exclude, ExactlyKInARow, AtMostKInARow
 from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy, UCSolutionEnumerator
 from sweetpea.tests.test_utils import get_level_from_name
 
@@ -113,7 +113,7 @@ def test_constraint_violation():
 
     block = fully_cross_block([color, text, con_factor_within_trial],
                               [color, text],
-                              [NoMoreThanKInARow(2, (color, red_color))])
+                              [AtMostKInARow(2, (color, red_color))])
 
     assert are_constraints_violated(block, {color: [red_color, blue_color, blue_color, blue_color]}) == False
     assert are_constraints_violated(block, {color: [red_color, red_color, blue_color, blue_color]}) == False

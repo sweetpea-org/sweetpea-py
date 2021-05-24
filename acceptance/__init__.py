@@ -3,22 +3,21 @@ from typing import Tuple, List, Union
 from itertools import repeat, permutations
 from random import shuffle
 
-from sweetpea.primitives import factor, simple_level, derived_level, get_external_level_name, Factor
+from sweetpea.primitives import Factor, SimpleLevel, DerivedLevel
 from sweetpea.constraints import at_most_k_in_a_row
 from sweetpea.internal import get_all_levels
 from sweetpea.derivation_processor import DerivationProcessor
 import os
 
-def __assert_atmostkinarow_pair(k: int, level: Tuple[factor, Union[simple_level, derived_level]], experiments: List[dict]) -> None:
+def __assert_atmostkinarow_pair(k: int, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], experiments: List[dict]) -> None:
     sublist = list(repeat(level[1], k + 1))
     for e in experiments:
         assert sublist not in [e[level[0]][i:i+k+1] for i in range(len(e[level[0]]) - (k + 1))]
 
-def __assert_atmostkinarow_factor(k: int, f: factor, experiments: List[dict]) -> None:
+def __assert_atmostkinarow_factor(k: int, f: Factor, experiments: List[dict]) -> None:
     factor_name = f.factor_name
     for level in f.levels:
-        level_name = get_external_level_name(level)
-        sublist = list(repeat(level_name, k + 1))
+        sublist = list(repeat(level.name, k + 1))
         for e in experiments:
             assert sublist not in [e[factor_name][i:i + k + 1] for i in range(len(e[factor_name]) - (k + 1))]
 

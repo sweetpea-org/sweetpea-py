@@ -3,7 +3,7 @@ import pytest
 
 from itertools import permutations
 
-from sweetpea.primitives import factor, derived_level, within_trial, transition
+from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.constraints import at_most_k_in_a_row, exactly_k_in_a_row, exclude
 from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, synthesize_trials
@@ -11,24 +11,24 @@ from sweetpea.tests.test_utils import get_level_from_name
 
 # Basic setup
 color_list = ["red", "blue"]
-color = factor("color", color_list)
-text  = factor("text",  color_list)
+color = Factor("color", color_list)
+text  = Factor("text",  color_list)
 
-# Congruent factor
-con_level  = derived_level("con", within_trial(op.eq, [color, text]))
-inc_level  = derived_level("inc", within_trial(op.ne, [color, text]))
-con_factor = factor("congruent?", [con_level, inc_level])
+# Congruent Factor
+con_level  = DerivedLevel("con", WithinTrial(op.eq, [color, text]))
+inc_level  = DerivedLevel("inc", WithinTrial(op.ne, [color, text]))
+con_factor = Factor("congruent?", [con_level, inc_level])
 
-# Repeated color factor
-repeated_color_factor = factor("repeated color?", [
-    derived_level("yes", transition(lambda colors: colors[0] == colors[1], [color])),
-    derived_level("no",  transition(lambda colors: colors[0] != colors[1], [color]))
+# Repeated color Factor
+repeated_color_factor = Factor("repeated color?", [
+    DerivedLevel("yes", Transition(lambda colors: colors[0] == colors[1], [color])),
+    DerivedLevel("no",  Transition(lambda colors: colors[0] != colors[1], [color]))
 ])
 
-# Repeated text factor
-repeated_text_factor = factor("repeated text?", [
-    derived_level("yes", transition(lambda texts: texts[0] == texts[1], [text])),
-    derived_level("no",  transition(lambda texts: texts[0] != texts[1], [text]))
+# Repeated text Factor
+repeated_text_factor = Factor("repeated text?", [
+    DerivedLevel("yes", Transition(lambda texts: texts[0] == texts[1], [text])),
+    DerivedLevel("no",  Transition(lambda texts: texts[0] != texts[1], [text]))
 ])
 
 

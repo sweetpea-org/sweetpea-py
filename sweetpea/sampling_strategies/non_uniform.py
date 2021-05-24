@@ -19,7 +19,6 @@ class NonUniformSamplingStrategy(SamplingStrategy):
                 if "WARNING" not in e:
                     return SamplingResult([], {})
 
-        # print(CNF(backend_request.get_cnfs_as_json()))
         solutions = sample_non_uniform(sample_count,
                                        CNF(backend_request.get_cnfs_as_json()),
                                        backend_request.fresh - 1,

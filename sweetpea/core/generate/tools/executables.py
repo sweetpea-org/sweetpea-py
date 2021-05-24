@@ -1,12 +1,53 @@
-"""This script makes it easy to set up the Unigen and CryptoMiniSAT executables
-as needed by Sweetpea.
+"""This module makes it easy to set up the Unigen and CryptoMiniSAT executables
+as needed by Sweetpea. It can also be run as a script.
 
-NOTE: SweetPea Core only makes use of the automated download of the current
-      system and machine-type's executables from the latest release. The rest
-      of the code accommodates other use cases and is not strictly necessary,
-      but it took a bit of reading to suss out GitHub's API so I figured I'd
-      leave it in place for future use if necessary. But perhaps it should be
-      removed at some point.
+.. note::
+
+    SweetPea Core only makes use of the automated download of the current
+    system and machine-type's executables from the latest release. The rest of
+    the code accommodates other use cases and is not strictly necessary, but it
+    took a bit of reading to suss out GitHub's API so I figured I'd leave it in
+    place for future use if necessary. But perhaps it should be removed at some
+    point.
+
+Using This Module As a Script
+=============================
+
+To use this module as a script, do ``python executables.py`` (specifying the
+full path as needed). A number of options are supported:
+
+-h, --help
+    Show a help message and exit.
+
+-d BIN_DIR, --bin-dir BIN_DIR
+    The directory into which to install the executables.
+
+    The default is determined by :func:`appdirs.user_data_dir` +
+    ``SweetPea/Executables``.
+
+-s SYSTEM, --system SYSTEM
+    The target system. Valid options are ``None``, ``Darwin``, ``Linux``, and
+    ``Windows``. When ``None`` is given, the system will be automatically
+    deduced by :func:`platform.system`.
+
+    The default is ``None``.
+
+-m MACHINE, --machine MACHINE
+    The target machine type. Valid options are ``None``, ``arm64``, ``x86_64``,
+    and ``AMD64``. When ``None`` is given, the machine type will be
+    automatically deduced by :func:`platform.machine`.
+
+    The default is ``None``.
+
+-t TAG, --tag TAG
+    The `sweetpea-org/unigen-exe <https://github.com/sweetpea-org/unigen-exe>`_
+    release tag to target for downloading.
+
+    The default is to use the latest available release tag.
+
+--asset-string
+    Prints out the asset string for the indicated system+machine combination.
+    This is provided mostly for debugging.
 """
 
 
@@ -24,11 +65,25 @@ from urllib.request import Request, urlopen
 from zipfile import ZipFile, ZipInfo
 
 
-__all__ = ['CRYPTOMINISAT_EXE', 'DEFAULT_DOWNLOAD_IF_MISSING', 'UNIGEN_EXE', 'ensure_executable_available']
+__all__ = [
+    # We export the environment variable names so they will be documented.
+    'DOWNLOAD_UNIGEN_ENV_VAR', 'UNIGEN_EXE_ENV_VAR',
+    # The rest of the exports are for use in other modules.
+    'CRYPTOMINISAT_EXE', 'DEFAULT_DOWNLOAD_IF_MISSING', 'UNIGEN_EXE',
+    'ensure_executable_available'
+]
 
 
 JSONDict = Dict[str, Any]
 
+#: The name of the environment variable that can be used to specify whether the
+#: bundled executables should be downloaded. The default value is ``True``.
+#: Valid options are:
+#:
+#: ===============================  ================================================================
+#: Download executables if missing  ``True``, ``true``, ``T``, ``t``, ``Yes``, ``yes``, ``Y``, ``y``
+#: Do not download executables      ``False``, ``false``, ``F``, ``f``, ``No``, ``no``, ``N``, ``n``
+#: ===============================  ================================================================
 DOWNLOAD_UNIGEN_ENV_VAR = 'UNIGEN_DOWNLOAD_IF_MISSING'
 if DOWNLOAD_UNIGEN_ENV_VAR in environ:
     download_if_missing = environ[DOWNLOAD_UNIGEN_ENV_VAR]
@@ -45,16 +100,18 @@ UNIGEN_EXE_LATEST_RELEASE_URL = "https://api.github.com/repos/sweetpea-org/unige
 UNIGEN_EXE_SPECIFIC_TAG_URL = "https://api.github.com/repos/sweetpea-org/unigen-exe/releases/tags/{tag}"
 
 _ASSET_NAMES = {
-    ('Darwin', 'arm64'): 'mac-apple-silicon',
-    ('Darwin', 'x86_64'): 'mac-intel',
-    ('Linux', 'x86_64'): 'linux-x86_64',
+    ('Darwin',  'arm64'):  'mac-apple-silicon',
+    ('Darwin',  'x86_64'): 'mac-intel',
+    ('Linux',   'x86_64'): 'linux-x86_64',
     ('Windows', 'x86_64'): 'win-x64',  # TODO: Verify that this is needed.
-    ('Windows', 'AMD64'): 'win-x64',
+    ('Windows', 'AMD64'):  'win-x64',
 }
 
 _VALID_ASSETS = {k: list(p[1] for p in v) for k, v in groupby(_ASSET_NAMES.keys(), lambda p: p[0])}
 
-# The folder in which executables will be stored.
+#: The folder in which executables will be stored if they are going to be
+#: downloaded. The default is an automatically generated directory in the
+#: user's data directory as determined by :func:`appdirs.user_data_dir`.
 UNIGEN_EXE_ENV_VAR = 'UNIGEN_EXE_DIR'
 if UNIGEN_EXE_ENV_VAR in environ:
     EXE_BIN_LOCATION = Path(environ[UNIGEN_EXE_ENV_VAR])
@@ -105,7 +162,7 @@ def _get_asset_path(system: Optional[str], machine: Optional[str]) -> str:
 
 
 def _get_asset_zip(system: Optional[str], machine: Optional[str]) -> str:
-    """Retrieves the .zip name of the appropriate release asset."""
+    """Retrieves the ``.zip`` name of the appropriate release asset."""
     return _get_asset_path(system, machine) + '.zip'
 
 
@@ -122,14 +179,16 @@ def _get_release_from_url(url: str) -> List[JSONDict]:
 
 def get_latest_release_assets() -> List[JSONDict]:
     """Returns a list of JSON dictionaries, each corresponding to an asset in
-    the latest release of the sweetpea-org/unigen-exe repository.
+    the latest release of the `sweetpea-org/unigen-exe repository
+    <https://github.com/sweetpea-org/unigen-exe>`_.
     """
     return _get_release_from_url(UNIGEN_EXE_LATEST_RELEASE_URL)
 
 
 def get_specific_release(tag: str) -> List[JSONDict]:
     """Returns a list of JSON dictionaries, each corresponding to an asset in
-    the indicated release of the sweetpea-org/unigen-exe repository.
+    the indicated release of the `sweetpea-org/unigen-exe repository
+    <https://github.com/sweetpea-org/unigen-exe>`_..
     """
     url = UNIGEN_EXE_SPECIFIC_TAG_URL.format(tag=tag)
     return _get_release_from_url(url)
@@ -147,9 +206,10 @@ def get_asset_url_for_release(system: Optional[str] = None,
                               tag: Optional[str] = None
                               ) -> str:
     """Produces the URL corresponding to the indicated asset for the
-    appropriate release. If `system` and `machine` are unspecified, they will
-    be deduced automatically from the host platform's self-report information.
-    If the `tag` is unspecified, the latest release will be used.
+    appropriate release. If ``system`` and ``machine`` are unspecified, they
+    will be deduced automatically from the host platform's self-report
+    information. If the ``tag`` is unspecified, the latest release will be
+    used.
     """
     # First resolve the needed asset name.
     asset_zip_name = _get_asset_zip(system, machine)
@@ -173,7 +233,7 @@ def download_and_extract_asset_zip_for_release(to_bin_dir: Path,
                                                machine: Optional[str] = None,
                                                tag: Optional[str] = None
                                                ) -> Iterator[Path]:
-    """Fetches the .zip archive corresponding to the indicated system and
+    """Fetches the ``.zip`` archive corresponding to the indicated system and
     machine from the indicated tag, or else use the automatically deduced
     system and machine from the latest release.
     """
@@ -231,7 +291,7 @@ def download_executables(to_bin_dir: Optional[Path] = None,
                          system: Optional[str] = None,
                          machine: Optional[str] = None,
                          tag: Optional[str] = None):
-    """Perform the download and extraction!"""
+    """Performs the download and extraction of the bundled executables."""
     if to_bin_dir is None:
         to_bin_dir = EXE_BIN_LOCATION
     print(f"Downloading and extracting SweetPea executables to {to_bin_dir}...")

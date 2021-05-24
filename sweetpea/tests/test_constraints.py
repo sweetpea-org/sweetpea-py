@@ -6,7 +6,7 @@ from itertools import permutations
 from sweetpea import fully_cross_block
 from sweetpea.blocks import Block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window, SimpleLevel
-from sweetpea.constraints import Constraint, Consistency, FullyCross, Derivation, AtMostKInARow, NoMoreThanKInARow, ExactlyKInARow, Exclude
+from sweetpea.constraints import Constraint, Consistency, FullyCross, Derivation, AtMostKInARow, ExactlyKInARow, Exclude
 from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import And, Or, If, Iff, Not, to_cnf_tseitin
 from sweetpea.tests.test_utils import get_level_from_name
@@ -541,7 +541,7 @@ def test_atmostkinarow_disallows_k_of_zero():
 
 
 def test_nomorethankinarow_sugar():
-    backend_request = __run_kinarow(NoMoreThanKInARow(1, (color, get_level_from_name(color, "red"))))
+    backend_request = __run_kinarow(AtMostKInARow(1, (color, get_level_from_name(color, "red"))))
     assert backend_request.ll_requests == [
         LowLevelRequest("LT", 2, [1,  7 ]),
         LowLevelRequest("LT", 2, [7,  13]),

@@ -1,4 +1,11 @@
-"""This module provides functionality for calling CryptoMiniSAT."""
+"""This module provides functionality for calling the third-party CryptoMiniSAT
+tool.
+
+`CryptoMiniSAT <https://github.com/msoos/cryptominisat>`_ is a an advanced
+incremental SAT solver. SweetPea uses CryptoMiniSAT for a few processes,
+including solving some CNF formulas or checking whether a CNF formula is
+satisfiable to begin with.
+"""
 
 
 from pathlib import Path
@@ -20,8 +27,11 @@ class CryptoMiniSATReturnCode(ReturnCodeEnum):
     result of various computations.
     """
 
+    #: CryptoMiniSAT judged the CNF formula to be satisfiable.
     Satisfiable   = 10
+    #: CryptoMiniSAT can make no judgment about the CNF formula.
     Unknown       = 15
+    #: CryptoMiniSAT judged the CNF formula to be unsatisfiable.
     Unsatisfiable = 20
 
 
@@ -45,10 +55,10 @@ def call_cryptominisat_cli(input_file: Path, download_if_missing: bool) -> Compl
     """Calls CryptoMiniSAT from the command line, reading a given file as the
     input problem.
 
-    If `download_if_missing` is `True`, SweetPea will automatically download
-    the CryptoMiniSAT executable (and other executables SweetPea depends on) to
-    a local directory from this repository:
-        https://github.com/sweetpea-org/unigen-exe
+    If ``download_if_missing`` is ``True``, SweetPea will automatically
+    download the CryptoMiniSAT executable (and other executables SweetPea
+    depends on) to a local directory from the `sweetpea-org/unigen-exe
+    repository <https://github.com/sweetpea-org/unigen-exe>`_.
     """
     ensure_executable_available(CRYPTOMINISAT_EXE, download_if_missing)
     command = [str(CRYPTOMINISAT_EXE), "--verb=0", str(input_file)]
@@ -62,12 +72,12 @@ def call_cryptominisat(input_file: Path,
                        ) -> Tuple[str, CryptoMiniSATReturnCode]:
     """Calls CryptoMiniSAT with the given file as input.
 
-    If `docker_mode` is `True`, this will use a Docker container to run
-    CryptoMiniSAT. If it's `False`, a command-line executable will be used.
+    If ``docker_mode`` is ``True``, this will use a Docker container to run
+    CryptoMiniSAT. If it's ``False``, a command-line executable will be used.
 
-    If `docker_mode` is `False` and no local CryptoMiniSAT executable can be
-    found, and if `download_if_missing` is `True`, the needed executable will
-    be automatically downloaded if it's missing.
+    If ``docker_mode`` is ``False`` *and* no local CryptoMiniSAT executable can
+    be found, and if ``download_if_missing`` is ``True``, the needed executable
+    will be automatically downloaded if it's missing.
     """
     if docker_mode:
         result = call_cryptominisat_docker(input_file)
@@ -82,11 +92,11 @@ def call_cryptominisat(input_file: Path,
 
 
 def cryptominisat_solve(input_file: Path, docker_mode: bool = DEFAULT_DOCKER_MODE_ON) -> Optional[List[int]]:
-    """Attempts to solve a CNF formula with CryptoMiniSAT and return the result
-    as a list of integers.
+    """Attempts to solve a CNF formula with CryptoMiniSAT and returns the
+    result as a list of integers.
 
-    Returns an empty list if the result was unsatisfiable, and returns None if
-    CryptoMiniSAT encounters some unknown issue.
+    Returns an empty list if the result was unsatisfiable, and returns ``None``
+    if CryptoMiniSAT encounters some unknown issue.
     """
     (result, code) = call_cryptominisat(input_file, docker_mode)
     if code is CryptoMiniSATReturnCode.Unsatisfiable:
@@ -103,7 +113,7 @@ def cryptominisat_is_satisfiable(input_file: Path, docker_mode: bool = DEFAULT_D
     """Determines whether the CNF formula encoded in the input file is
     satisfiable, according to CryptoMiniSAT.
 
-    Returns None if CryptoMiniSAT encounters an unknown issue.
+    Returns ``None`` if CryptoMiniSAT encounters an unknown issue.
     """
     (_, code) = call_cryptominisat(input_file, docker_mode)
     if code is CryptoMiniSATReturnCode.Satisfiable:

@@ -17,4 +17,7 @@ class ReturnCodeEnum(Enum):
 
     @classmethod
     def has_value(cls, value: int) -> bool:
+        """Determines whether this :class:`ReturnCodeEnum` contains the
+        indicated ``value``.
+        """
         return value in (e.value for e in cls)

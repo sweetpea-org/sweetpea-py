@@ -64,7 +64,7 @@ class SamplingStrategy(ABC):
 
         # Complex factors - The challenge here is knowing when to insert '', rather than using the variables.
         # Start after 'width' trials, and shift 'stride' trials for each variable.
-        complex_factors = list(filter(lambda f: f.has_complex_window(), block.design))
+        complex_factors = list(filter(lambda f: f.has_complex_window, block.design))
         for f in complex_factors:
             # Get variables for this factor
             start = block.first_variable_for_level(f, f.levels[0]) + 1

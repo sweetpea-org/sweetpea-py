@@ -1,17 +1,17 @@
-import json
-import math
+"""This module provides functionality for making requests to the backend."""
+
 
 from typing import List
+
 from sweetpea.logic import And, cnf_to_json
 from sweetpea.core import Var
 from sweetpea.core.generate.utility import GenerationRequest, AssertionType
 
 
-"""
-Represents an individual low-level request to the backend.
-"""
 class LowLevelRequest:
-    comparisons = ['EQ', 'LT', 'GT'] # will we want more comparisons in the future?
+    """Represents an individual low-level request to the backend."""
+
+    comparisons = ['EQ', 'LT', 'GT']  # will we want more comparisons in the future?
 
     def __init__(self, comparison: str, k: int, variables: List[int]) -> None:
         self.comparison = comparison
@@ -27,10 +27,11 @@ class LowLevelRequest:
             raise ValueError('LowLevelRequest.k must be an integer')
         # TODO - Non-empty list, list containing non-integers
 
-    """
-    Converts this request to a dict suitable for conversion to json and then the backend.
-    """
     def to_dict(self):
+        """Converts this request to a dict suitable for conversion to json and
+        then the backend.
+        """
+
         return {
             'equalityType': self.comparison,
             'k': self.k,
@@ -50,11 +51,11 @@ class LowLevelRequest:
         return str(self.__dict__)
 
 
-"""
-Represents a full request to the backend, including CNFs, LowLevelRequests, and
-unigen arguments.
-"""
 class BackendRequest:
+    """Represents a full request to the backend, including CNFs,
+    LowLevelRequests, and unigen arguments.
+    """
+
     def __init__(self, fresh: int, cnfs: List[And] = [], ll_requests: List[LowLevelRequest] = []) -> None:
         self.cnfs = list(cnfs)
         self.ll_requests = list(ll_requests)

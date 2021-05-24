@@ -1,5 +1,5 @@
 """This module provides the types and common functions that are used across the
-various generation functionalities.
+various submodules of :mod:`sweetpea.core.generate`.
 """
 
 
@@ -16,7 +16,8 @@ from ..cnf import CNF, Var
 
 __all__ = [
     'AssertionType', 'GenerationRequest', 'SampleType', 'ProblemSpecification', 'Solution',
-    'combine_and_save_cnf', 'save_cnf', 'temporary_cnf_file']
+    'combine_and_save_cnf', 'combine_cnf_with_requests', 'save_cnf', 'temporary_cnf_file'
+]
 
 
 JSONDict = Dict[str, Any]
@@ -24,9 +25,9 @@ JSONDict = Dict[str, Any]
 
 @contextmanager
 def temporary_cnf_file(base_path: Path = Path('.')) -> Iterator[Path]:
-    """Returns a `Path` to a new, local file in the directory of the given path
-    with a .cnf suffix. When used as a context manager (recommended), the file
-    will be deleted when it leaves the context scope.
+    """Returns a :class:`pathlib.Path` to a new, local file in the directory of
+    the given path with a ``.cnf`` suffix. When used as a context manager
+    (recommended), the file will be deleted when it leaves the context scope.
     """
     cnf_file = base_path / Path(str(generate_uuid())).with_suffix('.cnf')
     try:
@@ -37,31 +38,32 @@ def temporary_cnf_file(base_path: Path = Path('.')) -> Iterator[Path]:
 
 
 class AssertionType(Enum):
-    """The three supported variants of CNF assertion:
-
-        EQ :: assert k == n
-        LT :: assert k < n
-        GT :: assert k > n
-    """
+    """The three supported variants of CNF assertion."""
+    #: Assert k == n.
     EQ = auto()
+    #: Assert k < n.
     LT = auto()
+    #: Assert k > n.
     GT = auto()
 
     @staticmethod
     def from_json(s: str) -> AssertionType:
-        """Converts a JSON string to an AssertionType."""
+        """Converts a JSON string to an :class:`AssertionType`."""
         return AssertionType[s]
 
 
 class GenerationRequest(NamedTuple):
     """A request to generate a CNF."""
+    #: The variant of assertion to make.
     assertion_type: AssertionType
+    #: The ``k`` value.
     k: int
+    #: A list of variables to use in generation.
     boolean_values: List[Var]
 
     @staticmethod
     def from_json(data: JSONDict) -> GenerationRequest:
-        """Converts a JSON object to a GenerationRequest."""
+        """Converts a JSON object to a :class:`GenerationRequest`."""
         return GenerationRequest(
             assertion_type=AssertionType.from_json(data['equalityType']),
             k=data['k'],
@@ -69,14 +71,17 @@ class GenerationRequest(NamedTuple):
 
 
 class SampleType(Enum):
-    """The varieties of SAT sampling."""
+    """The supported methods of interacting with SweetPea core."""
+    #: Uniform sampling of a CNF formula.
     Uniform       = auto()
+    #: Non-uniform sampling of a CNF formula.
     NonUniform    = auto()
+    #: Test whether a CNF formula is satisfiable.
     IsSatisfiable = auto()
 
     @staticmethod
     def from_json(s: str) -> SampleType:
-        """Converts a JSON string to a SampleType."""
+        """Converts a JSON string to a :class:`SampleType`."""
         if s in ('BuildCNF', 'SampleUniform', 'Uniform'):
             return SampleType.Uniform
         elif s in ('SampleNonUniform', 'NonUniform'):
@@ -88,17 +93,24 @@ class SampleType(Enum):
 
 
 class ProblemSpecification(NamedTuple):
-    """A specification of a complete problem to be solved."""
+    """A specification of a complete SweetPea problem to be solved."""
+    #: The type of sample to produce.
     sample_type: SampleType
+    #: The number of samples to take.
     sample_count: int
+    #: The number of fresh variables in the input.
+    # TODO: This should be removed eventually.
     fresh: int
+    #: The length of the support set.
     support: int
+    #: The CNF formula to sample.
     cnf: CNF
+    #: A list of requests to make with regard to the CNF formula.
     requests: List[GenerationRequest]
 
     @staticmethod
     def from_json(data: JSONDict) -> ProblemSpecification:
-        """Converts a JSON object to a ProblemSpecification."""
+        """Converts a JSON object to a :class:`ProblemSpecification`."""
         return ProblemSpecification(
             sample_type=SampleType.from_json(data['action']),
             sample_count=data['sampleCount'],
@@ -110,7 +122,9 @@ class ProblemSpecification(NamedTuple):
 
 class Solution(NamedTuple):
     """The result of a generation."""
+    # TODO DOC
     assignment: List[int]
+    # TODO DOC
     frequency: int
 
 
@@ -118,8 +132,8 @@ def combine_cnf_with_requests(initial_cnf: CNF,
                               fresh: int,
                               support: int,  # FIXME: Remove.
                               generation_requests: List[GenerationRequest]) -> CNF:
-    """Combines a base CNF formula with a new CNF formula formed from the given
-    GenerationRequests.
+    """Combines a base :class:`CNF` with a new :class:`CNF` formed from the
+    given :class:`GenerationRequests <.GenerationRequest>`.
     """
     fresh_cnf = CNF.from_fresh(fresh)
     for request in generation_requests:
@@ -149,8 +163,8 @@ def combine_and_save_cnf(filename: Path,
                          support: int,
                          generation_requests: List[GenerationRequest]):
     """Combines a base CNF formula with the augmentations specified by the
-    list of GenerationRequests, merges those formulas, then saves the result to
-    a file at the given path.
+    :class:`list` of :class:`GenerationRequests <.GenerationRequest>`, merges
+    those formulas, then saves the result to a file at the given path.
     """
     combined_cnf = combine_cnf_with_requests(initial_cnf, fresh, support, generation_requests)
     save_cnf(filename, combined_cnf, fresh, support)

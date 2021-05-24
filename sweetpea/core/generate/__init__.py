@@ -1,4 +1,12 @@
-"""This module provides functionality for generating CNF formulas."""
+"""This module provides functionality for interacting with CNF formulas.
+
+SweetPea offers three mechanisms for CNF interaction:
+
+#. Sampling solutions from a CNF formula uniformly via :func:`sample_uniform`.
+#. Sampling solutions from a CNF formula *non*-uniformly via
+   :func:`sample_non_uniform`.
+#. Determining whether a CNF formula is satisfiable via :func:`is_satisfiable`.
+"""
 
 
 from .is_satisfiable import cnf_is_satisfiable

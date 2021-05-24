@@ -1,4 +1,18 @@
-"""Provides simple type aliases used in SweetPea Core."""
+"""This module provides the core data types used in SweetPea Core.
+
+Fundamentally, SweetPea deals with Boolean logic formulas written in
+*conjunctive normal form (CNF)*. `Wikipedia says
+<https://en.wikipedia.org/wiki/Conjunctive_normal_form>`_:
+
+    a formula is in **conjunctive normal form (CNF)** [...] if it is a
+    conjunction of one or more clauses, where a clause is a disjunction of
+    literals; otherwise put, it is a **product of sums** or **an AND of ORs**.
+
+In SweetPea, we refer to the "literals" as :class:`Vars <.Var>`. These are
+combined into :class:`Clauses <.Clause>`, which are then combined into
+:class:`CNFs <.CNF>`. Most SweetPea functionality revolves around building and
+manipulating :class:`CNFs <.CNF>`.
+"""
 
 # Allow type annotations to refer to not-yet-declared types.
 # flake8 doesn't know about this so we have to #noqa it.
@@ -9,7 +23,7 @@ import math
 from itertools import chain
 from typing import Iterable, List, Optional, Sequence, Tuple, Union
 
-from .binary import BinaryNumber, binary
+from .binary import BinaryNumber, int_to_binary
 from .simple_sequence import SimpleSequence
 
 
@@ -19,15 +33,15 @@ __all__ = ['Var', 'Clause', 'CNF']
 class Var:
     """A variable for use in a CNF formula.
 
-    This is essentially a wrapper for the builtin `int` type, but with a few
-    advantages:
+    This is essentially a wrapper for the builtin :class:`int` type, but with a
+    few advantages:
 
-      * It is semantically distinct from an `int`, so reading code is more
-        sensible.
-      * Type aliases for `int` can be obnoxious to deal with because you may
-        want to use `int`-supported operations (like addition, negation, etc),
-        but these are not cross-type compatible (i.e., `Var(3) + 2` produces an
-        error in mypy).
+      * It is semantically distinct from an :class:`int`, so reading code is
+        more sensible.
+      * Type aliases for :class:`int` can be obnoxious to deal with because you
+        may want to use :class:`int`-supported operations (like addition,
+        negation, etc), but these are not cross-type compatible (e.g.,
+        ``Var(3) + 2`` produces an error in mypy).
       * We can implement custom behavior as a sort of micro-DSL without much
         overhead or issue.
     """
@@ -105,15 +119,14 @@ class Var:
 
 
 class Clause(SimpleSequence[Var]):
-    """A sequence of variables. Clauses indicate logical disjunction between
-    the variables, i.e., `Clause(Var(3), Var(7))` encodes (3 ∨ 7).
+    """A sequence of :class:`Vars <.Var>`. A :class:`Clause` indicates a
+    logical disjunction between the contained variables. For example,
+    ``Clause(Var(3), Var(7))`` encodes (3 ∨ 7).
 
-    Clauses can also be instantiated with a list of variables. This method will
-    also accept raw integers instead of instances of `Var`. For example:
-
-        Clause([1, -2, 3])
-
-    corresponds to the formula (1 ∨ ¬2 ∨ 3).
+    A :class:`Clause` can also be instantiated with a :class:`list` of
+    :class:`Vars <.Var>`. This mode of instantiation will also accept raw
+    :class:`ints <int>` in addition to instances of :class:`Var`. For example,
+    ``Clause([1, -2, 3])`` corresponds to the formula (1 ∨ ¬2 ∨ 3).
     """
 
     @classmethod
@@ -124,8 +137,8 @@ class Clause(SimpleSequence[Var]):
         return ' '.join(str(var) for var in self)
 
     def __add__(self, other: Union[Clause, Var]) -> Clause:
-        """Logical OR. This alias exists due to the list-like interface of
-        Clauses.
+        """Logical OR. This alias exists due to the :class:`list`-like
+        interface of :class:`Clauses <.Clause>`.
         """
         if isinstance(other, Clause):
             return Clause(*self, *other)
@@ -160,19 +173,16 @@ class Clause(SimpleSequence[Var]):
 
 
 class CNF(SimpleSequence[Clause]):
-    """A conjunction of disjunction clauses. For example:
+    """A conjunction of disjunction :class:`Clauses <.Clause>`. For example,
+    ``CNF(Clause(Var(3), Var(7)), Clause(Var(1), Var(13)))`` corresponds to the
+    CNF formula ((3 ∨ 7) ∧ (1 ∨ 13)).
 
-        CNF(Clause(Var(3), Var(7)), Clause(Var(1), Var(13)))
-
-    corresponds to the CNF formula ((3 ∨ 7) ∧ (1 ∨ 13)).
-
-    CNF formulas can also be instantiated with a list of lists of variables,
-    where each inner list represents a clause and the outer list represents the
-    CNF formula itself. This method will also accept raw integers instead of
-    instances of `Var`. For example:
-
-        CNF([[1, 2, -3], [-2, 7, 1]])
-
+    :class:`CNFs <.CNF>` can also be instantiated with a :class:`list` of
+    :class:`lists <list>` of :class:`Vars <.Var>`, where each inner
+    :class:`list` represents a :class:`Clause` and the outer :class:`list`
+    represents the CNF formula itself. Similar to :class:`Clause`, this mode of
+    instantiation will also accept raw :class:`ints <int>` in addition to
+    instances of :class:`Var`. For example, ``CNF([[1, 2, -3], [-2, 7, 1]])``
     corresponds to the CNF formula ((1 ∨ 2 ∨ ¬3) ∧ (¬2 ∨ 7 ∨ 1)).
     """
 
@@ -184,12 +194,14 @@ class CNF(SimpleSequence[Clause]):
     ## This method is for initializing a CNF from a given number of fresh vars.
     @staticmethod
     def from_fresh(fresh: int) -> CNF:
-        """Returns an empty CNF formula with a given number of fresh variables
-        already allocated.
+        """Returns an empty :class:`CNF` with the given number of fresh
+        :class:`Vars <.Var>` already allocated.
 
-        TODO: This method probably shouldn't exist! The number of fresh
-              variables should be deduced from the formulas themselves. This
-              exists for legacy compatibility and should eventually be removed.
+        .. note::
+
+            This method probably shouldn't exist! The number of fresh variables
+            should be deduced from the formulas themselves. This exists for
+            legacy compatibility and should eventually be removed.
         """
         cnf = CNF()
         cnf._num_vars = fresh
@@ -229,7 +241,14 @@ class CNF(SimpleSequence[Clause]):
     def xnor_vars(a: Union[int, Var], b: Union[int, Var]) -> CNF:
         """Returns a CNF formula encoding (a ⊙ b) as ((a ∨ ¬b) ∧ (¬a ∨ b)).
 
-        NOTE: (a ⊙ b) is logically equivalent to (a ⇔ b).
+        .. note::
+
+            (a ⊙ b) is logically equivalent to (a ⇔ b), so this function
+            replaces the original Haskell version's |doubleImpliesLink|_.
+
+        .. |doubleImpliesLink| replace:: ``doubleImplies`` function
+        .. _doubleImpliesLink:
+            https://github.com/sweetpea-org/sweetpea-core/blob/20493dd1ffc8f5a53bd4004286e6a64298a16ce3/src/DataStructures.hs#L122-L124
         """
         if not isinstance(a, Var):
             a = Var(a)
@@ -239,8 +258,8 @@ class CNF(SimpleSequence[Clause]):
 
     @staticmethod
     def distribute(v: Var, cnf: CNF) -> CNF:
-        """Distributes the given variable across each clause of the given CNF
-        formula, producing a new CNF formula.
+        """Distributes the given :class:`Var` across each :class:`Clause` of
+        the given CNF formula, producing a new :class`CNF`.
         """
         return v ** cnf
 
@@ -268,12 +287,11 @@ class CNF(SimpleSequence[Clause]):
         return ''.join(str(clause) + ' 0\n' for clause in reversed(self._vals))
 
     def as_dimacs_string(self, fresh_variable_count: Optional[int] = None) -> str:
-        """Represents the CNF formula as a string in the DIMACS format.
+        """Represents the :class:`CNF` as a string in the DIMACS format.
 
         The DIMACS format is a standardized method of representing CNF formulas
-        as strings. This implementation is based on the details given here:
-
-            https://people.sc.fsu.edu/~jburkardt/data/cnf/cnf.html
+        as strings. This implementation is based on the details given `here
+        <https://people.sc.fsu.edu/~jburkardt/data/cnf/cnf.html>`_.
         """
         if fresh_variable_count is None:
             fresh_variable_count = self._num_vars
@@ -284,19 +302,20 @@ class CNF(SimpleSequence[Clause]):
                          fresh_variable_count: Optional[int] = None,
                          support_set_length: Optional[int] = None,
                          sampled_variables: Optional[List[Var]] = None) -> str:
-        """Returns a string representing the CNF formula in the modified DIMACS /
+        """Returns a string representing the CNF formula in the modified DIMACS
         format used by Unigen.
 
-        See `CNF.as_dimacs_string` for details about the DIMACS format.
+        See :meth:`CNF.as_dimacs_string` for details about the DIMACS format.
 
         Unigen adds an extra line at the top that describes the list of
         variables you would like to sample (instead of sampling among all
-        variables). This line is given as:
+        variables). This line is given in the form::
 
             c ind v1 v2 ... vn 0
 
-        where v1, v2, ..., vn represent variables. This line is placed just
-        below the "problem" line (the line beginning with "p").
+        where ``v1``, ``v2``, ..., ``vn`` represent variables in the formula.
+        This line is placed just below the "problem" line (the line beginning
+        with ``p``).
         """
         if support_set_length is not None and sampled_variables is not None:
             raise ValueError("cannot give both a support set length and sampled variables list to as_unigen_string!")
@@ -325,15 +344,22 @@ class CNF(SimpleSequence[Clause]):
         return unigen_string
 
     def as_list_of_list_of_ints(self) -> List[List[int]]:
-        """Converts the CNF to a list of lists of integers."""
+        """Converts the :class:`CNF` to a :class:`list` of
+        :class:`lists <list>` of :class:`ints <int>`.
+        """
         return [[int(var) for var in clause] for clause in self]
 
     def as_haskell_cnf(self) -> Tuple[int, List[List[int]]]:
-        """Converts the CNF to a tuple whose first element is the number of
-        fresh variables in the formula and whose second element is the CNF
-        represented as a list of list of integers. This is the way CNF formulas
-        were encoded in the original Haskell code, and this method exists for
-        compatibility checks.
+        """Converts the :class:`CNF` to a :class:`tuple` whose first element is
+        the number of fresh variables in the formula and whose second element
+        is the :class:`CNF` represented as a :class:`list` of
+        :class:`lists <list>` of :class:`ints <int>`.
+
+        .. note::
+
+            This is the way CNF formulas were encoded in the original Haskell
+            code. It only exists for consistency checks across the two code
+            bases.
         """
         return (self._num_vars, self.as_list_of_list_of_ints())
 
@@ -344,8 +370,8 @@ class CNF(SimpleSequence[Clause]):
 
     # CNF + ___
     def __add__(self, other: Union[CNF, Clause, Var]) -> CNF:
-        """Logical OR. This alias exists due to the list-like interface of CNF
-        formulas.
+        """Logical OR. This alias exists due to the :class:`list`-like
+        interface of :class:`CNFs <.CNF>`.
         """
         if isinstance(other, CNF):
             return CNF(*self, *other)
@@ -395,7 +421,9 @@ class CNF(SimpleSequence[Clause]):
 
     # CNF ** ___
     def __pow__(self, other: Var) -> CNF:
-        """Distribution of a variable across the clauses of a CNF formula."""
+        """Distribution of a :class:`Var` across the :class:`Clauses <.Clause>`
+        of a :class:`CNF`.
+        """
         if isinstance(other, Var):
             return CNF([clause | other for clause in self])
         return NotImplemented
@@ -412,7 +440,7 @@ class CNF(SimpleSequence[Clause]):
     ##
 
     def get_fresh(self) -> Var:
-        """Creates a new variable for the formula."""
+        """Creates a new :class:`Var` for the formula."""
         # NOTE: I think this is a weird interface. A new variable is generated,
         #       permanently affecting this CNF formula... but there's no
         #       guarantee that the caller actually incorporates that variable
@@ -421,15 +449,15 @@ class CNF(SimpleSequence[Clause]):
         return Var(self._num_vars)
 
     def get_n_fresh(self, n: int) -> List[Var]:
-        """Generates the next n variables, numbered sequentially."""
+        """Creates the next *n* :class:`Vars <.Var>`, numbered sequentially."""
         return [self.get_fresh() for _ in range(n)]
 
     def append(self, other: Union[CNF, Clause, Iterable[Clause], Var]):
-        """Appends a CNF formula to this formula."""
+        """Appends a :class:`CNF` to this :class:`CNF`."""
         self += other
 
     def prepend(self, other: Union[CNF, Clause, Iterable[Clause], Var]):
-        """Prepends a CNF formula to this formula."""
+        """Prepends a :class:`CNF` to this :class:`CNF`."""
         if isinstance(other, Var):
             self._vals.insert(0, Clause(other))
         elif isinstance(other, Clause):
@@ -440,7 +468,7 @@ class CNF(SimpleSequence[Clause]):
             raise NotImplementedError()
 
     def set_to_zero(self, variable: Var):
-        """Zeroes the specified variable by appending its negation to the
+        """Zeroes the specified :class:`Var` by appending its negation to the
         existing CNF formula.
         """
         self.prepend(~variable)
@@ -451,8 +479,8 @@ class CNF(SimpleSequence[Clause]):
         self.prepend(zeroed_cnf)
 
     def set_to_one(self, variable: Var):
-        """Sets the specified variable to 1 by appending it to the existing CNF
-        formula.
+        """Sets the specified variable to ``1`` by appending it to the existing
+        CNF formula.
         """
         self.prepend(variable)
 
@@ -466,7 +494,7 @@ class CNF(SimpleSequence[Clause]):
         # TODO: Describe this function's purpose.
         sum_bits = self.pop_count(in_list)
         # Add zero padding to the left.
-        in_binary = binary(k)
+        in_binary =  int_to_binary(k)
         in_binary.reverse()
         left_padded: BinaryNumber = in_binary[:len(sum_bits)]
         left_padded += [-1 for _ in range(len(sum_bits) - len(left_padded))]
@@ -486,7 +514,7 @@ class CNF(SimpleSequence[Clause]):
 
     def _inequality_assertion(self, assert_less_than: bool, k: int, in_list: Sequence[Var]):
         sum_bits = self.pop_count(in_list)
-        in_binary = binary(k)
+        in_binary = int_to_binary(k)
         k_vars = self.get_n_fresh(len(in_binary))
         assertion = [Var(kv.value * b) for (kv, b) in zip(k_vars, in_binary)]
         self.prepend(CNF([Clause(x) for x in assertion]))
@@ -536,8 +564,8 @@ class CNF(SimpleSequence[Clause]):
     ##
 
     def pop_count(self, in_list: Sequence[Var]) -> List[Var]:
-        """Returns the list that represents the bits of the `sum` variable in
-        binary.
+        """Returns the list of :class:`Vars <.Var>` that represents the bits of
+        the given list variable in binary.
         """
         if not in_list:
             raise ValueError("cannot take pop count of empty list")
