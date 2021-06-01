@@ -14,6 +14,9 @@ constraints on the sequencing of factors, and how to map those factors onto a
 sequence of trials. Such a design is constructed by calling the various
 functions exposed at the top of the :mod:`sweetpea` module.
 
+If you are new to SweetPea or factorial experiment design, we recommend starting
+with :ref:`the guide <guide>`.
+
 .. toctree::
    :maxdepth: 1
    :caption: Contents:

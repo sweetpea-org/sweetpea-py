@@ -1,7 +1,7 @@
 .. _guide_installation:
 
 Installation and Setup
-----------------------
+======================
 
 There are two ways to get SweetPea installed on your computer: through the
 Python Package Index (via ``pip``) or by cloning the repository and installing
@@ -16,7 +16,7 @@ manually.
 
 
 Automated Installation from the Python Package Index
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------------------------------
 
 To install SweetPea from the Python Package Index (PyPI), simply do::
 
@@ -26,7 +26,7 @@ This will automatically install the most recent published release of SweetPea.
 
 
 Manual Installation from Source
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------------
 
 Alternatively, you can install SweetPea manually. This can be useful if you want
 to have the most recent development updates, since the PyPI version will likely
@@ -42,7 +42,7 @@ You can clone the repository, the SweetPea dependencies, and make the
 
 
 Contributing to SweetPea Development
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------------------
 
 We also accept contributions to SweetPea. See the :ref:`Contributing to SweetPea
 <guide_contributing>` section of the guide for more information.
