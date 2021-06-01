@@ -42,7 +42,11 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Contributing to SweetPea" href="contributing.html" />
-    <link rel="prev" title="Factorial Experiment Design" href="factorial_design.html" /> 
+    <link rel="prev" title="Factorial Experiment Design" href="factorial_design.html" />
+<link rel="stylesheet" type="text/css"
+      href="../_static/css/custom.css" />
+
+
 </head>
 
 <body class="wy-body-for-nav">
@@ -109,7 +113,13 @@
 <li class="toctree-l3"><a class="reference internal" href="factorial_design.html#glossary">Glossary</a></li>
 </ul>
 </li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#">Using SweetPea</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Using SweetPea</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#a-simple-stroop-experiment">A Simple Stroop Experiment</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#building-the-simple-stroop-experiment">Building the Simple Stroop Experiment</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="contributing.html">Contributing to SweetPea</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="contributing/issues.html">Using the GitHub Issue Tracker</a></li>
 <li class="toctree-l3"><a class="reference internal" href="contributing/development.html">Developing SweetPea</a><ul>
@@ -249,10 +259,115 @@
 <span id="guide-usage"></span><h1>Using SweetPea<a class="headerlink" href="#using-sweetpea" title="Permalink to this headline">¶</a></h1>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>This section has yet to be written. It will be updated to include detailed
-information on how to use SweetPea. Until then, please refer to the <a class="reference external" href="https://github.com/sweetpea-org/sweetpea-py/tree/master/example_programs">example
-programs</a>,
-located in the <code class="docutils literal notranslate"><span class="pre">example_programs/</span></code> directory of the SweetPea repository.</p>
+<p>We are constantly seeking to improve the user interface of the SweetPea
+language. If something seems difficult or unintuitive to you, please let us
+know by <a class="reference internal" href="contributing/issues.html#issues"><span class="std std-ref">filing an issue</span></a>!</p>
+</div>
+<p>So you’ve decided to design a factorial experiment. That’s excellent! Factorial
+experimental designs are a great way to build repeatable experiments with
+multiple independent variables. Let’s design our experiment in words first, and
+then build it in SweetPea.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If you aren’t familiar with factorial experimental design, that’s okay! Just
+check out <a class="reference internal" href="factorial_design.html#guide-factorial-design"><span class="std std-ref">our short primer</span></a> first.</p>
+</div>
+<div class="section" id="a-simple-stroop-experiment">
+<h2>A Simple Stroop Experiment<a class="headerlink" href="#a-simple-stroop-experiment" title="Permalink to this headline">¶</a></h2>
+<p>For our example, we’ll be testing the <a class="reference external" href="https://en.wikipedia.org/wiki/Stroop_effect">Stroop effect</a>. From the Wikipedia article:</p>
+<blockquote>
+<div><p>In psychology, the <strong>Stroop effect</strong> is the delay in reaction time between
+congruent and incongruent stimuli.</p>
+</div></blockquote>
+<p>One of the most well-known experiments to test the Stroop effect is to show a
+participant a series of words that name colors that are also displayed in color.
+Sometimes, the color of the word is the same as the color in which the word is
+written — this is called <em>congruence</em>. Other times, the word and color are
+different, which is <em>incongruence</em>.</p>
+<p>We have two apparent independent variables: the color and the text. These are
+called <em>factors</em> in the realm of factorial design.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>There is also a third factor: whether the pairing of the color and text is
+congruent or incongruent. This is a form of <em>derived factor</em>, and we’ll come
+back to it later.</p>
+</div>
+<p>To test this effect, we will construct a series of <em>trials</em> to administer to a
+participant, where each trial is a single color+text pairing. For this
+experiment, we will use the three colors red, green, and blue, and we will also
+use the names of those colors as the text. All together, this gives us 9
+possible values for each trial:</p>
+<table class="colwidths-auto docutils align-center" id="id1">
+<caption><span class="caption-text">Stroop Effect Trials</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
+<thead>
+<tr class="row-odd"><th class="head stub"></th>
+<th class="head"><p>Red (Text)</p></th>
+<th class="head"><p>Green (Text)</p></th>
+<th class="head"><p>Blue (Text)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><th class="stub"><p>Red (Color)</p></th>
+<td><p><span class="red">red</span></p></td>
+<td><p><span class="red">green</span></p></td>
+<td><p><span class="red">blue</span></p></td>
+</tr>
+<tr class="row-odd"><th class="stub"><p>Green (Color)</p></th>
+<td><p><span class="green">red</span></p></td>
+<td><p><span class="green">green</span></p></td>
+<td><p><span class="green">blue</span></p></td>
+</tr>
+<tr class="row-even"><th class="stub"><p>Blue (Color)</p></th>
+<td><p><span class="blue">red</span></p></td>
+<td><p><span class="blue">green</span></p></td>
+<td><p><span class="blue">blue</span></p></td>
+</tr>
+</tbody>
+</table>
+<p>In the factorial design parlance, these three colors constitute <em>levels</em> in each
+of the factors. That is to say that the color factor has three levels, and the
+text factor has three levels.</p>
+<p>A trial will consist of showing one of the color+text pairs to a participant and
+asking them to identify the <em>color</em> in which the text is written. We will
+synthesize some <em>trial sequences</em> for our experiment now.</p>
+<div class="section" id="building-the-simple-stroop-experiment">
+<h3>Building the Simple Stroop Experiment<a class="headerlink" href="#building-the-simple-stroop-experiment" title="Permalink to this headline">¶</a></h3>
+<p>To build this simple Stroop experiment, we import and use the following SweetPea
+language forms:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../api/sweetpea.primitives.html#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Factor</span></code></a>: constructs factors and their levels</p></li>
+<li><p><a class="reference internal" href="../api/sweetpea.html#sweetpea.fully_cross_block" title="sweetpea.fully_cross_block"><code class="xref py py-func docutils literal notranslate"><span class="pre">fully_cross_block()</span></code></a>: combines the factors to produce trials</p></li>
+<li><p><a class="reference internal" href="../api/sweetpea.html#sweetpea.synthesize_trials_non_uniform" title="sweetpea.synthesize_trials_non_uniform"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials_non_uniform()</span></code></a>: uses non-uniform sampling to
+synthesize trial sequences</p></li>
+</ul>
+<p>To put it together, we do:</p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sweetpea</span> <span class="kn">import</span> <span class="n">Factor</span><span class="p">,</span> <span class="n">fully_cross_block</span><span class="p">,</span> <span class="n">synthesize_trials_non_uniform</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">text</span> <span class="o">=</span> <span class="n">Factor</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="s2">&quot;blue&quot;</span><span class="p">,</span> <span class="s2">&quot;green&quot;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">color</span> <span class="o">=</span> <span class="n">Factor</span><span class="p">(</span><span class="s2">&quot;color&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="s2">&quot;blue&quot;</span><span class="p">,</span> <span class="s2">&quot;green&quot;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">block</span> <span class="o">=</span> <span class="n">fully_cross_block</span><span class="p">([</span><span class="n">color</span><span class="p">,</span> <span class="n">text</span><span class="p">],</span> <span class="p">[</span><span class="n">color</span><span class="p">,</span> <span class="n">text</span><span class="p">],</span> <span class="p">[])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">experiments</span> <span class="o">=</span> <span class="n">synthesize_trials_non_uniform</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="go">Sampling 1 trial sequences using the class &lt;class &#39;sweetpea.sampling_strategies.uniform_combinatoric.UniformCombinatoricSamplingStrategy&#39;&gt;</span>
+</pre></div>
+</div>
+<p>The result of this synthesis is based on pseudo-random number generation, and so
+the output will likely not be the same every time. However, when we ran the code
+to write this tutorial, we got the following output:</p>
+<div class="highlight-pycon3 notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">sweetpea</span> <span class="kn">import</span> <span class="n">print_experiments</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">print_experiments</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">experiments</span><span class="p">)</span>
+<span class="go">1 trial sequences found.</span>
+<span class="go">Experiment 0:</span>
+<span class="go">color green | text blue</span>
+<span class="go">color blue  | text green</span>
+<span class="go">color green | text red</span>
+<span class="go">color green | text green</span>
+<span class="go">color red   | text green</span>
+<span class="go">color red   | text blue</span>
+<span class="go">color blue  | text blue</span>
+<span class="go">color red   | text red</span>
+<span class="go">color blue  | text red</span>
+</pre></div>
+</div>
+</div>
 </div>
 </div>
 
