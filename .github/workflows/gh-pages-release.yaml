@@ -1,0 +1,27 @@
+name: Publish GitHub Pages
+
+on:
+  release:
+    # published: when a release is published, including pre-releases
+    # edited:    when a release is modified in some way
+    # released:  when a pre-release or draft is released (I think)
+    types: [published, edited, released]
+
+jobs:
+  deploy-pages:
+    # Only run this job on the main repository, not forks.
+    if: ${{ github.repository == 'sweeptea-org/sweetpea-py' }}
+    # Only run if this wasn't caused by making a pre-release. There doesn't
+    # appear to be a way to distinguish this in the on.release.types list.
+    if: '!github.event.release.prerelease'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout SweetPea
+        uses: actions/checkout@v2
+      - name: Publish static site
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          external_repository: 'sweetpea-org/sweetpea-org.github.io'
+          publish_branch: master
+          publish_dir: ./docs/_build/html/
