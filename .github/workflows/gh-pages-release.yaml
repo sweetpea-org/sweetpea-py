@@ -1,4 +1,4 @@
-name: Publish GitHub Pages
+name: Publish sweetpea-org.github.io
 
 on:
   release:
