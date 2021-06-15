@@ -30,13 +30,13 @@ For our example, we'll be testing the `Stroop effect
     congruent and incongruent stimuli.
 
 One of the most well-known experiments to test the Stroop effect is to show a
-participant a series of words that name colors that are also displayed in color.
+participant a series of words for colors that are also displayed in color.
 Sometimes, the color of the word is the same as the color in which the word is
 written --- this is called *congruence*. Other times, the word and color are
 different, which is *incongruence*.
 
-We have two apparent independent variables: the color and the text. These are
-called *factors* in the realm of factorial design.
+We have two apparent independent variables: the color and the text. We call
+independent variables *factors* in the realm of factorial design.
 
 .. note::
 
@@ -132,6 +132,7 @@ to write this tutorial, we got the following output:
     color blue  | text red
 
 .. tip::
+
     The :func:`.print_experiments` function is useful for printing the results
     of synthesis.
 
