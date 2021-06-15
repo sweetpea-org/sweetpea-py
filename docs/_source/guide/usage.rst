@@ -79,13 +79,13 @@ possible values for each trial:
      - :blue:`green`
      - :blue:`blue`
 
-In the factorial design parlance, these three colors constitute *levels* in each
-of the factors. That is to say that the color factor has three levels, and the
-text factor has three levels.
+In the parlance of factorial design, these three colors constitute *levels* in
+each of the factors. That is to say that the ``color`` factor has three levels,
+and the ``text`` factor has three levels.
 
-A trial will consist of showing one of the color+text pairs to a participant and
-asking them to identify the *color* in which the text is written. We will
-synthesize some *trial sequences* for our experiment now.
+A trial will consist of showing one of the ``color`` and ``text`` pairs to a
+participant and asking them to identify the color in which the text is written.
+We will synthesize some *trial sequences* for our experiment now.
 
 
 Building the Simple Stroop Experiment
@@ -111,8 +111,9 @@ To put it together, we do:
     Sampling 1 trial sequences using the class <class 'sweetpea.sampling_strategies.uniform_combinatoric.UniformCombinatoricSamplingStrategy'>
 
 The result of this synthesis is based on pseudo-random number generation, and so
-the output will likely not be the same every time. However, when we ran the code
-to write this tutorial, we got the following output:
+the output will not be the same every time. However, when we ran the code to
+write this tutorial, we saw the following output (your output should look
+similar, though probably not identical):
 
 .. doctest::
     :options: +SKIP
