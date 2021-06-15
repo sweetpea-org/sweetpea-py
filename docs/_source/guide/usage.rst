@@ -130,3 +130,31 @@ to write this tutorial, we got the following output:
     color blue  | text blue
     color red   | text red
     color blue  | text red
+
+.. tip::
+    The :func:`.print_experiments` function is useful for printing the results
+    of synthesis.
+
+We generated a *fully-crossed experiment*: all possible color-text pairs were
+generated, though their order was randomized. We can see this by sorting a
+simplified representation of the experiment:
+
+.. doctest::
+
+    >>> from sweetpea import simplify_experiments
+    >>> # We immediately access the first element of the returned list.
+    >>> # This is because we only generated one trial run.
+    >>> simple = simplify_experiments(experiments)[0]
+    >>> for pair in sorted(simple):
+    ...     print(pair)
+    ...
+    ...
+    ('blue', 'blue')
+    ('blue', 'green')
+    ('blue', 'red')
+    ('green', 'blue')
+    ('green', 'green')
+    ('green', 'red')
+    ('red', 'blue')
+    ('red', 'green')
+    ('red', 'red')
