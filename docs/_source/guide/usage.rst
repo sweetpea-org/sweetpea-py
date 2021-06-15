@@ -94,9 +94,9 @@ Building the Simple Stroop Experiment
 To build this simple Stroop experiment, we import and use the following SweetPea
 language forms:
 
-* :class:`.Factor`: constructs factors and their levels
-* :func:`.fully_cross_block`: combines the factors to produce trials
-* :func:`.synthesize_trials_non_uniform`: uses non-uniform sampling to
+* :class:`.Factor` --- constructs factors and their levels
+* :func:`.fully_cross_block` --- combines the factors to produce trials
+* :func:`.synthesize_trials_non_uniform` --- uses non-uniform sampling to
   synthesize trial sequences
 
 To put it together, we do:
