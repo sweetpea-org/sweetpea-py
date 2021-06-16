@@ -11,7 +11,10 @@ import itertools
 from sweetpea.derivation_processor import DerivationProcessor
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.blocks import Block, FullyCrossBlock
-from sweetpea.primitives import Factor, SimpleLevel, DerivedLevel, get_external_level_name
+from sweetpea.primitives import (
+    Factor, SimpleLevel, DerivedLevel,
+    DerivationWindow, WithinTrialDerivationWindow, TransitionDerivationWindow,
+    get_external_level_name)
 from sweetpea.constraints import Consistency, Constraint, FullyCross, MultipleCross, MultipleCrossBlock
 from sweetpea.sampling_strategies.non_uniform import NonUniformSamplingStrategy
 from sweetpea.sampling_strategies.unigen import UnigenSamplingStrategy
