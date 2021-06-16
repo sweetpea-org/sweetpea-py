@@ -391,3 +391,69 @@ result of synthesizing one trial run from this design:
     ('red', 'blue', 'incongruent')
     ('red', 'green', 'incongruent')
     ('red', 'red', 'congruent')
+
+
+Constraints
+^^^^^^^^^^^
+
+Sometimes when designing an experiment, you'd like to impose some constraints on
+the mechanisms that generate trial sequences. SweetPea has you covered.
+
+Let's say we look at the above list of trials and decide "Hmm, maybe we should
+ensure we don't get too many ``incongruent`` trials in a row." After all, there
+are six ``incongruent`` trials to just three ``congruent`` ones!
+
+Arbitrarily, we will choose to limit trial sequences such that only two
+``incongruent`` trials may appear in a row. This will be accomplished using the
+:func:`~sweetpea.constraints.at_most_k_in_a_row` function.
+
+.. doctest::
+
+    >>> # We resume from the previous session.
+    >>> from sweetpea.constraints import at_most_k_in_a_row
+    >>> congruency_constraint = at_most_k_in_a_row(2, congruency)
+    >>> block = fully_cross_block(design, crossing, [congruency_constraint])
+    >>> experiments = synthesize_trials_non_uniform(block, 3)
+    Sampling 3 trial sequences using the <class 'sweetpea.sampling_strategies.non_uniform.NonUniformSamplingStrategy'>
+    >>> print_experiments(block, experiments)  # doctest: +SKIP
+    3 trial sequences found.
+    Experiment 0:
+    color red   | text green | congruency incongruent
+    color green | text blue  | congruency incongruent
+    color red   | text red   | congruency congruent
+    color blue  | text green | congruency incongruent
+    color red   | text blue  | congruency incongruent
+    color green | text green | congruency congruent
+    color green | text red   | congruency incongruent
+    color blue  | text red   | congruency incongruent
+    color blue  | text blue  | congruency congruent
+    <BLANKLINE>
+    Experiment 1:
+    color red   | text green | congruency incongruent
+    color blue  | text red   | congruency incongruent
+    color red   | text red   | congruency congruent
+    color blue  | text green | congruency incongruent
+    color red   | text blue  | congruency incongruent
+    color green | text green | congruency congruent
+    color green | text red   | congruency incongruent
+    color blue  | text blue  | congruency congruent
+    color green | text blue  | congruency incongruent
+    <BLANKLINE>
+    Experiment 2:
+    color red   | text green | congruency incongruent
+    color blue  | text red   | congruency incongruent
+    color red   | text red   | congruency congruent
+    color blue  | text green | congruency incongruent
+    color red   | text blue  | congruency incongruent
+    color blue  | text blue  | congruency congruent
+    color green | text red   | congruency incongruent
+    color green | text blue  | congruency incongruent
+    color green | text green | congruency congruent
+
+We can see from these outputs that we never get more than two trials in a row
+with the same ``congruency`` level selected. However, note that the constraint
+is *not* imposed across experiment boundaries: the final trial of the second
+experiment is ``incongruent``, and the first two trials of the third experiment
+are also ``incongruent``. This adds up to three consecutive trials! But this
+behavior is expected. The :func:`~sweetpea.constraints.at_most_k_in_a_row`
+constraint only looks *within* a given experiment, not across experiments.
