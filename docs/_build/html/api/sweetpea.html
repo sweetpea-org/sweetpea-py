@@ -116,6 +116,12 @@
 <li class="toctree-l2"><a class="reference internal" href="../guide/usage.html">Using SweetPea</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../guide/usage.html#a-simple-stroop-experiment">A Simple Stroop Experiment</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="../guide/usage.html#building-the-simple-stroop-experiment">Building the Simple Stroop Experiment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/usage.html#sweetpea-feature-recap">SweetPea Feature Recap</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/usage.html#working-with-derived-levels">Working With Derived Levels</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/usage.html#derivation">Derivation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/usage.html#constraints">Constraints</a></li>
 </ul>
 </li>
 </ul>
@@ -333,6 +339,29 @@ combinations are excluded through an <a class="reference internal" href="sweetpe
 </dd>
 <dt class="field-even">Return type</dt>
 <dd class="field-even"><p><a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block">sweetpea.blocks.Block</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.simplify_experiments">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">simplify_experiments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">experiments</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.simplify_experiments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a list of experiments into a list of lists of tuples, where
+each tuple represents a crossing in a given experiment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>experiments</strong> (<em>List</em><em>[</em><em>Dict</em><em>]</em>) – A list of experiments as <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#dict" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dicts</span></code></a>. These are produced by
+calls to any of the synthesis functions (<a class="reference internal" href="#sweetpea.synthesize_trials" title="sweetpea.synthesize_trials"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code></a>,
+<a class="reference internal" href="#sweetpea.synthesize_trials_non_uniform" title="sweetpea.synthesize_trials_non_uniform"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials_non_uniform()</span></code></a>, or
+<a class="reference internal" href="#sweetpea.synthesize_trials_uniform" title="sweetpea.synthesize_trials_uniform"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials_uniform()</span></code></a>).</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A list of lists of tuples of strings, where each sub-list corresponds
+to one of the <code class="docutils literal notranslate"><span class="pre">experiments</span></code>, each tuple corresponds to a particular
+crossing, and each string is the simple surface name of a level.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>List[List[Tuple[<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)">str</a>, …]]]</p>
 </dd>
 </dl>
 </dd></dl>
