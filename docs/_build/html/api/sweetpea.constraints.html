@@ -567,7 +567,8 @@ block initialization to ensure all constraints are valid.</p>
 <dt class="sig sig-object py" id="sweetpea.constraints.at_most_k_in_a_row">
 <span class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></span><span class="sig-name descname"><span class="pre">at_most_k_in_a_row</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.at_most_k_in_a_row" title="Permalink to this definition">¶</a></dt>
 <dd><p>This desugars pretty directly into the llrequests. The only thing to do
-here is to collect all the boolean vars that match the same level &amp; pair them up according to k.</p>
+here is to collect all the boolean vars that match the same level &amp; pair
+them up according to k.</p>
 <p>Continuing with the example from <a class="reference internal" href="#sweetpea.constraints.Consistency" title="sweetpea.constraints.Consistency"><code class="xref py py-class docutils literal notranslate"><span class="pre">Consistency</span></code></a>, say we want
 <code class="docutils literal notranslate"><span class="pre">AtMostKInARow</span> <span class="pre">1</span> <span class="pre">(&quot;color&quot;,</span> <span class="pre">&quot;red&quot;)</span></code>, then we need to grab all the vars
 which indicate color-red:</p>
@@ -600,6 +601,55 @@ been:</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="sweetpea.constraints.AtMostKInARow.apply_to_backend_request">
 <span class="sig-name descname"><span class="pre">apply_to_backend_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend_request</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.AtMostKInARow.apply_to_backend_request" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>block</strong> (<a class="reference internal" href="sweetpea.blocks.html#sweetpea.blocks.Block" title="sweetpea.blocks.Block"><em>sweetpea.blocks.Block</em></a>) – </p></li>
+<li><p><strong>level</strong> (<em>Tuple</em><em>[</em><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><em>sweetpea.primitives.Factor</em></a><em>, </em><em>Union</em><em>[</em><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.SimpleLevel" title="sweetpea.primitives.SimpleLevel"><em>sweetpea.primitives.SimpleLevel</em></a><em>, </em><a class="reference internal" href="sweetpea.primitives.html#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><em>sweetpea.primitives.DerivedLevel</em></a><em>]</em><em>]</em>) – </p></li>
+<li><p><strong>backend_request</strong> (<a class="reference internal" href="sweetpea.backend.html#sweetpea.backend.BackendRequest" title="sweetpea.backend.BackendRequest"><em>sweetpea.backend.BackendRequest</em></a>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.7/library/constants.html#None" title="(in Python v3.7)">None</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.constraints.at_least_k_in_a_row">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></span><span class="sig-name descname"><span class="pre">at_least_k_in_a_row</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.at_least_k_in_a_row" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is more complicated that AtMostKInARow. We collect all the boolean
+vars that match the same level &amp; pair them up according to k.</p>
+<p>We want <code class="docutils literal notranslate"><span class="pre">AtLeastKInARow</span> <span class="pre">2</span> <span class="pre">(&quot;color&quot;,</span> <span class="pre">&quot;red&quot;)</span></code>, then we need to grab all the
+vars which indicate color-red:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">19</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>and then wrap them up in CNF as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>If(1) Then (7)          --------This is a corner case
+If(And(!1, 7)) Then (13)
+If(And(!7, 13)) Then (19)
+If(19) Then (13)   --------This is a corner case
+</pre></div>
+</div>
+<p>If it had been <code class="docutils literal notranslate"><span class="pre">AtLeastKInARow</span> <span class="pre">3</span> <span class="pre">(&quot;color&quot;,</span> <span class="pre">&quot;red&quot;)</span></code>, the CNF would have
+been:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>If(1) Then (7, 13)          --------This is a corner case
+If(And(!1, 7)) Then (13, 19)
+If(19) Then (7, 13)   --------This is a corner case
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sweetpea.constraints.AtLeastKInARow">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">sweetpea.constraints.</span></span><span class="sig-name descname"><span class="pre">AtLeastKInARow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.AtLeastKInARow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.constraints._KInARow</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sweetpea.constraints.AtLeastKInARow.apply_to_backend_request">
+<span class="sig-name descname"><span class="pre">apply_to_backend_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend_request</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.constraints.AtLeastKInARow.apply_to_backend_request" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">

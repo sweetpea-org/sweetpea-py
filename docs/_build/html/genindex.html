@@ -313,18 +313,20 @@
         <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.MultipleCross.apply">(sweetpea.constraints.MultipleCross static method)</a>
 </li>
       </ul></li>
-      <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.AtMostKInARow.apply_to_backend_request">apply_to_backend_request() (sweetpea.constraints.AtMostKInARow method)</a>
+      <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.AtLeastKInARow.apply_to_backend_request">apply_to_backend_request() (sweetpea.constraints.AtLeastKInARow method)</a>
 
       <ul>
+        <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.AtMostKInARow.apply_to_backend_request">(sweetpea.constraints.AtMostKInARow method)</a>
+</li>
         <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.ExactlyK.apply_to_backend_request">(sweetpea.constraints.ExactlyK method)</a>
 </li>
         <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.ExactlyKInARow.apply_to_backend_request">(sweetpea.constraints.ExactlyKInARow method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivationWindow.args">args (sweetpea.primitives.DerivationWindow property)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sweetpea.core.cnf.html#sweetpea.core.cnf.CNF.as_dimacs_string">as_dimacs_string() (sweetpea.core.cnf.CNF method)</a>
 </li>
       <li><a href="api/sweetpea.core.cnf.html#sweetpea.core.cnf.CNF.as_haskell_cnf">as_haskell_cnf() (sweetpea.core.cnf.CNF method)</a>
@@ -349,7 +351,11 @@
 </li>
       <li><a href="api/sweetpea.core.generate.utility.html#sweetpea.core.generate.utility.Solution.assignment">assignment (sweetpea.core.generate.utility.Solution property)</a>
 </li>
+      <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.at_least_k_in_a_row">at_least_k_in_a_row() (in module sweetpea.constraints)</a>
+</li>
       <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.at_most_k_in_a_row">at_most_k_in_a_row() (in module sweetpea.constraints)</a>
+</li>
+      <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.AtLeastKInARow">AtLeastKInARow (class in sweetpea.constraints)</a>
 </li>
       <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.AtMostKInARow">AtMostKInARow (class in sweetpea.constraints)</a>
 </li>
@@ -384,13 +390,7 @@
       <li><a href="api/sweetpea.logic.html#sweetpea.logic.Not.c">c (sweetpea.logic.Not property)</a>
 </li>
       <li><a href="api/sweetpea.blocks.html#sweetpea.blocks.Block.calculate_samples_required">calculate_samples_required() (sweetpea.blocks.Block method)</a>
-
-      <ul>
-        <li><a href="api/sweetpea.blocks.html#sweetpea.blocks.FullyCrossBlock.calculate_samples_required">(sweetpea.blocks.FullyCrossBlock method)</a>
 </li>
-        <li><a href="api/sweetpea.blocks.html#sweetpea.blocks.MultipleCrossBlock.calculate_samples_required">(sweetpea.blocks.MultipleCrossBlock method)</a>
-</li>
-      </ul></li>
       <li><a href="api/sweetpea.core.generate.tools.unigen.html#sweetpea.core.generate.tools.unigen.call_unigen">call_unigen() (in module sweetpea.core.generate.tools.unigen)</a>
 </li>
       <li><a href="api/sweetpea.internal.html#sweetpea.internal.chunk">chunk() (in module sweetpea.internal)</a>
@@ -421,10 +421,10 @@
         <li><a href="api/sweetpea.tests.test_derivation_processor_tss.html#sweetpea.tests.test_derivation_processor_tss.color_motion_incongruent">(in module sweetpea.tests.test_derivation_processor_tss)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sweetpea.core.generate.utility.html#sweetpea.core.generate.utility.combine_and_save_cnf">combine_and_save_cnf() (in module sweetpea.core.generate.utility)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sweetpea.core.generate.utility.html#sweetpea.core.generate.utility.combine_cnf_with_requests">combine_cnf_with_requests() (in module sweetpea.core.generate.utility)</a>
 </li>
       <li><a href="api/sweetpea.backend.html#sweetpea.backend.LowLevelRequest.comparisons">comparisons (sweetpea.backend.LowLevelRequest attribute)</a>
@@ -1067,19 +1067,13 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sweetpea.blocks.html#sweetpea.blocks.Block.rearrage_samples">rearrage_samples() (sweetpea.blocks.Block method)</a>
-
-      <ul>
-        <li><a href="api/sweetpea.blocks.html#sweetpea.blocks.FullyCrossBlock.rearrage_samples">(sweetpea.blocks.FullyCrossBlock method)</a>
 </li>
-        <li><a href="api/sweetpea.blocks.html#sweetpea.blocks.MultipleCrossBlock.rearrage_samples">(sweetpea.blocks.MultipleCrossBlock method)</a>
-</li>
-      </ul></li>
       <li><a href="api/sweetpea.core.generate.utility.html#sweetpea.core.generate.utility.ProblemSpecification.requests">requests (sweetpea.core.generate.utility.ProblemSpecification property)</a>
+</li>
+      <li><a href="api/sweetpea.tests.test_derivation_processor_tss.html#sweetpea.tests.test_derivation_processor_tss.response_left">response_left() (in module sweetpea.tests.test_derivation_processor_tss)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/sweetpea.tests.test_derivation_processor_tss.html#sweetpea.tests.test_derivation_processor_tss.response_left">response_left() (in module sweetpea.tests.test_derivation_processor_tss)</a>
-</li>
       <li><a href="api/sweetpea.tests.test_derivation_processor_tss.html#sweetpea.tests.test_derivation_processor_tss.response_right">response_right() (in module sweetpea.tests.test_derivation_processor_tss)</a>
 </li>
       <li><a href="api/sweetpea.core.generate.tools.return_code.html#sweetpea.core.generate.tools.return_code.ReturnCodeEnum">ReturnCodeEnum (class in sweetpea.core.generate.tools.return_code)</a>

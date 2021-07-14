@@ -293,7 +293,7 @@ Unigen for a few processes.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="sweetpea.core.generate.tools.unigen.call_unigen">
-<span class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.unigen.</span></span><span class="sig-name descname"><span class="pre">call_unigen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">docker_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download_if_missing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.tools.unigen.call_unigen" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">sweetpea.core.generate.tools.unigen.</span></span><span class="sig-name descname"><span class="pre">call_unigen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_count</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">docker_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">download_if_missing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.core.generate.tools.unigen.call_unigen" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calls Unigen with the given file as input.</p>
 <p>If <code class="docutils literal notranslate"><span class="pre">docker_mode</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>, this will use a Docker container to run
 Unigen. If it’s <code class="docutils literal notranslate"><span class="pre">False</span></code>, a command-line executable will be used.</p>
@@ -303,6 +303,7 @@ will be automatically downloaded if it’s missing.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><strong>sample_count</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – </p></li>
 <li><p><strong>input_file</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/pathlib.html#pathlib.Path" title="(in Python v3.7)"><em>pathlib.Path</em></a>) – </p></li>
 <li><p><strong>docker_mode</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a>) – </p></li>
 <li><p><strong>download_if_missing</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a>) – </p></li>
