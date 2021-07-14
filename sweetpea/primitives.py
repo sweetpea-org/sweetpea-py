@@ -1,5 +1,12 @@
 """This module provides the fundamental primitives used by the SweetPea
 domain-specific language.
+
+A Note on Deprecations
+''''''''''''''''''''''
+
+A number of functions, classes, methods, and attributes in this file are marked
+as *deprecated*. These are preserved for backwards compatibility, but will
+eventually be removed in favor of alternative forms.
 """
 
 
@@ -11,8 +18,10 @@ __all__ = [
     'Level', 'SimpleLevel', 'DerivedLevel', 'ElseLevel',
     'Factor', 'SimpleFactor', 'DerivedFactor',
     'DerivationWindow', 'WithinTrialDerivationWindow', 'TransitionDerivationWindow',
+    # Backwards compatibility:
     'get_external_level_name', 'get_internal_level_name',
     'WithinTrial', 'Transition', 'Window',
+    'simple_level', 'derived_level', 'else_level', 'factor', 'within_trial', 'transition', 'window',
 ]
 
 
