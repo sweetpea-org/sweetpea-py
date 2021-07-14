@@ -42,7 +42,11 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="sweetpea.sampling_strategies.unigen module" href="sweetpea.sampling_strategies.unigen.html" />
-    <link rel="prev" title="sweetpea.sampling_strategies.non_uniform module" href="sweetpea.sampling_strategies.non_uniform.html" /> 
+    <link rel="prev" title="sweetpea.sampling_strategies.non_uniform module" href="sweetpea.sampling_strategies.non_uniform.html" />
+<link rel="stylesheet" type="text/css"
+      href="../_static/css/custom.css" />
+
+
 </head>
 
 <body class="wy-body-for-nav">
@@ -109,7 +113,19 @@
 <li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#glossary">Glossary</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../guide/usage.html">Using SweetPea</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/usage.html">Using SweetPea</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guide/usage.html#a-simple-stroop-experiment">A Simple Stroop Experiment</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/usage.html#building-the-simple-stroop-experiment">Building the Simple Stroop Experiment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/usage.html#sweetpea-feature-recap">SweetPea Feature Recap</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/usage.html#working-with-derived-levels">Working With Derived Levels</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/usage.html#derivation">Derivation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/usage.html#constraints">Constraints</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../guide/contributing.html">Contributing to SweetPea</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../guide/contributing/issues.html">Using the GitHub Issue Tracker</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../guide/contributing/development.html">Developing SweetPea</a><ul>
@@ -255,6 +271,19 @@
 <dt class="sig sig-object py" id="sweetpea.sampling_strategies.uniform_combinatoric.UniformCombinatoricSamplingStrategy">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">sweetpea.sampling_strategies.uniform_combinatoric.</span></span><span class="sig-name descname"><span class="pre">UniformCombinatoricSamplingStrategy</span></span><a class="headerlink" href="#sweetpea.sampling_strategies.uniform_combinatoric.UniformCombinatoricSamplingStrategy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="sweetpea.sampling_strategies.base.html#sweetpea.sampling_strategies.base.SamplingStrategy" title="sweetpea.sampling_strategies.base.SamplingStrategy"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.sampling_strategies.base.SamplingStrategy</span></code></a></p>
+<p>This strategy represents the ideal. Valid sequences are uniformly
+sampled via a bijection from natural numbers to valid trial sequences.</p>
+<p>Right now, the intent is that this will only work for designs without
+complex windows. Once we get that far, we can think about what steps are
+needed to support complex windows. (<code class="xref py py-class docutils literal notranslate"><span class="pre">Transition</span></code>, etc.)</p>
+<p>This also doesn’t quite work yet for <code class="xref py py-class docutils literal notranslate"><span class="pre">_KInARow</span></code> constraints, which
+represent a similar obstacle as the complex windows. However, it will still
+accept designs with constraints. When such designs are given, it will do
+rejection sampling to ensure that only valid sequences are returned. The
+metrics dictionary will include data pertaining to the number of samples
+rejected for each final sample, as well as an average. (On average, how
+many samples need to be generated before one is found that is
+satisfactory?)</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="sweetpea.sampling_strategies.uniform_combinatoric.UniformCombinatoricSamplingStrategy.sample">
 <em class="property"><span class="pre">static</span> </em><span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_count</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.sampling_strategies.uniform_combinatoric.UniformCombinatoricSamplingStrategy.sample" title="Permalink to this definition">¶</a></dt>

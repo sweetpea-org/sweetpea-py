@@ -42,7 +42,11 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="sweetpea.server module" href="sweetpea.server.html" />
-    <link rel="prev" title="sweetpea.metrics module" href="sweetpea.metrics.html" /> 
+    <link rel="prev" title="sweetpea.metrics module" href="sweetpea.metrics.html" />
+<link rel="stylesheet" type="text/css"
+      href="../_static/css/custom.css" />
+
+
 </head>
 
 <body class="wy-body-for-nav">
@@ -109,7 +113,19 @@
 <li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#glossary">Glossary</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../guide/usage.html">Using SweetPea</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/usage.html">Using SweetPea</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guide/usage.html#a-simple-stroop-experiment">A Simple Stroop Experiment</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/usage.html#building-the-simple-stroop-experiment">Building the Simple Stroop Experiment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/usage.html#sweetpea-feature-recap">SweetPea Feature Recap</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/usage.html#working-with-derived-levels">Working With Derived Levels</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/usage.html#derivation">Derivation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/usage.html#constraints">Constraints</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../guide/contributing.html">Contributing to SweetPea</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../guide/contributing/issues.html">Using the GitHub Issue Tracker</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../guide/contributing/development.html">Developing SweetPea</a><ul>
@@ -251,6 +267,11 @@
 <span id="sweetpea-primitives-module"></span><h1>sweetpea.primitives module<a class="headerlink" href="#module-sweetpea.primitives" title="Permalink to this headline">¶</a></h1>
 <p>This module provides the fundamental primitives used by the SweetPea
 domain-specific language.</p>
+<div class="section" id="a-note-on-deprecations">
+<h2>A Note on Deprecations<a class="headerlink" href="#a-note-on-deprecations" title="Permalink to this headline">¶</a></h2>
+<p>A number of functions, classes, methods, and attributes in this file are marked
+as <em>deprecated</em>. These are preserved for backwards compatibility, but will
+eventually be removed in favor of alternative forms.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="sweetpea.primitives.Level">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">sweetpea.primitives.</span></span><span class="sig-name descname"><span class="pre">Level</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">_</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">__</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.primitives.Level" title="Permalink to this definition">¶</a></dt>
@@ -414,6 +435,11 @@ via the <a class="reference internal" href="#sweetpea.primitives.Level.factor" t
 <dd class="field-odd"><p><strong>name</strong> – The name of the level.</p>
 </dd>
 </dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sweetpea.primitives.ElseLevel.weight">
+<span class="sig-name descname"><span class="pre">weight</span></span><em class="property"><span class="pre">:</span> <span class="pre">dataclasses.InitVar</span></em><em class="property"> <span class="pre">=</span> <span class="pre">1</span></em><a class="headerlink" href="#sweetpea.primitives.ElseLevel.weight" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="sweetpea.primitives.ElseLevel.derive_level_from_levels">
 <span class="sig-name descname"><span class="pre">derive_level_from_levels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other_levels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.primitives.ElseLevel.derive_level_from_levels" title="Permalink to this definition">¶</a></dt>
@@ -429,28 +455,6 @@ constructing the new level.</p>
 <dd class="field-even"><p><a class="reference internal" href="#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel">sweetpea.primitives.DerivedLevel</a></p>
 </dd>
 </dl>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sweetpea.primitives.ElseLevel.name">
-<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a></em><a class="headerlink" href="#sweetpea.primitives.ElseLevel.name" title="Permalink to this definition">¶</a></dt>
-<dd><p>The name of the level.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sweetpea.primitives.ElseLevel.internal_name">
-<span class="sig-name descname"><span class="pre">internal_name</span></span><em class="property"><span class="pre">:</span> <a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><span class="pre">str</span></a></em><a class="headerlink" href="#sweetpea.primitives.ElseLevel.internal_name" title="Permalink to this definition">¶</a></dt>
-<dd><p>The internal name, which is meant to be unique among levels.</p>
-<div class="deprecated">
-<p><span class="versionmodified deprecated">Deprecated since version 0.1.0: </span>This attribute will be removed. It should not be used outside of
-this module.</p>
-</div>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="sweetpea.primitives.ElseLevel.factor">
-<span class="sig-name descname"><span class="pre">factor</span></span><em class="property"><span class="pre">:</span> <a class="reference internal" href="#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><span class="pre">sweetpea.primitives.Factor</span></a></em><a class="headerlink" href="#sweetpea.primitives.ElseLevel.factor" title="Permalink to this definition">¶</a></dt>
-<dd><p>The factor to which this level belongs.</p>
 </dd></dl>
 
 </dd></dl>
@@ -1015,6 +1019,160 @@ module.</p>
 <p>alias of <a class="reference internal" href="#sweetpea.primitives.DerivationWindow" title="sweetpea.primitives.DerivationWindow"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.primitives.DerivationWindow</span></code></a></p>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.primitives.simple_level">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.primitives.</span></span><span class="sig-name descname"><span class="pre">simple_level</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.primitives.simple_level" title="Permalink to this definition">¶</a></dt>
+<dd><p>A function alias for <a class="reference internal" href="#sweetpea.primitives.SimpleLevel" title="sweetpea.primitives.SimpleLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleLevel</span></code></a>.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version 0.1.2: </span>This function will be removed in favor of direct instantiation of
+<a class="reference internal" href="#sweetpea.primitives.SimpleLevel" title="sweetpea.primitives.SimpleLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleLevel</span></code></a>.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – The name of the level.</p></li>
+<li><p><strong>weight</strong> (<em>Optional</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em>) – An optional weight for the level.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#sweetpea.primitives.SimpleLevel" title="sweetpea.primitives.SimpleLevel">sweetpea.primitives.SimpleLevel</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.primitives.derived_level">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.primitives.</span></span><span class="sig-name descname"><span class="pre">derived_level</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">derivation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.primitives.derived_level" title="Permalink to this definition">¶</a></dt>
+<dd><p>A function alias for <a class="reference internal" href="#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">DerivedLevel</span></code></a>.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version 0.1.2: </span>This function will be removed in favor of direct instantiation of
+<a class="reference internal" href="#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">DerivedLevel</span></code></a>.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – The name of the level.</p></li>
+<li><p><strong>derivation</strong> (<a class="reference internal" href="#sweetpea.primitives.DerivationWindow" title="sweetpea.primitives.DerivationWindow"><em>sweetpea.primitives.DerivationWindow</em></a>) – The derivation window for this level.</p></li>
+<li><p><strong>weight</strong> (<em>Optional</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em>) – An optional weight for the level.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel">sweetpea.primitives.DerivedLevel</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.primitives.else_level">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.primitives.</span></span><span class="sig-name descname"><span class="pre">else_level</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.primitives.else_level" title="Permalink to this definition">¶</a></dt>
+<dd><p>A function alias for <a class="reference internal" href="#sweetpea.primitives.ElseLevel" title="sweetpea.primitives.ElseLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">ElseLevel</span></code></a>.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version 0.1.2: </span>This function will be removed in favor of direct instantiation of
+<a class="reference internal" href="#sweetpea.primitives.ElseLevel" title="sweetpea.primitives.ElseLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">ElseLevel</span></code></a>.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – The name of the level.</p></li>
+<li><p><strong>weight</strong> (<em>Optional</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em>) – An optional weight for the level.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#sweetpea.primitives.ElseLevel" title="sweetpea.primitives.ElseLevel">sweetpea.primitives.ElseLevel</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.primitives.factor">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.primitives.</span></span><span class="sig-name descname"><span class="pre">factor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.primitives.factor" title="Permalink to this definition">¶</a></dt>
+<dd><p>A function alias for <a class="reference internal" href="#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Factor</span></code></a>.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version 0.1.2: </span>This function will be removed in favor of direct instantiation of
+<a class="reference internal" href="#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Factor</span></code></a>.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) – The name of the factor.</p></li>
+<li><p><strong>levels</strong> (<em>Sequence</em><em>[</em><em>Any</em><em>]</em>) – A sequence of levels for the factor.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor">sweetpea.primitives.Factor</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.primitives.within_trial">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.primitives.</span></span><span class="sig-name descname"><span class="pre">within_trial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.primitives.within_trial" title="Permalink to this definition">¶</a></dt>
+<dd><p>A function alias for <a class="reference internal" href="#sweetpea.primitives.WithinTrialDerivationWindow" title="sweetpea.primitives.WithinTrialDerivationWindow"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithinTrialDerivationWindow</span></code></a>.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version 0.1.2: </span>This function will be removed in favor of direct instantiation of
+<a class="reference internal" href="#sweetpea.primitives.WithinTrialDerivationWindow" title="sweetpea.primitives.WithinTrialDerivationWindow"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithinTrialDerivationWindow</span></code></a>.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fn</strong> (<em>Callable</em>) – A predicate function. See <a class="reference internal" href="#sweetpea.primitives.WithinTrialDerivationWindow" title="sweetpea.primitives.WithinTrialDerivationWindow"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithinTrialDerivationWindow</span></code></a>.</p></li>
+<li><p><strong>args</strong> (<em>List</em><em>[</em><a class="reference internal" href="#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><em>sweetpea.primitives.Factor</em></a><em>]</em>) – A list of <a class="reference internal" href="#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Factors</span></code></a>. See
+<a class="reference internal" href="#sweetpea.primitives.WithinTrialDerivationWindow" title="sweetpea.primitives.WithinTrialDerivationWindow"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithinTrialDerivationWindow</span></code></a>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#sweetpea.primitives.WithinTrialDerivationWindow" title="sweetpea.primitives.WithinTrialDerivationWindow">sweetpea.primitives.WithinTrialDerivationWindow</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.primitives.transition">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.primitives.</span></span><span class="sig-name descname"><span class="pre">transition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.primitives.transition" title="Permalink to this definition">¶</a></dt>
+<dd><p>A function alias for <a class="reference internal" href="#sweetpea.primitives.TransitionDerivationWindow" title="sweetpea.primitives.TransitionDerivationWindow"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransitionDerivationWindow</span></code></a>.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version 0.1.2: </span>This function will be removed in favor of direct instantiation of
+<a class="reference internal" href="#sweetpea.primitives.TransitionDerivationWindow" title="sweetpea.primitives.TransitionDerivationWindow"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransitionDerivationWindow</span></code></a>.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fn</strong> (<em>Callable</em>) – A predicate function. See <a class="reference internal" href="#sweetpea.primitives.TransitionDerivationWindow" title="sweetpea.primitives.TransitionDerivationWindow"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransitionDerivationWindow</span></code></a>.</p></li>
+<li><p><strong>args</strong> (<em>List</em><em>[</em><a class="reference internal" href="#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><em>sweetpea.primitives.Factor</em></a><em>]</em>) – A list of <a class="reference internal" href="#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Factors</span></code></a>. See
+<a class="reference internal" href="#sweetpea.primitives.TransitionDerivationWindow" title="sweetpea.primitives.TransitionDerivationWindow"><code class="xref py py-class docutils literal notranslate"><span class="pre">TransitionDerivationWindow</span></code></a>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#sweetpea.primitives.TransitionDerivationWindow" title="sweetpea.primitives.TransitionDerivationWindow">sweetpea.primitives.TransitionDerivationWindow</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.primitives.window">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.primitives.</span></span><span class="sig-name descname"><span class="pre">window</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stride</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.primitives.window" title="Permalink to this definition">¶</a></dt>
+<dd><p>A function alias for <a class="reference internal" href="#sweetpea.primitives.DerivationWindow" title="sweetpea.primitives.DerivationWindow"><code class="xref py py-class docutils literal notranslate"><span class="pre">DerivationWindow</span></code></a>.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version 0.1.2: </span>This function will be removed in favor of direct instantiation of
+<a class="reference internal" href="#sweetpea.primitives.DerivationWindow" title="sweetpea.primitives.DerivationWindow"><code class="xref py py-class docutils literal notranslate"><span class="pre">DerivationWindow</span></code></a>.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fn</strong> (<em>Callable</em>) – A predicate function. See <a class="reference internal" href="#sweetpea.primitives.DerivationWindow" title="sweetpea.primitives.DerivationWindow"><code class="xref py py-class docutils literal notranslate"><span class="pre">DerivationWindow</span></code></a>.</p></li>
+<li><p><strong>args</strong> (<em>List</em><em>[</em><a class="reference internal" href="#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><em>sweetpea.primitives.Factor</em></a><em>]</em>) – A list of <a class="reference internal" href="#sweetpea.primitives.Factor" title="sweetpea.primitives.Factor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Factors</span></code></a>. See
+<a class="reference internal" href="#sweetpea.primitives.DerivationWindow" title="sweetpea.primitives.DerivationWindow"><code class="xref py py-class docutils literal notranslate"><span class="pre">DerivationWindow</span></code></a>.</p></li>
+<li><p><strong>width</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – The width of the window.</p></li>
+<li><p><strong>stride</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – The stride of the window.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#sweetpea.primitives.DerivationWindow" title="sweetpea.primitives.DerivationWindow">sweetpea.primitives.DerivationWindow</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
 </div>
 
 

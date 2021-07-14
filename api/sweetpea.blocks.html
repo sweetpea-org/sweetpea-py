@@ -42,7 +42,11 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="sweetpea.combinatorics module" href="sweetpea.combinatorics.html" />
-    <link rel="prev" title="sweetpea.base_constraint module" href="sweetpea.base_constraint.html" /> 
+    <link rel="prev" title="sweetpea.base_constraint module" href="sweetpea.base_constraint.html" />
+<link rel="stylesheet" type="text/css"
+      href="../_static/css/custom.css" />
+
+
 </head>
 
 <body class="wy-body-for-nav">
@@ -109,7 +113,19 @@
 <li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#glossary">Glossary</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="../guide/usage.html">Using SweetPea</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/usage.html">Using SweetPea</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guide/usage.html#a-simple-stroop-experiment">A Simple Stroop Experiment</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/usage.html#building-the-simple-stroop-experiment">Building the Simple Stroop Experiment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/usage.html#sweetpea-feature-recap">SweetPea Feature Recap</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/usage.html#working-with-derived-levels">Working With Derived Levels</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/usage.html#derivation">Derivation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/usage.html#constraints">Constraints</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="../guide/contributing.html">Contributing to SweetPea</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="../guide/contributing/issues.html">Using the GitHub Issue Tracker</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../guide/contributing/development.html">Developing SweetPea</a><ul>
@@ -551,16 +567,6 @@ windows.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt class="sig sig-object py" id="sweetpea.blocks.FullyCrossBlock.calculate_samples_required">
-<span class="sig-name descname"><span class="pre">calculate_samples_required</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.FullyCrossBlock.calculate_samples_required" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="sweetpea.blocks.FullyCrossBlock.rearrage_samples">
-<span class="sig-name descname"><span class="pre">rearrage_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">results</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.FullyCrossBlock.rearrage_samples" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
 <dt class="sig sig-object py" id="sweetpea.blocks.FullyCrossBlock.crossing_size">
 <span class="sig-name descname"><span class="pre">crossing_size</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.FullyCrossBlock.crossing_size" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -613,16 +619,6 @@ windows.</p>
 <p>In a design <em>without</em> complex windows, this is equivalent to
 <code class="xref py py-func docutils literal notranslate"><span class="pre">Block.variables_per_sample()</span></code>.</p>
 </dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="sweetpea.blocks.MultipleCrossBlock.calculate_samples_required">
-<span class="sig-name descname"><span class="pre">calculate_samples_required</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.MultipleCrossBlock.calculate_samples_required" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="sweetpea.blocks.MultipleCrossBlock.rearrage_samples">
-<span class="sig-name descname"><span class="pre">rearrage_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">results</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.blocks.MultipleCrossBlock.rearrage_samples" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="sweetpea.blocks.MultipleCrossBlock.crossing_size">

@@ -40,7 +40,11 @@
 
     
     <link rel="index" title="Index" href="#" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+<link rel="stylesheet" type="text/css"
+      href="_static/css/custom.css" />
+
+
 </head>
 
 <body class="wy-body-for-nav">
@@ -107,7 +111,19 @@
 <li class="toctree-l3"><a class="reference internal" href="guide/factorial_design.html#glossary">Glossary</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="guide/usage.html">Using SweetPea</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guide/usage.html">Using SweetPea</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="guide/usage.html#a-simple-stroop-experiment">A Simple Stroop Experiment</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="guide/usage.html#building-the-simple-stroop-experiment">Building the Simple Stroop Experiment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="guide/usage.html#sweetpea-feature-recap">SweetPea Feature Recap</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="guide/usage.html#working-with-derived-levels">Working With Derived Levels</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="guide/usage.html#derivation">Derivation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="guide/usage.html#constraints">Constraints</a></li>
+</ul>
+</li>
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="guide/contributing.html">Contributing to SweetPea</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="guide/contributing/issues.html">Using the GitHub Issue Tracker</a></li>
 <li class="toctree-l3"><a class="reference internal" href="guide/contributing/development.html">Developing SweetPea</a><ul>
@@ -297,18 +313,20 @@
         <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.MultipleCross.apply">(sweetpea.constraints.MultipleCross static method)</a>
 </li>
       </ul></li>
-      <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.AtMostKInARow.apply_to_backend_request">apply_to_backend_request() (sweetpea.constraints.AtMostKInARow method)</a>
+      <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.AtLeastKInARow.apply_to_backend_request">apply_to_backend_request() (sweetpea.constraints.AtLeastKInARow method)</a>
 
       <ul>
+        <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.AtMostKInARow.apply_to_backend_request">(sweetpea.constraints.AtMostKInARow method)</a>
+</li>
         <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.ExactlyK.apply_to_backend_request">(sweetpea.constraints.ExactlyK method)</a>
 </li>
         <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.ExactlyKInARow.apply_to_backend_request">(sweetpea.constraints.ExactlyKInARow method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivationWindow.args">args (sweetpea.primitives.DerivationWindow property)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sweetpea.core.cnf.html#sweetpea.core.cnf.CNF.as_dimacs_string">as_dimacs_string() (sweetpea.core.cnf.CNF method)</a>
 </li>
       <li><a href="api/sweetpea.core.cnf.html#sweetpea.core.cnf.CNF.as_haskell_cnf">as_haskell_cnf() (sweetpea.core.cnf.CNF method)</a>
@@ -333,7 +351,11 @@
 </li>
       <li><a href="api/sweetpea.core.generate.utility.html#sweetpea.core.generate.utility.Solution.assignment">assignment (sweetpea.core.generate.utility.Solution property)</a>
 </li>
+      <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.at_least_k_in_a_row">at_least_k_in_a_row() (in module sweetpea.constraints)</a>
+</li>
       <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.at_most_k_in_a_row">at_most_k_in_a_row() (in module sweetpea.constraints)</a>
+</li>
+      <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.AtLeastKInARow">AtLeastKInARow (class in sweetpea.constraints)</a>
 </li>
       <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.AtMostKInARow">AtMostKInARow (class in sweetpea.constraints)</a>
 </li>
@@ -368,13 +390,7 @@
       <li><a href="api/sweetpea.logic.html#sweetpea.logic.Not.c">c (sweetpea.logic.Not property)</a>
 </li>
       <li><a href="api/sweetpea.blocks.html#sweetpea.blocks.Block.calculate_samples_required">calculate_samples_required() (sweetpea.blocks.Block method)</a>
-
-      <ul>
-        <li><a href="api/sweetpea.blocks.html#sweetpea.blocks.FullyCrossBlock.calculate_samples_required">(sweetpea.blocks.FullyCrossBlock method)</a>
 </li>
-        <li><a href="api/sweetpea.blocks.html#sweetpea.blocks.MultipleCrossBlock.calculate_samples_required">(sweetpea.blocks.MultipleCrossBlock method)</a>
-</li>
-      </ul></li>
       <li><a href="api/sweetpea.core.generate.tools.unigen.html#sweetpea.core.generate.tools.unigen.call_unigen">call_unigen() (in module sweetpea.core.generate.tools.unigen)</a>
 </li>
       <li><a href="api/sweetpea.internal.html#sweetpea.internal.chunk">chunk() (in module sweetpea.internal)</a>
@@ -405,10 +421,10 @@
         <li><a href="api/sweetpea.tests.test_derivation_processor_tss.html#sweetpea.tests.test_derivation_processor_tss.color_motion_incongruent">(in module sweetpea.tests.test_derivation_processor_tss)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sweetpea.core.generate.utility.html#sweetpea.core.generate.utility.combine_and_save_cnf">combine_and_save_cnf() (in module sweetpea.core.generate.utility)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sweetpea.core.generate.utility.html#sweetpea.core.generate.utility.combine_cnf_with_requests">combine_cnf_with_requests() (in module sweetpea.core.generate.utility)</a>
 </li>
       <li><a href="api/sweetpea.backend.html#sweetpea.backend.LowLevelRequest.comparisons">comparisons (sweetpea.backend.LowLevelRequest attribute)</a>
@@ -475,10 +491,12 @@
 </li>
       <li><a href="guide/factorial_design.html#term-derived-level"><strong>derived level</strong></a>
 </li>
-      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivedFactor">DerivedFactor (class in sweetpea.primitives)</a>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.derived_level">derived_level() (in module sweetpea.primitives)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivedFactor">DerivedFactor (class in sweetpea.primitives)</a>
+</li>
       <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivedLevel">DerivedLevel (class in sweetpea.primitives)</a>
 </li>
       <li><a href="api/sweetpea.design_graph.html#sweetpea.design_graph.DesignGraph">DesignGraph (class in sweetpea.design_graph)</a>
@@ -513,6 +531,8 @@
 <h2 id="E">E</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.else_level">else_level() (in module sweetpea.primitives)</a>
+</li>
       <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.ElseLevel">ElseLevel (class in sweetpea.primitives)</a>
 </li>
       <li><a href="api/sweetpea.core.generate.tools.executables.html#sweetpea.core.generate.tools.executables.ensure_executable_available">ensure_executable_available() (in module sweetpea.core.generate.tools.executables)</a>
@@ -525,10 +545,10 @@
 </li>
       <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.ExactlyK">ExactlyK (class in sweetpea.constraints)</a>
 </li>
-      <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.ExactlyKInARow">ExactlyKInARow (class in sweetpea.constraints)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.ExactlyKInARow">ExactlyKInARow (class in sweetpea.constraints)</a>
+</li>
       <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.Exclude">Exclude (class in sweetpea.constraints)</a>
 </li>
       <li><a href="api/sweetpea.constraints.html#sweetpea.constraints.exclude">exclude() (in module sweetpea.constraints)</a>
@@ -553,12 +573,10 @@
 </li>
       <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Factor">Factor (class in sweetpea.primitives)</a>
 </li>
-      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.ElseLevel.factor">factor (sweetpea.primitives.ElseLevel attribute)</a>
-
-      <ul>
-        <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Level.factor">(sweetpea.primitives.Level attribute)</a>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Level.factor">factor (sweetpea.primitives.Level attribute)</a>
 </li>
-      </ul></li>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.factor">factor() (in module sweetpea.primitives)</a>
+</li>
       <li><a href="api/sweetpea.blocks.html#sweetpea.blocks.Block.factor_in_crossing">factor_in_crossing() (sweetpea.blocks.Block method)</a>
 
       <ul>
@@ -757,12 +775,8 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.ElseLevel.internal_name">internal_name (sweetpea.primitives.ElseLevel attribute)</a>
-
-      <ul>
-        <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Level.internal_name">(sweetpea.primitives.Level attribute)</a>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Level.internal_name">internal_name (sweetpea.primitives.Level attribute)</a>
 </li>
-      </ul></li>
       <li><a href="api/sweetpea.internal.html#sweetpea.internal.intersperse">intersperse() (in module sweetpea.internal)</a>
 </li>
       <li><a href="api/sweetpea.server.html#sweetpea.server.is_cnf_still_sat">is_cnf_still_sat() (in module sweetpea.server)</a>
@@ -958,11 +972,9 @@
 <h2 id="N">N</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.ElseLevel.name">name (sweetpea.primitives.ElseLevel attribute)</a>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Factor.name">name (sweetpea.primitives.Factor attribute)</a>
 
       <ul>
-        <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Factor.name">(sweetpea.primitives.Factor attribute)</a>
-</li>
         <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Level.name">(sweetpea.primitives.Level attribute)</a>
 </li>
       </ul></li>
@@ -1055,19 +1067,13 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/sweetpea.blocks.html#sweetpea.blocks.Block.rearrage_samples">rearrage_samples() (sweetpea.blocks.Block method)</a>
-
-      <ul>
-        <li><a href="api/sweetpea.blocks.html#sweetpea.blocks.FullyCrossBlock.rearrage_samples">(sweetpea.blocks.FullyCrossBlock method)</a>
 </li>
-        <li><a href="api/sweetpea.blocks.html#sweetpea.blocks.MultipleCrossBlock.rearrage_samples">(sweetpea.blocks.MultipleCrossBlock method)</a>
-</li>
-      </ul></li>
       <li><a href="api/sweetpea.core.generate.utility.html#sweetpea.core.generate.utility.ProblemSpecification.requests">requests (sweetpea.core.generate.utility.ProblemSpecification property)</a>
+</li>
+      <li><a href="api/sweetpea.tests.test_derivation_processor_tss.html#sweetpea.tests.test_derivation_processor_tss.response_left">response_left() (in module sweetpea.tests.test_derivation_processor_tss)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/sweetpea.tests.test_derivation_processor_tss.html#sweetpea.tests.test_derivation_processor_tss.response_left">response_left() (in module sweetpea.tests.test_derivation_processor_tss)</a>
-</li>
       <li><a href="api/sweetpea.tests.test_derivation_processor_tss.html#sweetpea.tests.test_derivation_processor_tss.response_right">response_right() (in module sweetpea.tests.test_derivation_processor_tss)</a>
 </li>
       <li><a href="api/sweetpea.core.generate.tools.return_code.html#sweetpea.core.generate.tools.return_code.ReturnCodeEnum">ReturnCodeEnum (class in sweetpea.core.generate.tools.return_code)</a>
@@ -1124,11 +1130,15 @@
 </li>
       <li><a href="api/sweetpea.derivation_processor.html#sweetpea.derivation_processor.DerivationProcessor.shift_window">shift_window() (sweetpea.derivation_processor.DerivationProcessor static method)</a>
 </li>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.simple_level">simple_level() (in module sweetpea.primitives)</a>
+</li>
       <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.SimpleFactor">SimpleFactor (class in sweetpea.primitives)</a>
 </li>
       <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.SimpleLevel">SimpleLevel (class in sweetpea.primitives)</a>
 </li>
       <li><a href="api/sweetpea.core.simple_sequence.html#sweetpea.core.simple_sequence.SimpleSequence">SimpleSequence (class in sweetpea.core.simple_sequence)</a>
+</li>
+      <li><a href="api/sweetpea.html#sweetpea.simplify_experiments">simplify_experiments() (in module sweetpea)</a>
 </li>
       <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivationWindow.size">size (sweetpea.primitives.DerivationWindow property)</a>
 </li>
@@ -1872,6 +1882,8 @@
 </li>
       <li><a href="guide/factorial_design.html#term-transition-window"><strong>transition window</strong></a>
 </li>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.transition">transition() (in module sweetpea.primitives)</a>
+</li>
       <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.TransitionDerivationWindow">TransitionDerivationWindow (class in sweetpea.primitives)</a>
 </li>
       <li><a href="guide/factorial_design.html#term-trial"><strong>trial</strong></a>
@@ -1961,6 +1973,8 @@
       <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivedLevel.weight">weight (sweetpea.primitives.DerivedLevel attribute)</a>
 
       <ul>
+        <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.ElseLevel.weight">(sweetpea.primitives.ElseLevel attribute)</a>
+</li>
         <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.Level.weight">(sweetpea.primitives.Level property)</a>
 </li>
         <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.SimpleLevel.weight">(sweetpea.primitives.SimpleLevel attribute)</a>
@@ -1982,7 +1996,11 @@
 </li>
       <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.DerivedLevel.window">window (sweetpea.primitives.DerivedLevel attribute)</a>
 </li>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.window">window() (in module sweetpea.primitives)</a>
+</li>
       <li><a href="guide/factorial_design.html#term-within-trial-derivation"><strong>within-trial derivation</strong></a>
+</li>
+      <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.within_trial">within_trial() (in module sweetpea.primitives)</a>
 </li>
       <li><a href="api/sweetpea.primitives.html#sweetpea.primitives.WithinTrial">WithinTrial (in module sweetpea.primitives)</a>
 </li>
