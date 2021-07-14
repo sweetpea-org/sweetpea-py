@@ -97,7 +97,7 @@ class Level:
     #       factors are responsible for registering themselves with their
     #       levels. Perhaps factors could be the only way to create levels?
     #: The factor to which this level belongs.
-    factor: Factor = field(init=False)
+    factor: Factor = field(init=False, repr=False)
 
     # NOTE: Because of the way dataclasses work, a base class (e.g., `Level`)
     #       cannot provide an attribute with a default value if a subclass
