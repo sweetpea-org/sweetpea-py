@@ -299,6 +299,16 @@ class ElseLevel(Level):
         The name of the level.
     """
 
+    weight: InitVar[int] = 1
+
+    # NOTE: The __post_init__ method is a special case where we can ignore the
+    #       Liskov substitution property. This is addressed in
+    #       python/mypy#9254:
+    #           https://github.com/python/mypy/issues/9254
+    def __post_init__(self, weight: int):  # type: ignore # pylint: disable=arguments-differ
+        super().__post_init__()
+        self._weight = weight
+
     def derive_level_from_levels(self, other_levels: List[DerivedLevel]) -> DerivedLevel:
         """Converts the :class:`.ElseLevel` into a :class:`.DerivedLevel` by
         combining it with other specified
