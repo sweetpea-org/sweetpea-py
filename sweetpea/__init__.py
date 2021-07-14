@@ -6,7 +6,7 @@ designs.
 
 from functools import reduce
 from typing import Dict, List, Optional, Tuple, cast
-import itertools
+from itertools import product
 
 from sweetpea.derivation_processor import DerivationProcessor
 from sweetpea.logic import to_cnf_tseitin
@@ -231,7 +231,7 @@ def tabulate_experiments(experiments: List[Dict],
         max_combinations = 0
         # Each `element` is an n-tuple (s1, s2, ..., sn) where n is the number
         # of levels and each element is a level name.
-        for element in itertools.product(*levels):
+        for element in product(*levels):
             max_combinations += 1
 
             # add factor combination
@@ -414,8 +414,8 @@ def synthesize_trials(block: Block,
         levels, where each such list contains to one level per trial.
     """
     print("Sampling {} trial sequences using the {}".format(samples, sampling_strategy))
-    sampling_result = sampling_strategy.sample(block, block.calculate_samples_required(samples))
-    return block.rearrage_samples(samples, sampling_result.samples)
+    sampling_result = sampling_strategy.sample(block, samples)
+    return sampling_result.samples
 
 
 # TODO: This function isn't called anywhere, so it should be removed.
