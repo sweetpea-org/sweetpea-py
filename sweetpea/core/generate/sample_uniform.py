@@ -13,7 +13,8 @@ from .utility import GenerationRequest, Solution, combine_and_save_cnf, temporar
 __all__ = ['sample_uniform']
 
 
-def sample_uniform(initial_cnf: CNF,
+def sample_uniform(sample_count: int,
+                    initial_cnf: CNF,
                    fresh: int,
                    support: int,
                    generation_requests: List[GenerationRequest],
@@ -24,12 +25,18 @@ def sample_uniform(initial_cnf: CNF,
     """
     with temporary_cnf_file() as cnf_file:
         combine_and_save_cnf(cnf_file, initial_cnf, fresh, support, generation_requests)
-        solution_str = call_unigen(cnf_file, docker_mode=use_docker)
+        solution_str = call_unigen(sample_count, cnf_file, docker_mode=use_docker)
         # TODO: Validate that skipping the comments is the intended
         #       functionality. The Haskell code doesn't appear to need to do
         #       this, but this could be due to the Unigen upgrade or something
         #       else. Just check it.
-        return [build_solution(line) for line in solution_str.strip().splitlines() if line and not line.startswith('c')]
+        if not solution_str:
+            return []
+        sample_set = 0
+        if "we found only " in solution_str:
+            sample_set = int(solution_str[solution_str.index("we found only ")+14:].split(',')[0])
+
+        return [build_solution(line) for line in solution_str.strip().splitlines() if line and not line.startswith('c')][sample_set:]
 
 
 def build_solution(line: str) -> Solution:

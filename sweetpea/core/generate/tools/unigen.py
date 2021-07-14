@@ -10,6 +10,8 @@ Unigen for a few processes.
 from pathlib import Path
 from shlex import split as shell_split
 from subprocess import CompletedProcess, run
+import math
+import numpy
 
 from .docker_utility import DEFAULT_DOCKER_MODE_ON, docker_run
 from .executables import DEFAULT_DOWNLOAD_IF_MISSING, UNIGEN_EXE, ensure_executable_available
@@ -24,18 +26,19 @@ class UnigenError(ToolError):
     pass
 
 
-def call_unigen_docker(input_file: Path) -> CompletedProcess:
+def call_unigen_docker(input_file: Path, sample_count: int) -> CompletedProcess:
     """Calls Unigen in a Docker container, reading a given file as the input
     problem.
     """
     unigen_container = 'msoos/unigen'
     input_bytes = input_file.read_bytes()
+    # args = shell_split("--rm -i -a stdin -a stdout --samples="+str(sample_count))
     args = shell_split("--rm -i -a stdin -a stdout")
     result = docker_run(unigen_container, args, input_bytes)
     return result
 
 
-def call_unigen_cli(input_file: Path, download_if_missing: bool) -> CompletedProcess:
+def call_unigen_cli(input_file: Path, download_if_missing: bool, sample_count: int) -> CompletedProcess:
     """Calls Unigen from the command line, reading a given file as the input
     problem.
 
@@ -45,7 +48,8 @@ def call_unigen_cli(input_file: Path, download_if_missing: bool) -> CompletedPro
     <https://github.com/sweetpea-org/unigen-exe>`_.
     """
     ensure_executable_available(UNIGEN_EXE, download_if_missing)
-    command = [str(UNIGEN_EXE), str(input_file)]
+    seed = numpy.random.randint(999999999)
+    command = [str(UNIGEN_EXE), str(input_file), "--samples="+str(sample_count), "--seed="+str(999999999)]
     # NOTE: flake8 doesn't seem to handle the calls to `run` correctly, but
     #       mypy reports everything is fine here so we `noqa` to prevent flake8
     #       complaining about what it doesn't understand.
@@ -53,7 +57,8 @@ def call_unigen_cli(input_file: Path, download_if_missing: bool) -> CompletedPro
     return result
 
 
-def call_unigen(input_file: Path,
+def call_unigen(sample_count: int,
+                input_file: Path,
                 docker_mode: bool = DEFAULT_DOCKER_MODE_ON,
                 download_if_missing: bool = DEFAULT_DOWNLOAD_IF_MISSING
                 ) -> str:
@@ -67,9 +72,9 @@ def call_unigen(input_file: Path,
     will be automatically downloaded if it's missing.
     """
     if docker_mode:
-        result = call_unigen_docker(input_file)
+        result = call_unigen_docker(input_file, sample_count)
     else:
-        result = call_unigen_cli(input_file, download_if_missing)
+        result = call_unigen_cli(input_file, download_if_missing, sample_count)
     if result.returncode == 0:
         # Success!
         # (Comments in the earlier Haskell version of SweetPea's core indicate
@@ -79,4 +84,6 @@ def call_unigen(input_file: Path,
         # Failure.
         stdout = result.stdout.decode()
         stderr = result.stderr.decode()
+        if "The input formula is unsatisfiable" in stdout:
+            return ""
         raise UnigenError(result.returncode, stdout, stderr)

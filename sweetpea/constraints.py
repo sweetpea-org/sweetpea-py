@@ -450,6 +450,40 @@ class AtMostKInARow(_KInARow):
         return str(self.__dict__)
 
 
+def at_least_k_in_a_row(k, levels):
+    return AtLeastKInARow(k, levels)
+
+
+class AtLeastKInARow(_KInARow):
+    def __init__(self, k, levels):
+        super().__init__(k, levels)
+        self.max_trials_required = cast(int, None)
+
+    def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], backend_request: BackendRequest) -> None:
+        sublists = self._build_variable_sublists(block, level, self.k + 1)
+
+        implications = []
+        if sublists:
+            implications.append(If(sublists[0][0], And(sublists[0][1:-1])))
+            for sublist in sublists:
+                implications.append(If(And([Not(sublist[0]), sublist[1]]), And(sublist[2:])))
+            implications.append(If(sublists[-1][-1], And(sublists[-1][1:-1])))
+
+        (cnf, new_fresh) = block.cnf_fn(And(implications), backend_request.fresh)
+
+        backend_request.cnfs.append(cnf)
+        backend_request.fresh = new_fresh
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    def __repr__(self):
+        return str(self.__dict__)
+
+    def __str__(self):
+        return str(self.__dict__)
+
+
 def exactly_k(k ,levels):
     """Requires that if the given level exists at all, it must exist in a trial
     exactly ``k`` times.

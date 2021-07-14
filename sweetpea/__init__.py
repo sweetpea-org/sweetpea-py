@@ -390,8 +390,8 @@ def synthesize_trials(block: Block,
         levels, where each such list contains to one level per trial.
     """
     print("Sampling {} trial sequences using the {}".format(samples, sampling_strategy))
-    sampling_result = sampling_strategy.sample(block, block.calculate_samples_required(samples))
-    return block.rearrage_samples(samples, sampling_result.samples)
+    sampling_result = sampling_strategy.sample(block, samples)
+    return sampling_result.samples
 
 
 # TODO: This function isn't called anywhere, so it should be removed.
