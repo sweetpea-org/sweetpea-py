@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="sweetpea",
-    version="0.1.0",
+    version="0.1.1",
     author="Annie Cherkaev, Ben Draut, Ahsan Sajjad Butt, Pierce Darragh",
     author_email="annie.cherk@gmail.com, drautb@cs.utah.edu, ahsansbutt@hotmail.com",
     description="A language for synthesizing randomized experimental designs",
@@ -21,6 +21,7 @@ setuptools.setup(
         'numpy',
         'pytest',
         'requests',
+        'tqdm',
     ],
     classifiers=[
         "Programming Language :: Python :: 3",

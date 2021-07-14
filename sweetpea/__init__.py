@@ -6,7 +6,7 @@ designs.
 
 from functools import reduce
 from typing import Dict, List, Optional, cast
-import itertools
+from itertools import product
 
 from sweetpea.derivation_processor import DerivationProcessor
 from sweetpea.logic import to_cnf_tseitin
@@ -207,7 +207,7 @@ def tabulate_experiments(experiments: List[Dict],
         max_combinations = 0
         # Each `element` is an n-tuple (s1, s2, ..., sn) where n is the number
         # of levels and each element is a level name.
-        for element in itertools.product(*levels):
+        for element in product(*levels):
             max_combinations += 1
 
             # add factor combination

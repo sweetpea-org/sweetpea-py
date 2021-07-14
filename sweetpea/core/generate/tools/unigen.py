@@ -10,8 +10,7 @@ Unigen for a few processes.
 from pathlib import Path
 from shlex import split as shell_split
 from subprocess import CompletedProcess, run
-import math
-import numpy
+from numpy import random
 
 from .docker_utility import DEFAULT_DOCKER_MODE_ON, docker_run
 from .executables import DEFAULT_DOWNLOAD_IF_MISSING, UNIGEN_EXE, ensure_executable_available
@@ -48,7 +47,7 @@ def call_unigen_cli(input_file: Path, download_if_missing: bool, sample_count: i
     <https://github.com/sweetpea-org/unigen-exe>`_.
     """
     ensure_executable_available(UNIGEN_EXE, download_if_missing)
-    seed = numpy.random.randint(999999999)
+    seed = random.randint(999999999)
     command = [str(UNIGEN_EXE), str(input_file), "--samples="+str(sample_count), "--seed="+str(999999999)]
     # NOTE: flake8 doesn't seem to handle the calls to `run` correctly, but
     #       mypy reports everything is fine here so we `noqa` to prevent flake8

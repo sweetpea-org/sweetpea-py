@@ -410,7 +410,8 @@ class _KInARow(Constraint):
 
 def at_most_k_in_a_row(k, levels):
     """This desugars pretty directly into the llrequests. The only thing to do
-    here is to collect all the boolean vars that match the same level & pair them up according to k.
+    here is to collect all the boolean vars that match the same level & pair
+    them up according to k.
 
     Continuing with the example from :class:`.Consistency`, say we want
     ``AtMostKInARow 1 ("color", "red")``, then we need to grab all the vars
@@ -451,6 +452,28 @@ class AtMostKInARow(_KInARow):
 
 
 def at_least_k_in_a_row(k, levels):
+    """This is more complicated that AtMostKInARow. We collect all the boolean
+    vars that match the same level & pair them up according to k.
+
+    We want ``AtLeastKInARow 2 ("color", "red")``, then we need to grab all the
+    vars which indicate color-red::
+
+        [1, 7, 13, 19]
+
+    and then wrap them up in CNF as follows::
+
+        If(1) Then (7)          --------This is a corner case
+        If(And(!1, 7)) Then (13)
+        If(And(!7, 13)) Then (19)
+        If(19) Then (13)   --------This is a corner case
+
+    If it had been ``AtLeastKInARow 3 ("color", "red")``, the CNF would have
+    been::
+
+        If(1) Then (7, 13)          --------This is a corner case
+        If(And(!1, 7)) Then (13, 19)
+        If(19) Then (7, 13)   --------This is a corner case
+    """
     return AtLeastKInARow(k, levels)
 
 
@@ -459,14 +482,19 @@ class AtLeastKInARow(_KInARow):
         super().__init__(k, levels)
         self.max_trials_required = cast(int, None)
 
-    def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], backend_request: BackendRequest) -> None:
+    def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]],
+                                    backend_request: BackendRequest) -> None:
+
+        # Request sublists for k+1 to allow us to determine the transition
         sublists = self._build_variable_sublists(block, level, self.k + 1)
 
         implications = []
         if sublists:
+            # Starting corner case
             implications.append(If(sublists[0][0], And(sublists[0][1:-1])))
             for sublist in sublists:
                 implications.append(If(And([Not(sublist[0]), sublist[1]]), And(sublist[2:])))
+            # Ending corner case
             implications.append(If(sublists[-1][-1], And(sublists[-1][1:-1])))
 
         (cnf, new_fresh) = block.cnf_fn(And(implications), backend_request.fresh)
