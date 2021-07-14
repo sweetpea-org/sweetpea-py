@@ -1,5 +1,12 @@
 """This module provides the fundamental primitives used by the SweetPea
 domain-specific language.
+
+A Note on Deprecations
+''''''''''''''''''''''
+
+A number of functions, classes, methods, and attributes in this file are marked
+as *deprecated*. These are preserved for backwards compatibility, but will
+eventually be removed in favor of alternative forms.
 """
 
 
@@ -11,8 +18,10 @@ __all__ = [
     'Level', 'SimpleLevel', 'DerivedLevel', 'ElseLevel',
     'Factor', 'SimpleFactor', 'DerivedFactor',
     'DerivationWindow', 'WithinTrialDerivationWindow', 'TransitionDerivationWindow',
+    # Backwards compatibility:
     'get_external_level_name', 'get_internal_level_name',
     'WithinTrial', 'Transition', 'Window',
+    'simple_level', 'derived_level', 'else_level', 'factor', 'within_trial', 'transition', 'window',
 ]
 
 
@@ -298,6 +307,16 @@ class ElseLevel(Level):
     :param name:
         The name of the level.
     """
+
+    weight: InitVar[int] = 1
+
+    # NOTE: The __post_init__ method is a special case where we can ignore the
+    #       Liskov substitution property. This is addressed in
+    #       python/mypy#9254:
+    #           https://github.com/python/mypy/issues/9254
+    def __post_init__(self, weight: int):  # type: ignore # pylint: disable=arguments-differ
+        super().__post_init__()
+        self._weight = weight
 
     def derive_level_from_levels(self, other_levels: List[DerivedLevel]) -> DerivedLevel:
         """Converts the :class:`.ElseLevel` into a :class:`.DerivedLevel` by
@@ -939,6 +958,8 @@ def get_internal_level_name(level: Level) -> str:
     return level.internal_name
 
 
+#### Class aliases.
+
 #: An alias for :class:`.WithinTrialDerivationWindow`.
 #:
 #: .. deprecated:: 0.1.0
@@ -962,3 +983,142 @@ Transition = TransitionDerivationWindow
 #:     This class will be removed in favor of
 #:     :class:`.DerivationWindow`.
 Window = DerivationWindow
+
+
+#### Noun-form function aliases.
+
+def simple_level(name: str, weight: Optional[int] = None) -> SimpleLevel:
+    """A function alias for :class:`.SimpleLevel`.
+
+    .. deprecated:: 0.1.2
+
+        This function will be removed in favor of direct instantiation of
+        :class:`.SimpleLevel`.
+
+    :param name:
+        The name of the level.
+
+    :param weight:
+        An optional weight for the level.
+    """
+    if weight is None:
+        return SimpleLevel(name)
+    return SimpleLevel(name, weight)
+
+
+def derived_level(name: str, derivation: Window, weight: Optional[int] = None) -> DerivedLevel:
+    """A function alias for :class:`.DerivedLevel`.
+
+    .. deprecated:: 0.1.2
+
+        This function will be removed in favor of direct instantiation of
+        :class:`.DerivedLevel`.
+
+    :param name:
+        The name of the level.
+
+    :param derivation:
+        The derivation window for this level.
+
+    :param weight:
+        An optional weight for the level.
+    """
+    if weight is None:
+        return DerivedLevel(name, derivation)
+    return DerivedLevel(name, derivation, weight)
+
+
+def else_level(name: str, weight: Optional[int] = None) -> ElseLevel:
+    """A function alias for :class:`.ElseLevel`.
+
+    .. deprecated:: 0.1.2
+
+        This function will be removed in favor of direct instantiation of
+        :class:`.ElseLevel`.
+
+    :param name:
+        The name of the level.
+
+    :param weight:
+        An optional weight for the level.
+    """
+    if weight is None:
+        return ElseLevel(name)
+    return ElseLevel(name, weight)
+
+
+def factor(name: str, levels: Sequence[Any]) -> Factor:
+    """A function alias for :class:`.Factor`.
+
+    .. deprecated:: 0.1.2
+
+        This function will be removed in favor of direct instantiation of
+        :class:`.Factor`.
+
+    :param name:
+        The name of the factor.
+
+    :param levels:
+        A sequence of levels for the factor.
+    """
+    return Factor(name, levels)
+
+
+def within_trial(fn: Callable, args: List[Factor]) -> WithinTrialDerivationWindow:
+    """A function alias for :class:`.WithinTrialDerivationWindow`.
+
+    .. deprecated:: 0.1.2
+
+        This function will be removed in favor of direct instantiation of
+        :class:`.WithinTrialDerivationWindow`.
+
+    :param fn:
+        A predicate function. See :class:`.WithinTrialDerivationWindow`.
+
+    :param args:
+        A list of :class:`Factors <.Factor>`. See
+        :class:`.WithinTrialDerivationWindow`.
+    """
+    return WithinTrialDerivationWindow(fn, args)
+
+
+def transition(fn: Callable, args: List[Factor]) -> TransitionDerivationWindow:
+    """A function alias for :class:`.TransitionDerivationWindow`.
+
+    .. deprecated:: 0.1.2
+
+        This function will be removed in favor of direct instantiation of
+        :class:`.TransitionDerivationWindow`.
+
+    :param fn:
+        A predicate function. See :class:`.TransitionDerivationWindow`.
+
+    :param args:
+        A list of :class:`Factors <.Factor>`. See
+        :class:`.TransitionDerivationWindow`.
+    """
+    return TransitionDerivationWindow(fn, args)
+
+
+def window(fn: Callable, args: List[Factor], width: int, stride: int) -> DerivationWindow:
+    """A function alias for :class:`.DerivationWindow`.
+
+    .. deprecated:: 0.1.2
+
+        This function will be removed in favor of direct instantiation of
+        :class:`.DerivationWindow`.
+
+    :param fn:
+        A predicate function. See :class:`.DerivationWindow`.
+
+    :param args:
+        A list of :class:`Factors <.Factor>`. See
+        :class:`.DerivationWindow`.
+
+    :param width:
+        The width of the window.
+
+    :param stride:
+        The stride of the window.
+    """
+    return DerivationWindow(fn, args, width, stride)
