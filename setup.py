@@ -7,7 +7,7 @@ setuptools.setup(
     name="sweetpea",
     version="0.1.2",
     author="Annie Cherkaev, Ben Draut, Ahsan Sajjad Butt, Pierce Darragh",
-    author_email="annie.cherk@gmail.com, drautb@cs.utah.edu, ahsansbutt@hotmail.com",
+    author_email="annie.cherk@gmail.com, drautb@cs.utah.edu, ahsansbutt@hotmail.com, pierce.darragh@gmail.com",
     description="A language for synthesizing randomized experimental designs",
     long_description=long_description,
     long_description_content_type="text/markdown",

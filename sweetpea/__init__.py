@@ -5,13 +5,16 @@ designs.
 """
 
 from functools import reduce
-from typing import Dict, List, Optional, cast
+from typing import Dict, List, Optional, Tuple, cast
 from itertools import product
 
 from sweetpea.derivation_processor import DerivationProcessor
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.blocks import Block, FullyCrossBlock
-from sweetpea.primitives import Factor, get_external_level_name
+from sweetpea.primitives import (
+    Factor, SimpleLevel, DerivedLevel,
+    DerivationWindow, WithinTrialDerivationWindow, TransitionDerivationWindow,
+    get_external_level_name)
 from sweetpea.constraints import Consistency, Constraint, FullyCross, MultipleCross, MultipleCrossBlock
 from sweetpea.sampling_strategies.non_uniform import NonUniformSamplingStrategy
 from sweetpea.sampling_strategies.unigen import UnigenSamplingStrategy
@@ -127,6 +130,27 @@ def __desugar_constraints(constraints: List[Constraint]) -> List[Constraint]:
     for c in constraints:
         desugared_constraints.extend(c.desugar())
     return desugared_constraints
+
+
+def simplify_experiments(experiments: List[Dict]) -> List[List[Tuple[str, ...]]]:
+    """Converts a list of experiments into a list of lists of tuples, where
+    each tuple represents a crossing in a given experiment.
+
+    :param experiments:
+        A list of experiments as :class:`dicts <dict>`. These are produced by
+        calls to any of the synthesis functions (:func:`.synthesize_trials`,
+        :func:`.synthesize_trials_non_uniform`, or
+        :func:`.synthesize_trials_uniform`).
+
+    :returns:
+        A list of lists of tuples of strings, where each sub-list corresponds
+        to one of the ``experiments``, each tuple corresponds to a particular
+        crossing, and each string is the simple surface name of a level.
+    """
+    tuple_lists: List[List[Tuple[str, ...]]] = []
+    for experiment in experiments:
+        tuple_lists.append(list(zip(*experiment.values())))
+    return tuple_lists
 
 
 def print_experiments(block: Block, experiments: List[dict]):

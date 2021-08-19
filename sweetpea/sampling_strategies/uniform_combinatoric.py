@@ -11,26 +11,28 @@ from sweetpea.blocks import Block, FullyCrossBlock
 from sweetpea.combinatorics import extract_components, compute_jth_inversion_sequence, construct_permutation, compute_jth_combination
 from sweetpea.design_partitions import DesignPartitions
 from sweetpea.logic import And
-from sweetpea.primitives import get_internal_level_name, get_external_level_name
+from sweetpea.primitives import get_external_level_name
 from sweetpea.sampling_strategies.base import SamplingStrategy, SamplingResult
 from sweetpea.constraints import Exclude, _KInARow, ExactlyKInARow, AtMostKInARow
 
 
-"""
-This strategy represents the ideal. Valid sequences are uniformly sampled via a bijection from natural
-numbers to valid trial sequences.
-
-Right now, the intent is that this will only work for designs without complex windows. Once we get that
-far, we can think about what steps are needed to support complex windows. (Transition, etc.)
-
-This also doesn't quite work yet for _KInARow constraints, which represent a similar obstacle as
-the complex windows. However, it will still accept designs with constraints. When such designs
-are given, it will do rejection sampling to ensure that only valid sequences are returned.
-The metrics dictionary will include data pertaining to the number of samples rejected for each
-final sample, as well as an average. (On average, how many samples need to be generated before
-one is found that is satisfactory?)
-"""
 class UniformCombinatoricSamplingStrategy(SamplingStrategy):
+    """This strategy represents the ideal. Valid sequences are uniformly
+    sampled via a bijection from natural numbers to valid trial sequences.
+
+    Right now, the intent is that this will only work for designs without
+    complex windows. Once we get that far, we can think about what steps are
+    needed to support complex windows. (:class:`.Transition`, etc.)
+
+    This also doesn't quite work yet for :class:`._KInARow` constraints, which
+    represent a similar obstacle as the complex windows. However, it will still
+    accept designs with constraints. When such designs are given, it will do
+    rejection sampling to ensure that only valid sequences are returned. The
+    metrics dictionary will include data pertaining to the number of samples
+    rejected for each final sample, as well as an average. (On average, how
+    many samples need to be generated before one is found that is
+    satisfactory?)
+    """
 
     def __str__(self):
         return 'Uniform Combinatoric Sampling Strategy'
@@ -165,7 +167,7 @@ class UCSolutionEnumerator():
             for factor, level in trial_value.items():
                 if factor.factor_name not in experiment:
                     experiment[factor.factor_name] = []
-                experiment[factor.factor_name].append(get_external_level_name(level))
+                experiment[factor.factor_name].append(level.name)
         return experiment
 
     def generate_solution_variables(self) -> List[int]:
@@ -225,7 +227,7 @@ class UCSolutionEnumerator():
             for t in range(l):
                 # For each level in the factor, see if the derivation function is true.
                 for level in f.levels:
-                    if level.window.fn(*[get_external_level_name(trial_values[t][f]) for f in level.window.args]):
+                    if level.window.fn(*[(trial_values[t][f]).name for f in level.window.args]):
                         trial_values[t][f] = level
 
         return trial_values
@@ -268,7 +270,7 @@ class UCSolutionEnumerator():
                 merged_levels = {**ci, **sc}
                 for df in self._partitions.get_crossed_factors_derived():
                     w = merged_levels[df].window
-                    if not w.fn(*[get_external_level_name(merged_levels[f]) for f in w.args]):
+                    if not w.fn(*[(merged_levels[f]).name for f in w.args]):
                         sc_indices.remove(sc_idx)
 
             self._segment_lengths.append(len(sc_indices))
