@@ -48,7 +48,7 @@ def call_unigen_cli(input_file: Path, download_if_missing: bool, sample_count: i
     """
     ensure_executable_available(UNIGEN_EXE, download_if_missing)
     seed = random.randint(999999999)
-    command = [str(UNIGEN_EXE), str(input_file), "--samples="+str(sample_count), "--seed="+str(999999999)]
+    command = [str(UNIGEN_EXE), str(input_file), "--samples="+str(sample_count), "--seed="+str(seed)]
     # NOTE: flake8 doesn't seem to handle the calls to `run` correctly, but
     #       mypy reports everything is fine here so we `noqa` to prevent flake8
     #       complaining about what it doesn't understand.
