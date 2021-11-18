@@ -15,7 +15,9 @@ from sweetpea.primitives import (
     Factor, SimpleLevel, DerivedLevel,
     DerivationWindow, WithinTrialDerivationWindow, TransitionDerivationWindow,
     get_external_level_name)
-from sweetpea.constraints import Consistency, Constraint, FullyCross, MultipleCross, MultipleCrossBlock
+from sweetpea.constraints import (
+    Consistency, Constraint, Derivation, FullyCross, MultipleCross, MultipleCrossBlock,
+    at_most_k_in_a_row, at_least_k_in_a_row, exactly_k, exactly_k_in_a_row, exclude, minimum_trials)
 from sweetpea.sampling_strategies.non_uniform import NonUniformSamplingStrategy
 from sweetpea.sampling_strategies.unigen import UnigenSamplingStrategy
 from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy
