@@ -566,7 +566,7 @@ class MultipleCrossBlock(Block):
             return 0
 
         # If there are any, generate the full crossing as a list of tuples.
-        levels_lists = [list(f.levels) for f in self.crossing[0]]
+        levels_lists = [list(f.levels) for f in self.crossing[num]]
         all_crossings = list(product(*levels_lists))
 
         for constraint in exclusions:
