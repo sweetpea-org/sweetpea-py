@@ -20,6 +20,7 @@ from sweetpea.logic import to_cnf_tseitin
 from sweetpea.base_constraint import Constraint
 from sweetpea.design_graph import DesignGraph
 
+from pulp import LpProblem, LpVariable
 
 class Block:
     """Abstract class for Blocks. Contains the required data, and defines
@@ -44,6 +45,7 @@ class Block:
         self.require_complete_crossing = require_complete_crossing
         self.size = cast(int, None)
         self.errors = cast(Set[str], set())
+        self.variables_ILP = cast(dict[str: LpVariable], {})
         self.__validate()
 
     def extract_basic_factor_names(self, level: DerivedLevel) -> set:
@@ -264,6 +266,23 @@ class Block:
             c.apply(self, backend_request)
 
         return backend_request
+
+    def build_ILP_solver(self) -> LpProblem:
+        prob = LpProblem("Sweetpea")
+
+        num_trials = range(0, self.trials_per_sample())
+        for factor in design:
+            num_levels = len(factor.levels)
+            fac = LpVariable.dicts(factor.name, (num_levels, num_trials), cat="Binary")
+            self.variables_ILP[factor.name] = fac
+
+        from sweetpea.constraints import MinimumTrials
+        for c in self.constraints:
+            if isinstance(c, MinimumTrials):
+                continue
+            c.apply_ILP(self, prob)
+
+        return prob
 
     def get_variable(self, trial_number: int, level: Tuple[Factor, Any]) -> int:
         """Given a trial number (1-based), factor, and level, this method will
