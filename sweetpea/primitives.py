@@ -458,7 +458,10 @@ class Factor:
                   and len(level) == 2
                   and isinstance(level[0], str)
                   and isinstance(level[1], int)):
-                level = SimpleLevel(level[0], level[1])
+                for i in range(level[1]):
+                    current_level = SimpleLevel(level[0], level[1])
+                    real_levels.append(current_level)
+                continue
             else:
                 level = SimpleLevel(str(level))
             real_levels.append(level)
@@ -468,10 +471,17 @@ class Factor:
         # step to initialize the internal level map, which allows for constant-
         # time lookup of levels by name.
         for level in self.levels:
-            if level.name in self._level_map:
-                raise ValueError(f"Factor {self.name} instantiated with duplicate level {level.name}.")
-            self._level_map[level.name] = level
             level.factor = self
+            # This used to have the following error inside of the if statement:
+            #   raise ValueError(f"Factor {self.name} instantiated with
+            #                   duplicate level {level.name}.")
+            # This error prevented any levels from sharing the same name. It
+            # was removed with the the goal of adding weights to factors. The
+            # dictionary only seems to need access to one of the copies of
+            # a level because they are all the same. 
+            if level.name in self._level_map:
+                continue
+            self._level_map[level.name] = level
 
     # NOTE: Subclasses of `Factor` must override this method!
     # NOTE: This method cannot be decorated `@abstractmethod` because the
