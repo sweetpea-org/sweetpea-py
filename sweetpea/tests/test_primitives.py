@@ -29,13 +29,14 @@ def test_factor_validation():
     Factor("name", [1, 2])
 
     # Duplicated name
-    with pytest.raises(ValueError):
-        Factor("name", ["a", "b", "a"])
-    with pytest.raises(ValueError):
-        Factor("name", [
-            DerivedLevel("a", WithinTrial(op.eq, [color, text])),
-            ElseLevel("a")
-        ])
+    # This test is no longer applicable with weighting for levels.
+    # with pytest.raises(ValueError):
+    #     Factor("name", ["a", "b", "a"])
+    # with pytest.raises(ValueError):
+    #     Factor("name", [
+    #         DerivedLevel("a", WithinTrial(op.eq, [color, text])),
+    #         ElseLevel("a")
+    #     ])
 
     # Non-string name
     with pytest.raises(ValueError):

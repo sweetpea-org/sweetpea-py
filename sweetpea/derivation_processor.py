@@ -72,15 +72,8 @@ class DerivationProcessor:
                         raise ValueError(f"Expected derivation predicate to return bool; got {type(result)}.")
                     if level.window.predicate(*names):
                         valid_tuples.append(level_tuple)
-                        # This used to have the following error inside of the if statement:
-                        #   raise ValueError(f"Factor {factor.name} matches
-                        #                   {according_level[level_tuple].name} and
-                        #                   "f"{level.name} with assignment {names}.")
-                        # This error prevented any levels from sharing the same name. It
-                        # was removed with the the goal of adding weights to factors and
-                        # the check seems to have been redundant.
                         if level_tuple in according_level:
-                            continue
+                            raise ValueError(f"Factor {factor.name} matches {according_level[level_tuple].name} and "f"{level.name} with assignment {names}.")
                         according_level[level_tuple] = level
 
                 if not valid_tuples:
