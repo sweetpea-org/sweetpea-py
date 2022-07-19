@@ -367,8 +367,8 @@ class Factor:
 
     During :class:`.Factor` construction, the first :class:`.Level` in the
     :attr:`~.Factor.initial_levels` is dynamically type-checked. If it's a
-    :class:`.DerivedLevel` or :class:`.ElseLevel`, a `.DerivedFactor` will be
-    initialized. Otherwise, a `.SimpleFactor` will be initialized.
+    :class:`.DerivedLevel` or :class:`.ElseLevel`, a :class:`.DerivedFactor` will be
+    initialized. Otherwise, a :class:`.SimpleFactor` will be initialized.
 
     In all cases, the :attr:`~.Factor.initial_levels` will be processed. This
     step ensures that all of a factor's :attr:`~.Factor.levels` will always be
