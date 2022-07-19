@@ -10,10 +10,9 @@ on:
 jobs:
   deploy-pages:
     # Only run this job on the main repository, not forks.
-    if: ${{ github.repository == 'sweeptea-org/sweetpea-py' }}
     # Only run if this wasn't caused by making a pre-release. There doesn't
     # appear to be a way to distinguish this in the on.release.types list.
-    if: '!github.event.release.prerelease'
+    if: ${{ (github.repository == 'sweeptea-org/sweetpea-py') && !github.event.release.prerelease }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout SweetPea
