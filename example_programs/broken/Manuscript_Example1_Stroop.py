@@ -1,5 +1,5 @@
 import sys
-sys.path.append("..")
+sys.path.append("../..")
 
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial
 from sweetpea.constraints import minimum_trials, exclude
