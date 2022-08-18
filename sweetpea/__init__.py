@@ -451,4 +451,4 @@ def __generate_cnf(block: Block) -> str:
         DIMACS-formatted string.
     """
     cnf = build_cnf(block)
-    return cnf.as_unigen_string()
+    return cnf.as_unigen_string(support_set_length = block.variables_per_sample())
