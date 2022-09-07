@@ -4,7 +4,7 @@ import numpy as np
 
 from functools import reduce
 from itertools import product
-from math import factorial
+from math import factorial, ceil
 from typing import List, cast, Tuple
 
 from sweetpea.blocks import Block, FullyCrossBlock
@@ -55,23 +55,35 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
         sampled = 0
         rejected = 0
         total_rejected = 0
+        rounds_per_run = int(ceil(block.min_trials / cast(FullyCrossBlock, block).crossing_size()))
         samples = cast(List[dict], [])
         sequence_numbers = cast(List[int], [])
         while sampled < sample_count:
-            solution_variables = enumerator.generate_random_sample(sequence_numbers)
-            sequence_numbers.append(solution_variables[0])
-            # sample = SamplingStrategy.decode(block, solution_variables)
+            run = cast(dict, {})
+            rounds = 0
+            while rounds < rounds_per_run:
+                solution_variables = enumerator.generate_random_sample(sequence_numbers)
+                sequence_numbers.append(solution_variables[0])
+                # sample = SamplingStrategy.decode(block, solution_variables)
 
-            # if UniformCombinatoricSamplingStrategy.__are_constraints_violated(block, sample):
-            #     rejected += 1
-            #     continue
+                # if UniformCombinatoricSamplingStrategy.__are_constraints_violated(block, sample):
+                #     rejected += 1
+                #     continue
 
-            metrics['rejections'].append(rejected)
-            total_rejected += rejected
-            rejected = 0
-            sampled += 1
+                metrics['rejections'].append(rejected)
+                total_rejected += rejected
+                rejected = 0
+                sampled += 1
 
-            samples.append(solution_variables[1])
+                run = UniformCombinatoricSamplingStrategy.__combine_round(run, solution_variables[1])
+                rounds += 1
+
+            # Discard extra trials that came from rounding up `min_trials`
+            if rounds_per_run > 1:
+                for key in run:
+                    run[key] = (run[key])[:block.min_trials]
+
+            samples.append(run)
             if len(sequence_numbers) == enumerator.solution_count():
                 break
 
@@ -126,6 +138,16 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
         for f in block.design:
             if f.has_complex_window:
                 raise ValueError('Found factor in design with complex window! Factor={} The uniform combinatoric sampling strategy currently does not support designs containing factors with complex windows. Sorry!'.format(f.factor_name))
+
+    @staticmethod
+    def __combine_round(run: dict, round: dict) -> dict:
+        if len(run) == 0:
+            return round
+        else:
+            new_run = {}
+            for key in round:
+                new_run[key] = run[key] + round[key]
+            return new_run
 
 
 """

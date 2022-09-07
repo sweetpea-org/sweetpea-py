@@ -666,6 +666,9 @@ class MinimumTrials(Constraint):
         self.trials = trials
         # TODO: validation
 
+    def is_complex_for_combinatoric(self) -> bool:
+        return False
+
     def validate(self, block: Block) -> None:
         if self.trials <= 0 and not isinstance(self.trials, int):
             raise ValueError("Minimum trials must be a positive integer.")

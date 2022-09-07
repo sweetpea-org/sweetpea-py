@@ -20,6 +20,9 @@ class Constraint(ABC):
     def apply(self, block, backend_request) -> None:
         pass
 
+    def is_complex_for_combinatoric(self) -> bool:
+        return True
+
     def desugar(self) -> List:
         """Some constraints accept shorthand representations. (Like accepting a
         whole factor, rather than individual factor and level name pairs.)

@@ -1,7 +1,7 @@
 import operator as op
 import pytest
 
-from sweetpea import fully_cross_block
+from sweetpea import fully_cross_block, minimum_trials
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, get_external_level_name
 from sweetpea.sampling_strategies.uniform_combinatoric import UCSolutionEnumerator
 from sweetpea.tests.test_utils import get_level_from_name
@@ -88,7 +88,7 @@ def test_generate_sample_basic_stroop(sequence_number, expected_solution):
     enumerator = UCSolutionEnumerator(block)
     assert enumerator.generate_sample(sequence_number) == expected_solution
 
-
+    
 @pytest.mark.parametrize('sequence_number, expected_solution', [
 [0, {'color': ['red', 'red', 'blue', 'blue'], 'text': ['red', 'blue', 'blue', 'red'], 'congruency': ['congruent', 'incongruent', 'congruent', 'incongruent']}],
 [1, {'color': ['red', 'red', 'blue', 'blue'], 'text': ['blue', 'red', 'blue', 'red'], 'congruency': ['incongruent', 'congruent', 'congruent', 'incongruent']}],

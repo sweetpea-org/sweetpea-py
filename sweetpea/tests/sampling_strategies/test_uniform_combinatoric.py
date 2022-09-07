@@ -4,7 +4,7 @@ import os
 import pytest
 import re
 
-from sweetpea import fully_cross_block
+from sweetpea import fully_cross_block, minimum_trials, synthesize_trials_uniform
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
 from sweetpea.constraints import Exclude, ExactlyKInARow, AtMostKInARow
 from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy, UCSolutionEnumerator
@@ -119,3 +119,12 @@ def test_constraint_violation():
     assert are_constraints_violated(block, {color: [red_color, red_color, blue_color, blue_color]}) == False
     assert are_constraints_violated(block, {color: [red_color, red_color, red_color, blue_color]}) == True
     assert are_constraints_violated(block, {color: [blue_color, red_color, red_color, red_color]}) == True
+
+def test_minimum_trials():
+    for min_trials in [1, 2, 3, 4, 5, 6, 7, 17, 55]:
+        block = fully_cross_block([color, text],
+                                  [color, text],
+                                  [minimum_trials(min_trials)])
+        runs = synthesize_trials_uniform(block=block, samples=1)
+        assert len(runs[0]["color"]) == max(4, min_trials)
+
