@@ -55,7 +55,8 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
         sampled = 0
         rejected = 0
         total_rejected = 0
-        rounds_per_run = int(ceil(block.min_trials / cast(FullyCrossBlock, block).crossing_size()))
+        crossing_size = cast(FullyCrossBlock, block).crossing_size();
+        rounds_per_run = int(ceil(max(block.min_trials, crossing_size) / crossing_size))
         samples = cast(List[dict], [])
         sequence_numbers = cast(List[int], [])
         while sampled < sample_count:
