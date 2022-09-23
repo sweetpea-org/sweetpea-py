@@ -41,4 +41,9 @@ def shuffled_design_sample(input, num):
     shuffle(perms)
     return perms[:num]
 
+# Set to True to reset recorded files that have specific CNF encodings,
+# but leave as False to perform regression tests where the CNF should
+# not change:
+reset_expected_solutions = False
+
 path_to_cnf_files = os.path.dirname(os.path.abspath(__file__)) + "/cnf_files"

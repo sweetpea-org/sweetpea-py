@@ -5,6 +5,7 @@ from abc import abstractmethod
 from copy import deepcopy
 from typing import List, Tuple, Any, Union, cast, Dict
 from itertools import chain, product
+from math import ceil
 
 from sweetpea.base_constraint import Constraint
 from sweetpea.internal import chunk, chunk_list
@@ -75,7 +76,7 @@ class Consistency(Constraint):
             next_var += variables_for_factor
 
 
-class FullyCross(Constraint):
+class Cross(Constraint):
     """We represent the fully crossed constraint by allocating additional
     boolean variables to represent each unique state. Only factors in crossing
     will contribute to the number of states (there may be factors in the design
@@ -115,79 +116,21 @@ class FullyCross(Constraint):
         pass
 
     @staticmethod
-    def apply(block: FullyCrossBlock, backend_request: BackendRequest) -> None:
-        fresh = backend_request.fresh
-
-        # Step 1: Get a list of the trials that are involved in the crossing.
-        crossing_size = max(block.min_trials, block.crossing_size())
-        crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t),
-                                                        block.crossing[0])),
-                                      range(1, block.trials_per_sample() + 1)))
-        crossing_trials = crossing_trials[:crossing_size]
-
-        # Step 2: For each trial, cross all levels of all factors in the crossing.
-        crossing_factors = list(map(lambda t: (list(product(*[block.factor_variables_for_trial(f, t)
-                                                              for f in block.crossing[0]]))),
-                                    crossing_trials))
-
-        # Step 3: For each trial, cross all levels of all design-only factors in the crossing.
-        design_factors = cast(List[List[List[int]]], [])
-        design_factors = list(map(lambda _: [], crossing_trials))
-        for f in list(filter(lambda f: f not in block.crossing[0] and not f.has_complex_window, block.design)):
-            for i, t in enumerate(crossing_trials):
-                design_factors[i].append(block.factor_variables_for_trial(f, t))
-        design_combinations = cast(List[List[Tuple[int, ...]]], [])
-        design_combinations = list(map(lambda l: list(product(*l)), design_factors))
-
-        # Step 4: For each trial, combine each of the crossing factors with all of the design-only factors.
-        crossings = cast(List[List[List[Tuple[int, ...]]]], [])
-        for i, t in enumerate(crossing_trials):
-            crossings.append(list(map(lambda c: [c] + design_combinations[i] ,crossing_factors[i])))
-
-        # Step 5: Remove crossings that are not possible.
-        # From here on ignore all values other than the first in every list.
-        crossings = block.filter_excluded_derived_levels(crossings)
-
-        # Step 6: Allocate additional variables to represent each crossing.
-        num_state_vars = list(map(lambda c: len(c), crossings))
-        state_vars = list(range(fresh, fresh + sum(num_state_vars)))
-        fresh += sum(num_state_vars)
-
-        # Step 7: Associate each state variable with its crossing.
-        flattened_crossings = list(chain.from_iterable(crossings))
-        iffs = list(map(lambda n: Iff(state_vars[n], And([*flattened_crossings[n][0]])), range(len(state_vars))))
-
-        # Step 8: Constrain each crossing to occur in only one trial.
-        states = list(chunk(state_vars, block.crossing_size()))
-        transposed = cast(List[List[int]], list(map(list, zip(*states))))
-
-        # We Use n < 2 rather than n = 1 here because they may exclude some levels from the crossing.
-        # This ensures that there won't be duplicates, while still allowing some to be missing.
-        # backend_request.ll_requests += list(map(lambda l: LowLevelRequest("LT", 2, l), transposed))
-        backend_request.ll_requests += list(map(lambda l: LowLevelRequest("GT", 0, l), transposed))
-
-        (cnf, new_fresh) = block.cnf_fn(And(iffs), fresh)
-
-        backend_request.cnfs.append(cnf)
-        backend_request.fresh = new_fresh
-
-
-class MultipleCross(Constraint):
-    def validate(self, block: Block) -> None:
-        pass
-
-    @staticmethod
     def apply(block: MultipleCrossBlock, backend_request: BackendRequest) -> None:
-        # Treat each crossing seperately, and repeat the same process as fullycross
+        # Treat each crossing seperately, but they're related by shared variables, which
+        # are the per-trial, per-level variables of factors used in multiple crossings
         for c in block.crossing:
             fresh = backend_request.fresh
 
-            # Step 1: Get a list of the trials that are involved in the crossing.
-            crossing_size = max(block.min_trials, block.crossing_size())
+            # Step 1: Get a list of the trials that are involved in the crossing. That
+            # omits leading trials that will be present to initialize transitions, and
+            # the number of trials may have beed reduced by exclusions.
+            crossing_size = block.crossing_size();
+            trial_count = max(block.min_trials, crossing_size)
             crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t),
                                                             c)),
                                           range(1, block.trials_per_sample() + 1)))
-            crossing_trials = crossing_trials[:crossing_size]
+            crossing_trials = crossing_trials[:trial_count]
 
             # Step 2: For each trial, cross all levels of all factors in the crossing.
             crossing_factors = list(map(lambda t: (list(product(*[block.factor_variables_for_trial(f, t) for f in c]))), crossing_trials))
@@ -210,29 +153,34 @@ class MultipleCross(Constraint):
             # From here on ignore all values other than the first in every list.
             crossings = block.filter_excluded_derived_levels(crossings)
 
-            # Step 6: Allocate additional variables to represent each crossing.
+            # Step 6: Allocate additional variables to represent each crossing in each trial.
             num_state_vars = list(map(lambda c: len(c), crossings))
             state_vars = list(range(fresh, fresh + sum(num_state_vars)))
             fresh += sum(num_state_vars)
 
-            # Step 7: Associate each state variable with its crossing.
+            # Step 7: Associate each state variable with its crossing in each trial.
             flattened_crossings = list(chain.from_iterable(crossings))
             iffs = list(map(lambda n: Iff(state_vars[n], And([*flattened_crossings[n][0]])), range(len(state_vars))))
 
-            # Step 8: Constrain each crossing to occur in only one trial.
-            states = list(chunk(state_vars, block.crossing_size()))
+            # Step 8: Constrain each crossing to occur in only N trials, where
+            # N is the number of trials divided by the crossing size (after excluded
+            # combinations are removed). Making at "at most N" instead of "exactly N"
+            # accomodates a trial count that is not a multiple of the crossing size.
+            states = list(chunk(state_vars, crossing_size))
             transposed = cast(List[List[int]], list(map(list, zip(*states))))
-
-            # We Use n < 2 rather than n = 1 here because they may exclude some levels from the crossing.
-            # This ensures that there won't be duplicates, while still allowing some to be missing.
-            # backend_request.ll_requests += list(map(lambda l: LowLevelRequest("LT", 2, l), transposed))
-            backend_request.ll_requests += list(map(lambda l: LowLevelRequest("GT", 0, l), transposed))
+            max_repeat = int(ceil(trial_count / crossing_size))
+            backend_request.ll_requests += list(map(lambda l: LowLevelRequest("LT", max_repeat+1, l), transposed))
 
             (cnf, new_fresh) = block.cnf_fn(And(iffs), fresh)
 
             backend_request.cnfs.append(cnf)
             backend_request.fresh = new_fresh
 
+class FullyCross(Cross):
+    """Covered by Cross"""
+
+class MultipleCross(Cross):
+    """Covered by Cross"""
 
 class Derivation(Constraint):
     """A derivation such as::

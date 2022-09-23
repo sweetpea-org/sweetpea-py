@@ -5,7 +5,7 @@ from sweetpea.primitives import Factor, DerivedLevel, WithinTrial
 from sweetpea.server import build_cnf, is_cnf_still_sat
 from sweetpea.logic import And
 from sweetpea import fully_cross_block
-from acceptance import path_to_cnf_files
+from acceptance import path_to_cnf_files, reset_expected_solutions
 
 
 # Basic setup
@@ -26,8 +26,9 @@ def test_is_cnf_still_sat_should_respond_correctly():
     # Build the CNF on the server.
     cnf_result = build_cnf(block)
 
-    # with open(path_to_cnf_files+'/test_is_cnf_still_sat_should_respond_correctly.cnf', 'w') as f:
-    #     f.write(cnf_result.as_unigen_string())
+    if reset_expected_solutions:
+        with open(path_to_cnf_files+'/test_is_cnf_still_sat_should_respond_correctly.cnf', 'w') as f:
+            f.write(cnf_result.as_unigen_string())
     with open(path_to_cnf_files+'/test_is_cnf_still_sat_should_respond_correctly.cnf', 'r') as f:
         old_cnf = f.read()
 

@@ -1,4 +1,4 @@
-from acceptance import assert_no_repetition, path_to_cnf_files
+from acceptance import assert_no_repetition, path_to_cnf_files, reset_expected_solutions
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.constraints import exclude
 from sweetpea.encoding_diagram import print_encoding_diagram
@@ -62,8 +62,9 @@ def test_correct_solution_count_with_override_flag_and_multiple_trials_excluded_
     block       = fully_cross_block(design, crossing, constraints, require_complete_crossing=False)
     cnf = build_cnf(block)
 
-    # with open(path_to_cnf_files+'/test_correct_solution_count_with_override_flag_and_multiple_trials_excluded.cnf', 'w') as f:
-    #     f.write(cnf.as_unigen_string())
+    if reset_expected_solutions:
+        with open(path_to_cnf_files+'/test_correct_solution_count_with_override_flag_and_multiple_trials_excluded.cnf', 'w') as f:
+            f.write(cnf.as_unigen_string())
     with open(path_to_cnf_files+'/test_correct_solution_count_with_override_flag_and_multiple_trials_excluded.cnf', 'r') as f:
         old_cnf = f.read()
 

@@ -165,7 +165,9 @@ class Block:
         if not f.applies_to_trial(t):
             raise ValueError('Factor does not apply to trial #' + str(t) + ' f=' + str(f))
 
+        # FIXME: quadratic-time in t when `factor_variables_for_trial` is called t times
         previous_trials = sum(map(lambda trial: 1 if f.applies_to_trial(trial + 1) else 0, range(t))) - 1
+        # FIXME: this could be computed once per factor after self.exclude is in place
         initial_sequence = list(map(lambda l: self.first_variable_for_level(f, l),
                                     list(filter(lambda l: (f, l) not in self.exclude,
                                                 f.levels))))
@@ -379,6 +381,7 @@ class FullyCrossBlock(Block):
     def variables_per_trial(self):
         # Factors with complex windows are excluded because we don't want variables allocated
         # in every trial when the window spans multiple trials.
+        # FIXME: this could be computed once
         grid_factors = filter(lambda f: not f.has_complex_window, self.design)
         return sum([len(factor.levels) for factor in grid_factors])
 
@@ -534,6 +537,7 @@ class MultipleCrossBlock(Block):
         return trial
 
     def trials_per_sample(self):
+        # FIXME: this could be computed once
         crossing_size = self.crossing_size()
         required_trials = list(map(max, list(map(lambda c: list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size), c)), self.crossing))))
         required_trials.append(self.min_trials)
@@ -542,6 +546,7 @@ class MultipleCrossBlock(Block):
     def variables_per_trial(self):
         # Factors with complex windows are excluded because we don't want variables allocated
         # in every trial when the window spans multiple trials.
+        # FIXME: this could be computed once
         grid_factors = filter(lambda f: not f.has_complex_window, self.design)
         return sum([len(factor.levels) for factor in grid_factors])
 
