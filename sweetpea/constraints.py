@@ -6,6 +6,7 @@ from copy import deepcopy
 from typing import List, Tuple, Any, Union, cast, Dict
 from itertools import chain, product
 from math import ceil
+from itertools import chain
 
 from sweetpea.base_constraint import Constraint
 from sweetpea.internal import chunk, chunk_list
@@ -162,20 +163,35 @@ class Cross(Constraint):
             flattened_crossings = list(chain.from_iterable(crossings))
             iffs = list(map(lambda n: Iff(state_vars[n], And([*flattened_crossings[n][0]])), range(len(state_vars))))
 
-            # Step 8: Constrain each crossing to occur in only N trials, where
-            # N is the number of trials divided by the crossing size (after excluded
-            # combinations are removed). Making at "at most N" instead of "exactly N"
-            # accomodates a trial count that is not a multiple of the crossing size.
+            # Step 8: Constrain each crossing to occur exactly once in each `crossing_size`
+            # set of trials, or at most once in a last set of trials that is less than
+            # `crossing_size` in length.
             states = list(chunk(state_vars, crossing_size))
             transposed = cast(List[List[int]], list(map(list, zip(*states))))
-            max_repeat = int(ceil(trial_count / crossing_size))
-            backend_request.ll_requests += list(map(lambda l: LowLevelRequest("LT", max_repeat+1, l), transposed))
+            reqss = map(lambda l: Cross.__add_once_constraint(l, crossing_size), transposed)
+            backend_request.ll_requests += list(chain.from_iterable(reqss))
 
             (cnf, new_fresh) = block.cnf_fn(And(iffs), fresh)
 
             backend_request.cnfs.append(cnf)
             backend_request.fresh = new_fresh
 
+    @staticmethod
+    def __add_once_constraint(variables: List[int], crossing_size: int) -> List[LowLevelRequest]:
+        """Constrain to one of each `crossing_size` sequence of variables, and at
+        at most one for an ending sequence that is less than `crossing_size` in length.
+        """
+        to_add = len(variables)
+        reqs = cast(List[LowLevelRequest], [])
+        while to_add > 0:
+            if (to_add >= crossing_size):
+                reqs.append(LowLevelRequest("EQ", 1, variables[:crossing_size]))
+            else:
+                reqs.append(LowLevelRequest("LT", 2, variables))
+            variables = variables[crossing_size:]
+            to_add -= crossing_size
+        return reqs
+            
 class FullyCross(Cross):
     """Covered by Cross"""
 

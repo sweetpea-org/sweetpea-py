@@ -160,10 +160,10 @@ def test_fully_cross_simple():
     assert backend_request.fresh == 66
     assert backend_request.cnfs == [expected_cnf]
     assert backend_request.ll_requests == [
-        LowLevelRequest("LT", 2, [17, 21, 25, 29]),
-        LowLevelRequest("LT", 2, [18, 22, 26, 30]),
-        LowLevelRequest("LT", 2, [19, 23, 27, 31]),
-        LowLevelRequest("LT", 2, [20, 24, 28, 32])
+        LowLevelRequest("EQ", 1, [17, 21, 25, 29]),
+        LowLevelRequest("EQ", 1, [18, 22, 26, 30]),
+        LowLevelRequest("EQ", 1, [19, 23, 27, 31]),
+        LowLevelRequest("EQ", 1, [20, 24, 28, 32])
     ]
 
 
@@ -181,10 +181,10 @@ def test_fully_cross_with_constraint():
     assert backend_request.fresh == 74
     assert backend_request.cnfs == [expected_cnf]
     assert backend_request.ll_requests == [
-        LowLevelRequest("LT", 2, [25, 29, 33, 37]),
-        LowLevelRequest("LT", 2, [26, 30, 34, 38]),
-        LowLevelRequest("LT", 2, [27, 31, 35, 39]),
-        LowLevelRequest("LT", 2, [28, 32, 36, 40])
+        LowLevelRequest("EQ", 1, [25, 29, 33, 37]),
+        LowLevelRequest("EQ", 1, [26, 30, 34, 38]),
+        LowLevelRequest("EQ", 1, [27, 31, 35, 39]),
+        LowLevelRequest("EQ", 1, [28, 32, 36, 40])
     ]
 
 
@@ -209,10 +209,10 @@ def test_fully_cross_with_transition_in_design(design):
     assert backend_request.fresh == 72
     assert backend_request.cnfs == [expected_cnf]
     assert backend_request.ll_requests == [
-        LowLevelRequest("LT", 2, [23, 27, 31, 35]),
-        LowLevelRequest("LT", 2, [24, 28, 32, 36]),
-        LowLevelRequest("LT", 2, [25, 29, 33, 37]),
-        LowLevelRequest("LT", 2, [26, 30, 34, 38])
+        LowLevelRequest("EQ", 1, [23, 27, 31, 35]),
+        LowLevelRequest("EQ", 1, [24, 28, 32, 36]),
+        LowLevelRequest("EQ", 1, [25, 29, 33, 37]),
+        LowLevelRequest("EQ", 1, [26, 30, 34, 38])
     ]
 
 
@@ -235,10 +235,10 @@ def test_fully_cross_with_uncrossed_simple_factors():
     assert backend_request.fresh == 74
     assert backend_request.cnfs == [expected_cnf]
     assert backend_request.ll_requests == [
-        LowLevelRequest("LT", 2, [25, 29, 33, 37]),
-        LowLevelRequest("LT", 2, [26, 30, 34, 38]),
-        LowLevelRequest("LT", 2, [27, 31, 35, 39]),
-        LowLevelRequest("LT", 2, [28, 32, 36, 40])
+        LowLevelRequest("EQ", 1, [25, 29, 33, 37]),
+        LowLevelRequest("EQ", 1, [26, 30, 34, 38]),
+        LowLevelRequest("EQ", 1, [27, 31, 35, 39]),
+        LowLevelRequest("EQ", 1, [28, 32, 36, 40])
     ]
 
 
@@ -262,10 +262,10 @@ def test_fully_cross_with_transition_in_crossing():
     assert backend_request.fresh == 78
     assert backend_request.cnfs == [expected_cnf]
     assert backend_request.ll_requests == [
-        LowLevelRequest("LT", 2, [29, 33, 37, 41]),
-        LowLevelRequest("LT", 2, [30, 34, 38, 42]),
-        LowLevelRequest("LT", 2, [31, 35, 39, 43]),
-        LowLevelRequest("LT", 2, [32, 36, 40, 44])
+        LowLevelRequest("EQ", 1, [29, 33, 37, 41]),
+        LowLevelRequest("EQ", 1, [30, 34, 38, 42]),
+        LowLevelRequest("EQ", 1, [31, 35, 39, 43]),
+        LowLevelRequest("EQ", 1, [32, 36, 40, 44])
     ]
 
 
@@ -303,11 +303,11 @@ def test_fully_cross_with_exclude():
     assert backend_request.fresh == 112
     assert backend_request.cnfs == [expected_cnf]
     assert backend_request.ll_requests == [
-        LowLevelRequest("LT", 2, [36, 41, 46, 51, 56]),
-        LowLevelRequest("LT", 2, [37, 42, 47, 52, 57]),
-        LowLevelRequest("LT", 2, [38, 43, 48, 53, 58]),
-        LowLevelRequest("LT", 2, [39, 44, 49, 54, 59]),
-        LowLevelRequest("LT", 2, [40, 45, 50, 55, 60])
+        LowLevelRequest("EQ", 1, [36, 41, 46, 51, 56]),
+        LowLevelRequest("EQ", 1, [37, 42, 47, 52, 57]),
+        LowLevelRequest("EQ", 1, [38, 43, 48, 53, 58]),
+        LowLevelRequest("EQ", 1, [39, 44, 49, 54, 59]),
+        LowLevelRequest("EQ", 1, [40, 45, 50, 55, 60])
     ]
 
 

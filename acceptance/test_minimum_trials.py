@@ -12,17 +12,24 @@ design     = [correct_response, congruency]
 crossing   = [correct_response, congruency]
 
 @pytest.mark.parametrize('strategy', [NonUniformSamplingStrategy, UniformCombinatoricSamplingStrategy])
-def test_stays_balanced(strategy):
-    block  = fully_cross_block(design=design, crossing=crossing, constraints=[minimum_trials(trials=7)])
+@pytest.mark.parametrize('trial_count', [4, 5, 6, 7, 8])
+def test_stays_balanced(strategy, trial_count):
+    crossing_size = 1
+    for f in crossing:
+        crossing_size *= len(f.levels)
+    block  = fully_cross_block(design=design, crossing=crossing, constraints=[minimum_trials(trials=trial_count)])
     experiments = synthesize_trials(block=block, samples=3, sampling_strategy = strategy)
 
     for exp in experiments:
-        tabulation: Dict[str, List[str]] = dict()
-        conds = zip(*exp.values())
+        conds = list(zip(*exp.values()))
         for cond in conds:
-            if cond in tabulation:
-                tabulation[cond] = tabulation[cond] + 1
-            else:
-                tabulation[cond] = 1
-        for cond in tabulation:
-            assert tabulation[cond] == 1 or tabulation[cond] == 2
+            assert len(conds) == trial_count
+
+        to_go =  trial_count
+        while to_go > 0:
+            tabulation: Dict[List[str], bool] = dict()
+            for cond in conds[:crossing_size]:
+                assert not (cond in tabulation)
+                tabulation[cond] = True
+            to_go -= crossing_size
+            cond = cond[crossing_size:]
