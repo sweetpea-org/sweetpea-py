@@ -120,13 +120,13 @@ class Cross(Constraint):
     def apply(block: MultipleCrossBlock, backend_request: BackendRequest) -> None:
         # Treat each crossing seperately, but they're related by shared variables, which
         # are the per-trial, per-level variables of factors used in multiple crossings
-        for c in block.crossing:
+        for c in block.crossings:
             fresh = backend_request.fresh
 
             # Step 1: Get a list of the trials that are involved in the crossing. That
             # omits leading trials that will be present to initialize transitions, and
             # the number of trials may have beed reduced by exclusions.
-            crossing_size = block.crossing_size();
+            crossing_size = block.crossing_size(c);
             trial_count = max(block.min_trials, crossing_size)
             crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t),
                                                             c)),
@@ -139,7 +139,8 @@ class Cross(Constraint):
             # Step 3: For each trial, cross all levels of all design-only factors in the crossing.
             design_factors = cast(List[List[List[int]]], [])
             design_factors = list(map(lambda _: [], crossing_trials))
-            for f in list(filter(lambda f: f not in c and not f.has_complex_window, block.design)):
+            for f in list(filter(lambda f: f not in c and not f.has_complex_window,
+                                 block.design)):
                 for i, t in enumerate(crossing_trials):
                     design_factors[i].append(block.factor_variables_for_trial(f, t))
             design_combinations = cast(List[List[Tuple[int, ...]]], [])

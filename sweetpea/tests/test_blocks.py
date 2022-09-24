@@ -375,7 +375,7 @@ def test_fully_cross_block_should_copy_input_lists():
     assert len(block.design) == 3
 
     crossing.clear()
-    assert len(block.crossing[0]) == 2
+    assert len(block.crossings[0]) == 2
 
     constraints.clear()
     assert len(block.constraints) == 1

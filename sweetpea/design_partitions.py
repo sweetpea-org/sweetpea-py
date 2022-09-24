@@ -14,15 +14,28 @@ class DesignPartitions():
 
     def __init__(self, block: Block) -> None:
         self._block = block
+        self._crossed = None
 
     def get_crossed_factors(self):
-        return self._block.crossing[0]
+        if self._crossed:
+            return self._crossed
+        if len(self._block.crossings):
+            return self._block.crossings[0]
+
+        result = []
+        for c in self._block.crossings:
+            for f in c:
+                if f not in result:
+                    result.append(f)
+        self._crossed = result
+        return result
 
     def get_crossed_factors_derived(self):
         return list(filter(lambda f: f.is_derived(), self.get_crossed_factors()))
 
     def get_uncrossed_factors(self):
-        return list(filter(lambda f: f not in self._block.crossing[0], self._block.design))
+        crossed = self.get_crossed_factors()
+        return list(filter(lambda f: f not in crossed, self._block.design))
 
     def get_source_factors(self):
         # Source factors are depended on by at least one derived factor in the crossed factors.

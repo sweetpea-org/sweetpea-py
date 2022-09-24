@@ -21,7 +21,6 @@ design   = [color, text, congruency, color_red]
 crossing = [color, congruency]
 block    = fully_cross_block(design, crossing, [])
 
-
 def test_get_crossed_factors():
     partitions = DesignPartitions(block)
     assert partitions.get_crossed_factors() == crossing
