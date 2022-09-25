@@ -136,7 +136,7 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
             if isinstance(c, Exclude):
                 raise ValueError('The uniform combinatoric sampling strategy currently does not support Exclude constraints.')
 
-        for f in block.design:
+        for f in block.act_design:
             if f.has_complex_window:
                 raise ValueError('Found factor in design with complex window! Factor={} The uniform combinatoric sampling strategy currently does not support designs containing factors with complex windows. Sorry!'.format(f.factor_name))
 

@@ -3,6 +3,7 @@ import pytest
 
 from sweetpea import fully_cross_block, minimum_trials
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, get_external_level_name
+from sweetpea.constraints import Reify
 from sweetpea.sampling_strategies.uniform_combinatoric import UCSolutionEnumerator
 from sweetpea.tests.test_utils import get_level_from_name
 
@@ -37,7 +38,7 @@ def test_generate_crossing_instances():
 
 
 def test_generate_source_combinations():
-    block = fully_cross_block(design, [congruency], [])
+    block = fully_cross_block(design, [congruency], list(map(Reify, design)))
     enumerator = UCSolutionEnumerator(block)
     crossing_source_combos = enumerator._UCSolutionEnumerator__generate_source_combinations()
     simplified_names = []
@@ -84,7 +85,7 @@ def test_generate_source_combinations():
 def test_generate_sample_basic_stroop(sequence_number, expected_solution):
     block = fully_cross_block([color, text, congruency],
                               [color, text],
-                              [])
+                              [Reify(congruency)])
     enumerator = UCSolutionEnumerator(block)
     assert enumerator.generate_sample(sequence_number) == expected_solution
 

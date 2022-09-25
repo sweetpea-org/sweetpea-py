@@ -6,7 +6,7 @@ from itertools import permutations
 from sweetpea import fully_cross_block
 from sweetpea.blocks import Block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window, SimpleLevel
-from sweetpea.constraints import Constraint, Consistency, FullyCross, Derivation, AtMostKInARow, ExactlyKInARow, Exclude
+from sweetpea.constraints import Constraint, Consistency, FullyCross, Derivation, AtMostKInARow, ExactlyKInARow, Exclude, Reify
 from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import And, Or, If, Iff, Not, to_cnf_tseitin
 from sweetpea.tests.test_utils import get_level_from_name
@@ -35,8 +35,7 @@ congruent_bookend = Factor("congruent bookend?", [
 
 design = [color, text, con_factor]
 crossing = [color, text]
-block = fully_cross_block(design, crossing, [])
-
+block = fully_cross_block(design, crossing, [Reify(con_factor)])
 
 def test_consistency():
     # From standard example
@@ -71,7 +70,7 @@ def test_consistency():
 
 @pytest.mark.parametrize('design', permutations([color, text, color_repeats_factor]))
 def test_consistency_with_transition(design):
-    block = fully_cross_block(design, [color, text], [])
+    block = fully_cross_block(design, [color, text], [Reify(color_repeats_factor)])
 
     backend_request = BackendRequest(0)
     Consistency.apply(block, backend_request)
@@ -84,7 +83,8 @@ def test_consistency_with_transition(design):
 
 @pytest.mark.parametrize('design', permutations([color, text, color_repeats_factor, text_repeats_factor]))
 def test_consistency_with_multiple_transitions(design):
-    block = fully_cross_block(design, [color, text], [])
+    block = fully_cross_block(design, [color, text], [Reify(color_repeats_factor),
+                                                      Reify(text_repeats_factor)])
 
     backend_request = BackendRequest(0)
     Consistency.apply(block, backend_request)
@@ -103,7 +103,8 @@ def test_consistency_with_transition_first_and_uneven_level_lengths():
         DerivedLevel("no",  Window(no_fn, [color3], 3, 1))
     ])
 
-    block = fully_cross_block([color3_repeats_factor, color3, text], [color3, text], [])
+    block = fully_cross_block([color3_repeats_factor, color3, text], [color3, text],
+                              [Reify(color3_repeats_factor)])
 
     backend_request = BackendRequest(0)
     Consistency.apply(block, backend_request)
@@ -126,7 +127,7 @@ def test_consistency_with_transition_first_and_uneven_level_lengths():
 def test_consistency_with_general_window():
     design = [color, text, congruent_bookend]
     crossing = [color, text]
-    block = fully_cross_block(design, crossing, [])
+    block = fully_cross_block(design, crossing, [Reify(congruent_bookend)])
 
     backend_request = BackendRequest(0)
     Consistency.apply(block, backend_request)
@@ -194,7 +195,7 @@ def test_fully_cross_with_constraint():
 def test_fully_cross_with_transition_in_design(design):
     block = fully_cross_block(design,
                               [color, text],
-                              [])
+                              list(map(Reify, design)))
 
     backend_request = BackendRequest(23)
     FullyCross.apply(block, backend_request)
@@ -550,7 +551,7 @@ def test_nomorethankinarow_sugar():
 
 @pytest.mark.parametrize('design', permutations([color, text, color_repeats_factor]))
 def test_atmostkinarow_with_transition(design):
-    block = fully_cross_block(design, [color, text], [])
+    block = fully_cross_block(design, [color, text], list(map(Reify, design)))
 
     backend_request = __run_kinarow(AtMostKInARow(1, (color_repeats_factor, get_level_from_name(color_repeats_factor, "yes"))), block)
     assert backend_request.ll_requests == [
@@ -568,7 +569,7 @@ def test_atmostkinarow_with_transition(design):
 def test_atmostkinarow_with_multiple_transitions():
     block = fully_cross_block([color, text, color_repeats_factor, text_repeats_factor],
                               [color, text],
-                              [])
+                              [Reify(color_repeats_factor), Reify(text_repeats_factor)])
 
     backend_request = __run_kinarow(AtMostKInARow(1, (text_repeats_factor, get_level_from_name(text_repeats_factor, "yes"))), block)
     assert backend_request.ll_requests == [

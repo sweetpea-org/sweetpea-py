@@ -4,7 +4,7 @@ import pytest
 from itertools import permutations
 
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
-from sweetpea.constraints import AtMostKInARow, Derivation
+from sweetpea.constraints import AtMostKInARow, Derivation, Reify
 from sweetpea.derivation_processor import DerivationProcessor
 from sweetpea.blocks import Block
 from sweetpea import fully_cross_block
@@ -47,7 +47,7 @@ response_transition = Factor("response transition", [
 def test_generate_derivations_with_transition_that_depends_on_derived_levels():
     block = fully_cross_block([color, motion, task, response, response_transition],
                               [color, motion, task],
-                              [])
+                              [Reify(response), Reify(response_transition)])
     derivations = DerivationProcessor.generate_derivations(block)
 
     assert Derivation(64, [[6, 14], [7, 15]], response_transition) in derivations
@@ -57,7 +57,7 @@ def test_generate_derivations_with_transition_that_depends_on_derived_levels():
 def test_generate_derivations_when_derived_factor_precedes_dependencies():
     block = fully_cross_block([congruency, motion, color, task],
                               [color, motion, task],
-                              [])
+                              [Reify(congruency)])
     derivations = DerivationProcessor.generate_derivations(block)
 
     assert Derivation(0, [[4, 2], [5, 3]], congruency) in derivations

@@ -179,6 +179,9 @@ class Level:
         """
         return self.name
 
+    def uses_factor(self, factor):
+        return False
+
 
 @dataclass(eq=False)
 class SimpleLevel(Level):
@@ -297,6 +300,9 @@ class DerivedLevel(Level):
         :rtype: typing.List[typing.Tuple[.Level, ...]]
         """
         return list(product(*(factor.levels for factor in self.window.factors)))
+
+    def uses_factor(self, f: Factor):
+        return any(list(map(lambda wf: wf.uses_factor(f), self.window.factors)))
 
 
 @dataclass(eq=False)
@@ -616,6 +622,8 @@ class Factor:
         """
         return name in self
 
+    def uses_factor(self, f: Factor):
+        return self == f
 
 @dataclass
 class SimpleFactor(Factor):
@@ -736,6 +744,9 @@ class DerivedFactor(Factor):
     @property
     def first_level(self) -> DerivedLevel:
         return cast(DerivedLevel, self.levels[0])
+
+    def uses_factor(self, f: Factor):
+        return (self == f) or any(list(map(lambda l: l.uses_factor(f), self.levels)))
 
 
 ###############################################################################

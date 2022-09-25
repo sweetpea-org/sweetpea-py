@@ -6,6 +6,7 @@ from random import shuffle
 from sweetpea.sampling_strategies.base import SamplingStrategy
 from sweetpea import fully_cross_block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
+from sweetpea.constraints import Reify
 
 
 # Common variables for stroop.
@@ -33,7 +34,7 @@ congruent_bookend = Factor("congruent bookend?", [
 
 design = [color, text, con_factor]
 crossing = [color, text]
-blk = fully_cross_block(design, crossing, [])
+blk = fully_cross_block(design, crossing, [Reify(con_factor)])
 
 
 def test_decode():
@@ -90,7 +91,7 @@ def test_decode():
 def test_decode_with_transition():
     block = fully_cross_block([color, text, color_repeats_factor],
                               [color, text],
-                              [])
+                              [Reify(color_repeats_factor)])
 
     solution = [ 1,  -2,  3,  -4,
                  5,  -6, -7,   8,   #  17, -18
@@ -121,7 +122,7 @@ def test_decode_with_transition():
 def test_decode_with_general_window():
     block = fully_cross_block([color, text, congruent_bookend],
                               [color, text],
-                              [])
+                              [Reify(congruent_bookend)])
 
     solution = [ 1,  -2,  -3,   4,
                 -5,   6,   7,  -8,
@@ -139,7 +140,7 @@ def test_decode_with_general_window():
 def test_decode_with_transition_and_only_positive_variables():
     block = fully_cross_block([color, text, color_repeats_factor],
                               [color, text],
-                              [])
+                              [Reify(color_repeats_factor)])
 
     solution = [2, 3, 5, 8, 18, 9, 11, 19, 14, 16, 22]
 

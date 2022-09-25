@@ -2,7 +2,7 @@ import operator as op
 import pytest
 
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
-from sweetpea.constraints import at_most_k_in_a_row, exactly_k_in_a_row, exclude
+from sweetpea.constraints import at_most_k_in_a_row, exactly_k_in_a_row, exclude, Reify
 from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy
 from sweetpea import multiple_cross_block, synthesize_trials_non_uniform, synthesize_trials
 from sweetpea.tests.test_utils import get_level_from_name
@@ -13,7 +13,7 @@ from acceptance import shuffled_design_sample, path_to_cnf_files, reset_expected
 color_list = ["red", "blue"]
 color = Factor("color", color_list)
 text  = Factor("text",  color_list)
-mix   = Factor("text",  color_list)
+mix   = Factor("mix",  color_list)
 
 # Congruent Factor
 con_level  = DerivedLevel("con", WithinTrial(op.eq, [color, text]))

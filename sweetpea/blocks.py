@@ -14,12 +14,12 @@ from networkx import has_path
 from sweetpea.backend import BackendRequest
 from sweetpea.internal import get_all_levels
 from sweetpea.primitives import (
-    DerivedFactor, DerivedLevel, Factor, SimpleLevel,
+    DerivedFactor, DerivedLevel, ElseLevel, Factor, SimpleLevel,
     get_external_level_name, get_internal_level_name)
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.base_constraint import Constraint
 from sweetpea.design_graph import DesignGraph
-
+from sweetpea.internal import chunk_list
 
 class Block:
     """Abstract class for Blocks. Contains the required data, and defines
@@ -43,6 +43,7 @@ class Block:
         self.excluded_derived = cast(List[Dict[Factor, SimpleLevel]], [])
         self.require_complete_crossing = require_complete_crossing
         self.errors = cast(Set[str], set())
+        self.act_design = list(filter(lambda f: not self.factor_is_implied(f), self.design))
         self.__validate()
 
     def extract_basic_factor_names(self, level: DerivedLevel) -> set:
@@ -118,7 +119,7 @@ class Block:
         Alternatively stated, this returns the number of variables in the
         formula that constitute the independent support.
         """
-        return reduce(lambda sum, f: sum + self.variables_for_factor(f), self.design, 0)
+        return reduce(lambda sum, f: sum + self.variables_for_factor(f), self.act_design, 0)
 
     def variables_for_factor(self, f: Factor) -> int:
         """Indicates the number of variables needed to encode this factor."""
@@ -141,7 +142,7 @@ class Block:
             raise ValueError(f"Attempted to find first variable of non-Level object: {level}.")
         if factor.has_complex_window:
             offset = 0
-            complex_factors = filter(lambda f: f.has_complex_window, self.design)
+            complex_factors = filter(lambda f: f.has_complex_window, self.act_design)
             for f in complex_factors:
                 if f == factor:
                     offset += f.levels.index(level)
@@ -152,7 +153,7 @@ class Block:
             return self.grid_variables() + offset
 
         else:
-            simple_factors = list(filter(lambda f: not f.has_complex_window, self.design))
+            simple_factors = list(filter(lambda f: not f.has_complex_window, self.act_design))
             simple_levels = get_all_levels(simple_factors)
             return simple_levels.index((factor, level))
 
@@ -192,7 +193,7 @@ class Block:
           [[1, 2], [3, 4], []]
         """
         variables = cast(List[List[int]], [])
-        for f in self.design:
+        for f in self.act_design:
             # Skip factors that don't apply.
             if not f.applies_to_trial(t):
                 variables.append([])
@@ -211,11 +212,11 @@ class Block:
 
         if variable < self.grid_variables():
             variable = variable % self.variables_per_trial()
-            simple_factors = list(filter(lambda f: not f.has_complex_window, self.design))
+            simple_factors = list(filter(lambda f: not f.has_complex_window, self.act_design))
             simple_tuples = get_all_levels(simple_factors)
             return simple_tuples[variable]
         else:
-            complex_factors = list(filter(lambda f: f.has_complex_window, self.design))
+            complex_factors = list(filter(lambda f: f.has_complex_window, self.act_design))
             for f in complex_factors:
                 start = self.first_variable_for_level(f, f.levels[0])
                 end = start + self.variables_for_factor(f)
@@ -296,6 +297,49 @@ class Block:
 
     def factor_in_crossing(self, factor):
         pass
+
+    def factor_used_in_crossing(self, factor):
+        pass
+
+    def factor_is_implied(self, f: Factor) -> bool:
+        """Determines whether a factor's level selection is completely implied by level selections
+        other factors and is not involved directly in any constraints, so it doesn't have to be
+        part of the problem that is passed along to a solver.
+        """
+        if not isinstance(f, DerivedFactor):
+            return False
+        if self.factor_used_in_crossing(f):
+            return False
+        return not any(list(map(lambda c: c.uses_factor(f), self.constraints)))
+
+    def add_implied_levels(self, results: dict) -> dict:
+        """Given a dictionry for an experiment that maps all non-implied factors to their levels,
+        adds level values for implied factors"""
+        n = len(list(results.values())[0])
+        for f in self.design:
+            if f not in self.act_design:
+                vals = []
+                for i in range(0, n):
+                    if f.applies_to_trial(i+1):
+                        for l in f.levels:
+                            if isinstance(l, ElseLevel):
+                                vals.append(l.name)
+                            elif isinstance(l, DerivedLevel):
+                                w = l.window
+                                args = []
+                                for idx, df in enumerate(w.factors):
+                                    shift = w.width - (idx % w.width) - 1
+                                    args.append(results[df.name][i-shift])
+                                if w.width > 1:
+                                    args = list(chunk_list(args, w.width))
+                                if w.predicate(*args):
+                                    vals.append(l.name)
+                            else:
+                                raise RuntimeError("unexpected level in implied factor")
+                    else:
+                        vals.append("")
+                results[f.name] = vals
+        return results
 
     def __build_simple_variable_list(self, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]]) -> List[int]:
         first_variable = self.first_variable_for_level(level[0], level[1]) + 1
@@ -382,7 +426,7 @@ class _CrossBlock(Block):
         # Factors with complex windows are excluded because we don't want variables allocated
         # in every trial when the window spans multiple trials.
         # FIXME: this could be computed once
-        grid_factors = filter(lambda f: not f.has_complex_window, self.design)
+        grid_factors = filter(lambda f: not f.has_complex_window, self.act_design)
         return sum([len(factor.levels) for factor in grid_factors])
 
     def grid_variables(self):
@@ -425,11 +469,12 @@ class _CrossBlock(Block):
                     if excluded_level in c:
                         excluded_crossings.add(get_internal_level_name(c[0]) + ", " + get_internal_level_name(c[1]))
             else:
-                # For each crossing, ensure that atleast one combination is possible with the disgn-only factors keeping in mind the exclude contraints.
+                # For each crossing, ensure that atleast one combination is possible with the design-only factors
+                # keeping in mind the exclude contraints.
                 for c in all_crossings:
                     if all(list(map(lambda d: self.__excluded_derived(excluded_level, c+d),
                                     list(product(*[list(f.levels) for f in filter(lambda f: f not in crossing,
-                                                                                  self.design)]))))):
+                                                                                  self.act_design)]))))):
                         excluded_crossings.add(get_internal_level_name(c[0]) + ", " + get_internal_level_name(c[1]))
                         excluded_external_names.add(get_external_level_name(c[0]) + ", " + get_external_level_name(c[1]))
         if self.require_complete_crossing and len(excluded_crossings) != 0:
@@ -477,6 +522,10 @@ class _CrossBlock(Block):
 
     def factor_in_crossing(self, factor):
         return any(list(map(lambda c: factor in c, self.crossings)))
+
+    def factor_used_in_crossing(self, factor):
+        return any(list(map(lambda c: any(list(map(lambda f: f.uses_factor(factor), c))),
+                            self.crossings)))
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__

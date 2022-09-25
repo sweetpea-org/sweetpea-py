@@ -419,7 +419,8 @@ def synthesize_trials(block: Block,
     """
     print("Sampling {} trial sequences using the {}".format(samples, sampling_strategy))
     sampling_result = sampling_strategy.sample(block, samples)
-    return sampling_result.samples
+
+    return list(map(lambda e: block.add_implied_levels(e), sampling_result.samples))
 
 
 # TODO: This function isn't called anywhere, so it should be removed.

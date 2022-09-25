@@ -3,6 +3,7 @@ import operator as op
 
 from sweetpea import fully_cross_block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
+from sweetpea.constraints import Reify
 from sweetpea.encoding_diagram import __generate_encoding_diagram
 
 
@@ -25,7 +26,7 @@ text_repeats_factor = Factor("text repeats?", [
 
 design = [color, text, con_factor]
 crossing = [color, text]
-blk = fully_cross_block(design, crossing, [])
+blk = fully_cross_block(design, crossing, [Reify(con_factor)])
 
 
 def test_generate_encoding_diagram():
@@ -44,7 +45,7 @@ def test_generate_encoding_diagram():
 def test_generate_encoding_diagram_with_transition():
     block = fully_cross_block([color, text, color_repeats_factor],
                               [color, text],
-                              [])
+                              [Reify(color_repeats_factor)])
 
     assert __generate_encoding_diagram(block) == "\
 --------------------------------------------------\n\
@@ -59,9 +60,10 @@ def test_generate_encoding_diagram_with_transition():
 
 
 def test_generate_encoding_diagram_with_constraint_and_multiple_transitions():
-    block = fully_cross_block([color, text, con_factor, color_repeats_factor, text_repeats_factor],
+    design = [color, text, con_factor, color_repeats_factor, text_repeats_factor]
+    block = fully_cross_block(design,
                               [color, text],
-                              [])
+                              list(map(Reify, design)))
 
     assert __generate_encoding_diagram(block) == "\
 -------------------------------------------------------------------------------\n\
@@ -76,9 +78,10 @@ def test_generate_encoding_diagram_with_constraint_and_multiple_transitions():
 
 
 def test_generate_encoding_diagram_with_constraint_and_multiple_transitions_in_different_order():
-    block = fully_cross_block([text_repeats_factor, color, color_repeats_factor, text, con_factor],
+    design = [text_repeats_factor, color, color_repeats_factor, text, con_factor]
+    block = fully_cross_block(design,
                               [color, text],
-                              [])
+                              list(map(Reify, design)))
 
     assert __generate_encoding_diagram(block) == "\
 -------------------------------------------------------------------------------\n\
@@ -102,7 +105,7 @@ def test_generate_encoding_diagram_with_windows():
         DerivedLevel("no",  Window(no_fn, [color3], 3, 1))
     ])
 
-    block = fully_cross_block([color3_repeats_factor, color3, text], [color3, text], [])
+    block = fully_cross_block([color3_repeats_factor, color3, text], [color3, text], [Reify(color3_repeats_factor)])
 
     assert __generate_encoding_diagram(block) == "\
 ---------------------------------------------------------\n\
@@ -124,7 +127,7 @@ def test_generate_encoding_diagram_with_window_with_stride():
         DerivedLevel("no",  Window(lambda colors, texts: colors[0] != texts[0], [color, text], 1, 3))
     ])
 
-    block = fully_cross_block([color, text, congruent_bookend], [color, text], [])
+    block = fully_cross_block([color, text, congruent_bookend], [color, text], [Reify(congruent_bookend)])
 
     assert __generate_encoding_diagram(block) == "\
 ------------------------------------------------------\n\
@@ -142,7 +145,7 @@ def test_generate_encoding_diagram_with_window_with_stride():
         DerivedLevel("no",  Window(lambda colors, texts: colors[0] != texts[0], [color, text], 2, 2))
     ])
 
-    block = fully_cross_block([color, text, congruent_bookend], [color, text], [])
+    block = fully_cross_block([color, text, congruent_bookend], [color, text], [Reify(congruent_bookend)])
 
     assert __generate_encoding_diagram(block) == "\
 ------------------------------------------------------\n\

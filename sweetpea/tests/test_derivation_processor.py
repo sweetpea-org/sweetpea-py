@@ -4,7 +4,7 @@ import pytest
 from itertools import permutations
 
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
-from sweetpea.constraints import AtMostKInARow, Derivation
+from sweetpea.constraints import AtMostKInARow, Derivation, Reify
 from sweetpea.derivation_processor import DerivationProcessor
 from sweetpea.blocks import Block
 from sweetpea import fully_cross_block
@@ -34,7 +34,7 @@ congruent_bookend = Factor("congruent bookend?", [
 
 design = [color, text, con_factor]
 crossing = [color, text]
-blk = fully_cross_block(design, crossing, [])
+blk = fully_cross_block(design, crossing, [Reify(con_factor)])
 
 
 def two_con(i, n, t):
@@ -61,7 +61,7 @@ def test_generate_derivations_should_raise_error_if_fn_doesnt_return_a_boolean()
     with pytest.raises(ValueError):
         fully_cross_block([color, text, local_con_factor],
                           [color, text],
-                          [])
+                          [Reify(local_con_factor)])
 
 def test_generate_derivations_should_raise_error_if_some_factor_matches_multiple_levels():
     local_con_factor = Factor("congruent?", [
@@ -72,7 +72,7 @@ def test_generate_derivations_should_raise_error_if_some_factor_matches_multiple
     with pytest.raises(ValueError):
         fully_cross_block([color, text, local_con_factor],
                           [color, text],
-                          [])
+                          [Reify(local_con_factor)])
 
 def test_generate_derivations_should_produce_warning_if_some_level_is_unreachable(capsys):
     local_con_factor = Factor("congruent?", [
@@ -82,7 +82,7 @@ def test_generate_derivations_should_produce_warning_if_some_level_is_unreachabl
     ])
     fully_cross_block([color, text, local_con_factor],
                       [color, text],
-                      [])
+                      [Reify(local_con_factor)])
     assert capsys.readouterr().out == "WARNING: There is no assignment that matches factor congruent? with level dum.\n"
 
 def test_generate_derivations_within_trial():
@@ -102,7 +102,7 @@ def test_generate_derivations_within_trial():
     one_two_crossing = [integer, numeral, text]
 
     assert DerivationProcessor.generate_derivations(
-        fully_cross_block(one_two_design, one_two_crossing, [])) == [
+        fully_cross_block(one_two_design, one_two_crossing, list(map(Reify, one_two_design)))) == [
         Derivation(6, [[0, 2, 5], [0, 3, 4], [0, 3, 5], [1, 2, 4], [1, 2, 5], [1, 3, 4]], two_con_factor),
         Derivation(7, [[0, 2, 4], [1, 3, 5]], two_con_factor)]
 
@@ -112,7 +112,7 @@ def test_generate_derivations_within_trial():
      [color, color_repeats_factor, text],
      [color_repeats_factor, color, text]])
 def test_generate_derivations_transition(design):
-    block = fully_cross_block(design, [color, text], [])
+    block = fully_cross_block(design, [color, text], list(map(Reify, design)))
 
     assert DerivationProcessor.generate_derivations(block) == [
         Derivation(16, [[0, 4], [1, 5]], color_repeats_factor),
@@ -128,7 +128,7 @@ def test_generate_derivations_transition(design):
 def test_generate_derivations_with_multiple_transitions(design):
     block = fully_cross_block([color, text, color_repeats_factor, text_repeats_factor],
                               [color, text],
-                              [])
+                              [Reify(color_repeats_factor), Reify(text_repeats_factor)])
 
     assert DerivationProcessor.generate_derivations(block) == [
         Derivation(16, [[0, 4], [1, 5]], color_repeats_factor),
@@ -139,7 +139,7 @@ def test_generate_derivations_with_multiple_transitions(design):
 
 
 def test_generate_derivations_with_window():
-    block = fully_cross_block([color, text, congruent_bookend], [color, text], [])
+    block = fully_cross_block([color, text, congruent_bookend], [color, text], [Reify(congruent_bookend)])
 
     assert DerivationProcessor.generate_derivations(block) == [
         Derivation(16, [[0, 2], [1, 3]], congruent_bookend),

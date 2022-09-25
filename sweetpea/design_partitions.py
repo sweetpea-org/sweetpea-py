@@ -35,7 +35,7 @@ class DesignPartitions():
 
     def get_uncrossed_factors(self):
         crossed = self.get_crossed_factors()
-        return list(filter(lambda f: f not in crossed, self._block.design))
+        return list(filter(lambda f: f not in crossed, self._block.act_design))
 
     def get_source_factors(self):
         # Source factors are depended on by at least one derived factor in the crossed factors.

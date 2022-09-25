@@ -7,7 +7,9 @@ typecheck:
 	@echo "Typechecking..."
 	mypy --ignore-missing-imports sweetpea
 
-test: typecheck
+test: typecheck test-no-typecheck
+
+test-no-typecheck:
 	@echo "Running tests..."
 	python3 -m pytest -vv -p no:warnings sweetpea
 

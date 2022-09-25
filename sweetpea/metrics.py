@@ -19,6 +19,7 @@ def collect_design_metrics(block: Block) -> Dict:
 
     return {
         'full_factor_count': len(block.design),
+        'non_implied_factor_count': len(block.act_design),
         'crossing_factor_count': len(block.crossings),
         'constraint_count': len(block.constraints),
 

@@ -16,11 +16,14 @@ from sweetpea.logic import If, Iff, And, Or, Not
 from sweetpea.primitives import DerivedFactor, DerivedLevel, Factor, Level, SimpleLevel, get_internal_level_name
 
 
-def validate_factor_and_level(block: Block, factor: Factor, level: Union[SimpleLevel, DerivedLevel]) -> None:
+def validate_factor(block: Block, factor: Factor) -> None:
     if not block.has_factor(factor):
         raise ValueError(("A factor with name '{}' wasn't found in the design. "
                           "Are you sure the factor was included, and that the name is spelled "
                           "correctly?").format(factor.factor_name))
+
+def validate_factor_and_level(block: Block, factor: Factor, level: Union[SimpleLevel, DerivedLevel]) -> None:
+    validate_factor(block, factor)
 
     if not factor.has_level(level.name):
         raise ValueError(("A level with name '{}' wasn't found in the '{}' factor, "
@@ -63,13 +66,13 @@ class Consistency(Constraint):
     def apply(block: Block, backend_request: BackendRequest) -> None:
         next_var = 1
         for _ in range(block.trials_per_sample()):
-            for f in filter(lambda f: not f.has_complex_window, block.design):
+            for f in filter(lambda f: not f.has_complex_window, block.act_design):
                 number_of_levels = len(f.levels)
                 new_request = LowLevelRequest("EQ", 1, list(range(next_var, next_var + number_of_levels)))
                 backend_request.ll_requests.append(new_request)
                 next_var += number_of_levels
 
-        for f in filter(lambda f: f.has_complex_window, block.design):
+        for f in filter(lambda f: f.has_complex_window, block.act_design):
             variables_for_factor = block.variables_for_factor(f)
             var_list = list(map(lambda n: n + next_var, range(variables_for_factor)))
             chunks = list(chunk_list(var_list, len(f.levels)))
@@ -128,19 +131,19 @@ class Cross(Constraint):
             # the number of trials may have beed reduced by exclusions.
             crossing_size = block.crossing_size(c);
             trial_count = max(block.min_trials, crossing_size)
-            crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t),
-                                                            c)),
+            crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t), c)),
                                           range(1, block.trials_per_sample() + 1)))
             crossing_trials = crossing_trials[:trial_count]
 
             # Step 2: For each trial, cross all levels of all factors in the crossing.
-            crossing_factors = list(map(lambda t: (list(product(*[block.factor_variables_for_trial(f, t) for f in c]))), crossing_trials))
+            crossing_factors = list(map(lambda t: (list(product(*[block.factor_variables_for_trial(f, t) for f in c]))),
+                                        crossing_trials))
 
             # Step 3: For each trial, cross all levels of all design-only factors in the crossing.
+            # Omit any factors that are not relevant to constraints.
             design_factors = cast(List[List[List[int]]], [])
             design_factors = list(map(lambda _: [], crossing_trials))
-            for f in list(filter(lambda f: f not in c and not f.has_complex_window,
-                                 block.design)):
+            for f in list(filter(lambda f: f not in c and not f.has_complex_window, block.act_design)):
                 for i, t in enumerate(crossing_trials):
                     design_factors[i].append(block.factor_variables_for_trial(f, t))
             design_combinations = cast(List[List[Tuple[int, ...]]], [])
@@ -312,6 +315,9 @@ class Derivation(Constraint):
     def __str__(self):
         return str(self.__dict__)
 
+    def uses_factor(self, f: Factor) -> bool:
+        return any(list(map(lambda l: l.uses_factor(f), self.factor.levels)))
+
 
 class _KInARow(Constraint):
     def __init__(self, k, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]]):
@@ -337,6 +343,12 @@ class _KInARow(Constraint):
 
     def validate(self, block: Block) -> None:
         validate_factor_and_level(block, self.level[0], self.level[1])
+
+    def uses_factor(self, f: Factor) -> bool:
+        if isinstance(self.level, Factor):
+            return self.level.uses_factor(f)
+        else:
+            return self.level[0].uses_factor(f)
 
     def desugar(self) -> List[Constraint]:
         constraints = cast(List[Constraint], [self])
@@ -575,6 +587,9 @@ class Exclude(Constraint):
         if isinstance(self.level, DerivedLevel) and not self.factor.has_complex_window:
             block.excluded_derived.extend(self.extract_simplelevel(block, self.level))
 
+    def uses_factor(self, f: Factor) -> bool:
+        return self.factor.uses_factor(f)
+
     def extract_simplelevel(self, block: Block, level: DerivedLevel) -> List[Dict[Factor, SimpleLevel]]:
         """Recursively deciphers the excluded level to a list of combinations
         basic levels."""
@@ -620,6 +635,21 @@ class Exclude(Constraint):
 
     def __str__(self):
         return str(self.__dict__)
+
+class Reify(Constraint):
+    """The only purpose of this constraint is to make a factor
+    non-implied, so that it's exposed to a constraint solver."""
+    def __init__(self, factor):
+        self.factor = factor
+
+    def validate(self, block: Block) -> None:
+        validate_factor(block, self.factor)
+
+    def apply(self, block: Block, backend_request: BackendRequest) -> None:
+        """Do nothing."""
+
+    def uses_factor(self, f: Factor) -> bool:
+        return self.factor.uses_factor(f)
 
 
 def minimum_trials(trials):

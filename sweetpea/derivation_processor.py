@@ -52,6 +52,8 @@ class DerivationProcessor:
             returns a list of tuples. Each tuple is structured as:
             ``(index of the derived level, list of dependent levels)``
         """
+        # We include implied factors in `derived_factors` so we check the mapping of levels,
+        # but we'll only add to `accum` if the factor is non-implied
         derived_factors: List[DerivedFactor] = [factor for factor in block.design if isinstance(factor, DerivedFactor)]
         accum = []
 
@@ -80,13 +82,14 @@ class DerivationProcessor:
                 if not valid_tuples:
                     print(f"WARNING: There is no assignment that matches factor {factor.name} with level {level.name}.")
 
-                valid_indices = [[block.first_variable_for_level(level.factor, level) for level in valid_tuple]
-                                 for valid_tuple in valid_tuples]
-                shifted_indices = DerivationProcessor.shift_window(valid_indices,
-                                                                   level.window,
-                                                                   block.variables_per_trial())
-                level_index = block.first_variable_for_level(factor, level)
-                accum.append(Derivation(level_index, shifted_indices, factor))
+                if factor in block.act_design:
+                    valid_indices = [[block.first_variable_for_level(level.factor, level) for level in valid_tuple]
+                                     for valid_tuple in valid_tuples]
+                    shifted_indices = DerivationProcessor.shift_window(valid_indices,
+                                                                       level.window,
+                                                                       block.variables_per_trial())
+                    level_index = block.first_variable_for_level(factor, level)
+                    accum.append(Derivation(level_index, shifted_indices, factor))
         return accum
 
     @staticmethod
@@ -104,7 +107,7 @@ class DerivationProcessor:
                      window: DerivationWindow,
                      trial_size: int
                      ) -> List[List[int]]:
-        """This is a helper function that shifts the indices of
+        """This is a helper function that shifts< the indices of
         :func:`.DerivationProcessor.generate_derivations`.
 
         E.g., if it's a ``Transition(op.eq, [color, color])`` (i.e., "repeat"

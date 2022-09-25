@@ -4,6 +4,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
+from sweetpea.primitives import Factor
 
 class Constraint(ABC):
     """Generic interface for constraints."""
@@ -33,3 +34,10 @@ class Constraint(ABC):
         before proceding.
         """
         return [self]
+
+    def uses_factor(self, f: Factor) -> bool:
+        """Reports whether the given factor is relevant to the constraint, and
+        can return False when a factor is known to be relevant to the
+        crossing or some other constraint.
+        """
+        return False

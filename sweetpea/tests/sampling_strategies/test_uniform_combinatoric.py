@@ -6,7 +6,7 @@ import re
 
 from sweetpea import fully_cross_block, minimum_trials, synthesize_trials_uniform
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
-from sweetpea.constraints import Exclude, ExactlyKInARow, AtMostKInARow
+from sweetpea.constraints import Exclude, ExactlyKInARow, AtMostKInARow, Reify
 from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy, UCSolutionEnumerator
 from sweetpea.tests.test_utils import get_level_from_name
 
@@ -65,10 +65,16 @@ def test_validate_rejects_exclude_constraints():
 def test_validate_rejects_derived_factors_with_complex_windows():
     block = fully_cross_block([color, text, color_repeats_factor],
                               [color, text],
-                              [])
+                              [Reify(color_repeats_factor)])
     with pytest.raises(ValueError):
         UniformCombinatoricSamplingStrategy._UniformCombinatoricSamplingStrategy__validate(block)
 
+
+def test_validate_accepts_implied_derived_factors_with_complex_windows():
+    block = fully_cross_block([color, text, color_repeats_factor],
+                              [color, text],
+                              [])
+    # no error
 
 def test_example_counts():
     # Get all the python examples from the uc-counting-tests directory
