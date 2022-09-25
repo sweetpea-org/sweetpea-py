@@ -44,6 +44,9 @@ class Block:
         self.require_complete_crossing = require_complete_crossing
         self.errors = cast(Set[str], set())
         self.act_design = list(filter(lambda f: not self.factor_is_implied(f), self.design))
+        self._trials_per_sample = None
+        self._simple_tuples = cast(Optional[List[Tuple[Factor, Union[SimpleLevel, DerivedLevel]]]], None)
+        self._variables_per_trial = None
         self.__validate()
 
     def extract_basic_factor_names(self, level: DerivedLevel) -> set:
@@ -212,9 +215,10 @@ class Block:
 
         if variable < self.grid_variables():
             variable = variable % self.variables_per_trial()
-            simple_factors = list(filter(lambda f: not f.has_complex_window, self.act_design))
-            simple_tuples = get_all_levels(simple_factors)
-            return simple_tuples[variable]
+            if not self._simple_tuples:
+                simple_factors = list(filter(lambda f: not f.has_complex_window, self.act_design))
+                self._simple_tuples = get_all_levels(simple_factors)
+            return self._simple_tuples[variable]
         else:
             complex_factors = list(filter(lambda f: f.has_complex_window, self.act_design))
             for f in complex_factors:
@@ -415,19 +419,23 @@ class _CrossBlock(Block):
         return trial
 
     def trials_per_sample(self):
-        # FIXME: this could be computed once
+        if self._trials_per_sample:
+            return self._trials_per_sample
         crossing_size = max(map(lambda c: self.crossing_size(c), self.crossings))
         required_trials = list(map(max, list(map(lambda c: list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size), c)),
                                                  self.crossings))))
         required_trials.append(self.min_trials)
-        return max(required_trials)
+        self._trials_per_sample = max(required_trials)
+        return self._trials_per_sample
 
     def variables_per_trial(self):
         # Factors with complex windows are excluded because we don't want variables allocated
         # in every trial when the window spans multiple trials.
-        # FIXME: this could be computed once
+        if self._variables_per_trial:
+            return self._variables_per_trial
         grid_factors = filter(lambda f: not f.has_complex_window, self.act_design)
-        return sum([len(factor.levels) for factor in grid_factors])
+        self._variables_per_trial = sum([len(factor.levels) for factor in grid_factors])
+        return self._variables_per_trial
 
     def grid_variables(self):
         return self.trials_per_sample() * self.variables_per_trial()
