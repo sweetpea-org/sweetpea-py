@@ -5,7 +5,7 @@ import numpy as np
 from functools import reduce
 from itertools import product
 from math import factorial, ceil
-from typing import List, cast, Tuple
+from typing import List, cast, Tuple, Dict, Optional
 
 from sweetpea.blocks import Block, FullyCrossBlock
 from sweetpea.combinatorics import extract_components, compute_jth_inversion_sequence, construct_permutation, compute_jth_combination
@@ -43,50 +43,54 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
         UniformCombinatoricSamplingStrategy.__validate(block)
         metrics = {}
 
-        # 2. Count how many solutions there are.
+        # 2. Count how many solutions there are. The enumerator will notice
+        # the crossing size and minimum-trial request, and it will be prepared
+        # to generate runs of a crossing-size length or "leftover" length.
         enumerator = UCSolutionEnumerator(cast(FullyCrossBlock, block))
         metrics['solution_count'] = enumerator.solution_count()
+
+        if (enumerator.solution_count() == 0):
+            return SamplingResult([], metrics)
 
         # Select KInARow constraints to check for rejection sampling.
         constraints = list(filter(lambda c: isinstance(c, _KInARow), block.constraints))
 
         # 3. Generate samples.
+        rejection_sampling_enabled = False
         metrics['rejections'] = []
         sampled = 0
         rejected = 0
         total_rejected = 0
         crossing_size = cast(FullyCrossBlock, block).crossing_size();
-        rounds_per_run = int(ceil(max(block.min_trials, crossing_size) / crossing_size))
+        rounds_per_run = max(block.min_trials, crossing_size) // crossing_size
+        leftover = max(block.min_trials, crossing_size) % crossing_size
         samples = cast(List[dict], [])
-        sequence_numbers = cast(List[int], [])
+        used_keys = cast(Dict[Tuple[int, ...], bool], {})
         while sampled < sample_count:
+            if len(used_keys) == (pow(enumerator.solution_count(), rounds_per_run)
+                                  * enumerator.leftover_solution_count()):
+                break
+
+            solution_variabless = enumerator.generate_random_samples(rounds_per_run, leftover, used_keys)
+            used_keys[enumerator.extract_sequence_key(solution_variabless)] = True
+
+            # Combine randomly selected crossing-sized runs plus a leftover-sized run
+            # into one complete run with the requested number of trials.
             run = cast(dict, {})
-            rounds = 0
-            while rounds < rounds_per_run:
-                solution_variables = enumerator.generate_random_sample(sequence_numbers)
-                sequence_numbers.append(solution_variables[0])
-                # sample = SamplingStrategy.decode(block, solution_variables)
+            for round in range(0, rounds_per_run + (1 if leftover > 0 else 0)):
+                run = UniformCombinatoricSamplingStrategy.__combine_round(run, solution_variabless[round][1])
 
-                # if UniformCombinatoricSamplingStrategy.__are_constraints_violated(block, sample):
-                #     rejected += 1
-                #     continue
+            if rejection_sampling_enabled:
+                if UniformCombinatoricSamplingStrategy.__are_constraints_violated(block, run):
+                    rejected += 1
+                    continue
 
-                metrics['rejections'].append(rejected)
-                total_rejected += rejected
-                rejected = 0
-                sampled += 1
-
-                run = UniformCombinatoricSamplingStrategy.__combine_round(run, solution_variables[1])
-                rounds += 1
-
-            # Discard extra trials that came from rounding up `min_trials`
-            if rounds_per_run > 1:
-                for key in run:
-                    run[key] = (run[key])[:block.min_trials]
+            metrics['rejections'].append(rejected)
+            total_rejected += rejected
+            rejected = 0
+            sampled += 1
 
             samples.append(run)
-            if len(sequence_numbers) == enumerator.solution_count():
-                break
 
         metrics['sample_count'] = sample_count
         metrics['total_rejected'] = total_rejected
@@ -169,22 +173,56 @@ class UCSolutionEnumerator():
         # list are allowed.
         self._valid_source_combinations_indices = cast(List[List[int]], []) # Will be populated by solution counting
 
-        # Needs to be called last.
-        self._solution_count = self.__count_solutions()
+        # Call `__count_solutions` after everything else is set up.
+        crossing_size = block.crossing_size()
+        self._segment_lengths = cast(List[int], [])
+        self._solution_count = self.__count_solutions(crossing_size,
+                                                      self._segment_lengths,
+                                                      self._valid_source_combinations_indices)
+        self._leftover_segment_lengths = cast(List[int], [])
+        self._leftover_solution_count = 1
+        leftover = max(block.min_trials, crossing_size) % crossing_size;
+        if (leftover != 0):
+            self._leftover_solution_count = self.__count_solutions(leftover,
+                                                                   self._leftover_segment_lengths,
+                                                                   None)
 
     def solution_count(self):
         return self._solution_count
 
-    def generate_random_sample(self, sample_array: List[int]) -> Tuple[int, dict]:
-        # Select a random number from the range of solutions.
-        sequence_number = random.randrange(0, self._solution_count)
-        while sequence_number in sample_array:
-            sequence_number = random.randrange(0, self._solution_count)
-        return (sequence_number, self.generate_sample(sequence_number))
+    def leftover_solution_count(self):
+        return self._leftover_solution_count
+
+    def generate_random_samples(self, n: int, leftover: int, sampled: Dict[Tuple[int, ...], bool]) -> List[Tuple[int, dict]]:
+        # Select a sequence of n random numbers, each from the range of solutions.
+        # If `leftover` is not zero, then tack on one more sequence that is shorter
+        # than the crossing size.
+        # Then, make sure we haven't already picked the same sequence according to `sampled`.
+        # This rejection-based approach is probably ok for realistic experiments,
+        # where we're unlikely to want a number of samples close to the number of solutions
+        # at the same time that there are a lot of solutions.
+        sequence_key = (tuple([random.randrange(0, self._solution_count) for i in range(n)]),
+                        random.randrange(0, self._leftover_solution_count))
+        while tuple(list(sequence_key[0]) + ([sequence_key[1]] if leftover > 0 else [])) in sampled:
+            sequence_key = (tuple([random.randrange(0, self._solution_count) for i in range(n)]),
+                            random.randrange(0, self._leftover_solution_count))
+        return (list(map(lambda sequence_number: (sequence_number, self.generate_sample(sequence_number)),
+                         sequence_key[0]))
+                + ([(sequence_key[1],
+                     self.generate_leftover_sample(sequence_key[1], leftover))] if leftover > 0 else []))
+
+    def extract_sequence_key(self, solution_variabless: List[Tuple[int, dict]]) -> Tuple[int, ...]:
+        return tuple(map(lambda sv: sv[0], solution_variabless))
 
     def generate_sample(self, sequence_number: int) -> dict:
-        trial_values = self.generate_trail_values(sequence_number)
+        trial_values = self.generate_trail_values(sequence_number, self._block.crossing_size(), self._segment_lengths)
+        return self._trial_values_to_experiment(trial_values)
 
+    def generate_leftover_sample(self, sequence_number: int, leftover: int) -> dict:
+        trial_values = self.generate_trail_values(sequence_number, leftover, self._leftover_segment_lengths)
+        return self._trial_values_to_experiment(trial_values)
+
+    def _trial_values_to_experiment(self, trial_values: List[dict]) -> dict:
         experiment = cast(dict, {})
         for trial_number, trial_value in enumerate(trial_values):
             for factor, level in trial_value.items():
@@ -193,29 +231,16 @@ class UCSolutionEnumerator():
                 experiment[factor.factor_name].append(level.name)
         return experiment
 
-    def generate_solution_variables(self) -> List[int]:
-        sequence_number = random.randrange(0, self._solution_count)
-        trial_values = self.generate_trail_values(sequence_number)
-
-        solution = cast(List[int], [])
-        # Convert to variable encoding for SAT checking
-        for trial_number, trial_value in enumerate(trial_values):
-            for factor, level in trial_value.items():
-                solution.append(self._block.get_variable(trial_number + 1, (factor, level)))
-        solution.sort()
-        return solution
-
-    def generate_trail_values(self, sequence_number: int) -> List[dict]:
+    def generate_trail_values(self, sequence_number: int, trial_count: int, segment_lengths: List[int]) -> List[dict]:
         # 1. Extract the component pieces (permutation, each combination setting, etc)
         #    The 0th component is always the permutation index.
         #    The 1st-nth components are always the source combination indices for each trial in the sequence
         #    Any following components are the combination indices for independent basic factors.
-        components = extract_components(self._segment_lengths, sequence_number)
+        components = extract_components(segment_lengths, sequence_number)
 
         # 2. Generate the inversion sequence for the selected permutation number.
         #    Use the inversion sequence to construct the permutation.
-        l = self._block.crossing_size()
-        inversion_sequence = compute_jth_inversion_sequence(l, components[0])
+        inversion_sequence = compute_jth_inversion_sequence(trial_count, components[0])
         permutation_indices = construct_permutation(inversion_sequence)
         permutation = list(map(lambda i: self._crossing_instances[i], permutation_indices))
 
@@ -227,27 +252,27 @@ class UCSolutionEnumerator():
             source_combinations.append(self._source_combinations[source_combination_index_for_component])
 
         # 4. Generate the combinations for independent basic factors
-        independent_factor_combinations = cast(List[dict], [{}] *l)
+        independent_factor_combinations = cast(List[dict], [{}] *trial_count)
         u_b_i = self._partitions.get_uncrossed_basic_independent_factors()
         if u_b_i:
-            independent_combination_idx = components[l+1]
+            independent_combination_idx = components[trial_count+1]
             for f in u_b_i:
-                combo = compute_jth_combination(l, len(f.levels), independent_combination_idx)
-                for i in range(l):
+                combo = compute_jth_combination(trial_count, len(f.levels), independent_combination_idx)
+                for i in range(trial_count):
                     if not independent_factor_combinations[i]:
                         independent_factor_combinations[i] = {f : f.levels[combo[i]]}
                         continue
                     independent_factor_combinations[i][f] = f.levels[combo[i]]
 
         # 5. Merge the selected levels gathered so far to facilitate computing the uncrossed derived factor levels.
-        trial_values = cast(List[dict], [{}] * l)
-        for t in range(l):
+        trial_values = cast(List[dict], [{}] * trial_count)
+        for t in range(trial_count):
             trial_values[t] = {**permutation[t], **source_combinations[t], **independent_factor_combinations[t]}
 
         # 6. Generate uncrossed derived level values
         u_d = self._partitions.get_uncrossed_derived_factors()
         for f in u_d:
-            for t in range(l):
+            for t in range(trial_count):
                 # For each level in the factor, see if the derivation function is true.
                 for level in f.levels:
                     if level.window.fn(*[(trial_values[t][f]).name for f in level.window.args]):
@@ -272,13 +297,23 @@ class UCSolutionEnumerator():
         level_lists = [list(f.levels) for f in ubs]
         return [{ubs[i]: level for i,level in enumerate(levels)} for levels in product(*level_lists)]
 
-    def __count_solutions(self):
-        self._segment_lengths = []
+    def __count_solutions(self,
+                          first_n: int,
+                          segment_lengths: List[int],
+                          valid_source_combinations_indices: Optional[List[List[int]]]):
+        """Returns the number of solutions for a single round. When
+        minimum_trials increases the number of rounds, then we have
+        roughly a power of this result. The first_n argument is
+        between 1 and the crossing size, and it indicates how many of
+        the possible crossing-size trials we'll keep in a run. If we
+        need more trials than the crossing size, we'll pick multiple
+        crossing-size runs and concatenate them.
+        """
         ##############################################################
         # Permutations of crossing instances
         n = self._block.crossing_size()
-        n_factorial = factorial(n)
-        self._segment_lengths.append(n_factorial)
+        n_factorial = factorial(n) // factorial(n - first_n)
+        segment_lengths.append(n_factorial)
 
         ##############################################################
         # Uncrossed Dependent Factors
@@ -296,14 +331,14 @@ class UCSolutionEnumerator():
                     if not w.fn(*[(merged_levels[f]).name for f in w.args]):
                         sc_indices.remove(sc_idx)
 
-            self._segment_lengths.append(len(sc_indices))
-            self._valid_source_combinations_indices.append(sc_indices)
+            segment_lengths.append(len(sc_indices))
+            if isinstance(valid_source_combinations_indices, list):
+                valid_source_combinations_indices.append(sc_indices)
 
         ##############################################################
         # Uncrossed Independent Factors
-        u_b_i_counts = []
         u_b_i = self._partitions.get_uncrossed_basic_independent_factors()
         for f in u_b_i:
-            self._segment_lengths.append(pow(len(f.levels), n))
+            segment_lengths.append(pow(len(f.levels), first_n))
 
-        return reduce(op.mul, self._segment_lengths, 1)
+        return reduce(op.mul, segment_lengths, 1)
