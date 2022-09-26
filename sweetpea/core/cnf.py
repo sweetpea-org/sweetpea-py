@@ -21,7 +21,7 @@ from __future__ import annotations  # noqa
 import math
 
 from itertools import chain
-from typing import Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Iterable, List, Optional, Sequence, Tuple, Union, cast
 
 from .binary import BinaryNumber, int_to_binary
 from .simple_sequence import SimpleSequence
@@ -627,8 +627,12 @@ class CNF(SimpleSequence[Clause]):
 
         return (c, s)
 
-    def full_adder(self, a: Var, b: Var, cin: Var) -> Tuple[Var, Var]:
+    def full_adder(self, a: Var, b: Var, cin: Optional[Var]) -> Tuple[Var, Var]:
         # TODO DOC
+
+        if not cin:
+            return self.half_adder(a, b)
+        
         cout = self.get_fresh()
         s = self.get_fresh()
 
@@ -648,12 +652,16 @@ class CNF(SimpleSequence[Clause]):
 
         return (cout, s)
 
-    def saturate_adder(self, a: Var, b: Var, cin: Var) -> Var:
+    def saturate_adder(self, a: Var, b: Var, cin: Optional[Var]) -> Var:
         # TODO DOC
         s = self.get_fresh()
 
-        s_val     = CNF(a | b | cin)
-        s_neg_val = (~a & ~b & ~cin)
+        if (cin):
+            s_val     = CNF(a | b | cin)
+            s_neg_val = (~a & ~b & ~cin)
+        else:
+            s_val     = CNF(a | b)
+            s_neg_val = (~a & ~b)
         s_implies_s_val = CNF.distribute(~s, s_val)
         s_val_implies_s = CNF.distribute(s, s_neg_val)
         computed_s = s_implies_s_val + s_val_implies_s
@@ -663,8 +671,7 @@ class CNF(SimpleSequence[Clause]):
 
     def ripple_carry(self, xs: List[Var], ys: List[Var]) -> Tuple[Var, List[Var]]:
         # TODO DOC
-        cin = self.get_fresh()
-        self.set_to_zero(cin)
+        cin = None
 
         s_accum: List[Var] = []
 
@@ -673,13 +680,12 @@ class CNF(SimpleSequence[Clause]):
             s_accum.append(s)
             cin = c
 
-        return (cin, s_accum)
+        return (cast(Var, cin), s_accum)
 
     def ripple_saturate(self, xs: List[Var], ys: List[Var], saturate_at: int) -> List[Var]:
         # Assuming xs and ys have no more than `saturate_at` variables,
         # generate a saturating sum with no more than `saturate_at` variables
-        cin = self.get_fresh()
-        self.set_to_zero(cin)
+        cin = None
 
         s_accum: List[Var] = []
 
@@ -693,7 +699,7 @@ class CNF(SimpleSequence[Clause]):
                 cin = c
 
         if len(xs) < saturate_at:
-            s_accum.append(cin)
+            s_accum.append(cast(Var, cin))
 
         s_accum.reverse()
         return s_accum
