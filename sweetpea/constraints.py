@@ -140,7 +140,7 @@ class Cross(Constraint):
                                         crossing_trials))
 
             # Step 3: For each trial, cross all levels of all design-only factors in the crossing.
-            # Omit any factors that are not relevant to constraints.
+            # By using `block.act_design`, we omit any factors that are not relevant to constraints.
             design_factors = cast(List[List[List[int]]], [])
             design_factors = list(map(lambda _: [], crossing_trials))
             for f in list(filter(lambda f: f not in c and not f.has_complex_window, block.act_design)):
@@ -636,6 +636,10 @@ class Exclude(Constraint):
     def __str__(self):
         return str(self.__dict__)
 
+    def is_complex_for_combinatoric(self) -> bool:
+        return False
+
+
 class Reify(Constraint):
     """The only purpose of this constraint is to make a factor
     non-implied, so that it's exposed to a constraint solver."""
@@ -650,6 +654,9 @@ class Reify(Constraint):
 
     def uses_factor(self, f: Factor) -> bool:
         return self.factor.uses_factor(f)
+
+    def is_complex_for_combinatoric(self) -> bool:
+        return False
 
 
 def minimum_trials(trials):

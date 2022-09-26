@@ -234,14 +234,20 @@ class Block:
         """Given crossing and design-only variables and returns true if the
         combination meets any of the exclude contraints.
         """
-        di = {}
+        di = cast(Dict[Factor, SimpleLevel], {})
         for crossed in c:
             t = self.decode_variable(crossed)
-            di[t[0]] = t[1]
+            if isinstance(t[1], SimpleLevel):
+                di[t[0]] = t[1]
         for design in d:
             t = self.decode_variable(design)
-            di[t[0]] = t[1]
+            if isinstance(t[1], SimpleLevel):
+                di[t[0]] = t[1]
 
+        return self._is_excluded(di)
+
+    def _is_excluded(self, di: Dict[Factor, SimpleLevel]) -> bool:
+        """Like is_excluded, but for an argument in terms of a Factor and Level object."""
         return any(list(map(lambda e: all(list(map(lambda ex_level: e[ex_level] == di[ex_level], e))), self.excluded_derived)))
 
     def filter_excluded_derived_levels(self, l: List[List[List[Tuple[int, ...]]]]) -> List[List[List[Tuple[int, ...]]]]:
@@ -255,6 +261,14 @@ class Block:
                                                                        k[1:])),
                                                          j))),
                                l)))
+
+    def is_excluded_combination(self, di: Dict[Factor, SimpleLevel]) -> bool:
+        """Like is_excluded, but with a combination in dictionary form, and
+        also checks directly excluded factors for a crossing.
+        """
+        if self._is_excluded(di):
+            return True
+        return any(list(map(lambda t: t[0] in di and di[t[0]] == t[1], self.exclude)))
 
     def build_backend_request(self) -> BackendRequest:
         """Apply all constraints to build a :class:`.BackendRequest`. Formerly
@@ -476,6 +490,7 @@ class _CrossBlock(Block):
                 for c in all_crossings:
                     if excluded_level in c:
                         excluded_crossings.add(get_internal_level_name(c[0]) + ", " + get_internal_level_name(c[1]))
+                        excluded_external_names.add(get_external_level_name(c[0]) + ", " + get_external_level_name(c[1]))
             else:
                 # For each crossing, ensure that atleast one combination is possible with the design-only factors
                 # keeping in mind the exclude contraints.
@@ -486,7 +501,7 @@ class _CrossBlock(Block):
                         excluded_crossings.add(get_internal_level_name(c[0]) + ", " + get_internal_level_name(c[1]))
                         excluded_external_names.add(get_external_level_name(c[0]) + ", " + get_external_level_name(c[1]))
         if self.require_complete_crossing and len(excluded_crossings) != 0:
-            er = "Complete crossing is not possible beacuse the following combinations have been excluded:"
+            er = "Complete crossing is not possible because the following combinations have been excluded:"
             for names in excluded_external_names:
                 er += "\n" + names
             self.errors.add(er)

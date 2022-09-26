@@ -53,15 +53,6 @@ def test_validate_accepts_derived_factors_with_simple_windows():
     UniformCombinatoricSamplingStrategy._UniformCombinatoricSamplingStrategy__validate(block)
 
 
-def test_validate_rejects_exclude_constraints():
-    block = fully_cross_block([color, text, con_factor_within_trial],
-                              [color, text],
-                              [Exclude(color, red_color)])
-
-    with pytest.raises(ValueError):
-        UniformCombinatoricSamplingStrategy._UniformCombinatoricSamplingStrategy__validate(block)
-
-
 def test_validate_rejects_derived_factors_with_complex_windows():
     block = fully_cross_block([color, text, color_repeats_factor],
                               [color, text],

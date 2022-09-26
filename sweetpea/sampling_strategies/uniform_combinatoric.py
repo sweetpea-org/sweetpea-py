@@ -52,6 +52,10 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
         if (enumerator.solution_count() == 0):
             return SamplingResult([], metrics)
 
+        crossing_size = cast(FullyCrossBlock, block).crossing_size();
+        if (enumerator.crossing_instances_count() < crossing_size):
+            return SamplingResult([], metrics)
+
         # Select KInARow constraints to check for rejection sampling.
         constraints = list(filter(lambda c: isinstance(c, _KInARow), block.constraints))
 
@@ -61,7 +65,6 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
         sampled = 0
         rejected = 0
         total_rejected = 0
-        crossing_size = cast(FullyCrossBlock, block).crossing_size();
         rounds_per_run = max(block.min_trials, crossing_size) // crossing_size
         leftover = max(block.min_trials, crossing_size) % crossing_size
         samples = cast(List[dict], [])
@@ -136,10 +139,6 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
         if not isinstance(block, FullyCrossBlock):
             raise ValueError('The uniform combinatoric sampling strategy currently only supports FullyCrossBlock.')
 
-        for c in block.constraints:
-            if isinstance(c, Exclude):
-                raise ValueError('The uniform combinatoric sampling strategy currently does not support Exclude constraints.')
-
         for f in block.act_design:
             if f.has_complex_window:
                 raise ValueError('Found factor in design with complex window! Factor={} The uniform combinatoric sampling strategy currently does not support designs containing factors with complex windows. Sorry!'.format(f.factor_name))
@@ -193,6 +192,9 @@ class UCSolutionEnumerator():
     def leftover_solution_count(self):
         return self._leftover_solution_count
 
+    def crossing_instances_count(self):
+        return len(self._crossing_instances)
+
     def generate_random_samples(self, n: int, leftover: int, sampled: Dict[Tuple[int, ...], bool]) -> List[Tuple[int, dict]]:
         # Select a sequence of n random numbers, each from the range of solutions.
         # If `leftover` is not zero, then tack on one more sequence that is shorter
@@ -215,11 +217,11 @@ class UCSolutionEnumerator():
         return tuple(map(lambda sv: sv[0], solution_variabless))
 
     def generate_sample(self, sequence_number: int) -> dict:
-        trial_values = self.generate_trail_values(sequence_number, self._block.crossing_size(), self._segment_lengths)
+        trial_values = self.generate_trial_values(sequence_number, self._block.crossing_size(), self._segment_lengths)
         return self._trial_values_to_experiment(trial_values)
 
     def generate_leftover_sample(self, sequence_number: int, leftover: int) -> dict:
-        trial_values = self.generate_trail_values(sequence_number, leftover, self._leftover_segment_lengths)
+        trial_values = self.generate_trial_values(sequence_number, leftover, self._leftover_segment_lengths)
         return self._trial_values_to_experiment(trial_values)
 
     def _trial_values_to_experiment(self, trial_values: List[dict]) -> dict:
@@ -231,7 +233,7 @@ class UCSolutionEnumerator():
                 experiment[factor.factor_name].append(level.name)
         return experiment
 
-    def generate_trail_values(self, sequence_number: int, trial_count: int, segment_lengths: List[int]) -> List[dict]:
+    def generate_trial_values(self, sequence_number: int, trial_count: int, segment_lengths: List[int]) -> List[dict]:
         # 1. Extract the component pieces (permutation, each combination setting, etc)
         #    The 0th component is always the permutation index.
         #    The 1st-nth components are always the source combination indices for each trial in the sequence
@@ -290,7 +292,8 @@ class UCSolutionEnumerator():
     def __generate_crossing_instances(self) -> List[dict]:
         crossing = self._partitions.get_crossed_factors()
         level_lists = [list(f.levels) for f in crossing]
-        return [{crossing[i]: level for i,level in enumerate(levels)} for levels in product(*level_lists)]
+        crossings = [{crossing[i]: level for i,level in enumerate(levels)} for levels in product(*level_lists)]
+        return list(filter(lambda c: not self._block.is_excluded_combination(c), crossings))
 
     def __generate_source_combinations(self) -> List[dict]:
         ubs = self._partitions.get_uncrossed_basic_source_factors()

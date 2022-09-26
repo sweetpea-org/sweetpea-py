@@ -29,7 +29,6 @@ repeated_color_factor = Factor("repeated color?", [
 ])
 
 
-@pytest.mark.slow
 @pytest.mark.parametrize('design', [[direction, color, text, congruent_factor],
                                     [congruent_factor, direction, color, text],
                                     [direction, congruent_factor, color, text]])
