@@ -25,6 +25,7 @@ def sample_uniform(sample_count: int,
     """
     with temporary_cnf_file() as cnf_file:
         combine_and_save_cnf(cnf_file, initial_cnf, fresh, support, generation_requests)
+        print("Running UniGen\n")
         solution_str = call_unigen(sample_count, cnf_file, docker_mode=use_docker)
         # TODO: Validate that skipping the comments is the intended
         #       functionality. The Haskell code doesn't appear to need to do

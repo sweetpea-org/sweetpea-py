@@ -35,6 +35,7 @@ def sample_non_uniform(count: int,
     """
     with temporary_cnf_file() as cnf_file:
         combine_and_save_cnf(cnf_file, initial_cnf, fresh, support, generation_requests)
+        print("Running CryptoMiniSat\n")
         solutions = compute_solutions(cnf_file, support, count)
         return [Solution(solution, 1) for solution in solutions]
 

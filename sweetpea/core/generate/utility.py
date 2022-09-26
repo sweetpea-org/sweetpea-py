@@ -166,5 +166,6 @@ def combine_and_save_cnf(filename: Path,
     :class:`list` of :class:`GenerationRequests <.GenerationRequest>`, merges
     those formulas, then saves the result to a file at the given path.
     """
+    print("Encoding experiment constraints")
     combined_cnf = combine_cnf_with_requests(initial_cnf, fresh, support, generation_requests)
     save_cnf(filename, combined_cnf, fresh, support)

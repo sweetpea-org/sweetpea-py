@@ -492,9 +492,9 @@ class CNF(SimpleSequence[Clause]):
     def assert_k_of_n(self, k: int, in_list: Sequence[Var]):
         # TODO DOC
         # TODO: Describe this function's purpose.
-        sum_bits = self.pop_count(in_list)
-        # Add zero padding to the left.
         in_binary =  int_to_binary(k)
+        sum_bits = self.pop_count(in_list, len(in_binary)+1)
+        # Add zero padding to the left.
         in_binary.reverse()
         left_padded: BinaryNumber = in_binary[:len(sum_bits)]
         left_padded += [-1 for _ in range(len(sum_bits) - len(left_padded))]
@@ -513,8 +513,8 @@ class CNF(SimpleSequence[Clause]):
         self._inequality_assertion(False, k, in_list)
 
     def _inequality_assertion(self, assert_less_than: bool, k: int, in_list: Sequence[Var]):
-        sum_bits = self.pop_count(in_list)
         in_binary = int_to_binary(k)
+        sum_bits = self.pop_count(in_list, len(in_binary)+1)
         k_vars = self.get_n_fresh(len(in_binary))
         assertion = [Var(kv.value * b) for (kv, b) in zip(k_vars, in_binary)]
         self.prepend(CNF([Clause(x) for x in assertion]))
@@ -563,7 +563,7 @@ class CNF(SimpleSequence[Clause]):
     ## Pop Count
     ##
 
-    def pop_count(self, in_list: Sequence[Var]) -> List[Var]:
+    def pop_count(self, in_list: Sequence[Var], saturate_at: int) -> List[Var]:
         """Returns the list of :class:`Vars <.Var>` that represents the bits of
         the given list variable in binary.
         """
@@ -579,9 +579,9 @@ class CNF(SimpleSequence[Clause]):
         aux_list = self.get_n_fresh((2 ** nearest_largest_power) - len(in_list))
         self.zero_out(aux_list)
         # Now we can start computing the actual pop count.
-        return self._pop_count_layer([[x] for x in chain(in_list, aux_list)])
+        return self._pop_count_layer([[x] for x in chain(in_list, aux_list)], saturate_at)
 
-    def _pop_count_layer(self, bit_list: List[List[Var]]) -> List[Var]:
+    def _pop_count_layer(self, bit_list: List[List[Var]], saturate_at: int) -> List[Var]:
         if len(bit_list) == 1:
             return bit_list[0]
         midpoint = len(bit_list) // 2
@@ -592,12 +592,14 @@ class CNF(SimpleSequence[Clause]):
         # assumption since we've guaranteed the input to have a length that's a
         # power of two greater than one.
         for (l, r) in zip(left_half, right_half):
-            (cs, ss) = self.ripple_carry(l, r)
-            max_c = max(cs)
-            var_list.append([max_c] + list(reversed(ss)))
+            if saturate_at == 0:
+                (max_c, ss) = self.ripple_carry(l, r)
+                var_list.append([max_c] + list(reversed(ss)))
+            else:
+                var_list.append(self.ripple_saturate(l, r, saturate_at))
         # Reverse the list because of append ordering.
         var_list.reverse()
-        return self._pop_count_layer(var_list)
+        return self._pop_count_layer(var_list, saturate_at)
 
     ########################################
     ##
@@ -646,18 +648,52 @@ class CNF(SimpleSequence[Clause]):
 
         return (cout, s)
 
-    def ripple_carry(self, xs: List[Var], ys: List[Var]) -> Tuple[List[Var], List[Var]]:
+    def saturate_adder(self, a: Var, b: Var, cin: Var) -> Var:
+        # TODO DOC
+        s = self.get_fresh()
+
+        s_val     = CNF(a | b | cin)
+        s_neg_val = (~a & ~b & ~cin)
+        s_implies_s_val = CNF.distribute(~s, s_val)
+        s_val_implies_s = CNF.distribute(s, s_neg_val)
+        computed_s = s_implies_s_val + s_val_implies_s
+        self.prepend(computed_s)
+
+        return s
+
+    def ripple_carry(self, xs: List[Var], ys: List[Var]) -> Tuple[Var, List[Var]]:
         # TODO DOC
         cin = self.get_fresh()
         self.set_to_zero(cin)
 
-        c_accum: List[Var] = []
         s_accum: List[Var] = []
 
         for x, y in zip(reversed(xs), reversed(ys)):
             (c, s) = self.full_adder(x, y, cin)
-            c_accum.append(c)
             s_accum.append(s)
             cin = c
 
-        return (c_accum, s_accum)
+        return (cin, s_accum)
+
+    def ripple_saturate(self, xs: List[Var], ys: List[Var], saturate_at: int) -> List[Var]:
+        # Assuming xs and ys have no more than `saturate_at` variables,
+        # generate a saturating sum with no more than `saturate_at` variables
+        cin = self.get_fresh()
+        self.set_to_zero(cin)
+
+        s_accum: List[Var] = []
+
+        for i, (x, y) in enumerate(zip(reversed(xs), reversed(ys))):
+            if i+1 == saturate_at:
+                s = self.saturate_adder(x, y, cin)
+                s_accum.append(s)
+            else:
+                (c, s) = self.full_adder(x, y, cin)
+                s_accum.append(s)
+                cin = c
+
+        if len(xs) < saturate_at:
+            s_accum.append(cin)
+
+        s_accum.reverse()
+        return s_accum
