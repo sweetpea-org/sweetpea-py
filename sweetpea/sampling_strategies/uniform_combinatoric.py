@@ -233,6 +233,19 @@ class UCSolutionEnumerator():
                 experiment[factor.factor_name].append(level.name)
         return experiment
 
+    # Used for an acceptance test:
+    def generate_solution_variables(self) -> List[int]:
+        sequence_number = random.randrange(0, self._solution_count)
+        trial_values = self.generate_trial_values(sequence_number, self._block.crossing_size(), self._segment_lengths)
+
+        solution = cast(List[int], [])
+        # Convert to variable encoding for SAT checking
+        for trial_number, trial_value in enumerate(trial_values):
+            for factor, level in trial_value.items():
+                solution.append(self._block.get_variable(trial_number + 1, (factor, level)))
+        solution.sort()
+        return solution
+
     def generate_trial_values(self, sequence_number: int, trial_count: int, segment_lengths: List[int]) -> List[dict]:
         # 1. Extract the component pieces (permutation, each combination setting, etc)
         #    The 0th component is always the permutation index.
