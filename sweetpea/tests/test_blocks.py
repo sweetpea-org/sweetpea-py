@@ -383,7 +383,7 @@ def test_fully_cross_block_crossing_size_with_overlapping_exclude():
     assert FullyCrossBlock([color, text, congruent_factor, legal_factor],
                            [[color, text]],
                            [Exclude(congruent_factor, get_level_from_name(congruent_factor, "congruent")), # Excludes 3
-                            Exclude(legal_factor, get_level_from_name(legal_factor, "no"))], # Exludes 4, but 3 were already excluded
+                            Exclude(legal_factor, get_level_from_name(legal_factor, "no"))], # Excludes 4, but 3 were already excluded
                            require_complete_crossing=False).crossing_size() == 5
 
 

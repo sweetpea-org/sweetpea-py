@@ -49,6 +49,9 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
         enumerator = UCSolutionEnumerator(cast(FullyCrossBlock, block))
         metrics['solution_count'] = enumerator.solution_count()
 
+        if block.show_errors():
+            return SamplingResult([], {})
+
         if (enumerator.solution_count() == 0):
             return SamplingResult([], metrics)
 

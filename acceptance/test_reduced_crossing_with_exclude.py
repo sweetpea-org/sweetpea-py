@@ -1,7 +1,7 @@
 import pytest
 
 from acceptance import assert_no_repetition, path_to_cnf_files, reset_expected_solutions
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
+from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, factor, derived_level, within_trial
 from sweetpea.constraints import exclude
 from sweetpea.encoding_diagram import print_encoding_diagram
 from sweetpea import UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy
@@ -110,6 +110,73 @@ def test_correct_solution_count_with_design_levels_excluded(strategy):
     for e in experiments:
         for l in e['size']:
             assert l != 'large'
+
+@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+def test_correct_solution_with_extra_crossing_factor(strategy):
+    color      = factor("color",  ["red", "green", "blue", "brown"])
+    word       = factor("word", ["Red", "Green", "Blue", "Brown"])
+    location       = factor("location", ["up", "down", "left", "right"])
+
+    def is_response_left(color):
+        return color == "red"
+    def is_response_right(color):
+        return color == "green"
+    def is_response_up(color):
+        return color == "blue"
+    def is_response_down(color):
+        return color == "brown"
+
+    response = factor("response", [
+        derived_level("left", within_trial(is_response_left, [color])),
+        derived_level("right", within_trial(is_response_right, [color])),
+        derived_level("up", within_trial(is_response_up, [color])),
+        derived_level("down", within_trial(is_response_down, [color]))
+    ])
+
+    def is_congruent(color, word):
+        return color[1:] == word[1:]
+
+    def is_incongruent(color, word):
+        return not is_congruent(color, word)
+
+    congruent = derived_level("congruent", within_trial(is_congruent, [color, word]))
+    incongruent = derived_level("incongruent", within_trial(is_incongruent, [color, word]))
+
+    congruency = factor("congruency", [
+        congruent,
+        incongruent
+    ])
+
+
+    constraints = [exclude(congruency, congruent)]
+
+    design       = [color, word, response, congruency, location]
+    crossing     = [color, word, location]
+    block        = fully_cross_block(design, crossing, constraints,
+                                     require_complete_crossing=False)
+
+    experiments  = synthesize_trials(block, 1, sampling_strategy=strategy)
+
+    assert len(experiments[0]['color']) == 48 # would be 64 without exclude
+
+    found = {}
+    for i in range(len(experiments[0]['color'])):
+        key = (experiments[0]['color'][i], experiments[0]['word'][i], experiments[0]['location'][i])
+        assert not key in found
+        found[key] = True
+
+@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+def test_correct_solution_with_just_one_factor(strategy):
+    color = Factor("color", ['red', 'green'])
+    red = color.get_level('red')
+
+    block      = fully_cross_block(design=[color], crossing=[color],
+                                   require_complete_crossing=False,
+                                   constraints=[exclude(color, red)])
+    experiments = synthesize_trials(block=block, samples=1, sampling_strategy=strategy)
+
+    assert len(experiments[0]['color']) == 1
+    assert experiments[0]['color'][0] == 'green'
 
 def test_correct_solution_count_with_override_flag_and_multiple_trials_excluded_cnf():
     # With this constraint, there should only be ONE allowed crossing, and therefore one solution.

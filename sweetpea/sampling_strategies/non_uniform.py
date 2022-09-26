@@ -13,11 +13,8 @@ class NonUniformSamplingStrategy(SamplingStrategy):
     @staticmethod
     def sample(block: Block, sample_count: int) -> SamplingResult:
         backend_request = block.build_backend_request()
-        if block.errors:
-            for e in block.errors:
-                print(e)
-                if "WARNING" not in e:
-                    return SamplingResult([], {})
+        if block.show_errors():
+            return SamplingResult([], {})
 
         solutions = sample_non_uniform(sample_count,
                                        CNF(backend_request.get_cnfs_as_json()),

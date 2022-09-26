@@ -49,6 +49,14 @@ class Block:
         self._variables_per_trial = None
         self.__validate()
 
+    def show_errors(self) -> bool:
+        if self.errors:
+            for e in self.errors:
+                print(e)
+                if "WARNING" not in e:
+                    return True
+        return False
+
     def extract_basic_factor_names(self, level: DerivedLevel) -> set:
         included_factor_names = set()
         for factor in level.window.args:
@@ -489,8 +497,8 @@ class _CrossBlock(Block):
             if isinstance(excluded_level, SimpleLevel):
                 for c in all_crossings:
                     if excluded_level in c:
-                        excluded_crossings.add(get_internal_level_name(c[0]) + ", " + get_internal_level_name(c[1]))
-                        excluded_external_names.add(get_external_level_name(c[0]) + ", " + get_external_level_name(c[1]))
+                        excluded_crossings.add(tuple([get_internal_level_name(l) for l in c]))
+                        excluded_external_names.add(', '.join([get_external_level_name(l) for l in c]))
             else:
                 # For each crossing, ensure that atleast one combination is possible with the design-only factors
                 # keeping in mind the exclude contraints.
@@ -498,8 +506,8 @@ class _CrossBlock(Block):
                     if all(list(map(lambda d: self.__excluded_derived(excluded_level, c+d),
                                     list(product(*[list(f.levels) for f in filter(lambda f: f not in crossing,
                                                                                   self.act_design)]))))):
-                        excluded_crossings.add(get_internal_level_name(c[0]) + ", " + get_internal_level_name(c[1]))
-                        excluded_external_names.add(get_external_level_name(c[0]) + ", " + get_external_level_name(c[1]))
+                        excluded_crossings.add(tuple([get_internal_level_name(l) for l in c]))
+                        excluded_external_names.add(', '.join([get_external_level_name(l) for l in c]))
         if self.require_complete_crossing and len(excluded_crossings) != 0:
             er = "Complete crossing is not possible because the following combinations have been excluded:"
             for names in excluded_external_names:

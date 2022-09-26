@@ -18,11 +18,8 @@ class UnigenSamplingStrategy(SamplingStrategy):
     def sample(block: Block, sample_count: int, min_search: bool=False) -> SamplingResult:
 
         backend_request = block.build_backend_request()
-        if block.errors:
-            for e in block.errors:
-                print(e)
-                if "WARNING" not in e:
-                    return SamplingResult([], {})
+        if block.show_errors():
+            return SamplingResult([], {})
 
         solutions = sample_uniform(
             sample_count,
