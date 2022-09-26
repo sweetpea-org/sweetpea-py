@@ -611,7 +611,7 @@ class CNF(SimpleSequence[Clause]):
         c = self.get_fresh()
         s = self.get_fresh()
 
-        c_val = CNF.or_vars(a, b)
+        c_val = CNF.and_vars(a, b)
         c_neg_val = CNF.or_vars(~a, ~b)
         c_implies_c_val = CNF.distribute(~c, c_val)
         c_val_implies_c = CNF.distribute(c, c_neg_val)
