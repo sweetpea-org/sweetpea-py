@@ -11,7 +11,7 @@ from sweetpea.blocks import Block, FullyCrossBlock
 from sweetpea.combinatorics import extract_components, compute_jth_inversion_sequence, construct_permutation, compute_jth_combination
 from sweetpea.design_partitions import DesignPartitions
 from sweetpea.logic import And
-from sweetpea.primitives import get_external_level_name
+from sweetpea.primitives import get_external_level_name, SimpleLevel, Factor
 from sweetpea.sampling_strategies.base import SamplingStrategy, SamplingResult
 from sweetpea.constraints import Exclude, _KInARow, ExactlyKInARow, AtMostKInARow
 
@@ -59,11 +59,7 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
         if (enumerator.crossing_instances_count() < crossing_size):
             return SamplingResult([], metrics)
 
-        # Select KInARow constraints to check for rejection sampling.
-        constraints = list(filter(lambda c: isinstance(c, _KInARow), block.constraints))
-
         # 3. Generate samples.
-        rejection_sampling_enabled = False
         metrics['rejections'] = []
         sampled = 0
         rejected = 0
@@ -86,10 +82,9 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
             for round in range(0, rounds_per_run + (1 if leftover > 0 else 0)):
                 run = UniformCombinatoricSamplingStrategy.__combine_round(run, solution_variabless[round][1])
 
-            if rejection_sampling_enabled:
-                if UniformCombinatoricSamplingStrategy.__are_constraints_violated(block, run):
-                    rejected += 1
-                    continue
+            if UniformCombinatoricSamplingStrategy.__are_constraints_violated(block, run):
+                rejected += 1
+                continue
 
             metrics['rejections'].append(rejected)
             total_rejected += rejected
@@ -106,35 +101,10 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
 
     @staticmethod
     def __are_constraints_violated(block: Block, sample: dict) -> bool:
-        constraints = cast(List[_KInARow], filter(lambda c: isinstance(c, _KInARow), block.constraints))
+        constraints = block.constraints
         for c in constraints:
-            factor_name = c.level[0]
-            level_name = c.level[1]
-
-            level_list = sample[factor_name]
-            counts = []
-            count = 0
-            for l in level_list:
-                if count > 0 and l != level_name:
-                    counts.append(count)
-                    count = 0
-                elif l == level_name:
-                    count += 1
-
-            if count > 0:
-                counts.append(count)
-
-            fn = op.eq
-            if isinstance(c, ExactlyKInARow):
-                fn = op.eq
-            elif isinstance(c, AtMostKInARow):
-                fn = op.le
-            else:
-                raise ValueError("Unexpected constraint found! {}".format(c))
-
-            if not all(map(lambda n: fn(n, c.k), counts)):
+            if not c.potential_sample_conforms(sample):
                 return True
-
         return False
 
     @staticmethod
@@ -169,6 +139,7 @@ class UCSolutionEnumerator():
         self._crossing_instances = self.__generate_crossing_instances()
         self._source_combinations = self.__generate_source_combinations()
         self._segment_lengths = cast(List[int], []) # Will be populated by solution counting
+        self._ind_factor_levels = cast(List[Tuple[Factor, List[SimpleLevel]]], []) # Will be populated by solution counting
 
         # Maintains a lookup for valid source combinations for a permutation.
         # Example [[2, 3], ...] means that for permutation 0, indices 2 and 3 in the source combinations
@@ -271,16 +242,15 @@ class UCSolutionEnumerator():
 
         # 4. Generate the combinations for independent basic factors
         independent_factor_combinations = cast(List[dict], [{}] *trial_count)
-        u_b_i = self._partitions.get_uncrossed_basic_independent_factors()
-        if u_b_i:
+        if self._ind_factor_levels:
             independent_combination_idx = components[trial_count+1]
-            for f in u_b_i:
-                combo = compute_jth_combination(trial_count, len(f.levels), independent_combination_idx)
+            for fi, levels in self._ind_factor_levels:
+                combo = compute_jth_combination(trial_count, len(levels), independent_combination_idx)
                 for i in range(trial_count):
                     if not independent_factor_combinations[i]:
-                        independent_factor_combinations[i] = {f : f.levels[combo[i]]}
+                        independent_factor_combinations[i] = {fi : levels[combo[i]]}
                         continue
-                    independent_factor_combinations[i][f] = f.levels[combo[i]]
+                    independent_factor_combinations[i][fi] = levels[combo[i]]
 
         # 5. Merge the selected levels gathered so far to facilitate computing the uncrossed derived factor levels.
         trial_values = cast(List[dict], [{}] * trial_count)
@@ -358,6 +328,8 @@ class UCSolutionEnumerator():
         # Uncrossed Independent Factors
         u_b_i = self._partitions.get_uncrossed_basic_independent_factors()
         for f in u_b_i:
-            segment_lengths.append(pow(len(f.levels), first_n))
+            levels = list(filter(lambda l: not self._block.is_excluded_combination({f: l}), f.levels));
+            self._ind_factor_levels.append((f, levels))
+            segment_lengths.append(pow(len(levels), first_n))
 
         return reduce(op.mul, segment_lengths, 1)

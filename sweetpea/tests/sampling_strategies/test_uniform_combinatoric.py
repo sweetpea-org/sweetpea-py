@@ -105,17 +105,17 @@ def test_constraint_violation():
                               [color, text],
                               [ExactlyKInARow(2, (color, red_color))])
 
-    assert are_constraints_violated(block, {color: [red_color, red_color, blue_color, blue_color]}) == False
-    assert are_constraints_violated(block, {color: [red_color, blue_color, red_color, blue_color]}) == True
+    assert are_constraints_violated(block, {'color': ['red', 'red', 'blue', 'blue']}) == False
+    assert are_constraints_violated(block, {'color': ['red', 'blue', 'red', 'blue']}) == True
 
     block = fully_cross_block([color, text, con_factor_within_trial],
                               [color, text],
                               [AtMostKInARow(2, (color, red_color))])
 
-    assert are_constraints_violated(block, {color: [red_color, blue_color, blue_color, blue_color]}) == False
-    assert are_constraints_violated(block, {color: [red_color, red_color, blue_color, blue_color]}) == False
-    assert are_constraints_violated(block, {color: [red_color, red_color, red_color, blue_color]}) == True
-    assert are_constraints_violated(block, {color: [blue_color, red_color, red_color, red_color]}) == True
+    assert are_constraints_violated(block, {'color': ['red', 'blue', 'blue', 'blue']}) == False
+    assert are_constraints_violated(block, {'color': ['red', 'red', 'blue', 'blue']}) == False
+    assert are_constraints_violated(block, {'color': ['red', 'red', 'red', 'blue']}) == True
+    assert are_constraints_violated(block, {'color': ['blue', 'red', 'red', 'red']}) == True
 
 def test_minimum_trials():
     for min_trials in [1, 2, 3, 4, 5, 6, 7, 17, 55]:

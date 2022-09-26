@@ -1,9 +1,9 @@
 """This module provides constraints for CNF generation."""
 
-
+import operator as op
 from abc import abstractmethod
 from copy import deepcopy
-from typing import List, Tuple, Any, Union, cast, Dict
+from typing import List, Tuple, Any, Union, cast, Dict, Callable
 from itertools import chain, product
 from math import ceil
 from itertools import chain
@@ -79,6 +79,9 @@ class Consistency(Constraint):
             backend_request.ll_requests += list(map(lambda v: LowLevelRequest("EQ", 1, v), chunks))
             next_var += variables_for_factor
 
+    def potential_sample_conforms(self, sample: dict) -> bool:
+        # conformance by construction in combinatoric
+        return True
 
 class Cross(Constraint):
     """We represent the fully crossed constraint by allocating additional
@@ -195,6 +198,10 @@ class Cross(Constraint):
             variables = variables[crossing_size:]
             to_add -= crossing_size
         return reqs
+
+    def potential_sample_conforms(self, sample: dict) -> bool:
+        # conformance by construction in combinatoric
+        return True
             
 class FullyCross(Cross):
     """Covered by Cross"""
@@ -318,6 +325,9 @@ class Derivation(Constraint):
     def uses_factor(self, f: Factor) -> bool:
         return any(list(map(lambda l: l.uses_factor(f), self.factor.levels)))
 
+    def potential_sample_conforms(self, sample: dict) -> bool:
+        return True
+
 
 class _KInARow(Constraint):
     def __init__(self, k, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]]):
@@ -384,6 +394,32 @@ class _KInARow(Constraint):
     def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], backend_request: BackendRequest) -> None:
         pass
 
+    def potential_sample_conforms(self, sample: dict) -> bool:
+        factor_name = self.level[0].name
+        level_name = self.level[1].name
+
+        level_list = sample[factor_name]
+        counts = []
+        count = 0
+        for l in level_list:
+            if count > 0 and l != level_name:
+                counts.append(count)
+                count = 0
+            elif l == level_name:
+                count += 1
+
+        if count > 0:
+            counts.append(count)
+
+        return self._potential_counts_conform(counts)
+
+    @abstractmethod
+    def _potential_counts_conform(self, counts: List[int]) -> bool:
+        pass
+
+    def _potential_counts_conform_individually(self, counts: List[int], fn: Callable[[int, int], bool]) -> bool:
+        return all(map(lambda n: fn(n, self.k), counts))
+
 
 def at_most_k_in_a_row(k, levels):
     """This desugars pretty directly into the llrequests. The only thing to do
@@ -427,6 +463,9 @@ class AtMostKInARow(_KInARow):
     def __str__(self):
         return str(self.__dict__)
 
+    def _potential_counts_conform(self, counts: List[int]) -> bool:
+        return self._potential_counts_conform_individually(counts, op.le)
+
 
 def at_least_k_in_a_row(k, levels):
     """This is more complicated that AtMostKInARow. We collect all the boolean
@@ -464,7 +503,7 @@ class AtLeastKInARow(_KInARow):
 
         # Request sublists for k+1 to allow us to determine the transition
         sublists = self._build_variable_sublists(block, level, self.k + 1)
-
+        print(sublists)
         implications = []
         if sublists:
             # Starting corner case
@@ -487,6 +526,9 @@ class AtLeastKInARow(_KInARow):
 
     def __str__(self):
         return str(self.__dict__)
+
+    def _potential_counts_conform(self, counts: List[int]) -> bool:
+        return self._potential_counts_conform_individually(counts, op.ge)
 
 
 def exactly_k(k ,levels):
@@ -513,6 +555,9 @@ class ExactlyK(_KInARow):
 
     def __str__(self):
         return str(self.__dict__)
+
+    def _potential_counts_conform(self, counts: List[int]) -> bool:
+        return sum(counts) == self.k
 
 
 def exactly_k_in_a_row(k, levels):
@@ -555,7 +600,6 @@ class ExactlyKInARow(_KInARow):
                 implications.append(If(l[idx], l[idx + 1]))
 
         (cnf, new_fresh) = block.cnf_fn(And(implications), backend_request.fresh)
-
         backend_request.cnfs.append(cnf)
         backend_request.fresh = new_fresh
 
@@ -567,6 +611,9 @@ class ExactlyKInARow(_KInARow):
 
     def __str__(self):
         return str(self.__dict__)
+
+    def _potential_counts_conform(self, counts: List[int]) -> bool:
+        return self._potential_counts_conform_individually(counts, op.eq)
 
 
 def exclude(factor, levels):
@@ -639,6 +686,10 @@ class Exclude(Constraint):
     def is_complex_for_combinatoric(self) -> bool:
         return False
 
+    def potential_sample_conforms(self, sample: dict) -> bool:
+        # conformance by construction in combinatoric
+        return True
+
 
 class Reify(Constraint):
     """The only purpose of this constraint is to make a factor
@@ -658,6 +709,8 @@ class Reify(Constraint):
     def is_complex_for_combinatoric(self) -> bool:
         return False
 
+    def potential_sample_conforms(self, sample: dict) -> bool:
+        return True
 
 def minimum_trials(trials):
     return MinimumTrials(trials)
@@ -689,3 +742,6 @@ class MinimumTrials(Constraint):
 
     def __str__(self):
         return str(self.__dict__)
+
+    def potential_sample_conforms(self, sample: dict) -> bool:
+        return True

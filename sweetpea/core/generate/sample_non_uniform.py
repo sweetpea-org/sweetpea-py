@@ -66,16 +66,18 @@ def compute_solutions(filename: Path,
     solutions will be returned.
     """
     # TODO: Implement iteratively instead of recursively.
-    if solutions is None:
-        solutions = []
-    if count == 0:
-        return solutions
-    solution = cryptominisat_solve(filename, use_docker)
-    if not solution:
-        return solutions
-    solution = solution[:support]
-    update_file(filename, solution)
-    return compute_solutions(filename, support, count - 1, solutions + [solution])
+    while True:
+        if solutions is None:
+            solutions = []
+        if count == 0:
+            return solutions
+        solution = cryptominisat_solve(filename, use_docker)
+        if not solution:
+            return solutions
+        solution = solution[:support]
+        update_file(filename, solution)
+        count -= 1
+        solutions += [solution]
 
 
 def update_file(filename: Path, solution: List[int]):

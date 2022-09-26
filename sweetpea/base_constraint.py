@@ -41,3 +41,11 @@ class Constraint(ABC):
         crossing or some other constraint.
         """
         return False
+
+    @abstractmethod
+    def potential_sample_conforms(self, sample: dict) -> bool:
+        """For rejection sampling, checks whether a given potential sample
+        matches a constraint, as long as crossing, exclusion, and
+        minimum-trial contraints are already satisfied.
+        """
+        pass
