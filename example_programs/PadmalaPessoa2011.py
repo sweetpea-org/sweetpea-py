@@ -4,7 +4,8 @@ sys.path.append("..")
 
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.constraints import at_most_k_in_a_row
-from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
+from sweetpea import fully_cross_block, synthesize_trials, print_experiments, save_cnf
+from sweetpea import NonUniformSamplingStrategy, UniformCombinatoricSamplingStrategy
 
 
 """
@@ -87,6 +88,7 @@ block        = fully_cross_block(design, crossing, constraints)
 
 # SOLVE
 
-experiments  = synthesize_trials_non_uniform(block, 5)
+experiments  = synthesize_trials(block, 5, NonUniformSamplingStrategy)
+# Won't find a solution: UniformCombinatoricSamplingStrategy
 
 print_experiments(block, experiments)

@@ -30,7 +30,7 @@ from dataclasses import InitVar, dataclass, field
 from itertools import product
 from random import randint
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, cast
-
+from sweetpea.internal.iter import chunk_list
 
 ###############################################################################
 ##
@@ -247,27 +247,9 @@ class DerivedLevel(Level):
                 and factor.levels[0].window.stride > 1):
                 raise ValueError(f"{type(self).__name__} does not accept factors with stride > 1, but factor "
                                  f"{factor.name} has window with stride {factor.first_level.window.stride}.")
-        # Expand the factors. Each factor gets duplicated according to the
-        # derivation window width.
-        # TODO: Why is `DerivedLevel` manipulating the internal state of
-        #       `DerivationWindow`? This should probably be moved to a
-        #       `DerivationWindow` method.
-        # TODO: This could probably be handled a different way, too.
-        # FIXME: Okay, this is becoming a nuisance.
-        #        In the original code, this expansion modifies the
-        #        `window.args` --- but it does not modify the `window.argc`
-        #        that was set on object initialization. This `window.argc`
-        #        value is then used in `DerivationProcessor.shift_window`. This
-        #        means that we need to preserve the *initial* count of factors
-        #        when we expand the factor list.
-        #            The takeaway is that this is an awful way to handle this,
-        #        because we are clearly not meant to be *actually* expanding
-        #        the factors. We need a less confusing --- and more
-        #        semantically consistent --- way of managing this information.
-        expanded_factors: List[Factor] = []
-        for factor in self.window.factors:
-            expanded_factors.extend([factor] * self.window.width)
-        self.window.factors = expanded_factors
+        # Depth helps order of filling in levels when derived factors depend
+        # on other derived factors
+        self._depth = max(map(lambda f: f._get_depth(), self.window.factors))
 
     def get_dependent_cross_product(self) -> List[Tuple[Level, ...]]:
         """Produces a list of n-tuples, where each tuple represents a unique
@@ -299,11 +281,21 @@ class DerivedLevel(Level):
 
         :rtype: typing.List[typing.Tuple[.Level, ...]]
         """
-        return list(product(*(factor.levels for factor in self.window.factors)))
+        return list(product(*(factor.levels for factor in self.window.factors for i in range(self.window.width))))
 
     def uses_factor(self, f: Factor):
         return any(list(map(lambda wf: wf.uses_factor(f), self.window.factors)))
 
+    def _matches_trial(self, sample: dict, i :int) -> bool:
+        """Check whether trial i (zero-based) in the sample matches this level's predicate."""
+        window = self.window
+        args = []
+        for f in window.factors:
+            for j in range(window.width):
+                args.append(sample[f.name][i-(window.width-1)+j])
+        if window.width > 1:
+            args = list(chunk_list(args, window.width))
+        return window.predicate(*args)
 
 @dataclass(eq=False)
 class ElseLevel(Level):
@@ -336,18 +328,8 @@ class ElseLevel(Level):
         if not other_levels:
             return DerivedLevel(self.name, WithinTrialDerivationWindow(lambda: False, []))
         first_level = other_levels[0]
-        # TODO: This is very odd. We only take every *n*th factor from the
-        #       derivation window (where *n* is the window's width). This is
-        #       because the initializer for `DerivedLevel`s expands the list of
-        #       factors to duplicate by the width.
-        #           It seems like this should be rethought. Why go through the
-        #       trouble of duplicating the factors only to de-duplicate them
-        #       later? Perhaps `DerivedLevel`s need a different internal
-        #       representation to avoid this real duplication.
-        factors = first_level.window.factors[::first_level.window.width]
-        # TODO: This exhibits the same issue as the preceding TODO.
         window = DerivationWindow(lambda *args: not any(map(lambda l: l.window.predicate(*args), other_levels)),
-                                  factors,
+                                  first_level.window.factors,
                                   first_level.window.width,
                                   first_level.window.stride)
         return DerivedLevel(self.name, window)
@@ -625,6 +607,11 @@ class Factor:
     def uses_factor(self, f: Factor):
         return self == f
 
+    def _get_depth(self):
+        if not isinstance(self, DerivedFactor):
+            return 0
+        return max(map(lambda l: cast(DerivedLevel, l)._depth, self.levels))+1
+
 @dataclass
 class SimpleFactor(Factor):
     """A :class:`.Factor` comprised of :class:`SimpleLevels <.SimpleLevel>`. If
@@ -748,6 +735,28 @@ class DerivedFactor(Factor):
     def uses_factor(self, f: Factor):
         return (self == f) or any(list(map(lambda l: l.uses_factor(f), self.levels)))
 
+    def potential_sample_conforms(self, sample: dict) -> bool:
+        window = self.first_level.window
+        trials = sample[self.name]
+        for i in range(window.width-1, len(trials), window.stride):
+            found = False
+            for l in self.levels:
+                if l.name == trials[i]:
+                    if not l._matches_trial(sample, i):
+                        return False
+                    found = True
+                    break
+            if not found:
+                return False
+        return True
+
+    def select_level_for_sample(self, i: int, sample: dict) -> Any:
+        """Get level name for trial i (zero-based) depending on
+        values of other factors already in the sample."""
+        for f in self.levels:
+            if f._matches_trial(sample, i):
+                return f.name
+        raise RuntimeError("no matching trial found when filling in a sample")
 
 ###############################################################################
 ##
@@ -808,10 +817,6 @@ class DerivationWindow:
     #: The stride of this window.
     stride: int
 
-    #: The number of factors that originally came in, disregarding any
-    #: expansion caused by a :class:`.DerivedLevel` changing things.
-    initial_factor_count: int = field(init=False)
-
     def __post_init__(self):
         # NOTE: We check the types for backwards compatibility, but it should
         #       be handled with type-checking.
@@ -831,7 +836,6 @@ class DerivationWindow:
             if factor.name in found_factor_names:
                 raise ValueError(f"Derivations do not accept repeated factors. Factor repeated: {factor.name}.")
             found_factor_names.add(factor.name)
-        self.initial_factor_count = len(self.factors)
 
     @property
     def size(self) -> Tuple[int, int]:

@@ -9,7 +9,7 @@ from math import ceil
 from itertools import chain
 
 from sweetpea.base_constraint import Constraint
-from sweetpea.internal import chunk, chunk_list
+from sweetpea.internal.iter import chunk, chunk_list
 from sweetpea.blocks import Block, FullyCrossBlock, MultipleCrossBlock
 from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import If, Iff, And, Or, Not

@@ -29,7 +29,6 @@ from .simple_sequence import SimpleSequence
 
 __all__ = ['Var', 'Clause', 'CNF']
 
-
 class Var:
     """A variable for use in a CNF formula.
 

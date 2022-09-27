@@ -10,7 +10,7 @@ from functools import reduce
 from sweetpea.primitives import DerivationWindow, DerivedFactor, DerivedLevel, Level
 from sweetpea.blocks import Block
 from sweetpea.constraints import Derivation
-from sweetpea.internal import chunk_list
+from sweetpea.internal.iter import chunk_list
 
 
 class DerivationProcessor:
@@ -134,7 +134,7 @@ class DerivationProcessor:
 
         shifted_idxs = cast(List[List[int]], [])
         shifted_sublists = cast(List[List[int]], [])
-        argc = window.initial_factor_count
+        argc = len(window.factors)
         for idx_list in indices:
             sublist_size = len(idx_list) // argc
             sublists = chunk_list(idx_list, sublist_size)

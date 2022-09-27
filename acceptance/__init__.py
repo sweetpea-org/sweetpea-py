@@ -5,7 +5,7 @@ from random import shuffle
 
 from sweetpea.primitives import Factor, SimpleLevel, DerivedLevel
 from sweetpea.constraints import at_most_k_in_a_row
-from sweetpea.internal import get_all_levels
+from sweetpea.internal.levels import get_all_levels
 from sweetpea.derivation_processor import DerivationProcessor
 import os
 

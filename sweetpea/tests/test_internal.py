@@ -1,6 +1,7 @@
 import operator as op
 
-from sweetpea.internal import get_all_external_level_names, intersperse
+from sweetpea.internal.levels import get_all_external_level_names
+from sweetpea.internal.iter import intersperse
 from sweetpea.primitives import Factor, DerivedLevel, Transition
 
 

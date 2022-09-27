@@ -5,7 +5,7 @@ from itertools import repeat
 from functools import reduce
 
 from sweetpea.primitives import DerivedFactor, get_external_level_name
-from sweetpea.internal import get_all_external_level_names
+from sweetpea.internal.levels import get_all_external_level_names
 from sweetpea.blocks import Block
 
 

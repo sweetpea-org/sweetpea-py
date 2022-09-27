@@ -3,7 +3,7 @@ from typing import List, cast
 from itertools import repeat
 
 from sweetpea.blocks import Block
-from sweetpea.internal import intersperse
+from sweetpea.internal.iter import intersperse
 
 
 """

@@ -12,14 +12,14 @@ from math import ceil
 from networkx import has_path
 
 from sweetpea.backend import BackendRequest
-from sweetpea.internal import get_all_levels
+from sweetpea.internal.levels import get_all_levels
 from sweetpea.primitives import (
     DerivedFactor, DerivedLevel, ElseLevel, Factor, SimpleLevel,
     get_external_level_name, get_internal_level_name)
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.base_constraint import Constraint
 from sweetpea.design_graph import DesignGraph
-from sweetpea.internal import chunk_list
+from sweetpea.internal.iter import chunk_list
 
 class Block:
     """Abstract class for Blocks. Contains the required data, and defines
@@ -226,6 +226,7 @@ class Block:
             if not self._simple_tuples:
                 simple_factors = list(filter(lambda f: not f.has_complex_window, self.act_design))
                 self._simple_tuples = get_all_levels(simple_factors)
+            assert self._simple_tuples # for the type checker
             return self._simple_tuples[variable]
         else:
             complex_factors = list(filter(lambda f: f.has_complex_window, self.act_design))
@@ -256,7 +257,7 @@ class Block:
 
     def _is_excluded(self, di: Dict[Factor, SimpleLevel]) -> bool:
         """Like is_excluded, but for an argument in terms of a Factor and Level object."""
-        return any(list(map(lambda e: all(list(map(lambda ex_level: e[ex_level] == di[ex_level], e))), self.excluded_derived)))
+        return any(map(lambda e: all(map(lambda ex_level: e[ex_level] == di[ex_level], e)), self.excluded_derived))
 
     def filter_excluded_derived_levels(self, l: List[List[List[Tuple[int, ...]]]]) -> List[List[List[Tuple[int, ...]]]]:
         """Given a list of trials, the function filters the trials invalid as
@@ -339,7 +340,7 @@ class Block:
         return not any(list(map(lambda c: c.uses_factor(f), self.constraints)))
 
     def add_implied_levels(self, results: dict) -> dict:
-        """Given a dictionry for an experiment that maps all non-implied factors to their levels,
+        """Given a dictionary for an experiment that maps all non-implied factors to their levels,
         adds level values for implied factors"""
         n = len(list(results.values())[0])
         for f in self.design:
@@ -354,8 +355,9 @@ class Block:
                                 w = l.window
                                 args = []
                                 for idx, df in enumerate(w.factors):
-                                    shift = w.width - (idx % w.width) - 1
-                                    args.append(results[df.name][i-shift])
+                                    for j in range(w.width):
+                                        shift = w.width - j - 1
+                                        args.append(results[df.name][i-shift])
                                 if w.width > 1:
                                     args = list(chunk_list(args, w.width))
                                 if w.predicate(*args):
@@ -440,14 +442,16 @@ class _CrossBlock(Block):
                 counter += 1
         return trial
 
-    def trials_per_sample(self):
-        if self._trials_per_sample:
-            return self._trials_per_sample
+    def _trials_per_sample_for_crossing(self):
         crossing_size = max(map(lambda c: self.crossing_size(c), self.crossings))
         required_trials = list(map(max, list(map(lambda c: list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size), c)),
                                                  self.crossings))))
-        required_trials.append(self.min_trials)
-        self._trials_per_sample = max(required_trials)
+        return max(required_trials)
+
+    def trials_per_sample(self):
+        if self._trials_per_sample:
+            return self._trials_per_sample
+        self._trials_per_sample = max([self.min_trials, self._trials_per_sample_for_crossing()])
         return self._trials_per_sample
 
     def variables_per_trial(self):
@@ -503,9 +507,9 @@ class _CrossBlock(Block):
                 # For each crossing, ensure that atleast one combination is possible with the design-only factors
                 # keeping in mind the exclude contraints.
                 for c in all_crossings:
-                    if all(list(map(lambda d: self.__excluded_derived(excluded_level, c+d),
-                                    list(product(*[list(f.levels) for f in filter(lambda f: f not in crossing,
-                                                                                  self.act_design)]))))):
+                    if all(map(lambda d: self.__excluded_derived(excluded_level, c+d),
+                               list(product(*[list(f.levels) for f in filter(lambda f: f not in crossing,
+                                                                             self.act_design)])))):
                         excluded_crossings.add(tuple([get_internal_level_name(l) for l in c]))
                         excluded_external_names.add(', '.join([get_external_level_name(l) for l in c]))
         if self.require_complete_crossing and len(excluded_crossings) != 0:

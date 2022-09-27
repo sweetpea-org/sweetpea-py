@@ -60,3 +60,9 @@ class DesignPartitions():
 
     def get_uncrossed_derived_factors(self):
         return list(filter(lambda f: f.is_derived(), self.get_uncrossed_factors()))
+
+    def get_basic_factors(self):
+        return list(filter(lambda f: not f.is_derived(), self._block.act_design))
+
+    def get_derived_factors(self):
+        return list(filter(lambda f: f.is_derived(), self._block.act_design))
