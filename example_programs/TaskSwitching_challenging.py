@@ -1,6 +1,12 @@
+# Make SweetPea visible regardless of whether it's been installed.
+import sys
+sys.path.append("..")
+
 from sweetpea.constraints import *
 from sweetpea.primitives import derived_level, within_trial, transition
-from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
+from sweetpea import fully_cross_block, synthesize_trials, print_experiments
+from sweetpea import NonUniformSamplingStrategy, UniformCombinatoricSamplingStrategy
+
 """
 Task Switching Design (challenging)
 ***********************************
@@ -84,15 +90,15 @@ if size-size     then task transition = repetition
 otherwise switch
 """
 
-def task_repeat(color0, color1, motion0, motion1, size0, size1):
-    return (color0 == color1) or (motion0 == motion1) or (size0 == size1)
+def task_repeat(color, motion, size):
+    return (color[0] == color[1]) or (motion[0] == motion[1]) or (size[0] == size[1])
 
-def task_switch(color0, color1, motion0, motion1):
-    return not task_repeat(color0, color1, motion0, motion1)
+def task_switch(color, motion, size):
+    return not task_repeat(color, motion, size)
 
 task_transition = Factor("task_transition", [
-    derived_level("repeat", transition(task_repeat,   [task])),
-    derived_level("switch", transition(task_switch, [task]))
+    derived_level("repeat", transition(task_repeat, [color, motion, size])),
+    derived_level("switch", transition(task_switch, [color, motion, size]))
 ])
 
 """
@@ -115,11 +121,11 @@ if left-right then task transition = switch
 if right-left then task transition = switch
 """
 
-def response_repeat(response0, response1):
-    return (response0 == response1)
+def response_repeat(response):
+    return (response[0] == response[1])
 
-def response_switch(response0, response1):
-    return not response_repeat(response0, response1)
+def response_switch(response):
+    return not response_repeat(response)
 
 resp_transition = Factor("resp_transition", [
     derived_level("repeat", transition(response_repeat, [response])),
@@ -137,5 +143,8 @@ design       = [color, motion, size, task, congruency, response, task_transition
 
 crossing     = [color, motion, size, task]
 block        = fully_cross_block(design, crossing, constraints)
-experiments = synthesize_trials_non_uniform(block, 5)
-(nVars, cnf) = synthesize_trials(experiments)
+
+experiments  = synthesize_trials(block, 5, NonUniformSamplingStrategy)
+# Could also use UniformCombinatoricSamplingStrategy
+
+print_experiments(block, experiments)

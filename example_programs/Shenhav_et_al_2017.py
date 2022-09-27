@@ -6,7 +6,6 @@ from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.constraints import at_most_k_in_a_row
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
 import numpy as np
-import psyneulink as pnl
 
 # GENERATING EXPERIMENT SEQUENCE FOR AN EXPERIMENT BLOCK IN SHENHAV ET AL. 2017
 
@@ -104,6 +103,8 @@ motionInputSequence = np.multiply(np.asarray(experiments[0]["motion coherence"])
 # BUILD PSYNEULINK MODEL
 
 print("SIMULATING EXPERIMENT WITH PSYNEULINK MODEL...")
+
+import psyneulink as pnl
 
 optimal_color_control = 0.69
 optimal_motion_control = 0.18

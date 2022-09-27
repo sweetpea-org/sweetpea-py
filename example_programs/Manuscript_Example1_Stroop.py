@@ -46,7 +46,7 @@ response = Factor("response", [
 
 # constraints
 
-constraints = [minimum_trials(20), exclude(congruency, conLevel)]
+constraints = [minimum_trials(20)]
 
 # experiment
 
