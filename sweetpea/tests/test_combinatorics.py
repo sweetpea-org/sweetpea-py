@@ -67,37 +67,37 @@ def test_extract_components(sizes, n, expected):
     [10, factorial(10) - 1, [9, 8, 7, 6, 5, 4, 3, 2, 1, 0]],
 ])
 def test_compute_jth_inversion_sequence(n, j, sequence):
-    assert compute_jth_inversion_sequence(n, j) == sequence
+    assert compute_jth_inversion_sequence(n, n, j) == sequence
 
 
 @pytest.mark.parametrize('inversion_sequence, expected_permutation', [
     [[0, 0, 0, 0], [0, 1, 2, 3]],
     [[1, 0, 0, 0], [1, 0, 2, 3]],
-    [[2, 0, 0, 0], [1, 2, 0, 3]],
-    [[3, 0, 0, 0], [1, 2, 3, 0]],
+    [[2, 0, 0, 0], [2, 0, 1, 3]],
+    [[3, 0, 0, 0], [3, 0, 1, 2]],
     [[0, 1, 0, 0], [0, 2, 1, 3]],
-    [[1, 1, 0, 0], [2, 0, 1, 3]],
+    [[1, 1, 0, 0], [1, 2, 0, 3]],
     [[2, 1, 0, 0], [2, 1, 0, 3]],
-    [[3, 1, 0, 0], [2, 1, 3, 0]],
-    [[0, 2, 0, 0], [0, 2, 3, 1]],
-    [[1, 2, 0, 0], [2, 0, 3, 1]],
+    [[3, 1, 0, 0], [3, 1, 0, 2]],
+    [[0, 2, 0, 0], [0, 3, 1, 2]],
+    [[1, 2, 0, 0], [1, 3, 0, 2]],
     [[2, 2, 0, 0], [2, 3, 0, 1]],
-    [[3, 2, 0, 0], [2, 3, 1, 0]],
+    [[3, 2, 0, 0], [3, 2, 0, 1]],
     [[0, 0, 1, 0], [0, 1, 3, 2]],
     [[1, 0, 1, 0], [1, 0, 3, 2]],
-    [[2, 0, 1, 0], [1, 3, 0, 2]],
-    [[3, 0, 1, 0], [1, 3, 2, 0]],
-    [[0, 1, 1, 0], [0, 3, 1, 2]],
-    [[1, 1, 1, 0], [3, 0, 1, 2]],
-    [[2, 1, 1, 0], [3, 1, 0, 2]],
+    [[2, 0, 1, 0], [2, 0, 3, 1]],
+    [[3, 0, 1, 0], [3, 0, 2, 1]],
+    [[0, 1, 1, 0], [0, 2, 3, 1]],
+    [[1, 1, 1, 0], [1, 2, 3, 0]],
+    [[2, 1, 1, 0], [2, 1, 3, 0]],
     [[3, 1, 1, 0], [3, 1, 2, 0]],
     [[0, 2, 1, 0], [0, 3, 2, 1]],
-    [[1, 2, 1, 0], [3, 0, 2, 1]],
-    [[2, 2, 1, 0], [3, 2, 0, 1]],
+    [[1, 2, 1, 0], [1, 3, 2, 0]],
+    [[2, 2, 1, 0], [2, 3, 1, 0]],
     [[3, 2, 1, 0], [3, 2, 1, 0]]
 ])
 def test_construct_permutation(inversion_sequence, expected_permutation):
-    assert construct_permutation(inversion_sequence) == expected_permutation
+    assert construct_permutation(inversion_sequence, len(inversion_sequence)) == expected_permutation
 
 
 @pytest.mark.parametrize('l, n, j, expected_combination', [

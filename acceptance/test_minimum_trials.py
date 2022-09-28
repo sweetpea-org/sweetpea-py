@@ -25,7 +25,7 @@ def test_stays_balanced(strategy, trial_count):
         for cond in conds:
             assert len(conds) == trial_count
 
-        to_go =  trial_count
+        to_go = trial_count
         while to_go > 0:
             tabulation: Dict[List[str], bool] = dict()
             for cond in conds[:crossing_size]:
@@ -33,3 +33,26 @@ def test_stays_balanced(strategy, trial_count):
                 tabulation[cond] = True
             to_go -= crossing_size
             cond = cond[crossing_size:]
+
+@pytest.mark.parametrize('strategy', [NonUniformSamplingStrategy, UniformCombinatoricSamplingStrategy])
+@pytest.mark.parametrize('trial_count', [4, 5, 6])
+def test_leftovers_balanced_across_all_possible_colutions(strategy, trial_count):
+    block  = fully_cross_block(design=design, crossing=crossing, constraints=[minimum_trials(trials=trial_count)])
+    experiments = synthesize_trials(block=block, samples=500, sampling_strategy = strategy)
+
+    leftover = trial_count % 4
+
+    def factorial(n):
+        if n < 2:
+            return 1
+        else:
+            return n * factorial(n - 1)
+
+    assert len(experiments) == 24 * (24 // factorial(4 - leftover))
+
+    # Make sure the solutions are actually distinct
+    tabulation: Dict[List[str], bool] = dict()
+    for e in experiments:
+        key = tuple([(k, tuple(e[k])) for k in e])
+        assert not key in tabulation
+        tabulation[key] = True

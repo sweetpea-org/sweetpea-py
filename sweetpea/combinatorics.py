@@ -21,44 +21,52 @@ def extract_components(sizes: List[int], n: int) -> List[int]:
     return components
 
 
-def compute_jth_inversion_sequence(n, j):
+def compute_jth_inversion_sequence(n, m, j):
     """The are ``n!`` permutations of ``n`` elements. Each permutation can be
     uniquely identified by and constructed from its "inversion sequence". This
     function will compute the ``j``th inversion sequence for a set of ``n``
     elements.
 
+    To deal with permutation prefixes, our ``j`` selects only the
+    first m of n possible values. Also, we're going to change the
+    usual meaning of an inversion sequence, using the values that we
+    peel off (to construct a permutation) to mean how many unused
+    numbers we skip over, because we want a prefix of the sequence to
+    be able to represent any permutation prefix.
+
     Information on inversion sequences can be found:
 
     - `MathOnline <http://mathonline.wikidot.com/the-inversion-sequence-of-a-permutation>`__
     - "Introductory Combinatorics" by Richard A. Brualdi, ISBN 978-0136020400.
+
     """
     inversion = []
-    for k in range(n, 1, -1):
+    for k in range(n, n-m, -1):
         result = j % k
         inversion.append(result)
         j //= k
 
-    inversion.append(0)
     return inversion
 
 
-def construct_permutation(inversion_sequence: List[int]) -> List[int]:
+def construct_permutation(inversion_sequence: List[int], orig_n: int) -> List[int]:
     """Given an inversion sequence, construct the permutation."""
-    length = len(inversion_sequence)
-    permutation = cast(List[int], [None] * len(inversion_sequence))
-    for n, b in enumerate(inversion_sequence):
+    used = [False for i in range(orig_n)]
+    permutation = [-1 for i in inversion_sequence]
+    for n, skip in enumerate(inversion_sequence):
         idx = 0
-        step = -1
-        while idx < length:
-            if permutation[idx] == None:
-                step += 1
-                if step == b:
-                    break
+        while used[idx]:
             idx += 1
-        permutation[idx] = n
+        while skip > 0:
+            if not used[idx]:
+                skip -= 1
+            idx += 1
+        while used[idx]:
+            idx += 1
+        permutation[n] = idx
+        used[idx] = True
 
     return permutation
-
 
 def compute_jth_combination(l, n, j):
     """In a sequence of ``l`` items, where there are ``n`` choices for each

@@ -59,27 +59,27 @@ def test_generate_source_combinations():
 @pytest.mark.parametrize('sequence_number, expected_solution', [
 [0, {'color': ['red', 'red', 'blue', 'blue'], 'text': ['red', 'blue', 'red', 'blue'], 'congruency': ['congruent', 'incongruent', 'incongruent', 'congruent']}],
 [1, {'color': ['red', 'red', 'blue', 'blue'], 'text': ['blue', 'red', 'red', 'blue'], 'congruency': ['incongruent', 'congruent', 'incongruent', 'congruent']}],
-[2, {'color': ['red', 'blue', 'red', 'blue'], 'text': ['blue', 'red', 'red', 'blue'], 'congruency': ['incongruent', 'incongruent', 'congruent', 'congruent']}],
-[3, {'color': ['red', 'blue', 'blue', 'red'], 'text': ['blue', 'red', 'blue', 'red'], 'congruency': ['incongruent', 'incongruent', 'congruent', 'congruent']}],
+[2, {'color': ['blue', 'red', 'red', 'blue'], 'text': ['red', 'red', 'blue', 'blue'], 'congruency': ['incongruent', 'congruent', 'incongruent', 'congruent']}],
+[3, {'color': ['blue', 'red', 'red', 'blue'], 'text': ['blue', 'red', 'blue', 'red'], 'congruency': ['congruent', 'congruent', 'incongruent', 'incongruent']}],
 [4, {'color': ['red', 'blue', 'red', 'blue'], 'text': ['red', 'red', 'blue', 'blue'], 'congruency': ['congruent', 'incongruent', 'incongruent', 'congruent']}],
-[5, {'color': ['blue', 'red', 'red', 'blue'], 'text': ['red', 'red', 'blue', 'blue'], 'congruency': ['incongruent', 'congruent', 'incongruent', 'congruent']}],
+[5, {'color': ['red', 'blue', 'red', 'blue'], 'text': ['blue', 'red', 'red', 'blue'], 'congruency': ['incongruent', 'incongruent', 'congruent', 'congruent']}],
 [6, {'color': ['blue', 'red', 'red', 'blue'], 'text': ['red', 'blue', 'red', 'blue'], 'congruency': ['incongruent', 'incongruent', 'congruent', 'congruent']}],
-[7, {'color': ['blue', 'red', 'blue', 'red'], 'text': ['red', 'blue', 'blue', 'red'], 'congruency': ['incongruent', 'incongruent', 'congruent', 'congruent']}],
-[8, {'color': ['red', 'blue', 'blue', 'red'], 'text': ['red', 'red', 'blue', 'blue'], 'congruency': ['congruent', 'incongruent', 'congruent', 'incongruent']}],
-[9, {'color': ['blue', 'red', 'blue', 'red'], 'text': ['red', 'red', 'blue', 'blue'], 'congruency': ['incongruent', 'congruent', 'congruent', 'incongruent']}],
+[7, {'color': ['blue', 'red', 'red', 'blue'], 'text': ['blue', 'blue', 'red', 'red'], 'congruency': ['congruent', 'incongruent', 'congruent', 'incongruent']}],
+[8, {'color': ['red', 'blue', 'red', 'blue'], 'text': ['red', 'blue', 'blue', 'red'], 'congruency': ['congruent', 'congruent', 'incongruent', 'incongruent']}],
+[9, {'color': ['red', 'blue', 'red', 'blue'], 'text': ['blue', 'blue', 'red', 'red'], 'congruency': ['incongruent', 'congruent', 'congruent', 'incongruent']}],
 [10, {'color': ['blue', 'blue', 'red', 'red'], 'text': ['red', 'blue', 'red', 'blue'], 'congruency': ['incongruent', 'congruent', 'congruent', 'incongruent']}],
-[11, {'color': ['blue', 'blue', 'red', 'red'], 'text': ['red', 'blue', 'blue', 'red'], 'congruency': ['incongruent', 'congruent', 'incongruent', 'congruent']}],
+[11, {'color': ['blue', 'blue', 'red', 'red'], 'text': ['blue', 'red', 'red', 'blue'], 'congruency': ['congruent', 'incongruent', 'congruent', 'incongruent']}],
 [12, {'color': ['red', 'red', 'blue', 'blue'], 'text': ['red', 'blue', 'blue', 'red'], 'congruency': ['congruent', 'incongruent', 'congruent', 'incongruent']}],
 [13, {'color': ['red', 'red', 'blue', 'blue'], 'text': ['blue', 'red', 'blue', 'red'], 'congruency': ['incongruent', 'congruent', 'congruent', 'incongruent']}],
-[14, {'color': ['red', 'blue', 'red', 'blue'], 'text': ['blue', 'blue', 'red', 'red'], 'congruency': ['incongruent', 'congruent', 'congruent', 'incongruent']}],
-[15, {'color': ['red', 'blue', 'blue', 'red'], 'text': ['blue', 'blue', 'red', 'red'], 'congruency': ['incongruent', 'congruent', 'incongruent', 'congruent']}],
-[16, {'color': ['red', 'blue', 'red', 'blue'], 'text': ['red', 'blue', 'blue', 'red'], 'congruency': ['congruent', 'congruent', 'incongruent', 'incongruent']}],
-[17, {'color': ['blue', 'red', 'red', 'blue'], 'text': ['blue', 'red', 'blue', 'red'], 'congruency': ['congruent', 'congruent', 'incongruent', 'incongruent']}],
-[18, {'color': ['blue', 'red', 'red', 'blue'], 'text': ['blue', 'blue', 'red', 'red'], 'congruency': ['congruent', 'incongruent', 'congruent', 'incongruent']}],
+[14, {'color': ['blue', 'red', 'blue', 'red'], 'text': ['red', 'red', 'blue', 'blue'], 'congruency': ['incongruent', 'congruent', 'congruent', 'incongruent']}],
+[15, {'color': ['blue', 'red', 'blue', 'red'], 'text': ['blue', 'red', 'red', 'blue'], 'congruency': ['congruent', 'congruent', 'incongruent', 'incongruent']}],
+[16, {'color': ['red', 'blue', 'blue', 'red'], 'text': ['red', 'red', 'blue', 'blue'], 'congruency': ['congruent', 'incongruent', 'congruent', 'incongruent']}],
+[17, {'color': ['red', 'blue', 'blue', 'red'], 'text': ['blue', 'red', 'blue', 'red'], 'congruency': ['incongruent', 'incongruent', 'congruent', 'congruent']}],
+[18, {'color': ['blue', 'red', 'blue', 'red'], 'text': ['red', 'blue', 'blue', 'red'], 'congruency': ['incongruent', 'incongruent', 'congruent', 'congruent']}],
 [19, {'color': ['blue', 'red', 'blue', 'red'], 'text': ['blue', 'blue', 'red', 'red'], 'congruency': ['congruent', 'incongruent', 'incongruent', 'congruent']}],
 [20, {'color': ['red', 'blue', 'blue', 'red'], 'text': ['red', 'blue', 'red', 'blue'], 'congruency': ['congruent', 'congruent', 'incongruent', 'incongruent']}],
-[21, {'color': ['blue', 'red', 'blue', 'red'], 'text': ['blue', 'red', 'red', 'blue'], 'congruency': ['congruent', 'congruent', 'incongruent', 'incongruent']}],
-[22, {'color': ['blue', 'blue', 'red', 'red'], 'text': ['blue', 'red', 'red', 'blue'], 'congruency': ['congruent', 'incongruent', 'congruent', 'incongruent']}],
+[21, {'color': ['red', 'blue', 'blue', 'red'], 'text': ['blue', 'blue', 'red', 'red'], 'congruency': ['incongruent', 'congruent', 'incongruent', 'congruent']}],
+[22, {'color': ['blue', 'blue', 'red', 'red'], 'text': ['red', 'blue', 'blue', 'red'], 'congruency': ['incongruent', 'congruent', 'incongruent', 'congruent']}],
 [23, {'color': ['blue', 'blue', 'red', 'red'], 'text': ['blue', 'red', 'blue', 'red'], 'congruency': ['congruent', 'incongruent', 'incongruent', 'congruent']}]
 ])
 def test_generate_sample_basic_stroop(sequence_number, expected_solution):
@@ -89,32 +89,31 @@ def test_generate_sample_basic_stroop(sequence_number, expected_solution):
     enumerator = UCSolutionEnumerator(block)
     assert enumerator.generate_sample(sequence_number) == expected_solution
 
-    
 @pytest.mark.parametrize('sequence_number, expected_solution', [
-[0, {'color': ['red', 'red', 'blue', 'blue'], 'text': ['red', 'blue', 'blue', 'red'], 'congruency': ['congruent', 'incongruent', 'congruent', 'incongruent']}],
-[1, {'color': ['red', 'red', 'blue', 'blue'], 'text': ['blue', 'red', 'blue', 'red'], 'congruency': ['incongruent', 'congruent', 'congruent', 'incongruent']}],
-[2, {'color': ['red', 'blue', 'red', 'blue'], 'text': ['blue', 'blue', 'red', 'red'], 'congruency': ['incongruent', 'congruent', 'congruent', 'incongruent']}],
-[3, {'color': ['red', 'blue', 'blue', 'red'], 'text': ['blue', 'blue', 'red', 'red'], 'congruency': ['incongruent', 'congruent', 'incongruent', 'congruent']}],
-[4, {'color': ['red', 'blue', 'red', 'blue'], 'text': ['red', 'blue', 'blue', 'red'], 'congruency': ['congruent', 'congruent', 'incongruent', 'incongruent']}],
-[5, {'color': ['blue', 'red', 'red', 'blue'], 'text': ['blue', 'red', 'blue', 'red'], 'congruency': ['congruent', 'congruent', 'incongruent', 'incongruent']}],
-[6, {'color': ['blue', 'red', 'red', 'blue'], 'text': ['blue', 'blue', 'red', 'red'], 'congruency': ['congruent', 'incongruent', 'congruent', 'incongruent']}],
-[7, {'color': ['blue', 'red', 'blue', 'red'], 'text': ['blue', 'blue', 'red', 'red'], 'congruency': ['congruent', 'incongruent', 'incongruent', 'congruent']}],
-[8, {'color': ['red', 'blue', 'blue', 'red'], 'text': ['red', 'blue', 'red', 'blue'], 'congruency': ['congruent', 'congruent', 'incongruent', 'incongruent']}],
-[9, {'color': ['blue', 'red', 'blue', 'red'], 'text': ['blue', 'red', 'red', 'blue'], 'congruency': ['congruent', 'congruent', 'incongruent', 'incongruent']}],
-[10, {'color': ['blue', 'blue', 'red', 'red'], 'text': ['blue', 'red', 'red', 'blue'], 'congruency': ['congruent', 'incongruent', 'congruent', 'incongruent']}],
-[11, {'color': ['blue', 'blue', 'red', 'red'], 'text': ['blue', 'red', 'blue', 'red'], 'congruency': ['congruent', 'incongruent', 'incongruent', 'congruent']}],
-[12, {'color': ['red', 'red', 'blue', 'blue'], 'text': ['red', 'blue', 'red', 'blue'], 'congruency': ['congruent', 'incongruent', 'incongruent', 'congruent']}],
-[13, {'color': ['red', 'red', 'blue', 'blue'], 'text': ['blue', 'red', 'red', 'blue'], 'congruency': ['incongruent', 'congruent', 'incongruent', 'congruent']}],
-[14, {'color': ['red', 'blue', 'red', 'blue'], 'text': ['blue', 'red', 'red', 'blue'], 'congruency': ['incongruent', 'incongruent', 'congruent', 'congruent']}],
-[15, {'color': ['red', 'blue', 'blue', 'red'], 'text': ['blue', 'red', 'blue', 'red'], 'congruency': ['incongruent', 'incongruent', 'congruent', 'congruent']}],
-[16, {'color': ['red', 'blue', 'red', 'blue'], 'text': ['red', 'red', 'blue', 'blue'], 'congruency': ['congruent', 'incongruent', 'incongruent', 'congruent']}],
-[17, {'color': ['blue', 'red', 'red', 'blue'], 'text': ['red', 'red', 'blue', 'blue'], 'congruency': ['incongruent', 'congruent', 'incongruent', 'congruent']}],
-[18, {'color': ['blue', 'red', 'red', 'blue'], 'text': ['red', 'blue', 'red', 'blue'], 'congruency': ['incongruent', 'incongruent', 'congruent', 'congruent']}],
-[19, {'color': ['blue', 'red', 'blue', 'red'], 'text': ['red', 'blue', 'blue', 'red'], 'congruency': ['incongruent', 'incongruent', 'congruent', 'congruent']}],
-[20, {'color': ['red', 'blue', 'blue', 'red'], 'text': ['red', 'red', 'blue', 'blue'], 'congruency': ['congruent', 'incongruent', 'congruent', 'incongruent']}],
-[21, {'color': ['blue', 'red', 'blue', 'red'], 'text': ['red', 'red', 'blue', 'blue'], 'congruency': ['incongruent', 'congruent', 'congruent', 'incongruent']}],
-[22, {'color': ['blue', 'blue', 'red', 'red'], 'text': ['red', 'blue', 'red', 'blue'], 'congruency': ['incongruent', 'congruent', 'congruent', 'incongruent']}],
-[23, {'color': ['blue', 'blue', 'red', 'red'], 'text': ['red', 'blue', 'blue', 'red'], 'congruency': ['incongruent', 'congruent', 'incongruent', 'congruent']}]
+[0, {'color': ['red', 'red', 'blue', 'blue'], 'congruency': ['congruent', 'incongruent', 'congruent', 'incongruent'], 'text': ['red', 'blue', 'blue', 'red']}],
+[1, {'color': ['red', 'red', 'blue', 'blue'], 'congruency': ['incongruent', 'congruent', 'congruent', 'incongruent'], 'text': ['blue', 'red', 'blue', 'red']}],
+[2, {'color': ['blue', 'red', 'red', 'blue'], 'congruency': ['congruent', 'congruent', 'incongruent', 'incongruent'], 'text': ['blue', 'red', 'blue', 'red']}],
+[3, {'color': ['blue', 'red', 'red', 'blue'], 'congruency': ['incongruent', 'congruent', 'incongruent', 'congruent'], 'text': ['red', 'red', 'blue', 'blue']}],
+[4, {'color': ['red', 'blue', 'red', 'blue'], 'congruency': ['congruent', 'congruent', 'incongruent', 'incongruent'], 'text': ['red', 'blue', 'blue', 'red']}],
+[5, {'color': ['red', 'blue', 'red', 'blue'], 'congruency': ['incongruent', 'congruent', 'congruent', 'incongruent'], 'text': ['blue', 'blue', 'red', 'red']}],
+[6, {'color': ['blue', 'red', 'red', 'blue'], 'congruency': ['congruent', 'incongruent', 'congruent', 'incongruent'], 'text': ['blue', 'blue', 'red', 'red']}],
+[7, {'color': ['blue', 'red', 'red', 'blue'], 'congruency': ['incongruent', 'incongruent', 'congruent', 'congruent'], 'text': ['red', 'blue', 'red', 'blue']}],
+[8, {'color': ['red', 'blue', 'red', 'blue'], 'congruency': ['congruent', 'incongruent', 'incongruent', 'congruent'], 'text': ['red', 'red', 'blue', 'blue']}],
+[9, {'color': ['red', 'blue', 'red', 'blue'], 'congruency': ['incongruent', 'incongruent', 'congruent', 'congruent'], 'text': ['blue', 'red', 'red', 'blue']}],
+[10, {'color': ['blue', 'blue', 'red', 'red'], 'congruency': ['congruent', 'incongruent', 'congruent', 'incongruent'], 'text': ['blue', 'red', 'red', 'blue']}],
+[11, {'color': ['blue', 'blue', 'red', 'red'], 'congruency': ['incongruent', 'congruent', 'congruent', 'incongruent'], 'text': ['red', 'blue', 'red', 'blue']}],
+[12, {'color': ['red', 'red', 'blue', 'blue'], 'congruency': ['congruent', 'incongruent', 'incongruent', 'congruent'], 'text': ['red', 'blue', 'red', 'blue']}],
+[13, {'color': ['red', 'red', 'blue', 'blue'], 'congruency': ['incongruent', 'congruent', 'incongruent', 'congruent'], 'text': ['blue', 'red', 'red', 'blue']}],
+[14, {'color': ['blue', 'red', 'blue', 'red'], 'congruency': ['congruent', 'congruent', 'incongruent', 'incongruent'], 'text': ['blue', 'red', 'red', 'blue']}],
+[15, {'color': ['blue', 'red', 'blue', 'red'], 'congruency': ['incongruent', 'congruent', 'congruent', 'incongruent'], 'text': ['red', 'red', 'blue', 'blue']}],
+[16, {'color': ['red', 'blue', 'blue', 'red'], 'congruency': ['congruent', 'congruent', 'incongruent', 'incongruent'], 'text': ['red', 'blue', 'red', 'blue']}],
+[17, {'color': ['red', 'blue', 'blue', 'red'], 'congruency': ['incongruent', 'congruent', 'incongruent', 'congruent'], 'text': ['blue', 'blue', 'red', 'red']}],
+[18, {'color': ['blue', 'red', 'blue', 'red'], 'congruency': ['congruent', 'incongruent', 'incongruent', 'congruent'], 'text': ['blue', 'blue', 'red', 'red']}],
+[19, {'color': ['blue', 'red', 'blue', 'red'], 'congruency': ['incongruent', 'incongruent', 'congruent', 'congruent'], 'text': ['red', 'blue', 'blue', 'red']}],
+[20, {'color': ['red', 'blue', 'blue', 'red'], 'congruency': ['congruent', 'incongruent', 'congruent', 'incongruent'], 'text': ['red', 'red', 'blue', 'blue']}],
+[21, {'color': ['red', 'blue', 'blue', 'red'], 'congruency': ['incongruent', 'incongruent', 'congruent', 'congruent'], 'text': ['blue', 'red', 'blue', 'red']}],
+[22, {'color': ['blue', 'blue', 'red', 'red'], 'congruency': ['congruent', 'incongruent', 'incongruent', 'congruent'], 'text': ['blue', 'red', 'blue', 'red']}],
+[23, {'color': ['blue', 'blue', 'red', 'red'], 'congruency': ['incongruent', 'congruent', 'incongruent', 'congruent'], 'text': ['red', 'blue', 'blue', 'red']}]
 ])
 def test_generate_sample_basic_stroop_variation(sequence_number, expected_solution):
     block = fully_cross_block([color, text, congruency],
@@ -123,7 +122,6 @@ def test_generate_sample_basic_stroop_variation(sequence_number, expected_soluti
     enumerator = UCSolutionEnumerator(block)
     print (enumerator.generate_sample(sequence_number))
     assert enumerator.generate_sample(sequence_number) == expected_solution
-
 
 # ---------------------------------------------------------------
 # |   Trial |  color   |      text      |      congruency       |
@@ -137,7 +135,7 @@ def test_generate_sample_basic_stroop_variation(sequence_number, expected_soluti
 @pytest.mark.parametrize('sequence_number, expected_solution', [
 [0, {'color': ['red', 'red', 'blue', 'blue'], 'text': ['red', 'blue', 'blue', 'red'], 'congruency': ['congruent', 'incongruent', 'congruent', 'incongruent']}],
 [1, {'color': ['red', 'red', 'blue', 'blue'], 'text': ['blue', 'red', 'blue', 'red'], 'congruency': ['incongruent', 'congruent', 'congruent', 'incongruent']}],
-[41, {'color': ['blue', 'red', 'red', 'blue'], 'text': ['red', 'red', 'green', 'blue'], 'congruency': ['incongruent', 'congruent', 'incongruent', 'congruent']}]
+[41, {'color': ['red', 'blue', 'blue', 'red'], 'text': ['green', 'blue', 'red', 'red'], 'congruency': ['incongruent', 'congruent', 'incongruent', 'congruent']}]
 ])
 def test_generate_sample_basic_stroop_uneven_colors(sequence_number, expected_solution):
     text = Factor("text", ["red", "blue", "green"])

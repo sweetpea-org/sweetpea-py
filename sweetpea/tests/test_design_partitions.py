@@ -29,7 +29,7 @@ def test_get_crossed_factors():
 
 def test_get_crossed_factors_derived():
     partitions = DesignPartitions(block)
-    assert partitions.get_crossed_factors_derived() == [congruency]
+    assert partitions.get_crossed_derived_factors() == [congruency]
 
 
 def test_get_uncrossed_basic_factors():
