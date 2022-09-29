@@ -687,7 +687,14 @@ class Exclude(Constraint):
         return False
 
     def potential_sample_conforms(self, sample: dict) -> bool:
-        # conformance by construction in combinatoric
+        # conformance by construction in combinatoric for simple factors, but
+        # we have to check exlcusions based on complex factors
+        if self.factor.has_complex_window:
+            levels = sample[self.factor.name]
+            level_name = self.level.name
+            for l in levels:
+                if l == level_name:
+                    return False
         return True
 
 

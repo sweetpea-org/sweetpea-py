@@ -554,10 +554,6 @@ class Factor:
                 or window.stride > 1
                 or window.is_complex)
 
-    @property
-    def depends_on_complex_factor(self) -> bool:
-        return False
-
     def applies_to_trial(self, trial_number: int) -> bool:
         """Whether this factor applies to the given trial. For example, factors
         with :class:`.TransitionDerivation` derivations in their levels do not

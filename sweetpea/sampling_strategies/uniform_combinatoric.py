@@ -455,10 +455,9 @@ class UCSolutionEnumerator():
                     # Not yet separating complex:
                     # assert not df.has_complex_window
                     if not df.has_complex_window:
-                        if not df.depends_on_complex_factor:
-                            w = merged_levels[df].window
-                            if not w.fn(*[(merged_levels[f]).name for f in w.args]):
-                                sc_indices.remove(sc_idx)
+                        w = merged_levels[df].window
+                        if not w.fn(*[(merged_levels[f]).name for f in w.args]):
+                            sc_indices.remove(sc_idx)
 
             segment_lengths.append(len(sc_indices))
             if isinstance(valid_source_combinations_indices, list):

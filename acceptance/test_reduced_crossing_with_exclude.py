@@ -49,6 +49,60 @@ def test_correct_solution_count_with_override_flag(strategy):
     assert_no_repetition(experiments)  # FIXME
 
 @pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+def test_correct_solution_count_with_exclusion_via_complex_factor(strategy):
+    def illegal_stimulus(color, word):
+        return color[1] == "green" and word[1] == "blue"
+    def legal_stimulus(color, word):
+        return not illegal_stimulus(color, word)
+
+    stimulus_configuration = Factor("stimulus configuration", [
+        DerivedLevel("legal",   Transition(legal_stimulus, [color, word])),
+        DerivedLevel("illegal", Transition(illegal_stimulus, [color, word]))
+    ])
+
+    constraints = [exclude(stimulus_configuration, get_level_from_name(stimulus_configuration, "illegal"))]
+
+    design       = [color, word, stimulus_configuration]
+    crossing     = [color, word]
+
+    block      = fully_cross_block(design, crossing, constraints,
+                                   require_complete_crossing=False)
+    experiments = synthesize_trials(block=block, samples=150, sampling_strategy=strategy)
+
+    assert len(experiments) == 120
+
+@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+def test_correct_solution_count_with_exclusion_via_nested_complex_factor(strategy):
+    def unhappy_stimulus(color, word):
+        return color[1] == "green" and word[1] == "blue"
+    def happy_stimulus(color, word):
+        return not unhappy_stimulus(color, word)
+    smiley = Factor("smiley", [
+        DerivedLevel("happy",   Transition(happy_stimulus, [color, word])),
+        DerivedLevel("unhappy", Transition(unhappy_stimulus, [color, word]))
+    ])
+
+    def illegal_stimulus(smiley):
+        return smiley == "unhappy"
+    def legal_stimulus(smiley):
+        return smiley == "happy"
+    stimulus_configuration = Factor("stimulus configuration", [
+        DerivedLevel("legal",   WithinTrial(legal_stimulus, [smiley])),
+        DerivedLevel("illegal", WithinTrial(illegal_stimulus, [smiley]))
+    ])
+
+    constraints = [exclude(stimulus_configuration, get_level_from_name(stimulus_configuration, "illegal"))]
+
+    design       = [color, word, smiley, stimulus_configuration]
+    crossing     = [color, word]
+
+    block      = fully_cross_block(design, crossing, constraints,
+                                   require_complete_crossing=False)
+    experiments = synthesize_trials(block=block, samples=150, sampling_strategy=strategy)
+
+    assert len(experiments) == 120
+
+@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
 def test_correct_solution_count_with_override_flag_and_multiple_trials_excluded(strategy):
     # With this constraint, there should only be ONE allowed crossing, and therefore one solution.
     constraints = [exclude(stimulus_configuration, get_level_from_name(stimulus_configuration, "legal"))]
