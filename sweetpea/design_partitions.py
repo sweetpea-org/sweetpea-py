@@ -16,7 +16,7 @@ class DesignPartitions():
         self._block = block
         self._crossed = None
 
-    def get_crossed_factors(self):
+    def get_crossed_noncomplex_factors(self):
         if self._crossed:
             return self._crossed
         if len(self._block.crossings) == 1:
@@ -27,27 +27,37 @@ class DesignPartitions():
                 for f in c:
                     if f not in result:
                         result.append(f)
+        result = list(filter(lambda f: not f.has_complex_window, result))
         self._crossed = result
         return result
 
-    def get_crossed_derived_factors(self):
-        return list(filter(lambda f: f.is_derived(), self.get_crossed_factors()))
+    def get_crossed_noncomplex_derived_factors(self):
+        return list(filter(lambda f: f.is_derived(), self.get_crossed_noncomplex_factors()))
 
-    def get_uncrossed_factors(self):
-        crossed = self.get_crossed_factors()
+    def get_crossed_complex_factors(self):
+        result = []
+        for c in self._block.crossings:
+            for f in c:
+                if f.has_complex_window:
+                    if f not in result:
+                        result.append(f)
+        return result
+
+    def get_uncrossed_and_complex_factors(self):
+        crossed = self.get_crossed_noncomplex_factors()
         return list(filter(lambda f: f not in crossed, self._block.act_design))
 
     def get_source_factors(self):
-        # Source factors are depended on by at least one derived factor in the crossed factors.
+        # Source factors are depended on by at least one noncomplex derived factor in the crossed factors.
         source_factors = []
-        for derived_factor in self.get_crossed_derived_factors():
+        for derived_factor in self.get_crossed_noncomplex_derived_factors():
             for source_factor in derived_factor.levels[0].window.args:
                 if source_factor not in source_factors:
                     source_factors.append(source_factor)
         return source_factors
 
     def get_uncrossed_basic_factors(self):
-        uncrossed = self.get_uncrossed_factors()
+        uncrossed = self.get_uncrossed_and_complex_factors()
         return list(filter(lambda f: not f.is_derived(), uncrossed))
 
     def get_uncrossed_basic_source_factors(self):
@@ -58,8 +68,8 @@ class DesignPartitions():
         source_factors = self.get_source_factors()
         return list(filter(lambda f: f not in source_factors, self.get_uncrossed_basic_factors()))
 
-    def get_uncrossed_derived_factors(self):
-        return list(filter(lambda f: f.is_derived(), self.get_uncrossed_factors()))
+    def get_uncrossed_derived_and_complex_derived_factors(self):
+        return list(filter(lambda f: f.is_derived(), self.get_uncrossed_and_complex_factors()))
 
     def get_basic_factors(self):
         return list(filter(lambda f: not f.is_derived(), self._block.act_design))

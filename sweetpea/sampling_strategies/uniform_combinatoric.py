@@ -8,7 +8,9 @@ from math import factorial, ceil
 from typing import List, cast, Tuple, Dict, Optional
 
 from sweetpea.blocks import Block, FullyCrossBlock
-from sweetpea.combinatorics import extract_components, compute_jth_inversion_sequence, construct_permutation, compute_jth_combination
+from sweetpea.combinatorics import extract_components, compute_jth_permutation_prefix, compute_jth_combination
+from sweetpea.combinatorics import count_prefixes_of_permutations_with_copies, compute_jth_prefix_of_permutations_with_copies
+from sweetpea.combinatorics import PermutationMemo
 from sweetpea.design_partitions import DesignPartitions
 from sweetpea.logic import And
 from sweetpea.primitives import get_external_level_name, SimpleLevel, Factor, DerivedFactor
@@ -16,23 +18,11 @@ from sweetpea.sampling_strategies.base import SamplingStrategy, SamplingResult
 from sweetpea.constraints import Exclude, _KInARow, ExactlyKInARow, AtMostKInARow
 from sweetpea.internal.iter import chunk
 
-
 class UniformCombinatoricSamplingStrategy(SamplingStrategy):
     """This strategy represents the ideal. Valid sequences are uniformly
     sampled via a bijection from natural numbers to valid trial sequences.
 
-    Right now, the intent is that this will only work for designs without
-    complex windows. Once we get that far, we can think about what steps are
-    needed to support complex windows. (:class:`.Transition`, etc.)
-
-    This also doesn't quite work yet for :class:`._KInARow` constraints, which
-    represent a similar obstacle as the complex windows. However, it will still
-    accept designs with constraints. When such designs are given, it will do
-    rejection sampling to ensure that only valid sequences are returned. The
-    metrics dictionary will include data pertaining to the number of samples
-    rejected for each final sample, as well as an average. (On average, how
-    many samples need to be generated before one is found that is
-    satisfactory?)
+    Complex windows and counting constrants are handled by rejection sampling.
     """
 
     def __str__(self):
@@ -40,6 +30,16 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
 
     @staticmethod
     def sample(block: Block, sample_count: int) -> SamplingResult:
+        return UniformCombinatoricSamplingStrategy.__sample(block, sample_count, 0)
+
+    def __init__(self, acceptable_error):
+        self.acceptable_error = acceptable_error
+
+    def sample_object(self, block: Block, sample_count: int) -> SamplingResult:
+        return UniformCombinatoricSamplingStrategy.__sample(block, sample_count, self.acceptable_error)
+
+    @staticmethod
+    def __sample(block: Block, sample_count: int, acceptable_error: int) -> SamplingResult:
         # 1. Validate the block. Only FullyCrossBlock, No complex windows allowed.
         UniformCombinatoricSamplingStrategy.__validate(block)
         metrics = {}
@@ -56,9 +56,7 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
         if (enumerator.solution_count() == 0):
             return SamplingResult([], metrics)
 
-        crossing_size = enumerator.crossing_size;
-        if (enumerator.crossing_instances_count() < crossing_size):
-            return SamplingResult([], metrics)
+        crossing_size = enumerator.crossing_size
 
         # 3. Generate samples.
         metrics['rejections'] = []
@@ -88,10 +86,16 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
 
             run = enumerator.fill_in_nonpreamble_uncrossed_derived(run, trials_per_run)
 
-            if UniformCombinatoricSamplingStrategy.__are_constraints_violated(block, run):
+            if UniformCombinatoricSamplingStrategy.__are_constraints_violated(block, run, enumerator,
+                                                                              rounds_per_run, leftover,
+                                                                              acceptable_error):
                 rejected += 1
                 if rejected % 10000 == 0:
-                    print(f"Rejected {total_rejected+rejected} candidates so far (out of {possible_keys} choices)")
+                    if len(samples) > 0:
+                        accepts = f", accepted {len(samples)}"
+                    else:
+                        accepts = ""
+                    print(f"Rejected {total_rejected+rejected} candidates so far (out of {possible_keys} choices){accepts}")
                 continue
 
             metrics['rejections'].append(rejected)
@@ -110,13 +114,35 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
         return SamplingResult(samples, metrics)
 
     @staticmethod
-    def __are_constraints_violated(block: Block, sample: dict) -> bool:
+    def __are_constraints_violated(block: Block, sample: dict, enumerator: 'UCSolutionEnumerator',
+                                   rounds_per_run: int, leftover: int,
+                                   acceptable_error: int) -> bool:
         for c in block.constraints:
             if not c.potential_sample_conforms(sample):
                 return True
-        for f in block.act_design:
-            if isinstance(f, DerivedFactor):
-                if not f.potential_sample_conforms(sample):
+        if enumerator.has_crossed_complex_derived_factors:
+            # Check whether the sample achieves a crossing in each run
+            bad = 0
+            def conds_are_unique(start: int, end: int):
+                nonlocal bad
+                for c in block.crossings:
+                    combos = {}
+                    for t in range(start, end):
+                        key = tuple([sample[f.name][t] for f in c])
+                        if key in combos:
+                            if bad < acceptable_error:
+                                bad = bad + 1
+                            else:
+                                return False
+                        combos[key] = True
+                return True
+            for round in range(rounds_per_run):
+                start = enumerator._preamble_size + round * enumerator.crossing_size
+                if not conds_are_unique(start, start + enumerator.crossing_size):
+                    return True
+            if leftover > 0:
+                start = enumerator._preamble_size + rounds_per_run * enumerator.crossing_size
+                if not conds_are_unique(start, start+leftover):
                     return True
         return False
 
@@ -130,11 +156,10 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
         if len(run) == 0:
             return round
         else:
-            new_run = {}
+            new_run = run.copy()
             for key in round:
                 new_run[key] = run[key] + round[key]
             return new_run
-
 
 """
 Given a fully crossed block with no complex windows, this class stores the data structures and logic for enumerating
@@ -146,8 +171,10 @@ class UCSolutionEnumerator():
         self._block = block
         self._partitions = DesignPartitions(block)
         self._crossing_instances = self.__generate_crossing_instances()
-        self.crossing_size = len(self._crossing_instances)
+        self.noncomplex_crossing_size = len(self._crossing_instances)
         self._source_combinations = self.__generate_source_combinations()
+        self.__complex_crossing_instances = self.__count_complex_crossing_instances()
+        self.crossing_size = len(self._crossing_instances) * self.__complex_crossing_instances
         self._segment_lengths = cast(List[int], []) # Will be populated by solution counting
         self._ind_factor_levels = cast(List[Tuple[Factor, List[SimpleLevel]]], []) # Will be populated by solution counting
         self._basic_factor_levels = cast(List[Tuple[Factor, List[SimpleLevel]]], []) # Will be populated by solution counting
@@ -155,29 +182,35 @@ class UCSolutionEnumerator():
         self._sorted_derived_factors = self._partitions.get_derived_factors()
         self._sorted_derived_factors.sort(key=lambda f: f._get_depth())
 
-        self._sorted_uncrossed_derived = self._partitions.get_uncrossed_derived_factors()
-        self._sorted_uncrossed_derived.sort(key=lambda f: f._get_depth())
+        self._sorted_uncrossed_derived_and_complex_derived = self._partitions.get_uncrossed_derived_and_complex_derived_factors()
+        self._sorted_uncrossed_derived_and_complex_derived.sort(key=lambda f: f._get_depth())
+
+        self.has_crossed_complex_derived_factors = (self.__complex_crossing_instances > 1)
 
         # Maintains a lookup for valid source combinations for a permutation.
         # Example [[2, 3], ...] means that for permutation 0, indices 2 and 3 in the source combinations
         # list are allowed.
         self._valid_source_combinations_indices = cast(List[List[int]], []) # Will be populated by solution counting
 
-        crossing_size = self.crossing_size
+        noncomplex_crossing_size = self.noncomplex_crossing_size
         preamble_size = block._trials_per_sample_for_crossing() - block.crossing_size()
         self._preamble_size = preamble_size;
 
         # Call `__count_solutions` after everything else is set up.
         self._segment_lengths = cast(List[int], [])
-        self._solution_count = self.__count_solutions(crossing_size,
+        self._pmemo = PermutationMemo()
+        self._solution_count = self.__count_solutions(self.crossing_size,
                                                       self._segment_lengths,
+                                                      self._pmemo,
                                                       self._valid_source_combinations_indices)
         self._leftover_segment_lengths = cast(List[int], [])
         self._leftover_solution_count = 1
-        leftover = max(block.min_trials - preamble_size, crossing_size) % crossing_size;
+        self._leftover_pmemo = PermutationMemo()
+        leftover = max(block.min_trials - preamble_size, self.crossing_size) % self.crossing_size;
         if (leftover != 0):
             self._leftover_solution_count = self.__count_solutions(leftover,
                                                                    self._leftover_segment_lengths,
+                                                                   self._leftover_pmemo,
                                                                    None)
 
         # How many extra trials do we need to generate by randomly
@@ -222,11 +255,13 @@ class UCSolutionEnumerator():
         return tuple(map(lambda sv: sv[0], solution_variabless))
 
     def generate_sample(self, sequence_number: int) -> dict:
-        trial_values = self.generate_trial_values(sequence_number, len(self._crossing_instances), len(self._crossing_instances), self._segment_lengths)
+        trial_values = self.generate_trial_values(sequence_number, self.crossing_size, len(self._crossing_instances),
+                                                  self._pmemo, self._segment_lengths)
         return self._trial_values_to_experiment(trial_values)
 
     def generate_leftover_sample(self, sequence_number: int, leftover: int) -> dict:
-        trial_values = self.generate_trial_values(sequence_number, leftover, len(self._crossing_instances), self._leftover_segment_lengths)
+        trial_values = self.generate_trial_values(sequence_number, leftover, len(self._crossing_instances),
+                                                  self._leftover_pmemo, self._leftover_segment_lengths)
         return self._trial_values_to_experiment(trial_values)
 
     def _trial_values_to_experiment(self, trial_values: List[dict]) -> dict:
@@ -241,7 +276,8 @@ class UCSolutionEnumerator():
     # Used for an acceptance test:
     def generate_solution_variables(self) -> List[int]:
         sequence_number = random.randrange(0, self._solution_count)
-        trial_values = self.generate_trial_values(sequence_number, len(self._crossing_instances), len(self._crossing_instances), self._segment_lengths)
+        trial_values = self.generate_trial_values(sequence_number, len(self._crossing_instances), len(self._crossing_instances),
+                                                  PermutationMemo(), self._segment_lengths)
 
         solution = cast(List[int], [])
         # Convert to variable encoding for SAT checking
@@ -251,7 +287,8 @@ class UCSolutionEnumerator():
         solution.sort()
         return solution
 
-    def generate_trial_values(self, sequence_number: int, trial_count: int, crossing_size: int, segment_lengths: List[int]) -> List[dict]:
+    def generate_trial_values(self, sequence_number: int, trial_count: int, crossing_size: int,
+                              pmemo: PermutationMemo, segment_lengths: List[int]) -> List[dict]:
         # 1. Extract the component pieces (permutation, each combination setting, etc)
         #    The 0th component is always the permutation index.
         #    The 1st-nth components are always the source combination indices for each trial in the sequence
@@ -260,8 +297,12 @@ class UCSolutionEnumerator():
 
         # 2. Generate the inversion sequence for the selected permutation number.
         #    Use the inversion sequence to construct the permutation.
-        inversion_sequence = compute_jth_inversion_sequence(crossing_size, trial_count, components[0])
-        permutation_indices = construct_permutation(inversion_sequence, crossing_size)
+        if self.__complex_crossing_instances == 1:
+            permutation_indices = compute_jth_permutation_prefix(crossing_size, trial_count, components[0])
+        else:
+            permutation_indices = compute_jth_prefix_of_permutations_with_copies(crossing_size, self.__complex_crossing_instances,
+                                                                                 trial_count, components[0], pmemo)
+
         permutation = list(map(lambda i: self._crossing_instances[i], permutation_indices))
 
         # 3. Generate the source combinations for the selected sequence.
@@ -274,7 +315,7 @@ class UCSolutionEnumerator():
         # 4. Generate the combinations for independent basic factors
         independent_factor_combinations = cast(List[dict], [{}] *trial_count)
         if self._ind_factor_levels:
-            independent_combination_idx = components[trial_count+1]
+            independent_combination_idx = components[crossing_size+1]
             for fi, levels in self._ind_factor_levels:
                 combo = compute_jth_combination(trial_count, len(levels), independent_combination_idx)
                 for i in range(trial_count):
@@ -287,23 +328,6 @@ class UCSolutionEnumerator():
         trial_values = cast(List[dict], [{}] * trial_count)
         for t in range(trial_count):
             trial_values[t] = {**permutation[t], **source_combinations[t], **independent_factor_combinations[t]}
-
-        # 6. Generate uncrossed derived level values
-        u_d = self._partitions.get_uncrossed_derived_factors()
-        for f in u_d:
-            for t in range(trial_count):
-                # For each level in the factor, see if the derivation function is true.
-                hit = False
-                for level in f.levels:
-                    args = [(trial_values[t-(level.window.width-1)+j][f]).name for f in level.window.args for j in range(level.window.width)]
-                    if level.window.width > 1:
-                        args = list(chunk(args, level.window.width));
-                    if level.window.fn(*args):
-                        trial_values[t][f] = level
-                        hit = True
-                        break
-                if not hit:
-                    raise RuntimeError("did not find level for uncrossed derived factor")
 
         return trial_values
 
@@ -322,11 +346,15 @@ class UCSolutionEnumerator():
         return self._fill_in_derived(run, self._sorted_derived_factors, 0, self._preamble_size)
 
     def fill_in_nonpreamble_uncrossed_derived(self, run: dict, trials_per_run: int) -> dict:
-        return self._fill_in_derived(run, self._sorted_uncrossed_derived, self._preamble_size, trials_per_run)
+        # Note: "uncrossed" includes crossed derived that have complex windows
+        return self._fill_in_derived(run, self._sorted_uncrossed_derived_and_complex_derived, self._preamble_size, trials_per_run)
 
     def _fill_in_derived(self, run: dict, sorted_factors: List[DerivedFactor], start: int, end: int) -> dict:
         for df in sorted_factors:
-            trials = []
+            if start > 0:
+                trials = run[df.name][:start]
+            else:
+                trials = []
             for i in range(start, end):
                 if df.applies_to_trial(i+1):
                     trials.append(df.select_level_for_sample(i, run))
@@ -343,10 +371,19 @@ class UCSolutionEnumerator():
     ]
     """
     def __generate_crossing_instances(self) -> List[dict]:
-        crossing = self._partitions.get_crossed_factors()
+        crossing = self._partitions.get_crossed_noncomplex_factors()
         level_lists = [list(f.levels) for f in crossing]
         crossings = [{crossing[i]: level for i,level in enumerate(levels)} for levels in product(*level_lists)]
         return list(filter(lambda c: not self._block.is_excluded_combination(c), crossings))
+
+    def __count_complex_crossing_instances(self) -> int:
+        crossing = self._partitions.get_crossed_complex_factors()
+        if len(crossing) == 0:
+            return 1
+        else:
+            level_lists = [list(f.levels) for f in crossing]
+            crossings = [{crossing[i]: level for i,level in enumerate(levels)} for levels in product(*level_lists)]
+            return len(list(filter(lambda c: not self._block.is_excluded_combination(c), crossings)))
 
     def __generate_source_combinations(self) -> List[dict]:
         ubs = self._partitions.get_uncrossed_basic_source_factors()
@@ -356,6 +393,7 @@ class UCSolutionEnumerator():
     def __count_solutions(self,
                           first_n: int,
                           segment_lengths: List[int],
+                          pmemo: PermutationMemo,
                           valid_source_combinations_indices: Optional[List[List[int]]]):
         """Returns the number of solutions for a single round. When
         minimum_trials increases the number of rounds, then we have
@@ -367,8 +405,31 @@ class UCSolutionEnumerator():
         """
         ##############################################################
         # Permutations of crossing instances
-        n = len(self._crossing_instances)
-        permutations = factorial(n) // factorial(n - first_n)
+        #
+        # In the case of derived factors in the crossing, we consider only
+        # those with simple windows. Derived factors with simple windows
+        # can be combined with all other combinations, otherwise the design
+        # has no solutions, anyway (and we'll detect that by discovering zero
+        # allowed combinations in "Uncrossed Dependent Factors" below).
+        # Derived factors with complex windows, meanwhile, mean that we
+        # have to use rejection sampling, and so it's ok for the
+        # "Uncrossed Dependent Factors" step to over-approximate the allowed
+        # combinations.
+        q = len(self._crossing_instances)
+        m = self.__complex_crossing_instances
+        n = q * m
+        if m == 1:
+            permutations = factorial(n)
+            # We want only the first_n of the trials, so permutations of the
+            # remaining trials would all count the same:
+            if first_n != n:
+                permutations = permutations // factorial(n - first_n)
+        else:
+            # We need n = q*m trials (well, the first_n of those). But we don't
+            # want to distinguish among combinations where the noncomplex crossing
+            # component (with m choices of each) is the same.
+            permutations = count_prefixes_of_permutations_with_copies(q, m, first_n, pmemo)
+
         segment_lengths.append(permutations)
 
         ##############################################################
@@ -386,12 +447,18 @@ class UCSolutionEnumerator():
             for sc_idx, sc in enumerate(self._source_combinations):
                 # Apply the derivation fn for each DF in the crossing for this instance and make sure it
                 # return true for this level combination. If it doesn't, then remove this combination.
+                # The "crossing" here doesn't include crossed derived factors with complex windows,
+                # though, so we can only perform this filtering for a derived factor that does
+                # not depend on a complex-window derived factor.
                 merged_levels = {**ci, **sc}
-                for df in self._partitions.get_crossed_derived_factors():
-                    if not df.depends_on_complex_factor and not df.has_complex_window:
-                        w = merged_levels[df].window
-                        if not w.fn(*[(merged_levels[f]).name for f in w.args]):
-                            sc_indices.remove(sc_idx)
+                for df in self._partitions.get_crossed_noncomplex_derived_factors():
+                    # Not yet separating complex:
+                    # assert not df.has_complex_window
+                    if not df.has_complex_window:
+                        if not df.depends_on_complex_factor:
+                            w = merged_levels[df].window
+                            if not w.fn(*[(merged_levels[f]).name for f in w.args]):
+                                sc_indices.remove(sc_idx)
 
             segment_lengths.append(len(sc_indices))
             if isinstance(valid_source_combinations_indices, list):

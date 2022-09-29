@@ -18,6 +18,7 @@ from sweetpea.primitives import (
 from sweetpea.constraints import (
     Consistency, Constraint, Derivation, FullyCross, MultipleCross, MultipleCrossBlock,
     at_most_k_in_a_row, at_least_k_in_a_row, exactly_k, exactly_k_in_a_row, exclude, minimum_trials)
+from sweetpea.sampling_strategies.base import SamplingStrategy
 from sweetpea.sampling_strategies.non_uniform import NonUniformSamplingStrategy
 from sweetpea.sampling_strategies.unigen import UnigenSamplingStrategy
 from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy
@@ -417,7 +418,11 @@ def synthesize_trials(block: Block,
         levels, where each such list contains to one level per trial.
     """
     print("Sampling {} trial sequences using the {}".format(samples, sampling_strategy))
-    sampling_result = sampling_strategy.sample(block, samples)
+    if isinstance(sampling_strategy, type):
+        assert issubclass(sampling_strategy, SamplingStrategy)
+        sampling_result = sampling_strategy.sample(block, samples)
+    else:
+        sampling_result = sampling_strategy.sample_object(block, samples)
 
     return list(map(lambda e: block.add_implied_levels(e), sampling_result.samples))
 

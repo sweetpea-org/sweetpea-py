@@ -24,12 +24,12 @@ block    = fully_cross_block(design, crossing, list(map(Reify, design)))
 
 def test_get_crossed_factors():
     partitions = DesignPartitions(block)
-    assert partitions.get_crossed_factors() == crossing
+    assert partitions.get_crossed_noncomplex_factors() == crossing
 
 
 def test_get_crossed_factors_derived():
     partitions = DesignPartitions(block)
-    assert partitions.get_crossed_derived_factors() == [congruency]
+    assert partitions.get_crossed_noncomplex_derived_factors() == [congruency]
 
 
 def test_get_uncrossed_basic_factors():
@@ -49,6 +49,6 @@ def test_get_uncrossed_basic_independent_factors():
 
 def test_get_uncrossed_derived_factors():
     partitions = DesignPartitions(block)
-    assert partitions.get_uncrossed_derived_factors() == [color_red]
+    assert partitions.get_uncrossed_derived_and_complex_derived_factors() == [color_red]
 
 

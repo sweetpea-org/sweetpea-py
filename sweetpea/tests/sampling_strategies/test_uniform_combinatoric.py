@@ -97,17 +97,22 @@ def test_constraint_violation():
                               [color, text],
                               [ExactlyKInARow(2, (color, red_color))])
 
-    assert are_constraints_violated(block, {'color': ['red', 'red', 'blue', 'blue']}) == False
-    assert are_constraints_violated(block, {'color': ['red', 'blue', 'red', 'blue']}) == True
+    class FakeEnumer:
+        def __init__(self):
+            self.has_crossed_complex_derived_factors = False
+    enumer = FakeEnumer()
+
+    assert are_constraints_violated(block, {'color': ['red', 'red', 'blue', 'blue']}, enumer, 4, 0, 0) == False
+    assert are_constraints_violated(block, {'color': ['red', 'blue', 'red', 'blue']}, enumer, 4, 0, 0) == True
 
     block = fully_cross_block([color, text, con_factor_within_trial],
                               [color, text],
                               [AtMostKInARow(2, (color, red_color))])
 
-    assert are_constraints_violated(block, {'color': ['red', 'blue', 'blue', 'blue']}) == False
-    assert are_constraints_violated(block, {'color': ['red', 'red', 'blue', 'blue']}) == False
-    assert are_constraints_violated(block, {'color': ['red', 'red', 'red', 'blue']}) == True
-    assert are_constraints_violated(block, {'color': ['blue', 'red', 'red', 'red']}) == True
+    assert are_constraints_violated(block, {'color': ['red', 'blue', 'blue', 'blue']}, enumer, 4, 0, 0) == False
+    assert are_constraints_violated(block, {'color': ['red', 'red', 'blue', 'blue']}, enumer, 4, 0, 0) == False
+    assert are_constraints_violated(block, {'color': ['red', 'red', 'red', 'blue']}, enumer, 4, 0, 0) == True
+    assert are_constraints_violated(block, {'color': ['blue', 'red', 'red', 'red']}, enumer, 4, 0, 0) == True
 
 def test_minimum_trials():
     for min_trials in [1, 2, 3, 4, 5, 6, 7, 17, 55]:
@@ -116,4 +121,3 @@ def test_minimum_trials():
                                   [minimum_trials(min_trials)])
         runs = synthesize_trials_uniform(block=block, samples=1)
         assert len(runs[0]["color"]) == max(4, min_trials)
-

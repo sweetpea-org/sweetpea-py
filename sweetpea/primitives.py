@@ -286,16 +286,17 @@ class DerivedLevel(Level):
     def uses_factor(self, f: Factor):
         return any(list(map(lambda wf: wf.uses_factor(f), self.window.factors)))
 
-    def _matches_trial(self, sample: dict, i :int) -> bool:
+    def _trial_arguments(self, sample: dict, i :int) -> list:
         """Check whether trial i (zero-based) in the sample matches this level's predicate."""
         window = self.window
         args = []
         for f in window.factors:
+            levels = sample[f.name]
             for j in range(window.width):
-                args.append(sample[f.name][i-(window.width-1)+j])
+                args.append(levels[i-(window.width-1)+j])
         if window.width > 1:
             args = list(chunk_list(args, window.width))
-        return window.predicate(*args)
+        return args
 
 @dataclass(eq=False)
 class ElseLevel(Level):
@@ -739,27 +740,13 @@ class DerivedFactor(Factor):
     def uses_factor(self, f: Factor):
         return (self == f) or any(list(map(lambda l: l.uses_factor(f), self.levels)))
 
-    def potential_sample_conforms(self, sample: dict) -> bool:
-        window = self.first_level.window
-        trials = sample[self.name]
-        for i in range(window.width-1, len(trials), window.stride):
-            found = False
-            for l in self.levels:
-                if l.name == trials[i]:
-                    if not l._matches_trial(sample, i):
-                        return False
-                    found = True
-                    break
-            if not found:
-                return False
-        return True
-
     def select_level_for_sample(self, i: int, sample: dict) -> Any:
         """Get level name for trial i (zero-based) depending on
         values of other factors already in the sample."""
-        for f in self.levels:
-            if f._matches_trial(sample, i):
-                return f.name
+        args = self.levels[0]._trial_arguments(sample, i)
+        for l in self.levels:
+            if l.window.predicate(*args):
+                return l.name
         raise RuntimeError("no matching trial found when filling in a sample")
 
 ###############################################################################

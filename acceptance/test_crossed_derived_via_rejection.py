@@ -35,7 +35,6 @@ def test_check_small_crossed_derived_factor(strategy):
     check_crossed_derived_factor(strategy, [color, match2], 4)
 
 @pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
-@pytest.mark.slow
 def test_check_big_crossed_derived_factor(strategy):
     check_crossed_derived_factor(strategy, [color, match2, match1], 16)
 

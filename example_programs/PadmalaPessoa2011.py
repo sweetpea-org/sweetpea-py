@@ -89,6 +89,7 @@ block        = fully_cross_block(design, crossing, constraints)
 # SOLVE
 
 experiments  = synthesize_trials(block, 5, NonUniformSamplingStrategy)
-# Won't find a solution: UniformCombinatoricSamplingStrategy
+# Or:
+# experiments  = synthesize_trials(block, 5, UniformCombinatoricSamplingStrategy(acceptable_error = 15))
 
 print_experiments(block, experiments)
