@@ -35,7 +35,7 @@ def test_no_solutions_without_override_flag(strategy):
     block       = fully_cross_block(design, crossing, constraints)
     experiments = synthesize_trials(block, 500, sampling_strategy=strategy)
 
-    assert block.crossing_size() == 6
+    assert block.crossing_size() == 5
     assert len(experiments) == 0
     assert_no_repetition(experiments)
 
@@ -245,3 +245,43 @@ def test_correct_solution_count_with_override_flag_and_multiple_trials_excluded_
         old_cnf = f.read()
 
     assert old_cnf == cnf.as_unigen_string()  # FIXME
+
+@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+def test_correct_solutions_with_implicitly_excluded_crossing_due_to_derived_definition(strategy):
+    def ugly_stimulus(color, word):
+        return color == "green" and word == "red"
+    def pretty_stimulus(color, word):
+        return not ugly_stimulus(color, word)
+    aesthetic = Factor("aesthetic", [
+        DerivedLevel("ugly",   WithinTrial(ugly_stimulus, [color, word])),
+        DerivedLevel("pretty", WithinTrial(pretty_stimulus, [color, word]))
+    ])
+
+
+    def unhappy_stimulus(color, word):
+        return color[1] == "green" and word[1] == "blue"
+    def happy_stimulus(color, word):
+        return not unhappy_stimulus(color, word)
+    smiley = Factor("smiley", [
+        DerivedLevel("happy",   Transition(happy_stimulus, [color, word])),
+        DerivedLevel("unhappy", Transition(unhappy_stimulus, [color, word]))
+    ])
+
+    constraints = [exclude(aesthetic, get_level_from_name(aesthetic, "ugly"))]
+
+    design       = [color, word, smiley, aesthetic]
+    crossing     = [color, word, aesthetic]
+
+
+    block       = fully_cross_block(design, crossing, constraints, require_complete_crossing=False)
+    experiments = synthesize_trials(block, 4, sampling_strategy=UniformCombinatoricSamplingStrategy)
+
+    assert block.crossing_size() == 5
+    assert len(experiments) == 4
+    for e in experiments:
+        assert len(e['color']) == 5
+        seen = set()
+        for i in range(5):
+            key = (e['color'][i], e['motion'][i])
+            assert not key in seen
+            seen.add(key)

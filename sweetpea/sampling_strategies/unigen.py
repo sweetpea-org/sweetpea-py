@@ -15,6 +15,10 @@ This strategy relies fully on Unigen to produce the desired number of samples.
 class UnigenSamplingStrategy(SamplingStrategy):
 
     @staticmethod
+    def class_name():
+        return 'UniGen Sampling Strategy'
+
+    @staticmethod
     def sample(block: Block, sample_count: int, min_search: bool=False) -> SamplingResult:
 
         backend_request = block.build_backend_request()

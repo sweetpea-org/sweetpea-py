@@ -5,7 +5,7 @@ designs.
 """
 
 from functools import reduce
-from typing import Dict, List, Optional, Tuple, cast
+from typing import Dict, List, Optional, Tuple, Any, cast
 from itertools import product
 
 from sweetpea.derivation_processor import DerivationProcessor
@@ -174,7 +174,7 @@ def print_experiments(block: Block, experiments: List[dict]):
 
     format_str = reduce(lambda a, b: a + '{{:<{}}} | '.format(b), column_widths, '')[:-3] + '\n'
 
-    print('{} trial sequences found.'.format(len(experiments)))
+    print('\n{} trial sequences found.\n'.format(len(experiments)))
     for idx, e in enumerate(experiments):
         print('Experiment {}:'.format(idx))
         strs = [list(map(lambda v: name + " " + v, values)) for (name,values) in e.items()]
@@ -417,11 +417,15 @@ def synthesize_trials(block: Block,
         :class:`dictionary <dict>` mapping each factor name to a list of
         levels, where each such list contains to one level per trial.
     """
-    print("Sampling {} trial sequences using the {}".format(samples, sampling_strategy))
+    def starting(who: Any) -> None:
+        nonlocal samples
+        print(f"Sampling {samples} trial sequences using the {who}.")
     if isinstance(sampling_strategy, type):
         assert issubclass(sampling_strategy, SamplingStrategy)
+        starting(sampling_strategy.class_name())
         sampling_result = sampling_strategy.sample(block, samples)
     else:
+        starting(sampling_strategy)
         sampling_result = sampling_strategy.sample_object(block, samples)
 
     return list(map(lambda e: block.add_implied_levels(e), sampling_result.samples))

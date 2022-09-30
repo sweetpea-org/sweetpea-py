@@ -80,7 +80,14 @@ class DerivationProcessor:
                         according_level[level_tuple] = level
 
                 if not valid_tuples:
-                    print(f"WARNING: There is no assignment that matches factor {factor.name} with level {level.name}.")
+                    in_crossing = block.factor_in_crossing(factor)
+                    # Solvers can go wrong if a crossing level is not even possible:
+                    maybe_warning = "WARNING: " if (not in_crossing) or not block.require_complete_crossing else ""
+                    maybe_crossing = "crossed " if in_crossing else ""
+                    not_satisfiable = "not satisfiable" if block.require_complete_crossing else "incomplete"
+                    conclusion = f", which means that the crossing is {not_satisfiable}" if in_crossing else ""
+                    block.errors.add(f"{maybe_warning}No matches to the {maybe_crossing}factor"
+                                     f" '{factor.name}' predicate for level\n '{level.name}'{conclusion}.")
 
                 if factor in block.act_design:
                     valid_indices = [[block.first_variable_for_level(level.factor, level) for level in valid_tuple]

@@ -50,12 +50,17 @@ class Block:
         self.__validate()
 
     def show_errors(self) -> bool:
+        failed = False
         if self.errors:
             for e in self.errors:
-                print(e)
                 if "WARNING" not in e:
-                    return True
-        return False
+                    print(e)
+                    failed = True
+            if not failed:
+                for e in self.errors:
+                    if "WARNING" in e:
+                        print(e)
+        return failed
 
     def extract_basic_factor_names(self, level: DerivedLevel) -> set:
         included_factor_names = set()
@@ -390,7 +395,7 @@ class Block:
     def calculate_samples_required(self, samples):
         pass
 
-class _CrossBlock(Block):
+class CrossBlock(Block):
     """General crossed block, which handled multiple corssings. This block generates as many trials as needed
     tocross the levels across factors mentioned as lists in the block's
     crossing.
@@ -398,8 +403,6 @@ class _CrossBlock(Block):
 
     def __init__(self, design, crossings, constraints, require_complete_crossing=True, cnf_fn=to_cnf_tseitin):
         super().__init__(design, crossings, constraints, require_complete_crossing, cnf_fn)
-        if not self.require_complete_crossing:
-            self.errors.add("WARNING: Some combinations might have been excluded, this crossing may not be complete!")
         self.__validate()
 
     def __validate(self):
@@ -408,7 +411,7 @@ class _CrossBlock(Block):
     def __validate_crossing(self):
         dg = DesignGraph(self.design).graph
         warnings = []
-        template = "'{}' depends on '{}'"
+        template = " '{}' depends on '{}'"
         for crossing in self.crossings:
             combos = combinations(crossing, 2)
 
@@ -419,9 +422,9 @@ class _CrossBlock(Block):
                     warnings.append(template.format(c[1].factor_name, c[0].factor_name))
 
         if warnings:
-            self.errors.add("WARNING: There are dependencies between factors in the crossing. "
-                            "This may lead to unsatisfiable designs.\n"
-                            + reduce(lambda accum, s: accum + s + "\n", warnings, ""))
+            self.errors.add("WARNING: Dependencies among factors may make the"
+                            " crossing unsatisfiable:"
+                            + reduce(lambda accum, s: accum + "\n" + s, warnings, ""))
 
     def __trials_required_for_crossing(self, f: Factor, crossing_size: int) -> int:
         """Given a factor ``f``, and a crossing size, this function will
@@ -444,9 +447,14 @@ class _CrossBlock(Block):
 
     def _trials_per_sample_for_crossing(self):
         crossing_size = max(map(lambda c: self.crossing_size(c), self.crossings))
-        required_trials = list(map(max, list(map(lambda c: list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size), c)),
+        required_trials = list(map(max, list(map(lambda c: list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size),
+                                                                    c)),
                                                  self.crossings))))
         return max(required_trials)
+
+    def _trials_per_sample_for_one_crossing(self, c: List[Factor]):
+        crossing_size = self.crossing_size(c)
+        return max(map(lambda f: self.__trials_required_for_crossing(f, crossing_size), c))
 
     def trials_per_sample(self):
         if self._trials_per_sample:
@@ -469,7 +477,8 @@ class _CrossBlock(Block):
     def __count_exclusions(self, crossing):
         """This method is responsible for determining the number of trials that
         should be excluded from the full crossing, based on any
-        :class:`Exclude` constraints that the user provides. A single
+        :class:`Exclude` constraints that the user provides, as well as combinations
+        that are impossible based on a derived level's definition. A single
         :class:`Exclude` constraint may prevent multiple crossings, depending
         on the derivation function used.
         """
@@ -478,15 +487,36 @@ class _CrossBlock(Block):
         excluded_crossings = set()
         excluded_external_names = set()
 
-        # Get the exclude constraints.
-        exclusions = list(filter(lambda c: isinstance(c, Exclude), self.constraints))
-        if not exclusions:
-            return 0
-
-        # If there are any, generate the full crossing as a list of tuples.
+        # Generate the full crossing as a list of tuples.
         levels_lists = [list(f.levels) for f in crossing]
         all_crossings = list(product(*levels_lists))
 
+        # Get the exclude constraints.
+        exclusions = list(filter(lambda c: isinstance(c, Exclude), self.constraints))
+
+        # Check for impossible combinations
+        for c in all_crossings:
+            for l in c:
+                if isinstance(l, DerivedLevel):
+                    f = l.factor
+                    if f.is_derived() and not f.has_complex_window:
+                        argss = []
+                        for af in l.window.args:
+                            if af in crossing:
+                                # Find level in `c`:
+                                for al in c:
+                                    if al in af.levels:
+                                        argss.append([al.name])
+                                        break
+                            else:
+                                # We'll need to try all possible levels in `af`
+                                argss.append([ll.name for ll in af.levels])
+                        all_possible_argss = list(product(*argss))
+                        if not any([l.window.fn(*args) for args in all_possible_argss]):
+                            excluded_crossings.add(tuple([get_internal_level_name(l) for l in c]))
+                            excluded_external_names.add(', '.join([f"'{get_external_level_name(l)}'" for l in c]))
+
+        # Check for excluded combinations
         for constraint in exclusions:
             if constraint.factor.has_complex_window:
                 # If the excluded factor has a complex window, then we don't need
@@ -511,17 +541,22 @@ class _CrossBlock(Block):
                                list(product(*[list(f.levels) for f in filter(lambda f: f not in crossing,
                                                                              self.act_design)])))):
                         excluded_crossings.add(tuple([get_internal_level_name(l) for l in c]))
-                        excluded_external_names.add(', '.join([get_external_level_name(l) for l in c]))
-        if self.require_complete_crossing and len(excluded_crossings) != 0:
-            er = "Complete crossing is not possible because the following combinations have been excluded:"
+                        excluded_external_names.add(', '.join([f"'{get_external_level_name(l)}'" for l in c]))
+        if len(excluded_crossings) != 0:
+            if self.require_complete_crossing:
+                er = "Complete crossing unsatisfiable"
+            else:
+                er = "WARNING: crossing incomplete"
+            er += " due to excluded or impossible combinations:"
             for names in excluded_external_names:
-                er += "\n" + names
+                er += "\n " + names
             self.errors.add(er)
         return len(excluded_crossings)
 
     def __excluded_derived(self, excluded_level, c):
         """Given the complete crossing and an exclude constraint returns true
-        if that combination results in the exclude level.
+        if that combination results in the exclude level or if the combination
+        is not possible based on the level's definition.
         """
         ret = []
 
@@ -530,7 +565,8 @@ class _CrossBlock(Block):
 
         # Invoking the fn this way is only ok because we only do this for WithinTrial windows.
         # With complex windows, it wouldn't work due to the list aspect for each argument.
-        ret.append(excluded_level.window.fn(*list(map(lambda l: get_external_level_name(l), filter(lambda l: l.factor in excluded_level.window.args, c)))))
+        ret.append(excluded_level.window.fn(*list(map(lambda l: get_external_level_name(l),
+                                                      filter(lambda l: l.factor in excluded_level.window.args, c)))))
 
         return all(ret)
 
@@ -541,10 +577,7 @@ class _CrossBlock(Block):
                 raise ValueError("Not s single-corssing block, so crossing must be provided to crossing_size")
             crossing = self.crossings[0]
         crossing_size = self.crossing_size_without_exclusions(crossing)
-        if not self.require_complete_crossing:
-            crossing_size -= self.__count_exclusions(crossing)
-        else:
-            self.__count_exclusions(crossing)
+        crossing_size -= self.__count_exclusions(crossing)
         return crossing_size
 
     def crossing_size_without_exclusions(self, crossing: List[Factor]):
@@ -571,7 +604,7 @@ class _CrossBlock(Block):
     def __str__(self):
         return str(self.__dict__)
 
-class FullyCrossBlock(_CrossBlock):
+class FullyCrossBlock(CrossBlock):
     """A fully-crossed block. This block generates as many trials as needed to
     fully cross all levels across all factors in the block's crossing.
     """
@@ -579,7 +612,7 @@ class FullyCrossBlock(_CrossBlock):
     def __init__(self, design, crossings, constraints, require_complete_crossing=True, cnf_fn=to_cnf_tseitin):
         super().__init__(design, crossings, constraints, require_complete_crossing, cnf_fn)
 
-class MultipleCrossBlock(_CrossBlock):
+class MultipleCrossBlock(CrossBlock):
     """A multiple-crossed block. This block generates as many trials as needed
     tocross the levels across factors mentioned as lists in the block's
     crossing.

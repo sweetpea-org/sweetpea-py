@@ -11,6 +11,10 @@ solver repeatedly to produce unique (but not uniform) samples.
 class NonUniformSamplingStrategy(SamplingStrategy):
 
     @staticmethod
+    def class_name():
+        return 'Non-Uniform Sampling Strategy'
+
+    @staticmethod
     def sample(block: Block, sample_count: int) -> SamplingResult:
         backend_request = block.build_backend_request()
         if block.show_errors():

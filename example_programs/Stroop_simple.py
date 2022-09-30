@@ -91,7 +91,7 @@ block        = fully_cross_block(design, crossing, constraints)
 
 # SOLVE
 
-experiments  = synthesize_trials(block, 5, NonUniformSamplingStrategy())
+experiments  = synthesize_trials(block, 5, NonUniformSamplingStrategy)
 # Or:
 # experiments  = synthesize_trials(block, 5, UniformCombinatoricSamplingStrategy(acceptable_error=3))
 

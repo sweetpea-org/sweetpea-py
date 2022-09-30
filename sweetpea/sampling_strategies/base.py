@@ -14,7 +14,6 @@ class SamplingResult:
         self.samples = samples
         self.metrics = metrics
 
-
 """
 Generic interface for sampling strategies.
 """
@@ -84,3 +83,7 @@ class SamplingStrategy(ABC):
             experiment[f.factor_name] = level_names_fill
 
         return experiment
+
+    @staticmethod
+    def class_name():
+        return "Unknown Sampling Strategy"

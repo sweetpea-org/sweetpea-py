@@ -17,16 +17,10 @@ class DesignPartitions():
         self._crossed = None
 
     def get_crossed_noncomplex_factors(self):
+        """Only gets factors for the first crossing."""
         if self._crossed:
             return self._crossed
-        if len(self._block.crossings) == 1:
-            result = self._block.crossings[0]
-        else:
-            result = []
-            for c in self._block.crossings:
-                for f in c:
-                    if f not in result:
-                        result.append(f)
+        result = self._block.crossings[0]
         result = list(filter(lambda f: not f.has_complex_window, result))
         self._crossed = result
         return result

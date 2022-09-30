@@ -7,7 +7,7 @@ from itertools import product
 from math import factorial, ceil
 from typing import List, cast, Tuple, Dict, Optional
 
-from sweetpea.blocks import Block, FullyCrossBlock
+from sweetpea.blocks import Block, CrossBlock
 from sweetpea.combinatorics import extract_components, compute_jth_permutation_prefix, compute_jth_combination
 from sweetpea.combinatorics import count_prefixes_of_permutations_with_copies, compute_jth_prefix_of_permutations_with_copies
 from sweetpea.combinatorics import PermutationMemo
@@ -26,6 +26,10 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
     """
 
     def __str__(self):
+        return UniformCombinatoricSamplingStrategy.class_name()
+
+    @staticmethod
+    def class_name():
         return 'Uniform Combinatoric Sampling Strategy'
 
     @staticmethod
@@ -40,18 +44,18 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
 
     @staticmethod
     def __sample(block: Block, sample_count: int, acceptable_error: int) -> SamplingResult:
-        # 1. Validate the block. Only FullyCrossBlock, No complex windows allowed.
+        # 1. Validate the block.
         UniformCombinatoricSamplingStrategy.__validate(block)
         metrics = {}
+
+        if block.show_errors():
+            return SamplingResult([], {})
 
         # 2. Count how many solutions there are. The enumerator will note
         # the crossing size and minimum-trial request, and it will be prepared
         # to generate runs of a crossing-size length or "leftover" length.
-        enumerator = UCSolutionEnumerator(cast(FullyCrossBlock, block))
+        enumerator = UCSolutionEnumerator(cast(CrossBlock, block))
         metrics['solution_count'] = enumerator.solution_count()
-
-        if block.show_errors():
-            return SamplingResult([], {})
 
         if (enumerator.solution_count() == 0):
             return SamplingResult([], metrics)
@@ -86,7 +90,7 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
 
             run = enumerator.fill_in_nonpreamble_uncrossed_derived(run, trials_per_run)
 
-            if UniformCombinatoricSamplingStrategy.__are_constraints_violated(block, run, enumerator,
+            if UniformCombinatoricSamplingStrategy.__are_constraints_violated(cast(CrossBlock, block), run, enumerator,
                                                                               rounds_per_run, leftover,
                                                                               acceptable_error):
                 rejected += 1
@@ -114,42 +118,47 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
         return SamplingResult(samples, metrics)
 
     @staticmethod
-    def __are_constraints_violated(block: Block, sample: dict, enumerator: 'UCSolutionEnumerator',
+    def __are_constraints_violated(block: CrossBlock, sample: dict, enumerator: 'UCSolutionEnumerator',
                                    rounds_per_run: int, leftover: int,
                                    acceptable_error: int) -> bool:
-        for c in block.constraints:
-            if not c.potential_sample_conforms(sample):
+        for ct in block.constraints:
+            if not ct.potential_sample_conforms(sample):
                 return True
-        if enumerator.has_crossed_complex_derived_factors:
-            # Check whether the sample achieves a crossing in each run
+        if enumerator.has_crossed_complex_derived_factors or len(block.crossings) > 1:
+            # Check whether the sample achieves each crossing in the run
             bad = 0
-            def conds_are_unique(start: int, end: int):
-                nonlocal bad
-                for c in block.crossings:
-                    combos = {}
-                    for t in range(start, end):
-                        key = tuple([sample[f.name][t] for f in c])
-                        if key in combos:
-                            if bad < acceptable_error:
-                                bad = bad + 1
-                            else:
-                                return False
-                        combos[key] = True
-                return True
-            for round in range(rounds_per_run):
-                start = enumerator._preamble_size + round * enumerator.crossing_size
-                if not conds_are_unique(start, start + enumerator.crossing_size):
-                    return True
-            if leftover > 0:
-                start = enumerator._preamble_size + rounds_per_run * enumerator.crossing_size
-                if not conds_are_unique(start, start+leftover):
-                    return True
+            run_length = enumerator._preamble_size + (rounds_per_run * enumerator.crossing_size) + leftover
+            for i, c in enumerate(block.crossings):
+                if enumerator.has_crossed_complex_derived_factors or i > 0:
+                    def conds_are_unique(start: int, end: int):
+                        nonlocal bad
+                        combos = set({})
+                        for t in range(start, end):
+                            key = tuple([sample[f.name][t] for f in c])
+                            if key in combos:
+                                if bad < acceptable_error:
+                                    bad = bad + 1
+                                else:
+                                    return False
+                            combos.add(key)
+                        return True
+                    start = enumerator.preamble_sizes[i]
+                    c_crossing_size = enumerator.crossing_sizes[i]
+                    c_rounds_per_run = (run_length - start) // c_crossing_size
+                    c_leftover = (run_length - start) % c_crossing_size
+                    for round in range(rounds_per_run):
+                        if not conds_are_unique(start, start + c_crossing_size):
+                            return True
+                        start += c_crossing_size
+                    if c_leftover > 0:
+                        if not conds_are_unique(start, start+c_leftover):
+                            return True
         return False
 
     @staticmethod
     def __validate(block: Block) -> None:
-        if not isinstance(block, FullyCrossBlock):
-            raise ValueError('The uniform combinatoric sampling strategy currently only supports FullyCrossBlock.')
+        # Triggers checks within `block`:
+        block.trials_per_sample()
 
     @staticmethod
     def __combine_round(run: dict, round: dict) -> dict:
@@ -167,7 +176,7 @@ valid trial sequences in the design.
 """
 class UCSolutionEnumerator():
 
-    def __init__(self, block: FullyCrossBlock) -> None:
+    def __init__(self, block: CrossBlock) -> None:
         self._block = block
         self._partitions = DesignPartitions(block)
         self._crossing_instances = self.__generate_crossing_instances()
@@ -192,8 +201,15 @@ class UCSolutionEnumerator():
         # list are allowed.
         self._valid_source_combinations_indices = cast(List[List[int]], []) # Will be populated by solution counting
 
+        # For multiple crossings, we'll need the size of each crossing and how much to consider the
+        # preamble of each:
+        self.crossing_sizes = [block.crossing_size(c) for c in block.crossings]
+        self.preamble_sizes = [block._trials_per_sample_for_one_crossing(c) - block.crossing_size(c) for c in block.crossings]
+        # Check that calculations from two sources agree:
+        assert self.crossing_sizes[0] == self.crossing_size
+
         noncomplex_crossing_size = self.noncomplex_crossing_size
-        preamble_size = block._trials_per_sample_for_crossing() - block.crossing_size()
+        preamble_size = self.preamble_sizes[0]
         self._preamble_size = preamble_size;
 
         # Call `__count_solutions` after everything else is set up.
@@ -206,7 +222,7 @@ class UCSolutionEnumerator():
         self._leftover_segment_lengths = cast(List[int], [])
         self._leftover_solution_count = 1
         self._leftover_pmemo = PermutationMemo()
-        leftover = max(block.min_trials - preamble_size, self.crossing_size) % self.crossing_size;
+        leftover = (block.trials_per_sample() - preamble_size) % self.crossing_size;
         if (leftover != 0):
             self._leftover_solution_count = self.__count_solutions(leftover,
                                                                    self._leftover_segment_lengths,

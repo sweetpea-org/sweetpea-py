@@ -144,7 +144,7 @@ design       = [color, motion, size, task, congruency, response, task_transition
 crossing     = [color, motion, size, task]
 block        = fully_cross_block(design, crossing, constraints)
 
-experiments  = synthesize_trials(block, 5, NonUniformSamplingStrategy)
-# Could also use UniformCombinatoricSamplingStrategy
+experiments  = synthesize_trials(block, 5, UniformCombinatoricSamplingStrategy)
+# Could also use NonUniformSamplingStrategy
 
 print_experiments(block, experiments)

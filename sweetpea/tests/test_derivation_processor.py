@@ -80,10 +80,11 @@ def test_generate_derivations_should_produce_warning_if_some_level_is_unreachabl
         DerivedLevel("inc", WithinTrial(op.ne, [color, text])),
         DerivedLevel("dum", WithinTrial(lambda c, t: c=='green', [color, text]))
     ])
-    fully_cross_block([color, text, local_con_factor],
-                      [color, text],
-                      [Reify(local_con_factor)])
-    assert capsys.readouterr().out == "WARNING: There is no assignment that matches factor congruent? with level dum.\n"
+    block = fully_cross_block([color, text, local_con_factor],
+                              [color, text],
+                              [Reify(local_con_factor)])
+    block.show_errors()
+    assert capsys.readouterr().out == "WARNING: No matches to the factor 'congruent?' predicate for level\n 'dum'.\n"
 
 def test_generate_derivations_within_trial():
     assert DerivationProcessor.generate_derivations(blk) == [

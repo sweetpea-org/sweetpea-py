@@ -294,7 +294,7 @@ def test_fully_cross_block_grid_variables():
                            [[color, text]], []).grid_variables() == 16
     assert FullyCrossBlock([color, text, con_factor],
                            [[color, text]],
-                           [Exclude(con_factor, con_level)]).grid_variables() == 24
+                           [Exclude(con_factor, con_level)]).grid_variables() == 12
 
     # Should include grid variables, as well as additional variables for complex windows.
     assert FullyCrossBlock([color, text, color_repeats_factor],
@@ -307,7 +307,7 @@ def test_fully_cross_block_variables_per_sample():
                            [[color, text]], []).variables_per_sample() == 16
     assert FullyCrossBlock([color, text, con_factor],
                            [[color, text]],
-                           [Exclude(con_factor, con_level)]).variables_per_sample() == 24
+                           [Exclude(con_factor, con_level)]).variables_per_sample() == 12
 
     # Should include grid variables, as well as additional variables for complex windows.
     assert FullyCrossBlock([color, text, color_repeats_factor],
@@ -410,8 +410,8 @@ def test_fully_cross_block_should_copy_input_lists():
 def test_build_variable_list_for_simple_factors():
     block = fully_cross_block([color, text, con_factor], [color, text], [Exclude(con_factor, inc_level)])
 
-    assert block.build_variable_list((color, red_color)) == [1, 7, 13, 19]
-    assert block.build_variable_list((con_factor, get_level_from_name(con_factor, "con"))) == [5, 11, 17, 23]
+    assert block.build_variable_list((color, red_color)) == [1, 7]
+    assert block.build_variable_list((con_factor, get_level_from_name(con_factor, "con"))) == [5, 11]
 
 
 def test_build_variable_list_for_complex_factors():
