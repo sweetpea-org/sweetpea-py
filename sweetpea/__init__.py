@@ -24,6 +24,7 @@ from sweetpea.sampling_strategies.unigen import UnigenSamplingStrategy
 from sweetpea.sampling_strategies.cmsgen import CMSGenSamplingStrategy
 from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy
 from sweetpea.server import build_cnf
+from sweetpea.core.cnf import Var
 import csv
 
 
@@ -463,4 +464,4 @@ def __generate_cnf(block: Block) -> str:
         DIMACS-formatted string.
     """
     cnf = build_cnf(block)
-    return cnf.as_unigen_string(sampled_variables = block.support_variables())
+    return cnf.as_unigen_string(sampled_variables = [Var(n) for n in block.support_variables()])

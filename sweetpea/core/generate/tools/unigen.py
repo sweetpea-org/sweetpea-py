@@ -13,6 +13,8 @@ from subprocess import CompletedProcess, run
 from numpy import random
 from tempfile import NamedTemporaryFile
 
+from typing import Tuple
+
 from .docker_utility import DEFAULT_DOCKER_MODE_ON, docker_run
 from .executables import DEFAULT_DOWNLOAD_IF_MISSING, UNIGEN_EXE, CMSGEN_EXE, ensure_executable_available
 from .tool_error import ToolError
@@ -26,7 +28,7 @@ class UnigenError(ToolError):
     pass
 
 
-def call_unigen_docker(input_file: Path, sample_count: int) -> CompletedProcess:
+def call_unigen_docker(input_file: Path, sample_count: int) -> Tuple[CompletedProcess, str]:
     """Calls Unigen in a Docker container, reading a given file as the input
     problem.
     """
@@ -41,7 +43,7 @@ def call_unigen_docker(input_file: Path, sample_count: int) -> CompletedProcess:
 def call_unigen_cli(input_file: Path,
                     download_if_missing: bool,
                     sample_count: int,
-                    use_cmsgen: bool) -> CompletedProcess:
+                    use_cmsgen: bool) -> Tuple[CompletedProcess, str]:
     """Calls Unigen from the command line, reading a given file as the input
     problem.
 
