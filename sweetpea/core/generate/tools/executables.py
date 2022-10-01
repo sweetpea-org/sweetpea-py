@@ -69,7 +69,7 @@ __all__ = [
     # We export the environment variable names so they will be documented.
     'DOWNLOAD_UNIGEN_ENV_VAR', 'UNIGEN_EXE_ENV_VAR',
     # The rest of the exports are for use in other modules.
-    'CRYPTOMINISAT_EXE', 'DEFAULT_DOWNLOAD_IF_MISSING', 'UNIGEN_EXE',
+    'CRYPTOMINISAT_EXE', 'DEFAULT_DOWNLOAD_IF_MISSING', 'UNIGEN_EXE', 'CMSGEN_EXE',
     'ensure_executable_available'
 ]
 
@@ -130,12 +130,14 @@ def _build_exe_name(base_name: str) -> Path:
 APPROXMC_EXE = _build_exe_name('approxmc')
 CRYPTOMINISAT_EXE = _build_exe_name('cryptominisat5')
 UNIGEN_EXE = _build_exe_name('unigen')
+CMSGEN_EXE = _build_exe_name('cmsgen')
 
 # An easy-to-use collection of the paths.
 EXECUTABLE_PATHS = [
     APPROXMC_EXE,
     CRYPTOMINISAT_EXE,
     UNIGEN_EXE,
+    CMSGEN_EXE,
 ]
 
 
@@ -267,8 +269,11 @@ def download_and_extract_asset_zip_for_release(to_bin_dir: Path,
                 sub_path = Path(zipinfo.filename).relative_to(internal_base_asset_path)
                 new_path = to_bin_dir / sub_path
                 if new_path.is_file():
-                    raise RuntimeError(f"File exists; no contents extracted from zip: {new_path}")
-                write_buffer.append((zipinfo, new_path))
+                    # We'll need to do something different here one day when we
+                    # want to update existng executables...
+                    print(f"File exists; no contents extracted from zip: {new_path}")
+                else:
+                    write_buffer.append((zipinfo, new_path))
             else:
                 # We only extract the needed contents.
                 continue

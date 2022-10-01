@@ -19,7 +19,7 @@ class UnigenSamplingStrategy(SamplingStrategy):
         return 'UniGen Sampling Strategy'
 
     @staticmethod
-    def sample(block: Block, sample_count: int, min_search: bool=False) -> SamplingResult:
+    def sample(block: Block, sample_count: int, min_search: bool=False, use_cmsgen=False) -> SamplingResult:
 
         backend_request = block.build_backend_request()
         if block.show_errors():
@@ -31,7 +31,8 @@ class UnigenSamplingStrategy(SamplingStrategy):
             backend_request.fresh - 1,
             block.variables_per_sample(),
             backend_request.get_requests_as_generation_requests(),
-            False)
+            use_docker=False,
+            use_cmsgen=use_cmsgen)
 
         # This section deals with the problem caused by a corner case created
         # by at_least_k_in_a_row_constraint. I.e. in some cases this cotnraint

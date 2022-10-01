@@ -18,15 +18,17 @@ def sample_uniform(sample_count: int,
                    fresh: int,
                    support: int,
                    generation_requests: List[GenerationRequest],
-                   use_docker: bool = DEFAULT_DOCKER_MODE_ON
+                   use_docker: bool = DEFAULT_DOCKER_MODE_ON,
+                   use_cmsgen: bool = False
                    ) -> List[Solution]:
     """Samples solutions to a CNF problem uniformly. The solution is computed
     using Unigen.
     """
     with temporary_cnf_file() as cnf_file:
         combine_and_save_cnf(cnf_file, initial_cnf, fresh, support, generation_requests)
-        print("Running UniGen...")
-        solution_str = call_unigen(sample_count, cnf_file, docker_mode=use_docker)
+        solver_name = "UniGen" if not use_cmsgen else "CMSGen"
+        print(f"Running {solver_name}...")
+        solution_str = call_unigen(sample_count, cnf_file, docker_mode=use_docker, use_cmsgen=use_cmsgen)
         # TODO: Validate that skipping the comments is the intended
         #       functionality. The Haskell code doesn't appear to need to do
         #       this, but this could be due to the Unigen upgrade or something

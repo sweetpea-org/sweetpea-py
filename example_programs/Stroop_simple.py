@@ -4,8 +4,8 @@ sys.path.append("..")
 
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.constraints import at_most_k_in_a_row, minimum_trials
-from sweetpea import fully_cross_block, synthesize_trials, print_experiments, tabulate_experiments
-from sweetpea import NonUniformSamplingStrategy, UniformCombinatoricSamplingStrategy
+from sweetpea import fully_cross_block, synthesize_trials, print_experiments, tabulate_experiments, save_cnf
+from sweetpea import CMSGenSamplingStrategy
 
 
 """
@@ -91,8 +91,11 @@ block        = fully_cross_block(design, crossing, constraints)
 
 # SOLVE
 
-experiments  = synthesize_trials(block, 5, NonUniformSamplingStrategy)
+save_cnf(block, "/tmp/c-gt.cnf")
+
+experiments  = synthesize_trials(block, 5, CMSGenSamplingStrategy)
 # Or:
+# experiments  = synthesize_trials(block, 5, NonUniformSamplingStrategy)
 # experiments  = synthesize_trials(block, 5, UniformCombinatoricSamplingStrategy(acceptable_error=3))
 
 print_experiments(block, experiments)

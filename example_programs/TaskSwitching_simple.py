@@ -4,8 +4,8 @@ sys.path.append("..")
 
 from sweetpea.primitives import Factor, WithinTrial, Transition, derived_level
 from sweetpea.constraints import at_most_k_in_a_row
-from sweetpea import fully_cross_block, synthesize_trials, print_experiments
-from sweetpea import NonUniformSamplingStrategy, UniformCombinatoricSamplingStrategy
+from sweetpea import fully_cross_block, synthesize_trials, print_experiments, save_cnf
+from sweetpea import CMSGenSamplingStrategy
 
 """
 Task Switching Design (simple)
@@ -133,7 +133,9 @@ design       = [color, motion, task, congruency, response, task_transition, resp
 crossing     = [color, motion, task]
 block        = fully_cross_block(design, crossing, constraints)
 
-experiments  = synthesize_trials(block, 5, UniformCombinatoricSamplingStrategy)
-# Could also use NonUniformSamplingStrategy
+save_cnf(block, "/tmp/new-task.cnf")
+
+experiments  = synthesize_trials(block, 5, CMSGenSamplingStrategy)
+# Could also use NonUniformSamplingStrategy or UniformCombinatoricSamplingStrategy
 
 print_experiments(block, experiments)

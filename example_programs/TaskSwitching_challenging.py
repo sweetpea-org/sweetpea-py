@@ -5,7 +5,7 @@ sys.path.append("..")
 from sweetpea.constraints import *
 from sweetpea.primitives import derived_level, within_trial, transition
 from sweetpea import fully_cross_block, synthesize_trials, print_experiments
-from sweetpea import NonUniformSamplingStrategy, UniformCombinatoricSamplingStrategy
+from sweetpea import CMSGenSamplingStrategy
 
 """
 Task Switching Design (challenging)
@@ -144,7 +144,7 @@ design       = [color, motion, size, task, congruency, response, task_transition
 crossing     = [color, motion, size, task]
 block        = fully_cross_block(design, crossing, constraints)
 
-experiments  = synthesize_trials(block, 5, UniformCombinatoricSamplingStrategy)
-# Could also use NonUniformSamplingStrategy
+experiments  = synthesize_trials(block, 5, CMSGenSamplingStrategy)
+# Could also use NonUniformSamplingStrategy or UniformCombinatoricSamplingStrategy
 
 print_experiments(block, experiments)

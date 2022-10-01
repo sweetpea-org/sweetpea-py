@@ -21,6 +21,7 @@ from sweetpea.constraints import (
 from sweetpea.sampling_strategies.base import SamplingStrategy
 from sweetpea.sampling_strategies.non_uniform import NonUniformSamplingStrategy
 from sweetpea.sampling_strategies.unigen import UnigenSamplingStrategy
+from sweetpea.sampling_strategies.cmsgen import CMSGenSamplingStrategy
 from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy
 from sweetpea.server import build_cnf
 import csv
@@ -462,4 +463,4 @@ def __generate_cnf(block: Block) -> str:
         DIMACS-formatted string.
     """
     cnf = build_cnf(block)
-    return cnf.as_unigen_string(support_set_length = block.variables_per_sample())
+    return cnf.as_unigen_string(sampled_variables = block.support_variables())

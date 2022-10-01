@@ -137,6 +137,16 @@ class Block:
         """
         return reduce(lambda sum, f: sum + self.variables_for_factor(f), self.act_design, 0)
 
+    def support_variables(self) -> List[int]:
+        """Returns the variables for all non-derived factors for all trials.
+        The values of these variables determine the values of all others."""
+        vars = []
+        for t in range(self.trials_per_sample()):
+            for f in self.act_design:
+                if not f.is_derived():
+                    vars += self.factor_variables_for_trial(f, t+1)
+        return vars
+
     def variables_for_factor(self, f: Factor) -> int:
         """Indicates the number of variables needed to encode this factor."""
         trial_list = range(1, self.trials_per_sample() + 1)
