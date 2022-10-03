@@ -8,17 +8,16 @@ from sweetpea import fully_cross_block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
 from sweetpea.blocks import FullyCrossBlock
 from sweetpea.constraints import Exclude
-from sweetpea.tests.test_utils import get_level_from_name
 
 color = Factor("color", ["red", "blue"])
 text  = Factor("text",  ["red", "blue"])
 size  = Factor("size",  ["big", "small", "tiny"])
 direction = Factor("direction", ["up", "down"])
 
-red_color = get_level_from_name(color, "red")
-red_text = get_level_from_name(text, "red")
-blue_color = get_level_from_name(color, "blue")
-blue_text = get_level_from_name(text, "blue")
+red_color = color["red"]
+red_text = text["red"]
+blue_color = color["blue"]
+blue_text = text["blue"]
 
 con_level  = DerivedLevel("con", WithinTrial(op.eq, [color, text]))
 inc_level  = DerivedLevel("inc", WithinTrial(op.ne, [color, text]))
@@ -29,24 +28,24 @@ color_repeats_factor = Factor("repeated color?", [
     DerivedLevel("no",  Transition(lambda colors: colors[0] != colors[1], [color]))
 ])
 
-yes_color_repeats = get_level_from_name(color_repeats_factor, "yes")
-no_color_repeats = get_level_from_name(color_repeats_factor, "no")
+yes_color_repeats = color_repeats_factor["yes"]
+no_color_repeats = color_repeats_factor["no"]
 
 text_repeats_factor = Factor("repeated text?", [
     DerivedLevel("yes", Transition(lambda texts: texts[0] == texts[1], [text])),
     DerivedLevel("no",  Transition(lambda texts: texts[0] != texts[1], [text]))
 ])
 
-yes_text_repeats = get_level_from_name(text_repeats_factor, "yes")
-no_text_repeats = get_level_from_name(text_repeats_factor, "no")
+yes_text_repeats = text_repeats_factor["yes"]
+no_text_repeats = text_repeats_factor["no"]
 
 congruent_bookend = Factor("congruent bookend?", [
     DerivedLevel("yes", Window(lambda color, text: color == text, [color, text], 1, 3)),
     DerivedLevel("no",  Window(lambda color, text: color != text, [color, text], 1, 3))
 ])
 
-yes_congruent = get_level_from_name(congruent_bookend, "yes")
-no_congruent = get_level_from_name(congruent_bookend, "no")
+yes_congruent = congruent_bookend["yes"]
+no_congruent = congruent_bookend["no"]
 
 color3 = Factor("color3", ["red", "blue", "green"])
 
@@ -57,8 +56,8 @@ color3_repeats_factor = Factor("color3 repeats?", [
     DerivedLevel("no",  Window(no_fn, [color3], 3, 1))
 ])
 
-yes_color3_repeats = get_level_from_name(color3_repeats_factor, "yes")
-no_color3_repeats = get_level_from_name(color3_repeats_factor, "no")
+yes_color3_repeats = color3_repeats_factor["yes"]
+no_color3_repeats = color3_repeats_factor["no"]
 
 def test_has_factor():
     block = fully_cross_block([color, text], [color, text], [])
@@ -382,8 +381,8 @@ def test_fully_cross_block_crossing_size_with_overlapping_exclude():
 
     assert FullyCrossBlock([color, text, congruent_factor, legal_factor],
                            [[color, text]],
-                           [Exclude(congruent_factor, get_level_from_name(congruent_factor, "congruent")), # Excludes 3
-                            Exclude(legal_factor, get_level_from_name(legal_factor, "no"))], # Excludes 4, but 3 were already excluded
+                           [Exclude(congruent_factor, "congruent"), # Excludes 3
+                            Exclude(legal_factor, "no")], # Excludes 4, but 3 were already excluded
                            require_complete_crossing=False).crossing_size() == 5
 
 
@@ -392,7 +391,7 @@ def test_fully_cross_block_should_copy_input_lists():
     # user modifies the original list.
     design = [color, text, con_factor]
     crossing = [color, text]
-    constraints = [Exclude(con_factor, get_level_from_name(con_factor, "con"))]
+    constraints = [Exclude(con_factor, "con")]
 
     block = FullyCrossBlock(design, [crossing], constraints)
 
@@ -411,7 +410,7 @@ def test_build_variable_list_for_simple_factors():
     block = fully_cross_block([color, text, con_factor], [color, text], [Exclude(con_factor, inc_level)])
 
     assert block.build_variable_list((color, red_color)) == [1, 7]
-    assert block.build_variable_list((con_factor, get_level_from_name(con_factor, "con"))) == [5, 11]
+    assert block.build_variable_list((con_factor, con_factor["con"])) == [5, 11]
 
 
 def test_build_variable_list_for_complex_factors():
@@ -437,8 +436,8 @@ def test_build_variable_list_for_three_derived_levels():
                                  make_k_diff_level(1),
                                  make_k_diff_level(2)]);
 
-    block = fully_cross_block([color, text, changed], [color, text], [Exclude(changed, get_level_from_name(changed, "1"))])
+    block = fully_cross_block([color, text, changed], [color, text], [Exclude(changed, "1")])
 
-    assert block.build_variable_list((changed, get_level_from_name(changed, "0"))) == [17, 20, 23]
-    # assert block.build_variable_list((changed, get_level_from_name(changed, "1"))) == [18, 21, 24]
-    assert block.build_variable_list((changed, get_level_from_name(changed, "2"))) == [19, 22, 25]
+    assert block.build_variable_list((changed, changed["0"])) == [17, 20, 23]
+    # assert block.build_variable_list((changed, changed["1"])) == [18, 21, 24]
+    assert block.build_variable_list((changed, changed["2"])) == [19, 22, 25]

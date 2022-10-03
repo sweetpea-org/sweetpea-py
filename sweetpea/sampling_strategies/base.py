@@ -55,7 +55,7 @@ class Gen(ABC):
 
         # Simple factors
         tuples = list(map(lambda v: block.decode_variable(v), simple_variables))
-        string_tuples = list(map(lambda t: (t[0].factor_name, t[1].external_name), tuples))
+        string_tuples = list(map(lambda t: (t[0].name, t[1].name), tuples))
         for (factor_name, level_name) in string_tuples:
             if factor_name not in experiment:
                 experiment[factor_name] = []
@@ -72,7 +72,7 @@ class Gen(ABC):
 
             # Get the level names for the variables in the solution.
             level_tuples = list(map(lambda v: block.decode_variable(v), variables))
-            level_names = list(map(lambda t: (t[1].external_name), level_tuples))
+            level_names = list(map(lambda t: (t[1].name), level_tuples))
 
             # Intersperse empty strings for the trials to which this factor does not apply.
             #level_names = list(intersperse('', level_names, f.levels[0].window.stride - 1))
@@ -80,7 +80,7 @@ class Gen(ABC):
             level_names_fill = []
             for n in range(block.trials_per_sample()):
                 level_names_fill.append(level_names.pop(0) if f.applies_to_trial(n+1) else '')
-            experiment[f.factor_name] = level_names_fill
+            experiment[f.name] = level_names_fill
 
         return experiment
 

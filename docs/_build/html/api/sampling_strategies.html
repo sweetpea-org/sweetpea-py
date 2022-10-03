@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sampling Strategies &mdash; SweetPea  documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Constraints" href="constraints.html" />
+<link rel="stylesheet" type="text/css"
+      href="../_static/css/custom.css" />
+
+
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> SweetPea
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guide.html">SweetPea Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../guide/installation.html">Installation and Setup</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guide/installation.html#automated-installation-from-the-python-package-index">Automated Installation from the Python Package Index</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/installation.html#manual-installation-from-source">Manual Installation from Source</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/installation.html#contributing-to-sweetpea-development">Contributing to SweetPea Development</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/factorial_design.html">Factorial Experiment Design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#factors">Factors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#levels">Levels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#example">Example</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#derivations">Derivations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/factorial_design.html#within-trial-windows">Within-Trial Windows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/factorial_design.html#transition-windows">Transition Windows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/factorial_design.html#general-windows">General Windows</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/factorial_design.html#glossary">Glossary</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/usage.html">Using SweetPea</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guide/usage.html#a-simple-stroop-experiment">A Simple Stroop Experiment</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/usage.html#building-the-simple-stroop-experiment">Building the Simple Stroop Experiment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/usage.html#sweetpea-feature-recap">SweetPea Feature Recap</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/usage.html#working-with-derived-levels">Working With Derived Levels</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/usage.html#derivation">Derivation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/usage.html#constraints">Constraints</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../guide/contributing.html">Contributing to SweetPea</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../guide/contributing/issues.html">Using the GitHub Issue Tracker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/contributing/development.html">Developing SweetPea</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/development.html#configuring-your-development-environment">Configuring Your Development Environment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/development.html#repository-organization">Repository Organization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/development.html#workflows">Workflows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/development.html#pull-requests">Pull Requests</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/contributing/documentation.html">Contributing to the Documentation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/documentation.html#installing-dependencies">Installing Dependencies</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/documentation.html#building-the-documentation">Building the Documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/documentation.html#automatic-vs-manual-documentation">Automatic vs Manual Documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/documentation.html#contributing-to-the-automatic-documentation">Contributing to the Automatic Documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/documentation.html#style-guides">Style Guides</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/contributing/rest_style_guide.html">reStructuredText Style Guide</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/rest_style_guide.html#general">General</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/rest_style_guide.html#docstrings">Docstrings</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../guide/contributing/py_style_guide.html">Python Style Guide</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#note-on-pep-8">Note on PEP 8</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#maximum-line-length">Maximum Line Length</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#blank-lines">Blank Lines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#imports">Imports</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#string-quotes">String Quotes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#trailing-commas">Trailing Commas</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#comments">Comments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../guide/contributing/py_style_guide.html#type-checking-or-linting-overrides">Type-Checking or Linting Overrides</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">SweetPea API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="main.html">Experiments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="factors.html">Factors and Levels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="derivations.html">Derivations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="constraints.html">Constraints</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Sampling Strategies</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SweetPea</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../api.html">SweetPea API</a> &raquo;</li>
+      <li>Sampling Strategies</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/sampling_strategies.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="sampling-strategies">
+<span id="id1"></span><h1>Sampling Strategies<a class="headerlink" href="#sampling-strategies" title="Permalink to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="sweetpea.Gen">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">Gen</span></span><a class="headerlink" href="#sweetpea.Gen" title="Permalink to this definition"></a></dt>
+<dd><p>Abstract class for a sampling strategy (i.e., a generator
+of trials).</p>
+<p>A subclass of <code class="xref py py-class docutils literal notranslate"><span class="pre">Gen</span></code> can be used instead of an
+instance to mean the same sampling strategy as an instance
+with default arguments.</p>
+<p><em>Uniforimity</em>: Different subclasses of <cite>Gen</cite> provide
+different guarantee about coverage of the space of possible
+trial sequences. A guarantee of uniformity means that is a
+single trial sequence is requested via
+<code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code>, the generated sequence is chosen
+randomly among all trial sequences that fit the constraints
+of the experiment definition, and all such trial sequences
+are eqaully likely to be reported.</p>
+<p><em>Independence</em>: Different subclasses of <cite>Gen</cite> provide
+different behavior when multiple trial sequences are
+requested with a single call to <code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code>.
+Some strategies produce independenly chosen results, while
+some produce distinct results in the returned list of
+sequences.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sweetpea.UniGen">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">UniGen</span></span><a class="headerlink" href="#sweetpea.UniGen" title="Permalink to this definition"></a></dt>
+<dd><p><em>Uniforimity</em>: Generates trials with a guarantee of
+uniformity. Unfortunately, due to the difficulty of
+sampling with a guarantee, this stategy is unlikely to
+succeed for non-trial designs.</p>
+<p><em>Independence</em>: Generating multiple trials in one call to
+<code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code> with this strategy produces
+indepedent results. That is, the single call is the same as
+separate calls that each generate one sequence of trials.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sweetpea.CMSGen">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">CMSGen</span></span><a class="headerlink" href="#sweetpea.CMSGen" title="Permalink to this definition"></a></dt>
+<dd><p><em>Quasi-Uniforimity</em>: Generates trials that appear to be
+uniformly chosen based on the available technology for
+detecting non-uniformity. This strategy may perform well in
+terms of sampling possible configurations, despite a having
+no formal guarantee of uniformity.</p>
+<p><em>Independence</em>: Generating multiple trials in one call to
+<code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code> with this strategy produces
+indepedent results. That is, the single call is the same as
+separate calls that each generate one sequence of trials.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sweetpea.RandomGen">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">RandomGen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acceptable_error</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.RandomGen" title="Permalink to this definition"></a></dt>
+<dd><p><em>Uniforimity</em>: Generates trials with a guarantee of
+uniformity. Constraints or derived factors with a window
+greater than 1 can force generation to use rejection
+sampling, which may fail to find instances in a reasonable
+time if the search space is large.</p>
+<p><em>Non-Independence</em>: When multiple trials are generated in
+one call to <code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code> with this strategy,
+each of the results is constrained to be distinct. The
+number of returned experiments will be less than the
+requested number if the pool of possible trial sequences is
+exhausted.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>acceptable_error</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – With derived factors in the
+crossing, a number of combinations
+with those levels that are allowed
+to be missing (in which case other
+combinations will be duplicated);
+this parameter weakens the
+rejection step of rejection
+sampling, which can be useful when
+samples that match all constraints
+of the experiment prove difficult
+to find</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sweetpea.IterateGen">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">IterateGen</span></span><a class="headerlink" href="#sweetpea.IterateGen" title="Permalink to this definition"></a></dt>
+<dd><p><em>Non-Uniforimity</em>: Generates trials by repeatedly finding
+solutions to an experiment design’s constraints, but with
+no guarantee of uniform coverage or even randomness (i.e.,
+each separate use of <code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code> with this
+stragegy may produce the same result).</p>
+<p><em>Non-Independence</em>: When multiple trials are generated in
+one call to <code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code> with this strategy,
+each of the results is constrained to be distinct. The
+number of returned experiments will be less than the
+requested number if the pool of possible trial sequences is
+exhausted.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="constraints.html" class="btn btn-neutral float-left" title="Constraints" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, SweetPea Research Group.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

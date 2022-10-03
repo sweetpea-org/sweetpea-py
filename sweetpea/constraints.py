@@ -13,14 +13,15 @@ from sweetpea.internal.iter import chunk, chunk_list
 from sweetpea.blocks import Block, FullyCrossBlock, MultipleCrossBlock
 from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import If, Iff, And, Or, Not
-from sweetpea.primitives import DerivedFactor, DerivedLevel, Factor, Level, SimpleLevel, get_internal_level_name
+from sweetpea.primitives import DerivedFactor, DerivedLevel, Factor, Level, SimpleLevel
+from .internal.argcheck import argcheck, make_istuple
 
 
 def validate_factor(block: Block, factor: Factor) -> None:
     if not block.has_factor(factor):
         raise ValueError(("A factor with name '{}' wasn't found in the design. "
                           "Are you sure the factor was included, and that the name is spelled "
-                          "correctly?").format(factor.factor_name))
+                          "correctly?").format(factor.name))
 
 def validate_factor_and_level(block: Block, factor: Factor, level: Union[SimpleLevel, DerivedLevel]) -> None:
     validate_factor(block, factor)
@@ -28,8 +29,8 @@ def validate_factor_and_level(block: Block, factor: Factor, level: Union[SimpleL
     if not factor.has_level(level.name):
         raise ValueError(("A level with name '{}' wasn't found in the '{}' factor, "
                           "Are you sure the level name is spelled correctly?").format(
-                              get_internal_level_name(level),
-                              factor.factor_name))
+                              level.name,
+                              factor.name))
 
 
 class Consistency(Constraint):
@@ -336,20 +337,25 @@ class _KInARow(Constraint):
         self.__validate()
 
     def __validate(self) -> None:
+        who = self.__class__.__name__
+
         if not isinstance(self.k, int):
-            raise ValueError("k must be an integer.")
+            raise ValueError(f"{who}: k must be an integer, received {self.k}")
 
         if self.k <= 0:
-            raise ValueError("k must be greater than 0. If you're trying to exclude a particular level, "
-                             "please use the 'Exclude' constraint.")
+            raise ValueError(f"{who}: k must be greater than 0; if you're trying to exclude a particular level, "
+                             f"use the 'Exclude' constraint")
 
-        if not (isinstance(self.level, Factor) or \
-                (isinstance(self.level, tuple) and \
-                 len(self.level) == 2 and \
-                 isinstance(self.level[0], Factor) and \
-                 (isinstance(self.level[1], SimpleLevel)
-                 or isinstance(self.level[1], DerivedLevel)))):
-            raise ValueError("level must be either a Factor or a Tuple[Factor, DerivedLevel or SimpleLevel].")
+        if isinstance(self.level, Factor):
+            pass
+        elif isinstance(self.level, tuple) and len(self.level) == 2:
+            if not (isinstance(self.level[1], SimpleLevel) or isinstance(self.level[1], DerivedLevel)):
+                l = self.level[0].get_level(self.level[1])
+                if not l:
+                    raise ValueError(f"{who}: not a level in factor {self.level[0]}: {self.level[1]}")
+                self.level = (self.level[0], l)
+        else:
+            raise ValueError(f"{who}: expected either a Factor or a tuple of Factor and Level, given {self.level}")
 
     def validate(self, block: Block) -> None:
         validate_factor_and_level(block, self.level[0], self.level[1])
@@ -395,17 +401,17 @@ class _KInARow(Constraint):
         pass
 
     def potential_sample_conforms(self, sample: dict) -> bool:
-        factor_name = self.level[0].name
-        level_name = self.level[1].name
+        factor = self.level[0]
+        level = self.level[1]
 
-        level_list = sample[factor_name]
+        level_list = sample[factor]
         counts = []
         count = 0
         for l in level_list:
-            if count > 0 and l != level_name:
+            if count > 0 and l != level:
                 counts.append(count)
                 count = 0
-            elif l == level_name:
+            elif l == level:
                 count += 1
 
         if count > 0:
@@ -624,7 +630,15 @@ class Exclude(Constraint):
     def __init__(self, factor, level):
         self.factor = factor
         self.level = level
-        # TODO: validation
+        who = "Exclude"
+        argcheck(who, factor, Factor, "a Factor")
+        if not isinstance(level, Level):
+            l = factor.get_level(level)
+            if not l:
+                raise ValueError(f"{who}: not a level in factor {factor}: {level}")
+            self.level = l
+        elif level not in factor.levels:
+            raise RuntimeError(f"{who}: given level is not in given factor: {level} not in {factor}")
 
     def validate(self, block: Block) -> None:
         validate_factor_and_level(block, self.factor, self.level)
@@ -690,10 +704,10 @@ class Exclude(Constraint):
         # conformance by construction in combinatoric for simple factors, but
         # we have to check exlcusions based on complex factors
         if self.factor.has_complex_window:
-            levels = sample[self.factor.name]
-            level_name = self.level.name
+            levels = sample[self.factor]
+            level = self.level
             for l in levels:
-                if l == level_name:
+                if l == level:
                     return False
         return True
 
@@ -726,6 +740,8 @@ def minimum_trials(trials):
 class MinimumTrials(Constraint):
     def __init__(self, trials):
         self.trials = trials
+        who = "MinimumTrials"
+        argcheck(who, trials, int, "an integer")
         # TODO: validation
 
     def is_complex_for_combinatoric(self) -> bool:
@@ -735,7 +751,7 @@ class MinimumTrials(Constraint):
         if self.trials <= 0 and not isinstance(self.trials, int):
             raise ValueError("Minimum trials must be a positive integer.")
 
-    def apply(self, block: Block, backend_request: BackendRequest) -> None:
+    def apply(self, block: Block, backend_request: Union[BackendRequest, None]) -> None:
         if block.min_trials:
             block.min_trials = max([block.min_trials, self.trials])
         else:

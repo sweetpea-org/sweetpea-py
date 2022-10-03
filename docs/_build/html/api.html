@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SweetPea API Documentation &mdash; SweetPea  documentation</title>
+  <title>SweetPea API &mdash; SweetPea  documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <!--[if lt IE 9]>
@@ -19,7 +19,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="sweetpea package" href="api/sweetpea.html" />
+    <link rel="next" title="Experiments" href="api/main.html" />
     <link rel="prev" title="Python Style Guide" href="guide/contributing/py_style_guide.html" />
 <link rel="stylesheet" type="text/css"
       href="_static/css/custom.css" />
@@ -56,9 +56,9 @@
 <li class="toctree-l3"><a class="reference internal" href="guide/factorial_design.html#levels">Levels</a></li>
 <li class="toctree-l3"><a class="reference internal" href="guide/factorial_design.html#example">Example</a></li>
 <li class="toctree-l3"><a class="reference internal" href="guide/factorial_design.html#derivations">Derivations</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="guide/factorial_design.html#basic-windows">Basic Windows</a></li>
-<li class="toctree-l4"><a class="reference internal" href="guide/factorial_design.html#transition-windows">Transition Windows</a></li>
 <li class="toctree-l4"><a class="reference internal" href="guide/factorial_design.html#within-trial-windows">Within-Trial Windows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="guide/factorial_design.html#transition-windows">Transition Windows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="guide/factorial_design.html#general-windows">General Windows</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="guide/factorial_design.html#glossary">Glossary</a></li>
@@ -114,33 +114,12 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">SweetPea API Documentation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/sweetpea.html">sweetpea package</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="api/sweetpea.html#subpackages">Subpackages</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.core.html">sweetpea.core package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.sampling_strategies.html">sweetpea.sampling_strategies package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.tests.html">sweetpea.tests package</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="api/sweetpea.html#submodules">Submodules</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.backend.html">sweetpea.backend module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.base_constraint.html">sweetpea.base_constraint module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.blocks.html">sweetpea.blocks module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.combinatorics.html">sweetpea.combinatorics module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.constraints.html">sweetpea.constraints module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.derivation_processor.html">sweetpea.derivation_processor module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.design_graph.html">sweetpea.design_graph module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.design_partitions.html">sweetpea.design_partitions module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.encoding_diagram.html">sweetpea.encoding_diagram module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.internal.html">sweetpea.internal module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.logic.html">sweetpea.logic module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.metrics.html">sweetpea.metrics module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.primitives.html">sweetpea.primitives module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.server.html">sweetpea.server module</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">SweetPea API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/main.html">Experiments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/factors.html">Factors and Levels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/derivations.html">Derivations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/constraints.html">Constraints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/sampling_strategies.html">Sampling Strategies</a></li>
 </ul>
 </li>
 </ul>
@@ -159,7 +138,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>SweetPea API Documentation</li>
+      <li>SweetPea API</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -169,56 +148,18 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="sweetpea-api-documentation">
-<span id="api"></span><h1>SweetPea API Documentation<a class="headerlink" href="#sweetpea-api-documentation" title="Permalink to this heading"></a></h1>
-<p>This is the technical documentation for the <a class="reference internal" href="api/sweetpea.html#module-sweetpea" title="sweetpea"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sweetpea</span></code></a> Python package,
+  <section id="sweetpea-api">
+<span id="api"></span><h1>SweetPea API<a class="headerlink" href="#sweetpea-api" title="Permalink to this heading"></a></h1>
+<p>This is the technical documentation for the <code class="xref py py-mod docutils literal notranslate"><span class="pre">sweetpea</span></code> Python package,
 which provides the implementation of the <a class="reference internal" href="index.html#home"><span class="std std-ref">SweetPea language</span></a>.</p>
 <div class="toctree-wrapper compound">
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="api/sweetpea.html">sweetpea package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api/sweetpea.html#subpackages">Subpackages</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="api/sweetpea.core.html">sweetpea.core package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.core.html#data-representation">Data Representation</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.core.html#external-utilities">External Utilities</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.core.html#using-core">Using Core</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.core.html#subpackages">Subpackages</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.core.html#submodules">Submodules</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="api/sweetpea.sampling_strategies.html">sweetpea.sampling_strategies package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.sampling_strategies.html#submodules">Submodules</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="api/sweetpea.tests.html">sweetpea.tests package</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.tests.html#subpackages">Subpackages</a></li>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.tests.html#submodules">Submodules</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="api/sweetpea.html#submodules">Submodules</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="api/sweetpea.backend.html">sweetpea.backend module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/sweetpea.base_constraint.html">sweetpea.base_constraint module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/sweetpea.blocks.html">sweetpea.blocks module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/sweetpea.combinatorics.html">sweetpea.combinatorics module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/sweetpea.constraints.html">sweetpea.constraints module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/sweetpea.derivation_processor.html">sweetpea.derivation_processor module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/sweetpea.design_graph.html">sweetpea.design_graph module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/sweetpea.design_partitions.html">sweetpea.design_partitions module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/sweetpea.encoding_diagram.html">sweetpea.encoding_diagram module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/sweetpea.internal.html">sweetpea.internal module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/sweetpea.logic.html">sweetpea.logic module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/sweetpea.metrics.html">sweetpea.metrics module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="api/sweetpea.primitives.html">sweetpea.primitives module</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="api/sweetpea.primitives.html#a-note-on-deprecations">A Note on Deprecations</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="api/sweetpea.server.html">sweetpea.server module</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="api/main.html">Experiments</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/factors.html">Factors and Levels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/derivations.html">Derivations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/constraints.html">Constraints</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/sampling_strategies.html">Sampling Strategies</a></li>
 </ul>
 </div>
 </section>
@@ -228,7 +169,7 @@ which provides the implementation of the <a class="reference internal" href="ind
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="guide/contributing/py_style_guide.html" class="btn btn-neutral float-left" title="Python Style Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="api/sweetpea.html" class="btn btn-neutral float-right" title="sweetpea package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="api/main.html" class="btn btn-neutral float-right" title="Experiments" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

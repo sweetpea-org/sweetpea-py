@@ -18,8 +18,6 @@ __all__ = [
     'Level', 'SimpleLevel', 'DerivedLevel', 'ElseLevel',
     'Factor', 'SimpleFactor', 'DerivedFactor',
     'DerivationWindow', 'WithinTrialDerivationWindow', 'TransitionDerivationWindow',
-    # Backwards compatibility:
-    'get_external_level_name', 'get_internal_level_name',
     'WithinTrial', 'Transition', 'Window',
     'simple_level', 'derived_level', 'else_level', 'factor', 'within_trial', 'transition', 'window',
 ]
@@ -92,16 +90,6 @@ class Level:
     #: The name of the level.
     name: str
 
-    # TODO: I think we can get rid of `Level.internal_name` and replace it with
-    #       some other mechanism. See the TODO notes in `Level.__post_init__`.
-    #: The internal name, which is meant to be unique among levels.
-    #:
-    #: .. deprecated:: 0.1.0
-    #:
-    #:     This attribute will be removed. It should not be used outside of
-    #:     this module.
-    internal_name: str = field(init=False)
-
     # TODO: There is probably a way to make this smoother. As it stands,
     #       factors are responsible for registering themselves with their
     #       levels. Perhaps factors could be the only way to create levels?
@@ -134,50 +122,30 @@ class Level:
 
     def __new__(cls, *_, **__):
         if cls == Level:
-            raise ValueError(f"Cannot directly instantiate {cls.__name__}.")
-        return super().__new__(cls)
+            return super().__new__(SimpleLevel)
+        else:
+            return super().__new__(cls)
 
     def __post_init__(self):
-        # NOTE: This conversion exists for backwards compatibility.
-        if not isinstance(self.name, str):
-            self.name = str(self.name)
-        # TODO: Using random integers seems insecure. Perhaps use UUIDs or a
-        #       global (module-level) incremented counter.
-        # TODO: Alternatively, because this is only used for the `__eq__`
-        #       implementation, we could potentially remove this altogether and
-        #       simply switch to using `is` checks (which is a more secure way
-        #       of doing the same thing). The downside there is that this
-        #       requires users of SweetPea to understand the distinction
-        #       between `==` and `is`, which adds a bit of a barrier for an
-        #       audience that is not primarily made of programmers.
-        self.internal_name = self.name + f"{randint(0, 99999):05d}"
-
-    def __hash__(self) -> int:
-        return hash(self.internal_name)
-
-    def __eq__(self, other) -> bool:
-        if not isinstance(other, type(self)):
-            return False
-        return self.internal_name == other.internal_name
+        pass
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}<{self.name}>"
+        return f"Level<{self.name}>"
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def __hash__(self) -> int:
+        return hash(self.name)
+
+    def __eq__(self, other) -> bool:
+        # only equal when it's the same object:
+        return id(self) == id(other)
 
     @property
     def weight(self) -> int:
         """The level's weight."""
         return self._weight
-
-    # TODO: REMOVE. (backwards compatibility)
-    @property
-    def external_name(self) -> str:
-        """An alias for :attr:`.Level.name`.
-
-        .. deprecated:: 0.1.0
-
-            This property will be removed in favor of :attr:`.Level.name`.
-        """
-        return self.name
 
     def uses_factor(self, factor):
         return False
@@ -204,6 +172,9 @@ class SimpleLevel(Level):
     def __post_init__(self, weight: int):  # type: ignore # pylint: disable=arguments-differ
         super().__post_init__()
         self._weight = weight
+
+    def __repr__(self) -> str:
+        return self.__str__()
 
 
 @dataclass(eq=False)
@@ -291,12 +262,15 @@ class DerivedLevel(Level):
         window = self.window
         args = []
         for f in window.factors:
-            levels = sample[f.name]
+            levels = sample[f]
             for j in range(window.width):
-                args.append(levels[i-(window.width-1)+j])
+                args.append(levels[i-(window.width-1)+j].name)
         if window.width > 1:
             args = list(chunk_list(args, window.width))
         return args
+
+    def __repr__(self) -> str:
+        return "Derived" + self.__str__()
 
 @dataclass(eq=False)
 class ElseLevel(Level):
@@ -453,12 +427,9 @@ class Factor:
             real_levels.append(level)
         # Then we do any necessary post-processing of the levels.
         self.levels = self._process_initial_levels(real_levels)
-        # Lastly, ensure all the levels have distinct names. We also use this
-        # step to initialize the internal level map, which allows for constant-
-        # time lookup of levels by name.
         for level in self.levels:
-            if level.name in self._level_map:
-                raise ValueError(f"Factor {self.name} instantiated with duplicate level {level.name}.")
+            if hasattr(level, "factor"):
+                raise ValueError(f"Level already belongs to a factor: {level.name}")
             self._level_map[level.name] = level
             level.factor = self
 
@@ -482,27 +453,30 @@ class Factor:
         return new_instance
 
     def __eq__(self, other) -> bool:
-        if not isinstance(other, type(self)):
-            return False
-        return self.name == other.name and self.levels == other.levels
+        # only equal when it's the same object:
+        return id(self) == id(other)
 
     def __str__(self) -> str:
-        levels_string = '[' + ', '.join(map(str, self.levels)) + ']'
-        return f"{type(self).__name__}<{self.name} | {levels_string}>"
+        # levels_string = '[' + ', '.join(map(str, self.levels)) + ']'
+        # return f"Factor<{self.name} | {levels_string}>"
+        return f"Factor<{self.name}>"
+
+    def __repr__(self) -> str:
+        return self.__str__()
 
     def __hash__(self) -> int:
         return hash(self.name)
 
-    def __getitem__(self, name: str) -> Level:
+    def __getitem__(self, name) -> Level:
         value = self.get_level(name)
         if value is None:
             raise KeyError(f"Factor {self.name} has no level named {name}.")
         return value
 
-    def __contains__(self, name: str) -> bool:
+    def __contains__(self, name) -> bool:
         return name in self._level_map
 
-    def get_level(self, name: str) -> Optional[Level]:
+    def get_level(self, name) -> Optional[Level]:
         """Returns a :class:`.Level` instance corresponding to the given name,
         if it exists within this factor. Otherwise, returns ``None``.
         """
@@ -578,17 +552,6 @@ class Factor:
                 and (trial_number - window.width) % window.stride == 0)
 
     # TODO: REMOVE. (backwards compatibility)
-    @property
-    def factor_name(self) -> str:
-        """An alias for :attr:`.Factor.name` for backwards compatibility.
-
-        .. deprecated:: 0.1.0
-
-            This property will be removed in favor of :attr:`.Factor.name`.
-        """
-        return self.name
-
-    # TODO: REMOVE. (backwards compatibility)
     def has_level(self, name: str) -> bool:
         """Whether the given level name corresponds to a level in this factor.
 
@@ -650,7 +613,10 @@ class SimpleFactor(Factor):
     def __eq__(self, other) -> bool:  # pylint: disable=useless-super-delegation
         return super().__eq__(other)
 
-    def get_level(self, name: str) -> Optional[SimpleLevel]:
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def get_level(self, name) -> Optional[SimpleLevel]:
         return cast(Optional[SimpleLevel], super().get_level(name))
 
     @property
@@ -726,7 +692,10 @@ class DerivedFactor(Factor):
     def __eq__(self, other) -> bool:  # pylint: disable=useless-super-delegation
         return super().__eq__(other)
 
-    def get_level(self, name: str) -> Optional[DerivedLevel]:
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def get_level(self, name) -> Optional[DerivedLevel]:
         return cast(Optional[DerivedLevel], super().get_level(name))
 
     @property
@@ -742,7 +711,7 @@ class DerivedFactor(Factor):
         args = self.levels[0]._trial_arguments(sample, i)
         for l in self.levels:
             if l.window.predicate(*args):
-                return l.name
+                return l
         raise RuntimeError("no matching trial found when filling in a sample")
 
 ###############################################################################
@@ -935,30 +904,6 @@ class TransitionDerivationWindow(DerivationWindow):
 ## SweetPea implementation.
 ##
 ## TODO: Rewrite SweetPea's internal implementation in order to remove these!
-
-
-def get_external_level_name(level: Level) -> str:
-    """Returns :attr:`.Level.name`.
-
-    .. deprecated:: 0.1.0
-
-        This function will be removed in favor of :attr:`.Level.name`.
-    """
-    return level.name
-
-
-# TODO: This shouldn't be used in any other module anyway. Uses of this
-#       function should instead do `==` comparison of levels.
-def get_internal_level_name(level: Level) -> str:
-    """Returns :attr:`.Level.internal_name`.
-
-    .. deprecated:: 0.1.0
-
-        This function will be removed. It should not be used outside of this
-        module.
-    """
-    return level.internal_name
-
 
 #### Class aliases.
 

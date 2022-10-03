@@ -5,7 +5,6 @@ from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.constraints import at_most_k_in_a_row, exactly_k_in_a_row, exclude, Reify
 from sweetpea import UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy
 from sweetpea import multiple_cross_block, synthesize_trials_non_uniform, synthesize_trials
-from sweetpea.tests.test_utils import get_level_from_name
 from sweetpea.server import build_cnf
 from acceptance import shuffled_design_sample, path_to_cnf_files, reset_expected_solutions
 
@@ -101,7 +100,7 @@ def test_correct_solution_count_with_congruence_factor_but_unconstrained(strateg
 @pytest.mark.parametrize('design', shuffled_design_sample([color, text, mix, con_factor], 6))
 def test_correct_solution_count_with_congruence_factor_and_constrained(strategy, design):
     crossing = [[color, text], [text, mix]]
-    constraints = [at_most_k_in_a_row(1, (con_factor, get_level_from_name(con_factor, "con")))]
+    constraints = [at_most_k_in_a_row(1, (con_factor, "con"))]
 
     block  = multiple_cross_block(design, crossing, constraints)
     experiments  = synthesize_trials(block, 100, sampling_strategy=strategy)
@@ -111,7 +110,7 @@ def test_correct_solution_count_with_congruence_factor_and_constrained(strategy,
 
 def test_correct_solution_count_with_congruence_factor_and_constrained_cnf(design=[color, text, mix, con_factor]):
     crossing = [[color, text], [text, mix]]
-    constraints = [at_most_k_in_a_row(1, (con_factor, get_level_from_name(con_factor, "con")))]
+    constraints = [at_most_k_in_a_row(1, (con_factor, "con"))]
 
     block  = multiple_cross_block(design, crossing, constraints)
     cnf = build_cnf(block)
@@ -167,7 +166,7 @@ def test_correct_solution_count_with_repeated_color_factor_but_unconstrained(str
 @pytest.mark.parametrize('design', shuffled_design_sample([color, text, mix, repeated_color_factor], 6))
 def test_correct_solution_count_with_repeated_color_factor_and_constrained(strategy, design):
     crossing = [[color, text], [mix, text]]
-    constraints = [at_most_k_in_a_row(1, (repeated_color_factor, get_level_from_name(repeated_color_factor, "yes")))]
+    constraints = [at_most_k_in_a_row(1, (repeated_color_factor, "yes"))]
 
     block  = multiple_cross_block(design, crossing, constraints)
     experiments  = synthesize_trials(block, 100, sampling_strategy=strategy)
@@ -193,8 +192,8 @@ def test_correct_solution_count_with_repeated_color_and_text_factors_but_unconst
 def test_correct_solution_count_with_repeated_color_and_text_factors_and_constrained(strategy, design):
     crossing = [[color, text], [mix, text]]
     constraints = [
-        at_most_k_in_a_row(1, (repeated_color_factor, get_level_from_name(repeated_color_factor, "yes"))),
-        at_most_k_in_a_row(1, (repeated_text_factor, get_level_from_name(repeated_text_factor, "yes")))
+        at_most_k_in_a_row(1, (repeated_color_factor, "yes")),
+        at_most_k_in_a_row(1, (repeated_text_factor, "yes"))
     ]
 
     block  = multiple_cross_block(design, crossing, constraints)
@@ -207,7 +206,7 @@ def test_correct_solution_count_with_repeated_color_and_text_factors_and_constra
 @pytest.mark.parametrize('design', shuffled_design_sample([color, text, mix, repeated_color_factor], 6))
 def test_correct_solution_count_with_repeated_color_factor_and_no_repetition_allowed(strategy, design):
     crossing = [[color, text], [mix, text]]
-    constraints = [exclude(repeated_color_factor, get_level_from_name(repeated_color_factor, "yes"))]
+    constraints = [exclude(repeated_color_factor, "yes")]
 
     block  = multiple_cross_block(design, crossing, constraints)
     experiments  = synthesize_trials(block, 100, sampling_strategy=strategy)
@@ -217,7 +216,7 @@ def test_correct_solution_count_with_repeated_color_factor_and_no_repetition_all
 
 def test_correct_solution_count_with_repeated_color_factor_and_no_repetition_allowed_cnf(design=[color, text, mix, repeated_color_factor]):
     crossing = [[color, text], [mix, text]]
-    constraints = [exclude(repeated_color_factor, get_level_from_name(repeated_color_factor, "yes"))]
+    constraints = [exclude(repeated_color_factor, "yes")]
 
     block  = multiple_cross_block(design, crossing, constraints)
     cnf = build_cnf(block)

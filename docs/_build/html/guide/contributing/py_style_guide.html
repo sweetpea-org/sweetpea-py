@@ -56,9 +56,9 @@
 <li class="toctree-l3"><a class="reference internal" href="../factorial_design.html#levels">Levels</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../factorial_design.html#example">Example</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../factorial_design.html#derivations">Derivations</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../factorial_design.html#basic-windows">Basic Windows</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../factorial_design.html#transition-windows">Transition Windows</a></li>
 <li class="toctree-l4"><a class="reference internal" href="../factorial_design.html#within-trial-windows">Within-Trial Windows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../factorial_design.html#transition-windows">Transition Windows</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../factorial_design.html#general-windows">General Windows</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="../factorial_design.html#glossary">Glossary</a></li>
@@ -114,35 +114,7 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../../api.html">SweetPea API Documentation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../api/sweetpea.html">sweetpea package</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="../../api/sweetpea.html#subpackages">Subpackages</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.core.html">sweetpea.core package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.sampling_strategies.html">sweetpea.sampling_strategies package</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.tests.html">sweetpea.tests package</a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="../../api/sweetpea.html#submodules">Submodules</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.backend.html">sweetpea.backend module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.base_constraint.html">sweetpea.base_constraint module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.blocks.html">sweetpea.blocks module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.combinatorics.html">sweetpea.combinatorics module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.constraints.html">sweetpea.constraints module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.derivation_processor.html">sweetpea.derivation_processor module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.design_graph.html">sweetpea.design_graph module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.design_partitions.html">sweetpea.design_partitions module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.encoding_diagram.html">sweetpea.encoding_diagram module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.internal.html">sweetpea.internal module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.logic.html">sweetpea.logic module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.metrics.html">sweetpea.metrics module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.primitives.html">sweetpea.primitives module</a></li>
-<li class="toctree-l4"><a class="reference internal" href="../../api/sweetpea.server.html">sweetpea.server module</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">SweetPea API Documentation</a></li>
 </ul>
 
         </div>
@@ -326,15 +298,15 @@ given name by doing <code class="docutils literal notranslate"><span class="pre"
 <p>In all such cases, we strongly encourage placing a <code class="docutils literal notranslate"><span class="pre">NOTE</span></code>-style block comment
 on the preceding line explaining why the check was disabled. This should usually
 point to a documented issue to support the choice.</p>
-<p>For example, the two subclasses of <a class="reference internal" href="../../api/sweetpea.primitives.html#sweetpea.primitives.Level" title="sweetpea.primitives.Level"><code class="xref py py-class docutils literal notranslate"><span class="pre">Level</span></code></a> (<a class="reference internal" href="../../api/sweetpea.primitives.html#sweetpea.primitives.SimpleLevel" title="sweetpea.primitives.SimpleLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleLevel</span></code></a> and
-<a class="reference internal" href="../../api/sweetpea.primitives.html#sweetpea.primitives.DerivedLevel" title="sweetpea.primitives.DerivedLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">DerivedLevel</span></code></a>) override the <a class="reference external" href="https://docs.python.org/3.7/library/dataclasses.html#module-dataclasses" title="(in Python v3.7)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">dataclasses</span></code></a>-implemented
+<p>For example, the two subclasses of <code class="xref py py-class docutils literal notranslate"><span class="pre">Level</span></code> (<code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleLevel</span></code> and
+<code class="xref py py-class docutils literal notranslate"><span class="pre">DerivedLevel</span></code>) override the <a class="reference external" href="https://docs.python.org/3.7/library/dataclasses.html#module-dataclasses" title="(in Python v3.7)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">dataclasses</span></code></a>-implemented
 <code class="docutils literal notranslate"><span class="pre">__post_init__</span></code> methods with signatures that deviate from that of the base
-<a class="reference internal" href="../../api/sweetpea.primitives.html#sweetpea.primitives.Level" title="sweetpea.primitives.Level"><code class="xref py py-class docutils literal notranslate"><span class="pre">Level</span></code></a> class. This is usually disallowed by the <a class="reference external" href="https://en.wikipedia.org/wiki/Liskov_substitution_principle">Liskov Substitution
+<code class="xref py py-class docutils literal notranslate"><span class="pre">Level</span></code> class. This is usually disallowed by the <a class="reference external" href="https://en.wikipedia.org/wiki/Liskov_substitution_principle">Liskov Substitution
 Principle</a>, which
 says that subclasses should have compatible method signatures with their
 parents. But this is a special case where such deviation is perfectly reasonable
 and, in fact, necessary, so we had to disable type-checking and linting on those
-lines. The <a class="reference internal" href="../../api/sweetpea.primitives.html#sweetpea.primitives.SimpleLevel" title="sweetpea.primitives.SimpleLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleLevel</span></code></a> definition looks like this, as of this writing
+lines. The <code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleLevel</span></code> definition looks like this, as of this writing
 (with some unimportant parts abridged for clarity):</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@dataclass</span><span class="p">(</span><span class="n">eq</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">SimpleLevel</span><span class="p">(</span><span class="n">Level</span><span class="p">):</span>

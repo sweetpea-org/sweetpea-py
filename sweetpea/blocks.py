@@ -14,8 +14,7 @@ from networkx import has_path
 from sweetpea.backend import BackendRequest
 from sweetpea.internal.levels import get_all_levels
 from sweetpea.primitives import (
-    DerivedFactor, DerivedLevel, ElseLevel, Factor, SimpleLevel,
-    get_external_level_name, get_internal_level_name)
+    DerivedFactor, DerivedLevel, ElseLevel, Factor, SimpleLevel)
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.base_constraint import Constraint
 from sweetpea.design_graph import DesignGraph
@@ -32,7 +31,8 @@ class Block:
                  crossings: List[List[Factor]],
                  constraints: List[Constraint],
                  require_complete_crossing,
-                 cnf_fn) -> None:
+                 cnf_fn,
+                 who: str) -> None:
         self.design = list(design).copy()
         self.crossings = list(map(lambda c: list(c).copy(), crossings))
         self.constraints = list(constraints).copy()
@@ -47,7 +47,7 @@ class Block:
         self._trials_per_sample = None
         self._simple_tuples = cast(Optional[List[Tuple[Factor, Union[SimpleLevel, DerivedLevel]]]], None)
         self._variables_per_trial = None
-        self.__validate()
+        self.__validate(who)
 
     def show_errors(self) -> bool:
         failed = False
@@ -69,10 +69,18 @@ class Block:
                 for l in factor.levels:
                     included_factor_names.update(self.extract_basic_factor_names(l))
             else:
-                included_factor_names.add(factor.factor_name)
+                included_factor_names.add(factor.name)
         return included_factor_names
 
-    def __validate(self):
+    def __validate(self, who: str):
+        for cr in self.crossings:
+            names = set()
+            for f in cr:
+                if not f in self.design:
+                    raise RuntimeError(f"{who}: factor in crossing is not in design: {f}")
+                if f.name in names:
+                    raise RuntimeError(f"{who}: multiple factors have the same name: {f.name}")
+                names.add(f.name)
         # Ensure basic factors of derived levels in design form complete subset
         # of all declared basic factors.
         basic_factor_names = set()
@@ -80,7 +88,7 @@ class Block:
         for design_factor in self.design:
             for level in design_factor.levels:
                 if isinstance(level, SimpleLevel):
-                    basic_factor_names.add(level.factor.factor_name)
+                    basic_factor_names.add(level.factor.name)
                 elif isinstance(level, DerivedLevel):
                     included_factor_names.update(self.extract_basic_factor_names(level))
                 else:
@@ -90,7 +98,6 @@ class Block:
             # The derived levels include factors that are not basic factors.
             raise RuntimeError(f"Derived levels in experiment design include factors that are not listed as basic "
                                f"factors: {', '.join(str(name) for name in undefined_factor_names)}.")
-        # TODO: Make sure factor names are unique
         from sweetpea.constraints import AtLeastKInARow, MinimumTrials
         for c in self.constraints:
             c.validate(self)
@@ -411,14 +418,14 @@ class CrossBlock(Block):
     crossing.
     """
 
-    def __init__(self, design, crossings, constraints, require_complete_crossing=True, cnf_fn=to_cnf_tseitin):
-        super().__init__(design, crossings, constraints, require_complete_crossing, cnf_fn)
-        self.__validate()
+    def __init__(self, design, crossings, constraints, require_complete_crossing=True, cnf_fn=to_cnf_tseitin, who="CrossBlock"):
+        super().__init__(design, crossings, constraints, require_complete_crossing, cnf_fn, who)
+        self.__validate(who)
 
-    def __validate(self):
-        self.__validate_crossing()
+    def __validate(self, who: str):
+        self.__validate_crossing(who)
 
-    def __validate_crossing(self):
+    def __validate_crossing(self, who: str):
         dg = DesignGraph(self.design).graph
         warnings = []
         template = " '{}' depends on '{}'"
@@ -426,10 +433,10 @@ class CrossBlock(Block):
             combos = combinations(crossing, 2)
 
             for c in combos:
-                if has_path(dg, c[0].factor_name, c[1].factor_name):
-                    warnings.append(template.format(c[0].factor_name, c[1].factor_name))
-                elif has_path(dg, c[1].factor_name, c[0].factor_name):
-                    warnings.append(template.format(c[1].factor_name, c[0].factor_name))
+                if has_path(dg, c[0].name, c[1].name):
+                    warnings.append(template.format(c[0].name, c[1].name))
+                elif has_path(dg, c[1].name, c[0].name):
+                    warnings.append(template.format(c[1].name, c[0].name))
 
         if warnings:
             self.errors.add("WARNING: Dependencies among factors may make the"
@@ -495,7 +502,6 @@ class CrossBlock(Block):
         from sweetpea.constraints import Exclude
 
         excluded_crossings = set()
-        excluded_external_names = set()
 
         # Generate the full crossing as a list of tuples.
         levels_lists = [list(f.levels) for f in crossing]
@@ -523,8 +529,7 @@ class CrossBlock(Block):
                                 argss.append([ll.name for ll in af.levels])
                         all_possible_argss = list(product(*argss))
                         if not any([l.window.fn(*args) for args in all_possible_argss]):
-                            excluded_crossings.add(tuple([get_internal_level_name(l) for l in c]))
-                            excluded_external_names.add(', '.join([f"'{get_external_level_name(l)}'" for l in c]))
+                            excluded_crossings.add(tuple(c))
 
         # Check for excluded combinations
         for constraint in exclusions:
@@ -541,8 +546,7 @@ class CrossBlock(Block):
             if isinstance(excluded_level, SimpleLevel):
                 for c in all_crossings:
                     if excluded_level in c:
-                        excluded_crossings.add(tuple([get_internal_level_name(l) for l in c]))
-                        excluded_external_names.add(', '.join([get_external_level_name(l) for l in c]))
+                        excluded_crossings.add(tuple(c))
             else:
                 # For each crossing, ensure that atleast one combination is possible with the design-only factors
                 # keeping in mind the exclude contraints.
@@ -550,15 +554,15 @@ class CrossBlock(Block):
                     if all(map(lambda d: self.__excluded_derived(excluded_level, c+d),
                                list(product(*[list(f.levels) for f in filter(lambda f: f not in crossing,
                                                                              self.act_design)])))):
-                        excluded_crossings.add(tuple([get_internal_level_name(l) for l in c]))
-                        excluded_external_names.add(', '.join([f"'{get_external_level_name(l)}'" for l in c]))
+                        excluded_crossings.add(tuple(c))
         if len(excluded_crossings) != 0:
             if self.require_complete_crossing:
                 er = "Complete crossing unsatisfiable"
             else:
                 er = "WARNING: crossing incomplete"
             er += " due to excluded or impossible combinations:"
-            for names in excluded_external_names:
+            for c in excluded_crossings:
+                names = ', '.join([f"'{l.name}'" for l in c])
                 er += "\n " + names
             self.errors.add(er)
         return len(excluded_crossings)
@@ -575,7 +579,7 @@ class CrossBlock(Block):
 
         # Invoking the fn this way is only ok because we only do this for WithinTrial windows.
         # With complex windows, it wouldn't work due to the list aspect for each argument.
-        ret.append(excluded_level.window.fn(*list(map(lambda l: get_external_level_name(l),
+        ret.append(excluded_level.window.fn(*list(map(lambda l: l.name,
                                                       filter(lambda l: l.factor in excluded_level.window.args, c)))))
 
         return all(ret)
@@ -584,7 +588,7 @@ class CrossBlock(Block):
         """The crossing argument must be one of the block's crossings."""
         if not crossing:
             if len(self.crossings) != 1:
-                raise ValueError("Not s single-corssing block, so crossing must be provided to crossing_size")
+                raise ValueError("Not a single-crossing block, so crossing must be provided to crossing_size")
             crossing = self.crossings[0]
         crossing_size = self.crossing_size_without_exclusions(crossing)
         crossing_size -= self.__count_exclusions(crossing)
@@ -619,8 +623,8 @@ class FullyCrossBlock(CrossBlock):
     fully cross all levels across all factors in the block's crossing.
     """
 
-    def __init__(self, design, crossings, constraints, require_complete_crossing=True, cnf_fn=to_cnf_tseitin):
-        super().__init__(design, crossings, constraints, require_complete_crossing, cnf_fn)
+    def __init__(self, design, crossings, constraints, require_complete_crossing=True, cnf_fn=to_cnf_tseitin, who="FullyCrossBlock"):
+        super().__init__(design, crossings, constraints, require_complete_crossing, cnf_fn, who)
 
 class MultipleCrossBlock(CrossBlock):
     """A multiple-crossed block. This block generates as many trials as needed
@@ -628,5 +632,5 @@ class MultipleCrossBlock(CrossBlock):
     crossing.
     """
 
-    def __init__(self, design, crossings, constraints, require_complete_crossing=True, cnf_fn=to_cnf_tseitin):
-        super().__init__(design, crossings, constraints, require_complete_crossing, cnf_fn)
+    def __init__(self, design, crossings, constraints, require_complete_crossing=True, cnf_fn=to_cnf_tseitin, who="MultipleCrossBlock"):
+        super().__init__(design, crossings, constraints, require_complete_crossing, cnf_fn, who)

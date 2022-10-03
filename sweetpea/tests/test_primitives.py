@@ -28,15 +28,6 @@ def test_factor_validation():
     Factor("factor name", ["level 1", "level 2"])
     Factor("name", [1, 2])
 
-    # Duplicated name
-    with pytest.raises(ValueError):
-        Factor("name", ["a", "b", "a"])
-    with pytest.raises(ValueError):
-        Factor("name", [
-            DerivedLevel("a", WithinTrial(op.eq, [color, text])),
-            ElseLevel("a")
-        ])
-
     # Non-string name
     with pytest.raises(ValueError):
         Factor(56, ["level "])

@@ -3,7 +3,6 @@ import pytest
 
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea import fully_cross_block, NonUniformSamplingStrategy, UniformCombinatoricSamplingStrategy, synthesize_trials, minimum_trials
-from sweetpea.tests.test_utils import get_level_from_name
 from acceptance import shuffled_design_sample, path_to_cnf_files, reset_expected_solutions
 
 correct_response = Factor(name="correct_response", initial_levels=["H", "S"])

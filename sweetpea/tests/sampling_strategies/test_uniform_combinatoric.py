@@ -8,15 +8,14 @@ from sweetpea import fully_cross_block, minimum_trials, synthesize_trials_unifor
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
 from sweetpea.constraints import Exclude, ExactlyKInARow, AtMostKInARow, Reify
 from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy, UCSolutionEnumerator
-from sweetpea.tests.test_utils import get_level_from_name
 
 color = Factor("color", ["red", "blue"])
 text  = Factor("text",  ["red", "blue"])
 
-red_color = get_level_from_name(color, "red")
-blue_color = get_level_from_name(color, "blue")
-red_text = get_level_from_name(text, "red")
-blue_text = get_level_from_name(text, "blue")
+red_color = color["red"]
+blue_color = color["blue"]
+red_text = text["red"]
+blue_text = text["blue"]
 
 con_factor_within_trial = Factor("congruent?", [
     DerivedLevel("con", WithinTrial(op.eq, [color, text])),
@@ -38,19 +37,19 @@ def test_validate_accepts_basic_factors():
     block = fully_cross_block([color, text],
                               [color, text],
                               [])
-    UniformCombinatoricSamplingStrategy._UniformCombinatoricSamplingStrategy__validate(block)
+    UniformCombinatoricSamplingStrategy._RandomGen__validate(block)
 
 
 def test_validate_accepts_derived_factors_with_simple_windows():
     block = fully_cross_block([color, text, con_factor_within_trial],
                               [color, text],
                               [])
-    UniformCombinatoricSamplingStrategy._UniformCombinatoricSamplingStrategy__validate(block)
+    UniformCombinatoricSamplingStrategy._RandomGen__validate(block)
 
     block = fully_cross_block([color, text, con_factor_window],
                               [color, text],
                               [])
-    UniformCombinatoricSamplingStrategy._UniformCombinatoricSamplingStrategy__validate(block)
+    UniformCombinatoricSamplingStrategy._RandomGen__validate(block)
 
 
 def test_validate_accepts_implied_derived_factors_with_complex_windows():
@@ -91,7 +90,7 @@ def test_example_counts():
 
 
 def test_constraint_violation():
-    are_constraints_violated = UniformCombinatoricSamplingStrategy._UniformCombinatoricSamplingStrategy__are_constraints_violated
+    are_constraints_violated = UniformCombinatoricSamplingStrategy._RandomGen__are_constraints_violated
 
     block = fully_cross_block([color, text, con_factor_within_trial],
                               [color, text],
@@ -102,17 +101,17 @@ def test_constraint_violation():
             self.has_crossed_complex_derived_factors = False
     enumer = FakeEnumer()
 
-    assert are_constraints_violated(block, {'color': ['red', 'red', 'blue', 'blue']}, enumer, 4, 0, 0) == False
-    assert are_constraints_violated(block, {'color': ['red', 'blue', 'red', 'blue']}, enumer, 4, 0, 0) == True
+    assert are_constraints_violated(block, {color: [color[l] for l in ['red', 'red', 'blue', 'blue']]}, enumer, 4, 0, 0) == False
+    assert are_constraints_violated(block, {color: [color[l] for l in ['red', 'blue', 'red', 'blue']]}, enumer, 4, 0, 0) == True
 
     block = fully_cross_block([color, text, con_factor_within_trial],
                               [color, text],
                               [AtMostKInARow(2, (color, red_color))])
 
-    assert are_constraints_violated(block, {'color': ['red', 'blue', 'blue', 'blue']}, enumer, 4, 0, 0) == False
-    assert are_constraints_violated(block, {'color': ['red', 'red', 'blue', 'blue']}, enumer, 4, 0, 0) == False
-    assert are_constraints_violated(block, {'color': ['red', 'red', 'red', 'blue']}, enumer, 4, 0, 0) == True
-    assert are_constraints_violated(block, {'color': ['blue', 'red', 'red', 'red']}, enumer, 4, 0, 0) == True
+    assert are_constraints_violated(block, {color: [color[l] for l in ['red', 'blue', 'blue', 'blue']]}, enumer, 4, 0, 0) == False
+    assert are_constraints_violated(block, {color: [color[l] for l in ['red', 'red', 'blue', 'blue']]}, enumer, 4, 0, 0) == False
+    assert are_constraints_violated(block, {color: [color[l] for l in ['red', 'red', 'red', 'blue']]}, enumer, 4, 0, 0) == True
+    assert are_constraints_violated(block, {color: [color[l] for l in ['blue', 'red', 'red', 'red']]}, enumer, 4, 0, 0) == True
 
 def test_minimum_trials():
     for min_trials in [1, 2, 3, 4, 5, 6, 7, 17, 55]:

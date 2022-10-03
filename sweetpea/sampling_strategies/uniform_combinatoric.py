@@ -13,7 +13,7 @@ from sweetpea.combinatorics import count_prefixes_of_permutations_with_copies, c
 from sweetpea.combinatorics import PermutationMemo
 from sweetpea.design_partitions import DesignPartitions
 from sweetpea.logic import And
-from sweetpea.primitives import get_external_level_name, SimpleLevel, Factor, DerivedFactor
+from sweetpea.primitives import SimpleLevel, Factor, DerivedFactor
 from sweetpea.sampling_strategies.base import SamplingStrategy, SamplingResult
 from sweetpea.constraints import Exclude, _KInARow, ExactlyKInARow, AtMostKInARow
 from sweetpea.internal.iter import chunk
@@ -107,7 +107,7 @@ class RandomGen(SamplingStrategy):
             rejected = 0
             sampled += 1
 
-            samples.append(run)
+            samples.append(enumerator.factors_and_levels_to_names(run))
 
         metrics['sample_count'] = sample_count
         metrics['total_rejected'] = total_rejected
@@ -134,7 +134,7 @@ class RandomGen(SamplingStrategy):
                         nonlocal bad
                         combos = set({})
                         for t in range(start, end):
-                            key = tuple([sample[f.name][t] for f in c])
+                            key = tuple([sample[f][t] for f in c])
                             if key in combos:
                                 if bad < acceptable_error:
                                     bad = bad + 1
@@ -284,10 +284,16 @@ class UCSolutionEnumerator():
         experiment = cast(dict, {})
         for trial_number, trial_value in enumerate(trial_values):
             for factor, level in trial_value.items():
-                if factor.factor_name not in experiment:
-                    experiment[factor.factor_name] = []
-                experiment[factor.factor_name].append(level.name)
+                if factor not in experiment:
+                    experiment[factor] = []
+                experiment[factor].append(level)
         return experiment
+
+    def factors_and_levels_to_names(self, experiment: dict) -> dict:
+        new_experiment = cast(dict, {})
+        for k in experiment:
+            new_experiment[k.name] = [(l.name if l else "") for l in experiment[k]]
+        return new_experiment
 
     # Used for an acceptance test:
     def generate_solution_variables(self) -> List[int]:
@@ -357,8 +363,8 @@ class UCSolutionEnumerator():
             for _ in range(self._preamble_size):
                 n = sequence_number % len(levels)
                 sequence_number =  sequence_number // len(levels)
-                trials.append(levels[n].name)
-            run[f.name] = trials
+                trials.append(levels[n])
+            run[f] = trials
         return self._fill_in_derived(run, self._sorted_derived_factors, 0, self._preamble_size)
 
     def fill_in_nonpreamble_uncrossed_derived(self, run: dict, trials_per_run: int) -> dict:
@@ -368,15 +374,15 @@ class UCSolutionEnumerator():
     def _fill_in_derived(self, run: dict, sorted_factors: List[DerivedFactor], start: int, end: int) -> dict:
         for df in sorted_factors:
             if start > 0:
-                trials = run[df.name][:start]
+                trials = run[df][:start]
             else:
                 trials = []
             for i in range(start, end):
                 if df.applies_to_trial(i+1):
                     trials.append(df.select_level_for_sample(i, run))
                 else:
-                    trials.append("")
-            run[df.name] = trials
+                    trials.append(None)
+            run[df] = trials
         return run
 
     """

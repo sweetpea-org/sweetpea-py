@@ -15,7 +15,7 @@ def __assert_atmostkinarow_pair(k: int, level: Tuple[Factor, Union[SimpleLevel, 
         assert sublist not in [e[level[0]][i:i+k+1] for i in range(len(e[level[0]]) - (k + 1))]
 
 def __assert_atmostkinarow_factor(k: int, f: Factor, experiments: List[dict]) -> None:
-    factor_name = f.factor_name
+    factor_name = f.name
     for level in f.levels:
         sublist = list(repeat(level.name, k + 1))
         for e in experiments:

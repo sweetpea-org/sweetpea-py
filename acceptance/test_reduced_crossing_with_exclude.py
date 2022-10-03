@@ -6,7 +6,6 @@ from sweetpea.constraints import exclude
 from sweetpea.encoding_diagram import print_encoding_diagram
 from sweetpea import UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy
 from sweetpea import fully_cross_block, synthesize_trials, print_experiments
-from sweetpea.tests.test_utils import get_level_from_name
 from sweetpea.server import build_cnf
 from sweetpea.server import build_cnf
 
@@ -24,7 +23,7 @@ stimulus_configuration = Factor("stimulus configuration", [
     DerivedLevel("illegal", WithinTrial(illegal_stimulus, [color, word]))
 ])
 
-constraints = [exclude(stimulus_configuration, get_level_from_name(stimulus_configuration, "illegal"))]
+constraints = [exclude(stimulus_configuration, "illegal")]
 
 design       = [color, word, stimulus_configuration]
 crossing     = [color, word]
@@ -60,7 +59,7 @@ def test_correct_solution_count_with_exclusion_via_complex_factor(strategy):
         DerivedLevel("illegal", Transition(illegal_stimulus, [color, word]))
     ])
 
-    constraints = [exclude(stimulus_configuration, get_level_from_name(stimulus_configuration, "illegal"))]
+    constraints = [exclude(stimulus_configuration, "illegal")]
 
     design       = [color, word, stimulus_configuration]
     crossing     = [color, word]
@@ -91,7 +90,7 @@ def test_correct_solution_count_with_exclusion_via_nested_complex_factor(strateg
         DerivedLevel("illegal", WithinTrial(illegal_stimulus, [smiley]))
     ])
 
-    constraints = [exclude(stimulus_configuration, get_level_from_name(stimulus_configuration, "illegal"))]
+    constraints = [exclude(stimulus_configuration, "illegal")]
 
     design       = [color, word, smiley, stimulus_configuration]
     crossing     = [color, word]
@@ -105,7 +104,7 @@ def test_correct_solution_count_with_exclusion_via_nested_complex_factor(strateg
 @pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
 def test_correct_solution_count_with_override_flag_and_multiple_trials_excluded(strategy):
     # With this constraint, there should only be ONE allowed crossing, and therefore one solution.
-    constraints = [exclude(stimulus_configuration, get_level_from_name(stimulus_configuration, "legal"))]
+    constraints = [exclude(stimulus_configuration, "legal")]
     block       = fully_cross_block(design, crossing, constraints, require_complete_crossing=False)
     experiments = synthesize_trials(block, 500, sampling_strategy=strategy)
 
@@ -234,7 +233,7 @@ def test_correct_solution_with_just_one_factor(strategy):
 
 def test_correct_solution_count_with_override_flag_and_multiple_trials_excluded_cnf():
     # With this constraint, there should only be ONE allowed crossing, and therefore one solution.
-    constraints = [exclude(stimulus_configuration, get_level_from_name(stimulus_configuration, "legal"))]
+    constraints = [exclude(stimulus_configuration, "legal")]
     block       = fully_cross_block(design, crossing, constraints, require_complete_crossing=False)
     cnf = build_cnf(block)
 
@@ -267,7 +266,7 @@ def test_correct_solutions_with_implicitly_excluded_crossing_due_to_derived_defi
         DerivedLevel("unhappy", Transition(unhappy_stimulus, [color, word]))
     ])
 
-    constraints = [exclude(aesthetic, get_level_from_name(aesthetic, "ugly"))]
+    constraints = [exclude(aesthetic, "ugly")]
 
     design       = [color, word, smiley, aesthetic]
     crossing     = [color, word, aesthetic]
