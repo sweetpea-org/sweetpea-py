@@ -4,8 +4,42 @@ randomized experimental designs and the synthesis of trial sequences from those
 designs.
 """
 
+__all__ = [
+    'synthesize_trials',
+
+    'print_experiments', 'tabulate_experiments', 
+    'save_experiments_csv', 'experiments_to_tuples',
+
+    'Block', 'CrossBlock', 'MultiCrossBlock',
+    
+    'Factor', 'Level', 'DerivedLevel', 'ElseLevel'
+
+    'Window', 'WithinTrial', 'Transition', 'AcrossTrials',
+
+    'LevelSpec',
+
+    'Constraint',
+    'Exclude', 'MinimumTrials', 'ExactlyK',
+    'AtMostKInARow', 'AtLeastKInARow',
+    'ExactlyKInARow',
+
+    'Gen', 'RandomGen', 'IterateGen', 
+    'CMSGen', 'UniGen',
+
+    # --------------------------------------------------
+    # For backward compatibility:
+    
+    'SimpleLevel', 'DerivationWindow', 'WithinTrialDerivationWindow', 'TransitionDerivationWindow',
+    'get_external_level_name',
+
+    'at_most_k_in_a_row', 'at_least_k_in_a_row', 'exactly_k', 'exactly_k_in_a_row', 'exclude', 'minimum_trials',
+
+    'fully_cross_block', 'multiple_cross_block',
+    'simplify_experiments', 'experiment_to_csv', 'save_cnf'
+]
+
 from functools import reduce
-from typing import Dict, List, Optional, Tuple, Any, cast
+from typing import Dict, List, Optional, Tuple, Any, Union, cast
 from itertools import product
 
 from sweetpea.derivation_processor import DerivationProcessor
@@ -14,15 +48,17 @@ from sweetpea.blocks import Block, FullyCrossBlock
 from sweetpea.primitives import (
     Factor, SimpleLevel, DerivedLevel,
     DerivationWindow, WithinTrialDerivationWindow, TransitionDerivationWindow,
+    Window, WithinTrial, Transition, AcrossTrials,
     get_external_level_name)
 from sweetpea.constraints import (
     Consistency, Constraint, Derivation, FullyCross, MultipleCross, MultipleCrossBlock,
+    Exclude, MinimumTrials, ExactlyK, AtMostKInARow, AtLeastKInARow, ExactlyKInARow,
     at_most_k_in_a_row, at_least_k_in_a_row, exactly_k, exactly_k_in_a_row, exclude, minimum_trials)
-from sweetpea.sampling_strategies.base import SamplingStrategy
-from sweetpea.sampling_strategies.non_uniform import NonUniformSamplingStrategy
-from sweetpea.sampling_strategies.unigen import UnigenSamplingStrategy
-from sweetpea.sampling_strategies.cmsgen import CMSGenSamplingStrategy
-from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy
+from sweetpea.sampling_strategies.base import SamplingStrategy, Gen
+from sweetpea.sampling_strategies.non_uniform import NonUniformSamplingStrategy, IterateGen
+from sweetpea.sampling_strategies.unigen import UnigenSamplingStrategy, UniGen
+from sweetpea.sampling_strategies.cmsgen import CMSGenSamplingStrategy, CMSGen
+from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy, RandomGen
 from sweetpea.server import build_cnf
 from sweetpea.core.cnf import Var
 import csv
@@ -33,11 +69,10 @@ import csv
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-def fully_cross_block(design: List[Factor],
-                      crossing: List[Factor],
-                      constraints: List[Constraint],
-                      require_complete_crossing=True,
-                      cnf_fn=to_cnf_tseitin) -> Block:
+def CrossBlock(design: List[Factor],
+               crossing: List[Factor],
+               constraints: List[Constraint],
+               allow_exclude: bool = False) -> Block:
     """Returns a fully crossed :class:`.Block` meant to be used in experiment
     synthesis. This is the preferred mechanism for describing an experiment.
 
@@ -52,7 +87,7 @@ def fully_cross_block(design: List[Factor],
         determined as the product of the number of levels of factors in
         ``crossing``.
 
-        If ``require_complete_crossing`` is ``False``, the ``constraints`` can
+        If ``allow_exclude`` is ``True``, the ``constraints`` can
         reduce the total number of trials.
 
         Different trial sequences of the experiment will have different
@@ -67,30 +102,37 @@ def fully_cross_block(design: List[Factor],
         A :class:`list` of :class:`Constraints <.Constraint>` that restrict the
         generated trials.
 
-    :param require_complete_crossing:
+    :param allow_exclude:
         Whether every combination in ``crossing`` must appear in a block of
-        trials. ``True`` by default. A ``False`` value is appropriate if
+        trials. ``False`` by default. A ``True`` value is appropriate if
         combinations are excluded through an :class:`.Exclude`
         :class:`.Constraint`.
-
-    :param cnf_fn:
-        A CNF conversion function. Default is :func:`.to_cnf_tseitin`.
     """
     all_constraints = cast(List[Constraint], [FullyCross(), Consistency()]) + constraints
     all_constraints = __desugar_constraints(all_constraints) #expand the constraints into a form we can process.
-    block = FullyCrossBlock(design, [crossing], all_constraints, require_complete_crossing, cnf_fn)
+    block = FullyCrossBlock(design, [crossing], all_constraints, not allow_exclude, to_cnf_tseitin)
     block.constraints += DerivationProcessor.generate_derivations(block)
     if (not list(filter(lambda c: c.is_complex_for_combinatoric(), constraints))
           and not list(filter(lambda f: f.has_complex_window, design))):
         block.complex_factors_or_constraints = False
     return block
 
+def fully_cross_block(design: List[Factor],
+                      crossing: List[Factor],
+                      constraints: List[Constraint],
+                      require_complete_crossing=True) -> Block:
+    return CrossBlock(design, crossing, constraints, allow_exclude = not require_complete_crossing)
 
 def multiple_cross_block(design: List[Factor],
                          crossings: List[List[Factor]],
                          constraints: List[Constraint],
-                         require_complete_crossing=True,
-                         cnf_fn=to_cnf_tseitin) -> Block:
+                         require_complete_crossing: bool = True) -> Block:
+    return MultiCrossBlock(design, crossings, constraints, allow_exclude = not require_complete_crossing)
+
+def MultiCrossBlock(design: List[Factor],
+                    crossings: List[List[Factor]],
+                    constraints: List[Constraint],
+                    allow_exclude: bool = False) -> Block:
     """Returns a :class:`.Block` with multiple crossings, meant to be used in
     experiment synthesis. Similar to :func:`fully_cross_block`, except it can
     be configured with multiple crossings.
@@ -115,18 +157,15 @@ def multiple_cross_block(design: List[Factor],
         A :class:`list` of :class:`Constraints <.Constraint>` that restrict the
         generated trials.
 
-    :param require_complete_crossing:
-        Whether every combination in ``crossings`` must appear in a block of
-        trials. ``True`` by default. A ``False`` value is appropriate if
+    :param allow_exclude:
+        Whether every combination in ``crossing`` must appear in a block of
+        trials. ``False`` by default. A ``True`` value is appropriate if
         combinations are excluded through an :class:`.Exclude`
-        :class:`.Constraint.`
-
-    :param cnf_fn:
-        A CNF conversion function. Default is :func:`.to_cnf_tseitin`.
+        :class:`.Constraint`.
     """
     all_constraints = cast(List[Constraint], [MultipleCross(), Consistency()]) + constraints
     all_constraints = __desugar_constraints(all_constraints) #expand the constraints into a form we can process.
-    block = MultipleCrossBlock(design, crossings, all_constraints, require_complete_crossing, cnf_fn)
+    block = MultipleCrossBlock(design, crossings, all_constraints, not allow_exclude, to_cnf_tseitin)
     block.constraints += DerivationProcessor.generate_derivations(block)
     return block
 
@@ -138,7 +177,8 @@ def __desugar_constraints(constraints: List[Constraint]) -> List[Constraint]:
     return desugared_constraints
 
 
-def simplify_experiments(experiments: List[Dict]) -> List[List[Tuple[str, ...]]]:
+def _experiments_to_tuples(experiments: List[dict],
+                           factors: List[Union[Factor, str]]):
     """Converts a list of experiments into a list of lists of tuples, where
     each tuple represents a crossing in a given experiment.
 
@@ -153,11 +193,18 @@ def simplify_experiments(experiments: List[Dict]) -> List[List[Tuple[str, ...]]]
         to one of the ``experiments``, each tuple corresponds to a particular
         crossing, and each string is the simple surface name of a level.
     """
+    keys = [f.name if instanceof(f, Factor) else f for f in factors]
     tuple_lists: List[List[Tuple[str, ...]]] = []
     for experiment in experiments:
-        tuple_lists.append(list(zip(*experiment.values())))
+        tuple_lists.append(list(zip(*[experiment[key] for key in keys])))
     return tuple_lists
 
+def simplify_experiments(experiments: List[Dict]) -> List[List[Tuple[str, ...]]]:
+    return _experiments_to_tuples(experiments, list(experiments[0].keys))
+
+def experiments_to_tuples(block: Block,
+                          experiments: List[dict]):
+    return _experiments_to_tuples(experiments, block.design)
 
 def print_experiments(block: Block, experiments: List[dict]):
     """Displays the generated experiments in a human-friendly form.
@@ -183,9 +230,8 @@ def print_experiments(block: Block, experiments: List[dict]):
         transposed = list(map(list, zip(*strs)))
         print(reduce(lambda a, b: a + format_str.format(*b), transposed, ''))
 
-
-# TODO: Finish the documentation of this function.
-def tabulate_experiments(experiments: List[Dict],
+def tabulate_experiments(block: Block = None,
+                         experiments: List[Dict] = None,
                          factors: Optional[List[Factor]] = None,
                          trials: Optional[List[int]] = None):
     """Tabulates and prints the given experiments in a human-friendly form.
@@ -212,8 +258,13 @@ def tabulate_experiments(experiments: List[Dict],
 
             Finish specification of this parameter.
     """
+    if factors is None and block is None:
+        raise RuntimeError("tabulate_experiments: expected a `block` or `factors` argument")
+
     if factors is None:
-        factors = []
+        if len(block.crossings) != 1:
+            raise RuntimeError("tabulate_experiments: expected block with one crossing")
+        factors = block.crossings[0]
 
     for exp_idx, e in enumerate(experiments):
         tabulation: Dict[str, List[str]] = dict()
@@ -285,7 +336,9 @@ def tabulate_experiments(experiments: List[Dict],
         print(reduce(lambda a, b: a + format_str.format(*b), transposed, ''))
 
 
-def experiment_to_csv(experiments: List[dict], file_prefix: str = "experiment"):
+def _experiments_to_csv(experiments: List[dict],
+                        factors: List[Union[Factor, str]],
+                        file_prefix: str = "experiment"):
     """Exports a list of experiments to CSV files. Each experiment will be
     saved to a separate ``.csv`` file.
 
@@ -301,7 +354,7 @@ def experiment_to_csv(experiments: List[dict], file_prefix: str = "experiment"):
     for idx, experiment in enumerate(experiments):
 
         dict = experiment
-        csv_columns = list(dict.keys())
+        csv_columns = [f.name if instanceof(f, Factor) else f for f in factors]
         num_rows = len(dict[csv_columns[0]])
 
         csv_file = file_prefix + "_" + str(idx) + ".csv"
@@ -317,6 +370,14 @@ def experiment_to_csv(experiments: List[dict], file_prefix: str = "experiment"):
         except IOError:
             print("I/O error")
 
+# For backward compatibility:
+def experiment_to_csv(experiments: List[dict], file_prefix: str = "experiment"):
+    return _experiments_to_csv(experiments, list(experiments[0].keys()), file_prefix)
+
+def save_experiments_csv(block: Block,
+                         experiments: List[dict],
+                         factors: List[Union[Factor, str]]):
+    return _experiments_to_csv(experiments, block.design, file_prefix)
 
 def synthesize_trials_non_uniform(block: Block, samples: int) -> List[dict]:
     """Synthesizes experimental trials with non-uniform sampling. See

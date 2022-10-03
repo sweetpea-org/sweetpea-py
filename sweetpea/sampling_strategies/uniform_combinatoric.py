@@ -18,7 +18,7 @@ from sweetpea.sampling_strategies.base import SamplingStrategy, SamplingResult
 from sweetpea.constraints import Exclude, _KInARow, ExactlyKInARow, AtMostKInARow
 from sweetpea.internal.iter import chunk
 
-class UniformCombinatoricSamplingStrategy(SamplingStrategy):
+class RandomGen(SamplingStrategy):
     """This strategy represents the ideal. Valid sequences are uniformly
     sampled via a bijection from natural numbers to valid trial sequences.
 
@@ -30,7 +30,7 @@ class UniformCombinatoricSamplingStrategy(SamplingStrategy):
 
     @staticmethod
     def class_name():
-        return 'Uniform Combinatoric Sampling Strategy'
+        return 'RandomGen'
 
     @staticmethod
     def sample(block: Block, sample_count: int) -> SamplingResult:
@@ -498,3 +498,5 @@ class UCSolutionEnumerator():
             self._basic_factor_levels.append((f, levels))
             combos *= len(levels)
         return pow(combos, self._preamble_size)
+
+UniformCombinatoricSamplingStrategy = RandomGen

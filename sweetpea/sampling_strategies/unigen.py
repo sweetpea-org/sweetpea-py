@@ -12,11 +12,11 @@ from sweetpea.core import sample_uniform, CNF
 """
 This strategy relies fully on Unigen to produce the desired number of samples.
 """
-class UnigenSamplingStrategy(SamplingStrategy):
+class UniGen(SamplingStrategy):
 
     @staticmethod
     def class_name():
-        return 'UniGen Sampling Strategy'
+        return 'UniGen'
 
     @staticmethod
     def sample(block: Block, sample_count: int, min_search: bool=False, use_cmsgen=False) -> SamplingResult:
@@ -86,3 +86,5 @@ class UnigenSamplingStrategy(SamplingStrategy):
 
         result = list(map(lambda s: SamplingStrategy.decode(block, s.assignment), solutions))
         return SamplingResult(result, {})
+
+UnigenSamplingStrategy = UniGen

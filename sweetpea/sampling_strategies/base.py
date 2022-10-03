@@ -17,7 +17,7 @@ class SamplingResult:
 """
 Generic interface for sampling strategies.
 """
-class SamplingStrategy(ABC):
+class Gen(ABC):
 
     """
     Sample some number of trial sequences for the given block.
@@ -87,3 +87,5 @@ class SamplingStrategy(ABC):
     @staticmethod
     def class_name():
         return "Unknown Sampling Strategy"
+
+SamplingStrategy = Gen

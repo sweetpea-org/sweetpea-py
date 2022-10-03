@@ -2,10 +2,11 @@
 import sys
 sys.path.append("..")
 
-from sweetpea.constraints import *
-from sweetpea.primitives import derived_level, within_trial, transition
-from sweetpea import fully_cross_block, synthesize_trials, print_experiments
-from sweetpea import CMSGenSamplingStrategy
+from sweetpea import (
+    Factor, DerivedLevel, WithinTrial, Transition, AtMostKInARow,
+    CrossBlock, synthesize_trials, print_experiments,
+    CMSGen, IterateGen, RandomGen
+)
 
 """
 Task Switching Design (challenging)
@@ -60,8 +61,8 @@ def response_left(task, color, motion, size):
 def response_right(task, color, motion, size):
     return not response_left(task, color, motion, size)
 
-response = Factor("response", [derived_level("left",  within_trial(response_left,  [task, color, motion, size])),
-                              derived_level("right", within_trial(response_right, [task, color, motion, size]))])
+response = Factor("response", [DerivedLevel("left",  WithinTrial(response_left,  [task, color, motion, size])),
+                              DerivedLevel("right", WithinTrial(response_right, [task, color, motion, size]))])
 
 
 """
@@ -78,8 +79,8 @@ def incongruent(color, motion):
     return not congruent(color, motion)
 
 congruency = Factor("congruency", 
-    [derived_level("con", within_trial(congruent,   [color, motion])),
-    derived_level("inc", within_trial(incongruent, [color, motion]))])
+    [DerivedLevel("con", WithinTrial(congruent,   [color, motion])),
+    DerivedLevel("inc", WithinTrial(incongruent, [color, motion]))])
 
 
 """
@@ -97,8 +98,8 @@ def task_switch(color, motion, size):
     return not task_repeat(color, motion, size)
 
 task_transition = Factor("task_transition", [
-    derived_level("repeat", transition(task_repeat, [color, motion, size])),
-    derived_level("switch", transition(task_switch, [color, motion, size]))
+    DerivedLevel("repeat", Transition(task_repeat, [color, motion, size])),
+    DerivedLevel("switch", Transition(task_switch, [color, motion, size]))
 ])
 
 """
@@ -128,13 +129,13 @@ def response_switch(response):
     return not response_repeat(response)
 
 resp_transition = Factor("resp_transition", [
-    derived_level("repeat", transition(response_repeat, [response])),
-    derived_level("switch", transition(response_switch, [response]))
+    DerivedLevel("repeat", Transition(response_repeat, [response])),
+    DerivedLevel("switch", Transition(response_switch, [response]))
 ])
 
 k = 7
 constraints = [AtMostKInARow(k, task_transition),
-                AtMostKInARow(k, resp_transition)]
+               AtMostKInARow(k, resp_transition)]
                 
 
 print(type(constraints))
@@ -142,9 +143,9 @@ print(type(constraints))
 design       = [color, motion, size, task, congruency, response, task_transition, resp_transition]
 
 crossing     = [color, motion, size, task]
-block        = fully_cross_block(design, crossing, constraints)
+block        = CrossBlock(design, crossing, constraints)
 
-experiments  = synthesize_trials(block, 5, CMSGenSamplingStrategy)
-# Could also use NonUniformSamplingStrategy or UniformCombinatoricSamplingStrategy
+experiments  = synthesize_trials(block, 5, CMSGen)
+# Could also use IterateGen or RandomGen
 
 print_experiments(block, experiments)

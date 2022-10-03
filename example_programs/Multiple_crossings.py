@@ -2,9 +2,11 @@
 import sys
 sys.path.append("..")
 
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial
-from sweetpea import multiple_cross_block, synthesize_trials_non_uniform, print_experiments
-
+from sweetpea import (
+    Factor, DerivedLevel, WithinTrial,
+    MultiCrossBlock, synthesize_trials, print_experiments,
+    CMSGen
+)
 
 """
 Multiple Crossing Task (Multi-component vector matching)
@@ -89,10 +91,10 @@ constraints = []
 
 design       = [left, right, four_case]
 crossing     = [[left, four_case], [right,four_case]]
-block        = multiple_cross_block(design, crossing, constraints)
+block        = MultiCrossBlock(design, crossing, constraints)
 
 # SOLVE
 
-experiments  = synthesize_trials_non_uniform(block, 1)
+experiments  = synthesize_trials(block, 1, CMSGen)
 
 print_experiments(block, experiments)

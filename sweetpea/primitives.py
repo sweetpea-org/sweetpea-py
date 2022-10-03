@@ -986,6 +986,7 @@ Transition = TransitionDerivationWindow
 #:     :class:`.DerivationWindow`.
 Window = DerivationWindow
 
+AcrossTrials = Window
 
 #### Noun-form function aliases.
 

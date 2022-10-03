@@ -8,11 +8,11 @@ from sweetpea.core import CNF, sample_non_uniform
 This represents the non-uniform sampling strategy, in which we 'sample' just by using a SAT
 solver repeatedly to produce unique (but not uniform) samples.
 """
-class NonUniformSamplingStrategy(SamplingStrategy):
+class IterateGen(SamplingStrategy):
 
     @staticmethod
     def class_name():
-        return 'Non-Uniform Sampling Strategy'
+        return 'IterateGen'
 
     @staticmethod
     def sample(block: Block, sample_count: int) -> SamplingResult:
@@ -28,3 +28,5 @@ class NonUniformSamplingStrategy(SamplingStrategy):
 
         result = list(map(lambda s: SamplingStrategy.decode(block, s.assignment), solutions))
         return SamplingResult(result, {})
+
+NonUniformSamplingStrategy = IterateGen

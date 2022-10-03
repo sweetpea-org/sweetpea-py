@@ -2,9 +2,13 @@
 import sys
 sys.path.append("..")
 
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial
-from sweetpea.constraints import at_most_k_in_a_row
-from sweetpea import fully_cross_block, synthesize_trials, print_experiments, UniformCombinatoricSamplingStrategy
+
+from sweetpea import (
+    Factor, DerivedLevel, WithinTrial, Transition,
+    CrossBlock, synthesize_trials, print_experiments, 
+    CMSGen, RandomGen
+)
+
 import numpy as np
 
 # GENERATING EXPERIMENT SEQUENCE FOR AN EXPERIMENT BLOCK IN SHENHAV ET AL. 2017
@@ -86,11 +90,11 @@ constraints = []
 
 design       = [colorCoherence, motionCoherence, color, motion, colorResponse, motionResponse, congruency]
 crossing     = [colorCoherence, motionCoherence, color, motion]
-block        = fully_cross_block(design, crossing, constraints)
+block        = CrossBlock(design, crossing, constraints)
 
 # SOLVE FOR EXPERIMENT SEQUENCE
 
-experiments  = synthesize_trials(block, 1, UniformCombinatoricSamplingStrategy)
+experiments  = synthesize_trials(block, 1, RandomGen)
 
 print_experiments(block, experiments)
 

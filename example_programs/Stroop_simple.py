@@ -2,11 +2,11 @@
 import sys
 sys.path.append("..")
 
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
-from sweetpea.constraints import at_most_k_in_a_row, minimum_trials
-from sweetpea import fully_cross_block, synthesize_trials, print_experiments, tabulate_experiments, save_cnf
-from sweetpea import CMSGenSamplingStrategy
-
+from sweetpea import (
+    Factor, DerivedLevel, WithinTrial, Transition, AtMostKInARow,
+    CrossBlock, synthesize_trials, print_experiments, tabulate_experiments,
+    CMSGen, IterateGen, RandomGen
+)
 
 """
 Stroop Task
@@ -81,23 +81,21 @@ resp_transition = Factor("response_transition", [
 # DEFINE SEQUENCE CONSTRAINTS
 
 k = 7
-constraints = [at_most_k_in_a_row(k, resp_transition)]
+constraints = [AtMostKInARow(k, resp_transition)]
 
 # DEFINE EXPERIMENT
 
 design       = [color, word, congruency, resp_transition, response]
 crossing     = [color, word, resp_transition]
-block        = fully_cross_block(design, crossing, constraints)
+block        = CrossBlock(design, crossing, constraints)
 
 # SOLVE
 
-save_cnf(block, "/tmp/c-gt.cnf")
-
-experiments  = synthesize_trials(block, 5, CMSGenSamplingStrategy)
+experiments  = synthesize_trials(block, 5, CMSGen)
 # Or:
-# experiments  = synthesize_trials(block, 5, NonUniformSamplingStrategy)
-# experiments  = synthesize_trials(block, 5, UniformCombinatoricSamplingStrategy(acceptable_error=3))
+# experiments  = synthesize_trials(block, 5, IterateGen)
+# experiments  = synthesize_trials(block, 5, RandomGen(acceptable_error=3))
 
 print_experiments(block, experiments)
 
-# tabulate_experiments(experiments, crossing)
+# tabulate_experiments(block, experiments)
