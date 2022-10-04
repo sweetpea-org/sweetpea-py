@@ -19,6 +19,7 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Legacy" href="legacy.html" />
     <link rel="prev" title="Constraints" href="constraints.html" />
 <link rel="stylesheet" type="text/css"
       href="../_static/css/custom.css" />
@@ -119,6 +120,7 @@
 <li class="toctree-l2"><a class="reference internal" href="derivations.html">Derivations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="constraints.html">Constraints</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Sampling Strategies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="legacy.html">Legacy</a></li>
 </ul>
 </li>
 </ul>
@@ -158,7 +160,7 @@ of trials).</p>
 <p>A subclass of <code class="xref py py-class docutils literal notranslate"><span class="pre">Gen</span></code> can be used instead of an
 instance to mean the same sampling strategy as an instance
 with default arguments.</p>
-<p><em>Uniforimity</em>: Different subclasses of <cite>Gen</cite> provide
+<p><em>Uniformity</em>: Different subclasses of <cite>Gen</cite> provide
 different guarantee about coverage of the space of possible
 trial sequences. A guarantee of uniformity means that is a
 single trial sequence is requested via
@@ -166,55 +168,55 @@ single trial sequence is requested via
 randomly among all trial sequences that fit the constraints
 of the experiment definition, and all such trial sequences
 are eqaully likely to be reported.</p>
-<p><em>Independence</em>: Different subclasses of <cite>Gen</cite> provide
+<p><em>Replacement</em>: Different subclasses of <cite>Gen</cite> provide
 different behavior when multiple trial sequences are
 requested with a single call to <code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code>.
-Some strategies produce independenly chosen results, while
-some produce distinct results in the returned list of
-sequences.</p>
+Some strategies produce sample with replacement, producing
+independently chosen results. Others sample without
+replacement, which means they are potentially capable of
+counting the total number of solutions.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="sweetpea.UniGen">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">UniGen</span></span><a class="headerlink" href="#sweetpea.UniGen" title="Permalink to this definition"></a></dt>
-<dd><p><em>Uniforimity</em>: Generates trials with a guarantee of
+<dd><p><em>Uniformity</em>: Generates trials with a guarantee of
 uniformity. Unfortunately, due to the difficulty of
 sampling with a guarantee, this stategy is unlikely to
 succeed for non-trial designs.</p>
-<p><em>Independence</em>: Generating multiple trials in one call to
-<code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code> with this strategy produces
-indepedent results. That is, the single call is the same as
-separate calls that each generate one sequence of trials.</p>
+<p><em>Replacement</em>: Generating multiple trials in one call to
+<code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code> produces indepedent results. That
+is, the single call is the same as separate calls that each
+generate one sequence of trials.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="sweetpea.CMSGen">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">CMSGen</span></span><a class="headerlink" href="#sweetpea.CMSGen" title="Permalink to this definition"></a></dt>
-<dd><p><em>Quasi-Uniforimity</em>: Generates trials that appear to be
+<dd><p><em>Quasi-Uniformity</em>: Generates trials that appear to be
 uniformly chosen based on the available technology for
 detecting non-uniformity. This strategy may perform well in
 terms of sampling possible configurations, despite a having
 no formal guarantee of uniformity.</p>
-<p><em>Independence</em>: Generating multiple trials in one call to
-<code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code> with this strategy produces
-indepedent results. That is, the single call is the same as
-separate calls that each generate one sequence of trials.</p>
+<p><em>Replacement</em>: Generating multiple trials in one call to
+<code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code> produces indepedent results. That
+is, the single call is the same as separate calls that each
+generate one sequence of trials.</p>
 </dd></dl>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="sweetpea.RandomGen">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">RandomGen</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acceptable_error</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.RandomGen" title="Permalink to this definition"></a></dt>
-<dd><p><em>Uniforimity</em>: Generates trials with a guarantee of
+<dd><p><em>Uniformity</em>: Generates trials with a guarantee of
 uniformity. Constraints or derived factors with a window
 greater than 1 can force generation to use rejection
 sampling, which may fail to find instances in a reasonable
 time if the search space is large.</p>
-<p><em>Non-Independence</em>: When multiple trials are generated in
-one call to <code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code> with this strategy,
-each of the results is constrained to be distinct. The
-number of returned experiments will be less than the
-requested number if the pool of possible trial sequences is
-exhausted.</p>
+<p><em>Without Replacement</em>: When multiple trials are generated
+in one call to <code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code>, each of the
+results is constrained to be distinct. The number of
+returned experiments will be less than the requested number
+if the pool of possible trial sequences is exhausted.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><p><strong>acceptable_error</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – With derived factors in the
@@ -235,17 +237,16 @@ to find</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="sweetpea.IterateGen">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">IterateGen</span></span><a class="headerlink" href="#sweetpea.IterateGen" title="Permalink to this definition"></a></dt>
-<dd><p><em>Non-Uniforimity</em>: Generates trials by repeatedly finding
+<dd><p><em>Non-Uniformity</em>: Generates trials by repeatedly finding
 solutions to an experiment design’s constraints, but with
 no guarantee of uniform coverage or even randomness (i.e.,
 each separate use of <code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code> with this
 stragegy may produce the same result).</p>
-<p><em>Non-Independence</em>: When multiple trials are generated in
-one call to <code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code> with this strategy,
-each of the results is constrained to be distinct. The
-number of returned experiments will be less than the
-requested number if the pool of possible trial sequences is
-exhausted.</p>
+<p><em>Without Replacement</em>: When multiple trials are generated
+in one call to <code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code>, each of the
+results is constrained to be distinct. The number of
+returned experiments will be less than the requested number
+if the pool of possible trial sequences is exhausted.</p>
 </dd></dl>
 
 </section>
@@ -255,6 +256,7 @@ exhausted.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="constraints.html" class="btn btn-neutral float-left" title="Constraints" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="legacy.html" class="btn btn-neutral float-right" title="Legacy" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
