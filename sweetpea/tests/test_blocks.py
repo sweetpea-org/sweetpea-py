@@ -441,3 +441,55 @@ def test_build_variable_list_for_three_derived_levels():
     assert block.build_variable_list((changed, changed["0"])) == [17, 20, 23]
     # assert block.build_variable_list((changed, changed["1"])) == [18, 21, 24]
     assert block.build_variable_list((changed, changed["2"])) == [19, 22, 25]
+
+def test_crossing_size_with_complex_excludes():
+    deviantColor             = Factor("deviant color",  ["pink", "purple"])
+    deviantOrientation       = Factor("deviant orientation", ["left", "right"])
+    deviantMovement          = Factor("deviant movement", ["vertical", "horizontal"])
+    
+    deviantColorObject          = Factor("color deviant", ["object 1", "object 2", "object 3", "object 4"])
+    deviantOrientationObject    = Factor("orientation deviant", ["object 1", "object 2", "object 3", "object 4"])
+    deviantMovementObject       = Factor("movement deviant", ["object 1", "object 2", "object 3", "object 4"])
+
+    def legalObjectConfiguration(deviantColorObject, deviantOrientationObject, deviantMovementObject):
+        return (deviantColorObject != deviantOrientationObject) and (deviantColorObject != deviantMovementObject) and (deviantOrientationObject != deviantMovementObject)
+    def illegalObjectConfiguration(deviantColorObject, deviantOrientationObject, deviantMovementObject):
+        return not legalObjectConfiguration(deviantColorObject, deviantOrientationObject, deviantMovementObject)
+    legalObject = DerivedLevel("legal", WithinTrial(legalObjectConfiguration, [deviantColorObject, deviantOrientationObject, deviantMovementObject]))
+    illegalObject = DerivedLevel("illegal", WithinTrial(illegalObjectConfiguration, [deviantColorObject, deviantOrientationObject, deviantMovementObject]))
+    objectConfiguration = Factor("object configuration", [
+        legalObject,
+        illegalObject
+    ])
+
+    task              = Factor("task", ["color task", "movement task", "orientation task"])
+
+    def A_B_A(tasks):
+        return (tasks[0] == tasks[2]) and (tasks[0] != tasks[1])
+    def A_B_C(tasks):
+        return (tasks[0] != tasks[2]) and (tasks[0] != tasks[1]) and (tasks[1] != tasks[2])
+    def A_A_B(tasks):
+        return (tasks[0] == tasks[1]) and (tasks[1] != tasks[2])
+    def A_A_A(tasks):
+        return (tasks[0] == tasks[1]) and (tasks[1] == tasks[2])
+    def A_B_B(tasks):
+        return (tasks[0] != tasks[1]) and (tasks[1] == tasks[2])
+    def invalid_transition(tasks):
+        return A_A_B(tasks) or A_A_A(tasks) or A_B_B(tasks)
+
+    illegalTransition = DerivedLevel("illegalT", Window(invalid_transition, [task], 3, 1))
+    task_transition = Factor("task transition", [
+        DerivedLevel("A-B-A", Window(A_B_A, [task], 3, 1)),
+        DerivedLevel("A-B-C", Window(A_B_C, [task], 3, 1)),
+        illegalTransition
+    ])
+
+    constraints = [Exclude(objectConfiguration, illegalObject),
+                   Exclude(task_transition, illegalTransition)
+                   ]
+
+    design       = [deviantColorObject, deviantOrientationObject, deviantMovementObject, objectConfiguration, task, task_transition]
+    crossing     = [deviantColorObject, deviantOrientationObject, deviantMovementObject, task, task_transition]
+    block        = fully_cross_block(design, crossing, constraints, require_complete_crossing=False)
+
+    assert block.crossing_size() == 144

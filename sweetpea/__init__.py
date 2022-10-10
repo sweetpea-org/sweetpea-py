@@ -492,7 +492,7 @@ def synthesize_trials(block: Block,
     """
     def starting(who: Any) -> None:
         nonlocal samples
-        print(f"Sampling {samples} trial sequences using the {who}.")
+        print(f"Sampling {samples} trial sequences using {who}.")
     if isinstance(sampling_strategy, type):
         assert issubclass(sampling_strategy, SamplingStrategy)
         starting(sampling_strategy.class_name())

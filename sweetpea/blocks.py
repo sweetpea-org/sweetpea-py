@@ -14,7 +14,7 @@ from networkx import has_path
 from sweetpea.backend import BackendRequest
 from sweetpea.internal.levels import get_all_levels
 from sweetpea.primitives import (
-    DerivedFactor, DerivedLevel, ElseLevel, Factor, SimpleLevel)
+    DerivedFactor, DerivedLevel, ElseLevel, Factor, SimpleLevel, Level)
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.base_constraint import Constraint
 from sweetpea.design_graph import DesignGraph
@@ -48,6 +48,7 @@ class Block:
         self._simple_tuples = cast(Optional[List[Tuple[Factor, Union[SimpleLevel, DerivedLevel]]]], None)
         self._variables_per_trial = None
         self.__validate(who)
+        self._cached_previous_count = cast(Dict[Tuple[Factor, int], int], {})
 
     def show_errors(self) -> bool:
         failed = False
@@ -190,6 +191,26 @@ class Block:
             simple_levels = get_all_levels(simple_factors)
             return simple_levels.index((factor, level))
 
+    def _get_previous_trials_variable_count(self, f: Factor, trial: int):
+        """The `trial` argument is 1-based."""
+        t = trial
+        while True:
+            maybe_count = cast(Optional[int], 0)
+            if t == 1:
+                maybe_count = 0
+            else:
+                key = (f, t)
+                maybe_count = self._cached_previous_count.get(key, None)
+            if maybe_count is not None:
+                count = maybe_count
+                while t < trial:
+                    if (f.applies_to_trial(t)):
+                        count += 1
+                    t += 1
+                    self._cached_previous_count[(f, t)] = count
+                return count
+            t -= 1
+
     def factor_variables_for_trial(self, f: Factor, t: int) -> List[int]:
         """Given a factor and a trial number (1-based) this function will
         return a list of the variables representing the levels of the given
@@ -198,9 +219,8 @@ class Block:
         if not f.applies_to_trial(t):
             raise ValueError('Factor does not apply to trial #' + str(t) + ' f=' + str(f))
 
-        # FIXME: quadratic-time in t when `factor_variables_for_trial` is called t times
-        previous_trials = sum(map(lambda trial: 1 if f.applies_to_trial(trial + 1) else 0, range(t))) - 1
-        # FIXME: this could be computed once per factor after self.exclude is in place
+        previous_trials = self._get_previous_trials_variable_count(f, t)
+        # this could be computed once per factor after self.exclude is in place
         initial_sequence = list(map(lambda l: self.first_variable_for_level(f, l),
                                     list(filter(lambda l: (f, l) not in self.exclude,
                                                 f.levels))))
@@ -236,6 +256,18 @@ class Block:
 
         return variables
 
+    def encode_combination(self, combination: Dict[Factor, Level], trial: int):
+        def encode_variable(f: Factor, l: Level, trial: int):
+            offset = self.first_variable_for_level(f, l)
+            previous_trials = self._get_previous_trials_variable_count(f, trial)
+            if f.has_complex_window:
+                offset += len(f.levels) * previous_trials
+            else:
+                offset += self.variables_per_trial() * previous_trials
+            return offset+1
+
+        return tuple([encode_variable(f, l, trial) for f,l in combination.items()])
+
     def decode_variable(self, variable: int) -> Tuple[Factor, Union[SimpleLevel, DerivedLevel]]:
         """Given a variable number from the SAT formula, this method will
         return the associated factor and level name.
@@ -261,46 +293,33 @@ class Block:
 
         raise RuntimeError('Unable to find factor/level for variable!')
 
-    def is_excluded(self, c: Tuple[int, ...], d: Tuple[int, ...]) -> bool:
-        """Given crossing and design-only variables and returns true if the
-        combination meets any of the exclude contraints.
-        """
-        di = cast(Dict[Factor, SimpleLevel], {})
-        for crossed in c:
-            t = self.decode_variable(crossed)
-            if isinstance(t[1], SimpleLevel):
-                di[t[0]] = t[1]
-        for design in d:
-            t = self.decode_variable(design)
-            if isinstance(t[1], SimpleLevel):
-                di[t[0]] = t[1]
-
-        return self._is_excluded(di)
-
-    def _is_excluded(self, di: Dict[Factor, SimpleLevel]) -> bool:
-        """Like is_excluded, but for an argument in terms of a Factor and Level object."""
-        return any(map(lambda e: all(map(lambda ex_level: e[ex_level] == di[ex_level], e)), self.excluded_derived))
-
-    def filter_excluded_derived_levels(self, l: List[List[List[Tuple[int, ...]]]]) -> List[List[List[Tuple[int, ...]]]]:
-        """Given a list of trials, the function filters the trials invalid as
-        per the exclude contraints.
-        """
-        return list(filter(None,
-                           map(lambda j: list(filter(lambda li: len(li) > 1,
-                                                     map(lambda k: [k[0]]
-                                                         + list(filter(lambda c: not self.is_excluded(k[0], c),
-                                                                       k[1:])),
-                                                         j))),
-                               l)))
-
     def is_excluded_combination(self, di: Dict[Factor, SimpleLevel]) -> bool:
-        """Like is_excluded, but with a combination in dictionary form, and
-        also checks directly excluded factors for a crossing.
-        """
-        if self._is_excluded(di):
+        """Given a combination of levels, reports whether this combination has been excluded,
+        either explicitly or implicitly by the definition of a derived level."""
+        # Check based on excluded simple levels:
+        if any([t[0] in di and di[t[0]] == t[1] for t in self.exclude]):
             return True
-        return any(list(map(lambda t: t[0] in di and di[t[0]] == t[1], self.exclude)))
+        # Check based on excluded derived levels and derived-level definitions:
+        if any([all([e[ex_level] == di.get(ex_level, None) for ex_level in e]) for e in self.excluded_derived]):
+            return True
+        return False
 
+    def is_excluded_or_inconsistent_combination(self, di: Dict[Factor, SimpleLevel]) -> bool:
+        """Like extends is_excluded_combination to also check for combinations that are
+        inconsistent with derived-factor definitions. Assumes that `di` is based on the
+        block's first crossing.
+        """
+        if self.is_excluded_combination(di):
+            return True
+        for f in self.crossings[0]:
+            if isinstance(f, DerivedFactor) and not f.has_complex_window and f in di:
+                l = cast(DerivedLevel, di[f])
+                if all([df in di for df in l.window.args]):
+                    args = [di[df].name for df in l.window.args]
+                    if not l.window.fn(*args):
+                        return True
+        return False
+    
     def build_backend_request(self) -> BackendRequest:
         """Apply all constraints to build a :class:`.BackendRequest`. Formerly
         known as ``__desugar``.
@@ -533,28 +552,29 @@ class CrossBlock(Block):
 
         # Check for excluded combinations
         for constraint in exclusions:
-            if constraint.factor.has_complex_window:
-                # If the excluded factor has a complex window, then we don't need
-                # to reduce the sequence length. What if the transition being excluded
-                # is in the crossing? If it is, then they shouldn't be excluding it.
-                # We should give an error if we detect that.
-                continue
-
             # Retrieve the derivation function that defines this exclusion.
             excluded_level = constraint.level
 
-            if isinstance(excluded_level, SimpleLevel):
+            if excluded_level.factor in crossing:
                 for c in all_crossings:
                     if excluded_level in c:
                         excluded_crossings.add(tuple(c))
-            else:
-                # For each crossing, ensure that atleast one combination is possible with the design-only factors
-                # keeping in mind the exclude contraints.
+
+            if isinstance(excluded_level, SimpleLevel):
+                # nothing more to do
+                pass
+            elif constraint.factor.has_complex_window:
+                # We are not obliged to filter impossible cases for a complex level
+                continue
+            elif excluded_level.factor not in crossing:
+                # For each crossing, ensure that at least one combination is possible with the design-only
+                # factor, keeping in mind the exclude contraints.
                 for c in all_crossings:
                     if all(map(lambda d: self.__excluded_derived(excluded_level, c+d),
                                list(product(*[list(f.levels) for f in filter(lambda f: f not in crossing,
                                                                              self.act_design)])))):
                         excluded_crossings.add(tuple(c))
+
         if len(excluded_crossings) != 0:
             if self.require_complete_crossing:
                 er = "Complete crossing unsatisfiable"
@@ -568,21 +588,21 @@ class CrossBlock(Block):
         return len(excluded_crossings)
 
     def __excluded_derived(self, excluded_level, c):
-        """Given the complete crossing and an exclude constraint returns true
+        """Given the complete crossing and an exclude constraint, returns true
         if that combination results in the exclude level or if the combination
         is not possible based on the level's definition.
         """
         ret = []
 
+        cx = {l.factor: l.name for l in c}
+
         for f in filter(lambda f: f.is_derived(), excluded_level.window.args):
-            ret.append(self.__excluded_derived(list(filter(lambda l: l.factor == f, c))[0], c))
+            if self.__excluded_derived(cx[f], c):
+                return True
 
         # Invoking the fn this way is only ok because we only do this for WithinTrial windows.
         # With complex windows, it wouldn't work due to the list aspect for each argument.
-        ret.append(excluded_level.window.fn(*list(map(lambda l: l.name,
-                                                      filter(lambda l: l.factor in excluded_level.window.args, c)))))
-
-        return all(ret)
+        return excluded_level.window.fn(*[cx[f] for f in excluded_level.window.args])
 
     def crossing_size(self, crossing: Optional[List[Factor]] = None):
         """The crossing argument must be one of the block's crossings."""

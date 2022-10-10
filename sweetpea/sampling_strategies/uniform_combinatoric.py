@@ -396,7 +396,7 @@ class UCSolutionEnumerator():
         crossing = self._partitions.get_crossed_noncomplex_factors()
         level_lists = [list(f.levels) for f in crossing]
         crossings = [{crossing[i]: level for i,level in enumerate(levels)} for levels in product(*level_lists)]
-        return list(filter(lambda c: not self._block.is_excluded_combination(c), crossings))
+        return list(filter(lambda c: not self._block.is_excluded_or_inconsistent_combination(c), crossings))
 
     def __count_complex_crossing_instances(self) -> int:
         crossing = self._partitions.get_crossed_complex_factors()

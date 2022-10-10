@@ -130,48 +130,35 @@ class Cross(Constraint):
         for c in block.crossings:
             fresh = backend_request.fresh
 
-            # Step 1: Get a list of the trials that are involved in the crossing. That
-            # omits leading trials that will be present to initialize transitions, and
-            # the number of trials may have beed reduced by exclusions.
+            # Step 1a: Get a list of the trials that are involved in the crossing. That list
+            # omits leading trials that will be present to initialize transitions, and the
+            # number of trials may have been reduced by exclusions.
             crossing_size = block.crossing_size(c);
             trial_count = max(block.min_trials, crossing_size)
             crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t), c)),
                                           range(1, block.trials_per_sample() + 1)))
             crossing_trials = crossing_trials[:trial_count]
 
-            # Step 2: For each trial, cross all levels of all factors in the crossing.
-            crossing_factors = list(map(lambda t: (list(product(*[block.factor_variables_for_trial(f, t) for f in c]))),
-                                        crossing_trials))
+            # Step 1b: For each trial, cross all levels of all factors in the crossing.
+            # We exclude any combination that is dsiallowed by implicit or explicit exlcusions.
+            level_lists = [list(f.levels) for f in c]
+            crossings = [{level.factor: level for level in levels} for levels in product(*level_lists)]
+            trial_combinations = list(filter(lambda c: not block.is_excluded_or_inconsistent_combination(c), crossings))
+            crossing_combinations = [[block.encode_combination(c, t) for c in trial_combinations] for t in crossing_trials]
+            # Each trial is now represented in `crossing_factors` by a list
+            # of potential level combinations, where each level combination is represented
+            # as tuple of CNF variables.
 
-            # Step 3: For each trial, cross all levels of all design-only factors in the crossing.
-            # By using `block.act_design`, we omit any factors that are not relevant to constraints.
-            design_factors = cast(List[List[List[int]]], [])
-            design_factors = list(map(lambda _: [], crossing_trials))
-            for f in list(filter(lambda f: f not in c and not f.has_complex_window, block.act_design)):
-                for i, t in enumerate(crossing_trials):
-                    design_factors[i].append(block.factor_variables_for_trial(f, t))
-            design_combinations = cast(List[List[Tuple[int, ...]]], [])
-            design_combinations = list(map(lambda l: list(product(*l)), design_factors))
+            # Step 2a: Allocate additional variables to represent each crossing in each trial.
+            num_state_vars = len(crossing_combinations) * len(crossing_combinations[0])
+            state_vars = list(range(fresh, fresh + num_state_vars))
+            fresh += num_state_vars
 
-            # Step 4: For each trial, combine each of the crossing factors with all of the design-only factors.
-            crossings = cast(List[List[List[Tuple[int, ...]]]], [])
-            for i, t in enumerate(crossing_trials):
-                crossings.append(list(map(lambda c: [c] + design_combinations[i], crossing_factors[i])))
+            # Step 2b: Associate each state variable with its combination in each trial.
+            flattened_combinations = list(chain.from_iterable(crossing_combinations))
+            iffs = list(map(lambda n: Iff(state_vars[n], And([*flattened_combinations[n]])), range(len(state_vars))))
 
-            # Step 5: Remove crossings that are not possible.
-            # From here on ignore all values other than the first in every list.
-            crossings = block.filter_excluded_derived_levels(crossings)
-
-            # Step 6: Allocate additional variables to represent each crossing in each trial.
-            num_state_vars = list(map(lambda c: len(c), crossings))
-            state_vars = list(range(fresh, fresh + sum(num_state_vars)))
-            fresh += sum(num_state_vars)
-
-            # Step 7: Associate each state variable with its crossing in each trial.
-            flattened_crossings = list(chain.from_iterable(crossings))
-            iffs = list(map(lambda n: Iff(state_vars[n], And([*flattened_crossings[n][0]])), range(len(state_vars))))
-
-            # Step 8: Constrain each crossing to occur exactly once in each `crossing_size`
+            # Step 3: Constrain each crossing to occur exactly once in each `crossing_size`
             # set of trials, or at most once in a last set of trials that is less than
             # `crossing_size` in length.
             states = list(chunk(state_vars, crossing_size))
