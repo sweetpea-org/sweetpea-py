@@ -458,11 +458,11 @@ class CNF(SimpleSequence[Clause]):
     def prepend(self, other: Union[CNF, Clause, Iterable[Clause], Var]):
         """Prepends a :class:`CNF` to this :class:`CNF`."""
         if isinstance(other, Var):
-            self._vals.insert(0, Clause(other))
+            self._vals.append(Clause(other))
         elif isinstance(other, Clause):
-            self._vals.insert(0, other)
+            self._vals.append(other)
         elif isinstance(other, CNF):
-            self._vals = [*other._vals, *self._vals]
+            self._vals.extend(other._vals)
         else:
             raise NotImplementedError()
 
