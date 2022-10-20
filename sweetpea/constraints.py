@@ -14,7 +14,7 @@ from sweetpea.blocks import Block, FullyCrossBlock, MultipleCrossBlock
 from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import If, Iff, And, Or, Not
 from sweetpea.primitives import DerivedFactor, DerivedLevel, Factor, Level, SimpleLevel
-from .internal.argcheck import argcheck, make_istuple
+from sweetpea.internal.argcheck import argcheck, make_istuple
 
 
 def validate_factor(block: Block, factor: Factor) -> None:
@@ -26,9 +26,8 @@ def validate_factor(block: Block, factor: Factor) -> None:
 def validate_factor_and_level(block: Block, factor: Factor, level: Union[SimpleLevel, DerivedLevel]) -> None:
     validate_factor(block, factor)
 
-    if not factor.has_level(level.name):
-        raise ValueError(("A level with name '{}' wasn't found in the '{}' factor, "
-                          "Are you sure the level name is spelled correctly?").format(
+    if not level in factor:
+        raise ValueError(("A level with name '{}' wasn't found in the '{}' factor").format(
                               level.name,
                               factor.name))
 

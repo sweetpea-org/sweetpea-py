@@ -1,10 +1,7 @@
 import operator as op
 import pytest
 
-from sweetpea import fully_cross_block
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window
-from sweetpea.constraints import AtMostKInARow
-from sweetpea.logic import to_cnf_tseitin
+from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, AcrossTrials
 
 
 # Common variables for stroop.
@@ -26,10 +23,6 @@ text_repeats_factor = Factor("text repeats?", [
 ])
 
 congruent_bookend = Factor("congruent bookend?", [
-    DerivedLevel("yes", Window(lambda color, text: color == text, [color, text], 1, 3)),
-    DerivedLevel("no",  Window(lambda color, text: color != text, [color, text], 1, 3))
+    DerivedLevel("yes", AcrossTrials(lambda color, text: color == text, [color, text], 1, 3)),
+    DerivedLevel("no",  AcrossTrials(lambda color, text: color != text, [color, text], 1, 3))
 ])
-
-design = [color, text, con_factor]
-crossing = [color, text]
-blk = fully_cross_block(design, crossing, [])

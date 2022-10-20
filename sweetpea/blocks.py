@@ -8,13 +8,11 @@ from functools import reduce
 from itertools import accumulate, combinations, product, repeat
 from typing import List, Union, Tuple, Optional, cast, Any, Dict, Set
 from math import ceil
-
 from networkx import has_path
 
 from sweetpea.backend import BackendRequest
 from sweetpea.internal.levels import get_all_levels
-from sweetpea.primitives import (
-    DerivedFactor, DerivedLevel, ElseLevel, Factor, SimpleLevel, Level)
+from sweetpea.primitives import DerivedFactor, DerivedLevel, ElseLevel, Factor, SimpleLevel, Level
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.base_constraint import Constraint
 from sweetpea.design_graph import DesignGraph
@@ -65,7 +63,7 @@ class Block:
 
     def extract_basic_factor_names(self, level: DerivedLevel) -> set:
         included_factor_names = set()
-        for factor in level.window.args:
+        for factor in level.window.factors:
             if isinstance(factor, DerivedFactor):
                 for l in factor.levels:
                     included_factor_names.update(self.extract_basic_factor_names(l))
@@ -151,7 +149,7 @@ class Block:
         vars = []
         for t in range(self.trials_per_sample()):
             for f in self.act_design:
-                if not f.is_derived():
+                if not isinstance(f, DerivedFactor):
                     vars += self.factor_variables_for_trial(f, t+1)
         return vars
 
@@ -314,9 +312,9 @@ class Block:
         for f in self.crossings[0]:
             if isinstance(f, DerivedFactor) and not f.has_complex_window and f in di:
                 l = cast(DerivedLevel, di[f])
-                if all([df in di for df in l.window.args]):
-                    args = [di[df].name for df in l.window.args]
-                    if not l.window.fn(*args):
+                if all([df in di for df in l.window.factors]):
+                    args = [di[df].name for df in l.window.factors]
+                    if not l.window.predicate(*args):
                         return True
         return False
     
@@ -534,9 +532,9 @@ class CrossBlock(Block):
             for l in c:
                 if isinstance(l, DerivedLevel):
                     f = l.factor
-                    if f.is_derived() and not f.has_complex_window:
+                    if isinstance(f, DerivedFactor) and not f.has_complex_window:
                         argss = []
-                        for af in l.window.args:
+                        for af in l.window.factors:
                             if af in crossing:
                                 # Find level in `c`:
                                 for al in c:
@@ -547,7 +545,7 @@ class CrossBlock(Block):
                                 # We'll need to try all possible levels in `af`
                                 argss.append([ll.name for ll in af.levels])
                         all_possible_argss = list(product(*argss))
-                        if not any([l.window.fn(*args) for args in all_possible_argss]):
+                        if not any([l.window.predicate(*args) for args in all_possible_argss]):
                             excluded_crossings.add(tuple(c))
 
         # Check for excluded combinations
@@ -596,13 +594,13 @@ class CrossBlock(Block):
 
         cx = {l.factor: l.name for l in c}
 
-        for f in filter(lambda f: f.is_derived(), excluded_level.window.args):
+        for f in filter(lambda f: isinstance(f, DerivedFactor), excluded_level.window.factors):
             if self.__excluded_derived(cx[f], c):
                 return True
 
-        # Invoking the fn this way is only ok because we only do this for WithinTrial windows.
+        # Invoking the predicate this way is only ok because we only do this for WithinTrial windows.
         # With complex windows, it wouldn't work due to the list aspect for each argument.
-        return excluded_level.window.fn(*[cx[f] for f in excluded_level.window.args])
+        return excluded_level.window.predicate(*[cx[f] for f in excluded_level.window.factors])
 
     def crossing_size(self, crossing: Optional[List[Factor]] = None):
         """The crossing argument must be one of the block's crossings."""

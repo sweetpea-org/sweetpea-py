@@ -6,6 +6,7 @@ from typing import List
 
 from sweetpea.primitives import Factor
 
+
 class Constraint(ABC):
     """Generic interface for constraints."""
 

@@ -65,11 +65,6 @@ def test_factor_get_level():
     assert color.get_level("bogus") is None
 
 
-def test_factor_is_derived():
-    assert color.is_derived() == False
-    assert con_factor.is_derived() == True
-
-
 def test_factor_has_complex_window():
 	assert color.has_complex_window == False
 	assert con_factor.has_complex_window == False
@@ -109,8 +104,8 @@ def test_derived_level_validation():
 
 def test_derived_level_argument_list_expansion():
     # Used to internally duplicate each factor to match the width of the window, but not any more
-    assert color_repeats_level.window.args == [color]
-    assert color_no_repeat_level.window.args == [color]
+    assert color_repeats_level.window.factors == [color]
+    assert color_no_repeat_level.window.factors == [color]
 
 
 def test_derived_level_get_dependent_cross_product():

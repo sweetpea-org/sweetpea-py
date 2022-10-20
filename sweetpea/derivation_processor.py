@@ -6,7 +6,6 @@ import operator as op
 from typing import Any, Dict, List, Tuple, cast
 from functools import reduce
 
-# TODO: Fix this Derivation name collision.
 from sweetpea.primitives import DerivationWindow, DerivedFactor, DerivedLevel, Level
 from sweetpea.blocks import Block
 from sweetpea.constraints import Derivation

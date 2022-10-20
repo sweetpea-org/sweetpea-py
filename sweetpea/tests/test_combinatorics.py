@@ -2,11 +2,13 @@ import pytest
 
 from math import factorial
 
-from sweetpea.combinatorics import extract_components, compute_jth_inversion_sequence, construct_permutation
-from sweetpea.combinatorics import compute_jth_combination, compute_jth_permutation_prefix
-from sweetpea.combinatorics import count_prefixes_of_permutations_with_copies, recur_count_prefixes_of_permutations_with_copies, k_prefixes_of_permutations_with_copies
-from sweetpea.combinatorics import count_permutation_with_copies, compute_jth_prefix_of_permutations_with_copies
-from sweetpea.combinatorics import PermutationMemo
+from sweetpea.combinatorics import (
+    extract_components, compute_jth_inversion_sequence, construct_permutation,
+    compute_jth_combination, compute_jth_permutation_prefix,
+    count_prefixes_of_permutations_with_copies, recur_count_prefixes_of_permutations_with_copies, k_prefixes_of_permutations_with_copies,
+    count_permutation_with_copies, compute_jth_prefix_of_permutations_with_copies,
+    PermutationMemo
+)
 
 @pytest.mark.parametrize('sizes, n, expected', [
     [[4, 2, 3], 0,  [0, 0, 0]],

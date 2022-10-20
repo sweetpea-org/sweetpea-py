@@ -4,6 +4,7 @@ from sweetpea.sampling_strategies.base import SamplingStrategy, SamplingResult
 from sweetpea.sampling_strategies.unigen import UnigenSamplingStrategy
 from sweetpea.blocks import Block
 
+
 """
 This strategy relies fully on CMSGen to produce the desired number of samples.
 """

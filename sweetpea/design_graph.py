@@ -33,7 +33,7 @@ class DesignGraph():
 
             # Add directed edges between this factor and all factors that it depends on.
             for l in f.levels:
-                for depended_on_factor in l.window.args:
+                for depended_on_factor in l.window.factors:
                     g.add_edge(f.name, depended_on_factor.name)
 
         return g

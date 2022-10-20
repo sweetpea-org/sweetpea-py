@@ -9,6 +9,7 @@ from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, W
 from sweetpea.blocks import FullyCrossBlock
 from sweetpea.constraints import Exclude
 
+
 color = Factor("color", ["red", "blue"])
 text  = Factor("text",  ["red", "blue"])
 size  = Factor("size",  ["big", "small", "tiny"])

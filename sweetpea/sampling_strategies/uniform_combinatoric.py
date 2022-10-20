@@ -8,9 +8,11 @@ from math import factorial, ceil
 from typing import List, cast, Tuple, Dict, Optional
 
 from sweetpea.blocks import Block, CrossBlock
-from sweetpea.combinatorics import extract_components, compute_jth_permutation_prefix, compute_jth_combination
-from sweetpea.combinatorics import count_prefixes_of_permutations_with_copies, compute_jth_prefix_of_permutations_with_copies
-from sweetpea.combinatorics import PermutationMemo
+from sweetpea.combinatorics import (
+    extract_components, compute_jth_permutation_prefix, compute_jth_combination,
+    count_prefixes_of_permutations_with_copies, compute_jth_prefix_of_permutations_with_copies,
+    PermutationMemo
+)
 from sweetpea.design_partitions import DesignPartitions
 from sweetpea.logic import And
 from sweetpea.primitives import SimpleLevel, Factor, DerivedFactor
@@ -478,7 +480,7 @@ class UCSolutionEnumerator():
                     # assert not df.has_complex_window
                     if not df.has_complex_window:
                         w = merged_levels[df].window
-                        if not w.fn(*[(merged_levels[f]).name for f in w.args]):
+                        if not w.predicate(*[(merged_levels[f]).name for f in w.factors]):
                             sc_indices.remove(sc_idx)
 
             segment_lengths.append(len(sc_indices))

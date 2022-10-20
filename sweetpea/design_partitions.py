@@ -4,6 +4,7 @@ factors.
 
 
 from sweetpea.blocks import Block
+from sweetpea.primitives import DerivedFactor
 
 
 class DesignPartitions():
@@ -26,7 +27,7 @@ class DesignPartitions():
         return result
 
     def get_crossed_noncomplex_derived_factors(self):
-        return list(filter(lambda f: f.is_derived(), self.get_crossed_noncomplex_factors()))
+        return list(filter(lambda f: isinstance(f, DerivedFactor), self.get_crossed_noncomplex_factors()))
 
     def get_crossed_complex_factors(self):
         result = []
@@ -45,14 +46,14 @@ class DesignPartitions():
         # Source factors are depended on by at least one noncomplex derived factor in the crossed factors.
         source_factors = []
         for derived_factor in self.get_crossed_noncomplex_derived_factors():
-            for source_factor in derived_factor.levels[0].window.args:
+            for source_factor in derived_factor.levels[0].window.factors:
                 if source_factor not in source_factors:
                     source_factors.append(source_factor)
         return source_factors
 
     def get_uncrossed_basic_factors(self):
         uncrossed = self.get_uncrossed_and_complex_factors()
-        return list(filter(lambda f: not f.is_derived(), uncrossed))
+        return list(filter(lambda f: not isinstance(f, DerivedFactor), uncrossed))
 
     def get_uncrossed_basic_source_factors(self):
         source_factors = self.get_source_factors()
@@ -63,10 +64,10 @@ class DesignPartitions():
         return list(filter(lambda f: f not in source_factors, self.get_uncrossed_basic_factors()))
 
     def get_uncrossed_derived_and_complex_derived_factors(self):
-        return list(filter(lambda f: f.is_derived(), self.get_uncrossed_and_complex_factors()))
+        return list(filter(lambda f: isinstance(f, DerivedFactor), self.get_uncrossed_and_complex_factors()))
 
     def get_basic_factors(self):
-        return list(filter(lambda f: not f.is_derived(), self._block.act_design))
+        return list(filter(lambda f: not isinstance(f, DerivedFactor), self._block.act_design))
 
     def get_derived_factors(self):
-        return list(filter(lambda f: f.is_derived(), self._block.act_design))
+        return list(filter(lambda f: isinstance(f, DerivedFactor), self._block.act_design))

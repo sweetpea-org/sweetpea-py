@@ -1,7 +1,9 @@
 """This module provides some convenience functions to be used internally."""
 
+
 from itertools import islice, tee, chain, repeat
 from typing import Any, Tuple, List, Iterator, Iterable
+
 
 def chunk(it: Iterable[Any], size: int) -> Iterator[Tuple[Any, ...]]:
     """Handy-dandy chunker from SO:

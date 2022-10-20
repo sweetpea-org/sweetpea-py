@@ -1,5 +1,4 @@
 from math import ceil, log
-from sweetpea.constraints import minimum_trials
 from tqdm import tqdm
 import sys
 
@@ -8,6 +7,7 @@ from typing import List, cast
 from sweetpea.sampling_strategies.base import SamplingStrategy, SamplingResult
 from sweetpea.blocks import Block
 from sweetpea.core import sample_uniform, CNF
+from sweetpea.constraints import minimum_trials
 
 """
 This strategy relies fully on Unigen to produce the desired number of samples.

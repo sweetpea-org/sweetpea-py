@@ -1,8 +1,10 @@
 """This module provides combinatoric functionality."""
 
+
 from typing import List, Tuple, Dict, Any, Union, Optional, cast
 from math import factorial
 from functools import reduce
+
 
 def extract_components(sizes: List[int], n: int) -> List[int]:
     """Given a list of dimension sizes, and an integer less than the product of

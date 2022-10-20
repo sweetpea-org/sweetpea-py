@@ -4,6 +4,7 @@ randomized experimental designs and the synthesis of trial sequences from those
 designs.
 """
 
+
 __all__ = [
     'synthesize_trials',
 
@@ -38,9 +39,11 @@ __all__ = [
     'NonUniformSamplingStrategy', 'UniformCombinatoricSamplingStrategy', 'UnigenSamplingStrategy'
 ]
 
+
 from functools import reduce
 from typing import Dict, List, Optional, Tuple, Any, Union, cast
 from itertools import product
+import csv
 
 from sweetpea.derivation_processor import DerivationProcessor
 from sweetpea.logic import to_cnf_tseitin
@@ -49,11 +52,13 @@ from sweetpea.blocks import CrossBlock as CrossBlock_class
 from sweetpea.primitives import (
     Factor, Level, SimpleLevel, DerivedLevel, ElseLevel,
     DerivationWindow, WithinTrialDerivationWindow, TransitionDerivationWindow,
-    Window, WithinTrial, Transition, AcrossTrials)
+    Window, WithinTrial, Transition, AcrossTrials
+)
 from sweetpea.constraints import (
     Consistency, Constraint, Derivation, FullyCross, MultipleCross, MultipleCrossBlock,
     Exclude, MinimumTrials, ExactlyK, AtMostKInARow, AtLeastKInARow, ExactlyKInARow,
-    at_most_k_in_a_row, at_least_k_in_a_row, exactly_k, exactly_k_in_a_row, exclude, minimum_trials)
+    at_most_k_in_a_row, at_least_k_in_a_row, exactly_k, exactly_k_in_a_row, exclude, minimum_trials
+)
 from sweetpea.sampling_strategies.base import SamplingStrategy, Gen
 from sweetpea.sampling_strategies.non_uniform import NonUniformSamplingStrategy, IterateGen
 from sweetpea.sampling_strategies.unigen import UnigenSamplingStrategy, UniGen
@@ -61,8 +66,7 @@ from sweetpea.sampling_strategies.cmsgen import CMSGenSamplingStrategy, CMSGen
 from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy, RandomGen
 from sweetpea.server import build_cnf
 from sweetpea.core.cnf import Var
-from .internal.argcheck import argcheck, make_islistof
-import csv
+from sweetpea.internal.argcheck import argcheck, make_islistof
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
