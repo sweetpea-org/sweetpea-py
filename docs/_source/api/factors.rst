@@ -49,17 +49,43 @@ Factors and Levels
                 :returns: a list of levels
                 :rtype: List[Level]
 
-.. class:: sweetpea.Level(name)
+.. class:: sweetpea.Level(name, weight=1)
 
               A level for use in a non-derived factor. A level object
               can be used for only one factor.
 
+              If `weight` is provided as a value greater than 1, it
+              affects how the level is used in crossings: combined
+              `weight` times with each combination of other factors'
+              levels in a crossing. Providing a `weight` is greater
+              than 1 is thus conceptually similar to having multiple
+              levels with the same `name`, but the would-be copies for
+              a weighted level are not distinct. Consequently, a
+              sampling strategy without replacement (see :class:`Gen`)
+              will produce fewer samples than it would for separate
+              levels that use the same name. Along similar lines, a
+              :class:`DerivedLevel` can have a weight greater than 1
+              to affect crossings, but cannot be included in a level
+              multiple times, because each derived level's predicate
+              must be distinct.
+
+              A `weight` value has no effect on a level within an
+              uncrossed factor. To increase the frequency of a
+              non-derived level name relative to other names, use the
+              same name for multiple levels within the enclosing
+              factor.
+
+              :param name: the level's name, which can be any value
+              :param weight: the level's weight
+              :type weight: int
+              :rtype: Level
+
               .. property:: name
 
-                The level's name, which can be any kind of value.
+                 The level's name, which can be any kind of value.
 
 
-.. function:: sweetpea.DerivedLevel(name, derivation)
+.. function:: sweetpea.DerivedLevel(name, derivation, weight=1)
 
               Creates a derived level, which depends on the levels of
               other factors in a design.
@@ -68,10 +94,12 @@ Factors and Levels
               :param derivation: a condition on other factors' levels; see
                                  :ref:`derivations`
               :type derivation: Derivation
+              :param weight: the level's weight
+              :type weight: int
               :returns: a derived level
               :rtype: Level
 
-.. function:: sweetpea.ElseLevel(name)
+.. function:: sweetpea.ElseLevel(name, weight=1)
 
               Creates a derived level that acts as an “else” case,
               matching any arguments that other derived levels do not
@@ -80,5 +108,7 @@ Factors and Levels
               combination with other derived levels.
 
               :param name: the level's name, which can be any value
+              :param weight: the level's weight
+              :type weight: int
               :returns: a derived level
               :rtype: Level

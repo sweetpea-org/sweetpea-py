@@ -12,11 +12,15 @@ from networkx import has_path
 
 from sweetpea.backend import BackendRequest
 from sweetpea.internal.levels import get_all_levels
-from sweetpea.primitives import DerivedFactor, DerivedLevel, ElseLevel, Factor, SimpleLevel, Level
+from sweetpea.primitives import (
+    DerivedFactor, DerivedLevel, ElseLevel, Factor, SimpleLevel, Level
+)
 from sweetpea.logic import to_cnf_tseitin
 from sweetpea.base_constraint import Constraint
 from sweetpea.design_graph import DesignGraph
 from sweetpea.internal.iter import chunk_list
+from sweetpea.internal.weight import combination_weight
+
 
 class Block:
     """Abstract class for Blocks. Contains the required data, and defines
@@ -419,7 +423,7 @@ class Block:
     def __build_complex_variable_list(self, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]]) -> List[int]:
         factor = level[0]
         level_count = len(factor.levels)
-        n = int(self.variables_for_factor(factor) / level_count)
+        n = self.variables_for_factor(factor) // level_count
         start = self.first_variable_for_level(level[0], level[1]) + 1
         return reduce(lambda l, v: l + [start + (v * level_count)], range(n), [])
 
@@ -518,7 +522,7 @@ class CrossBlock(Block):
         """
         from sweetpea.constraints import Exclude
 
-        excluded_crossings = set()
+        excluded_crossings = cast(Set[Tuple[Level, ...]], set())
 
         # Generate the full crossing as a list of tuples.
         levels_lists = [list(f.levels) for f in crossing]
@@ -583,7 +587,8 @@ class CrossBlock(Block):
                 names = ', '.join([f"'{l.name}'" for l in c])
                 er += "\n " + names
             self.errors.add(er)
-        return len(excluded_crossings)
+
+        return sum([combination_weight(c) for c in excluded_crossings])
 
     def __excluded_derived(self, excluded_level, c):
         """Given the complete crossing and an exclude constraint, returns true
@@ -614,7 +619,7 @@ class CrossBlock(Block):
 
     def crossing_size_without_exclusions(self, crossing: List[Factor]):
         """The crossing argument must be one of the block's crossings."""
-        return reduce(lambda sum, factor: sum * len(factor.levels), crossing, 1)
+        return reduce(lambda sum, factor: sum * factor.level_weight_sum(), crossing, 1)
 
     def draw_design_graph(self):
         dg = DesignGraph(self.design)

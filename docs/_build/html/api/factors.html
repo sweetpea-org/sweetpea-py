@@ -120,7 +120,7 @@
 <li class="toctree-l2"><a class="reference internal" href="derivations.html">Derivations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="constraints.html">Constraints</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sampling_strategies.html">Sampling Strategies</a></li>
-<li class="toctree-l2"><a class="reference internal" href="legacy.html">Legacy API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="legacy.html">Legacy</a></li>
 </ul>
 </li>
 </ul>
@@ -226,9 +226,39 @@ name, any one of them might be returned.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="sweetpea.Level">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">Level</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.Level" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">Level</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.Level" title="Permalink to this definition"></a></dt>
 <dd><p>A level for use in a non-derived factor. A level object
 can be used for only one factor.</p>
+<p>If <cite>weight</cite> is provided as a value greater than 1, it
+affects how the level is used in crossings: combined
+<cite>weight</cite> times with each combination of other factors’
+levels in a crossing. Providing a <cite>weight</cite> is greater
+than 1 is thus conceptually similar to having multiple
+levels with the same name, but the would-be copies for a
+weighted level are not distinct. Consequently, a
+sampling strategy without replacement (see <code class="xref py py-class docutils literal notranslate"><span class="pre">Gen</span></code>)
+will produce fewer samples than it would for separate
+levels that use the same name. Along similar lines, a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">DerivedLevel</span></code> can have a weight grater than 1
+(to affect crossings), but cannot be included in a level
+multiple times, because each derived level’s predicate
+must be distinct.</p>
+<p>A <cite>weight</cite> value has no effect on a level within an
+uncrossed factor. To increase the frequency of a
+non-derived level name relative to other names, use the
+same name for multiple levels within the enclosing
+factor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – the level’s name, which can be any value</p></li>
+<li><p><strong>weight</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – the level’s weight</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#sweetpea.Level" title="sweetpea.Level">Level</a></p>
+</dd>
+</dl>
 <dl class="py property">
 <dt class="sig sig-object py" id="sweetpea.Level.name">
 <em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#sweetpea.Level.name" title="Permalink to this definition"></a></dt>
@@ -239,7 +269,7 @@ can be used for only one factor.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="sweetpea.DerivedLevel">
-<span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">DerivedLevel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">derivation</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.DerivedLevel" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">DerivedLevel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">derivation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.DerivedLevel" title="Permalink to this definition"></a></dt>
 <dd><p>Creates a derived level, which depends on the levels of
 other factors in a design.</p>
 <dl class="field-list simple">
@@ -248,6 +278,7 @@ other factors in a design.</p>
 <li><p><strong>name</strong> – the level’s name, which can be any value</p></li>
 <li><p><strong>derivation</strong> (<a class="reference internal" href="derivations.html#sweetpea.Derivation" title="sweetpea.Derivation"><em>Derivation</em></a>) – a condition on other factors’ levels; see
 <a class="reference internal" href="derivations.html#derivations"><span class="std std-ref">Derivations</span></a></p></li>
+<li><p><strong>weight</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – the level’s weight</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -261,7 +292,7 @@ other factors in a design.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="sweetpea.ElseLevel">
-<span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">ElseLevel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.ElseLevel" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">ElseLevel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.ElseLevel" title="Permalink to this definition"></a></dt>
 <dd><p>Creates a derived level that acts as an “else” case,
 matching any arguments that other derived levels do not
 match. An “else” derived level can appear only once
@@ -269,7 +300,10 @@ among the levels supplied to <a class="reference internal" href="#sweetpea.Facto
 combination with other derived levels.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>name</strong> – the level’s name, which can be any value</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – the level’s name, which can be any value</p></li>
+<li><p><strong>weight</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – the level’s weight</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>a derived level</p>

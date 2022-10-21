@@ -26,53 +26,9 @@ from sweetpea.internal.iter import chunk_list
 ##
 
 
-"""
-
-TODO: REMOVE
-
-Level weights are relative. They are positive integer values*, where the value
-represents the number of variables devoted to that level. If we imagine two
-factors with a few levels, all with the default weight of 1:
-
-    f0 = Factor('color', ['red', 'blue', 'green'])
-    f1 = Factor('text', ['red', 'blue'])
-
-and convert them into a CNF formula, we will have one variable per level:
-
-    (1 ∨ 2 ∨ 3) ∧ (4 ∨ 5 ∨ 6)
-
-If we adjust one of the `color` levels to have a weight of `2`, though:
-
-    f0 = Factor('color', ['red', SimpleLevel('blue', 2), 'green'])
-    f1 = Factor('text', ['red', 'blue'])
-
-The formula would instead look like:
-
-    (1 ∨ 2 ∨ 3 ∨ 4) ∧ (5 ∨ 6 ∨ 7)
-
-The `blue` level now has two variables: `3` and `4`. When sampling, this gives
-that level two opportunities to be chosen for every one time either of the
-other levels could be chosen.
-
-* They don't have to be positive integers forever. Eventually, they can support
-varieties of values for greater configuration, but for the moment we'll stick
-with the integers.
-
-"""
-
-
 @dataclass
 class Level:
     """A discrete value that a :class:`.Factor` can hold.
-
-    .. note::
-
-        Do not directly instantiate :class:`.Level`. Instead, construct one of
-        the subclasses:
-
-        - :class:`.SimpleLevel`
-        - :class:`.DerivedLevel`
-        - :class:`.ElseLevel`
 
     For more on levels, consult :ref:`the guide <guide_factorial_levels>`.
     """
@@ -107,6 +63,7 @@ class Level:
     #               def __post_init__(self, ..., weight: int):
     #                   ...
     #                   self._weight = weight
+    #                   self.weight = weight
     #                   ...
     _weight: int = field(init=False)
 
@@ -162,6 +119,7 @@ class SimpleLevel(Level):
     def __post_init__(self, weight: int):  # type: ignore # pylint: disable=arguments-differ
         super().__post_init__()
         self._weight = weight
+        self.weight = weight # type: ignore
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -201,6 +159,7 @@ class DerivedLevel(Level):
         if not isinstance(self.window, DerivationWindow):
             raise TypeError(f"DerivedLevel must be given a DerivationWindow; got {type(self.window).__name__}.")
         self._weight = weight
+        self.weight = weight # type: ignore
         # Verify internal factors' strides.
         for factor in self.window.factors:
             if (isinstance(factor, DerivedFactor)
@@ -280,6 +239,7 @@ class ElseLevel(Level):
     def __post_init__(self, weight: int):  # type: ignore # pylint: disable=arguments-differ
         super().__post_init__()
         self._weight = weight
+        self.weight = weight # type: ignore
 
     def derive_level_from_levels(self, other_levels: List[DerivedLevel]) -> DerivedLevel:
         """Converts the :class:`.ElseLevel` into a :class:`.DerivedLevel` by
@@ -297,7 +257,7 @@ class ElseLevel(Level):
                                   first_level.window.factors,
                                   first_level.window.width,
                                   first_level.window.stride)
-        return DerivedLevel(self.name, window)
+        return DerivedLevel(self.name, window, self.weight)
 
 
 ###############################################################################
@@ -405,13 +365,6 @@ class Factor:
         for level in initial_levels:
             if isinstance(level, Level):
                 pass
-            elif isinstance(level, str):
-                level = SimpleLevel(level)
-            elif (isinstance(level, (tuple, list))
-                  and len(level) == 2
-                  and isinstance(level[0], str)
-                  and isinstance(level[1], int)):
-                level = SimpleLevel(level[0], level[1])
             else:
                 level = SimpleLevel(str(level))
             real_levels.append(level)
@@ -522,6 +475,9 @@ class Factor:
         if not isinstance(self, DerivedFactor):
             return 0
         return max(map(lambda l: cast(DerivedLevel, l)._depth, self.levels))+1
+
+    def level_weight_sum(self):
+        return sum([l.weight for l in self.levels])
 
 @dataclass
 class SimpleFactor(Factor):

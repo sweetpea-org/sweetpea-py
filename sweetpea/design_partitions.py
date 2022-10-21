@@ -30,12 +30,12 @@ class DesignPartitions():
         return list(filter(lambda f: isinstance(f, DerivedFactor), self.get_crossed_noncomplex_factors()))
 
     def get_crossed_complex_factors(self):
+        """Only gets factors for the first crossing."""
         result = []
-        for c in self._block.crossings:
-            for f in c:
-                if f.has_complex_window:
-                    if f not in result:
-                        result.append(f)
+        for f in self._block.crossings[0]:
+            if f.has_complex_window:
+                if f not in result:
+                    result.append(f)
         return result
 
     def get_uncrossed_and_complex_factors(self):

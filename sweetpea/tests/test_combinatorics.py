@@ -6,7 +6,7 @@ from sweetpea.combinatorics import (
     extract_components, compute_jth_inversion_sequence, construct_permutation,
     compute_jth_combination, compute_jth_permutation_prefix,
     count_prefixes_of_permutations_with_copies, recur_count_prefixes_of_permutations_with_copies, k_prefixes_of_permutations_with_copies,
-    count_permutation_with_copies, compute_jth_prefix_of_permutations_with_copies,
+    count_permutations_with_copies, compute_jth_prefix_of_permutations_with_copies,
     PermutationMemo
 )
 
@@ -153,7 +153,7 @@ def test_compute_jth_permutation(n, m):
                           [32, 32],
                           [17, 5]])
 def test_consistent_permuatations_with_copies_count(q, m):
-    amt1 = count_permutation_with_copies(q, m, q*m)
+    amt1 = count_permutations_with_copies(q, m, q*m)
     amt2 = count_prefixes_of_permutations_with_copies(q, m, q*m, PermutationMemo())
     amt3 = k_prefixes_of_permutations_with_copies(q, m, q*m, -1, PermutationMemo())
     assert amt1 == amt2

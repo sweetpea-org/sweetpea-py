@@ -43,6 +43,43 @@ def compute_jth_combination(l, n, j):
     return combination
 
 ##############################################################
+# Finding combinations without replacement by index
+#
+# Treats the index as a number in the "combinatorial number system".
+
+def compute_jth_combination_without_replacement(n, m, j) -> List[int]:
+    """In a set of ``m`` items, where there are ``n`` choices for each
+    item, this will compute the ``jth`` combination, out of all n-choose-m`
+    possibilities.
+    """
+    combination = []
+    while m > 0:
+        c = m-1
+        f_m = factorial(m)
+        while c+1 < n and n_choose_m_given_m_factorial(c+1, m, f_m) <= j:
+            c += 1
+        j -= n_choose_m_given_m_factorial(c, m, f_m)
+        combination.append(c)
+        m -= 1
+
+    return combination
+
+def n_choose_m_given_m_factorial(n: int, m: int, f_m: int):
+    if n < m:
+        return 0
+    if n == m:
+        return 1
+    p = 1
+    h = n - m
+    while n > h:
+        p *= n
+        n -= 1
+    return p // f_m
+
+def n_choose_m(n: int, m: int):
+    return n_choose_m_given_m_factorial(n, m, factorial(m))
+
+##############################################################
 # Finding unique prefixes of permutations
 #
 # For permutations, the simple case is that you want the `j`th
@@ -122,8 +159,11 @@ def construct_permutation(inversion_sequence: List[int], orig_n: int) -> List[in
 #   https://stackoverflow.com/questions/24506460/algorithm-for-finding-multiset-permutation-given-lexicographic-index
 #
 # Initially, we're given:
+#
 #   q = noncomplex factor crossing
+#
 #   m = complex factor crossing size
+#       [generalized to counter buckets when noncomplex factors are weighted]
 #
 # We have m copies of q combinations, where each copy is
 # indistinguishable. The number of distinct permutations is not
@@ -139,7 +179,8 @@ def construct_permutation(inversion_sequence: List[int], orig_n: int) -> List[in
 #  (c[0] + ... c[q-1])! / c[0]! * ... c[q-1]!
 #
 # permutations. To generate a permutation given an index from 0 to
-# K-1, start with a counter array c initialized to m:
+# K-1, start with a counter array c initialized to m (or, more generally,
+# a counter array is given):
 #
 #  - Pick the first non-empty counter and decrement it. Count
 #    how many solutions would continue:
@@ -179,6 +220,10 @@ def construct_permutation_with_copies(idx: int, q: int, m: int) -> List[int]:
     counters = [m for i in range(q)]
     return _construct_permutation_with_copies(idx, q, q*m, counters)
 
+def construct_permutation_with_varying_copies(idx: int, q: int, counters: List[int]) -> List[int]:
+    counters = counters[:]
+    return _construct_permutation_with_copies(idx, q, sum(counters), counters)
+
 def count_remaining_permutations(counters: List[int]) -> int:
     d = 1
     for c in counters:
@@ -186,7 +231,7 @@ def count_remaining_permutations(counters: List[int]) -> int:
             d = d * factorial(c)
     return factorial(sum(counters)) // d
 
-def count_permutation_with_copies(q: int, m: int, first_n: int) -> int:
+def count_permutations_with_copies(q: int, m: int, first_n: int) -> int:
     n = q * m;
     if n == first_n:
         return factorial(n) // pow(factorial(m), q)
@@ -196,6 +241,9 @@ def count_permutation_with_copies(q: int, m: int, first_n: int) -> int:
         # among the q possibilities.
         return cast(int, count_prefixes_of_permutations_with_copies(q, m, first_n, PermutationMemo()))
 
+def count_permutations_with_varying_copies(q: int, counters: List[int], first_n: int) -> int:
+    return cast(int, count_prefixes_of_permutations_with_copies(q, counters, first_n, PermutationMemo()))
+
 ##############################################################
 # Finding unique prefixes of permutations with repetitions
 #
@@ -204,7 +252,7 @@ def count_permutation_with_copies(q: int, m: int, first_n: int) -> int:
 # simple case is when `first_n` is no more than `m`; in that case,
 # it's just a base-`q` number of `first_n` digits: `pow(q, first_n)`.
 # Otherwise, the number of permutations depends on how you distribute
-# `first_n` slows among the `q` choices, since using lots of one
+# `first_n` slots among the `q` choices, since using slots of one
 # choice will reduce the number of distinct permutations. We use a
 # dynamic-programming algorithm to count. The overall strategy is to
 # try every allocation of `first_n` items to the `q` choices, and
@@ -232,8 +280,11 @@ class PermutationMemo():
     def __init__(self):
         self.memo = {}
 
-def count_prefixes_of_permutations_with_copies(q: int, m: int, first_n: int,
+def count_prefixes_of_permutations_with_copies(q: int, m_or_counters: Union[int, List[int]], first_n: int,
                                                pmemo: PermutationMemo) -> int:
+    if isinstance(m_or_counters, list):
+        return cast(int, k_prefixes_of_permutations_with_copies(q, m_or_counters, first_n, -1, pmemo))
+    m = m_or_counters
     if first_n <= m:
         # Other techniques should produce the same result
         return pow(q, first_n)
@@ -242,8 +293,11 @@ def count_prefixes_of_permutations_with_copies(q: int, m: int, first_n: int,
     else:
         return cast(int, k_prefixes_of_permutations_with_copies(q, m, first_n, -1, pmemo))
 
-def compute_jth_prefix_of_permutations_with_copies(q: int, m: int, first_n: int, j: int,
+def compute_jth_prefix_of_permutations_with_copies(q: int, m_or_counters: Union[int, List[int]], first_n: int, j: int,
                                                    pmemo: PermutationMemo) -> List[int]:
+    if isinstance(m_or_counters, list):
+        return cast(List[int], k_prefixes_of_permutations_with_copies(q, m_or_counters, first_n, j, pmemo))
+    m = m_or_counters
     if first_n <= m:
         return compute_jth_combination(first_n, q, j)
     else:
@@ -272,8 +326,21 @@ def recur_count_prefixes_of_permutations_with_copies(q: int, m: int, first_n: in
 
     return recur(0, first_n, q, m)
 
-def k_prefixes_of_permutations_with_copies(q: int, m: int, first_n: int, find: int,
+def k_prefixes_of_permutations_with_copies(q: int, m_or_counters: Union[int, List[int]], first_n: int, find: int,
                                            pmemo: PermutationMemo) -> Union[int, List[int]]:
+    # Dispatch on `m_or_counters` as a number (representing a uniform array) or an array:
+    def available_after(start_i: int) -> int:
+        nonlocal m_or_counters, q
+        if isinstance(m_or_counters, list):
+            return sum(m_or_counters[start_i:])
+        else:
+            return ((q - start_i) * m_or_counters)
+    def available_at(start_i: int) -> int:
+        nonlocal m_or_counters
+        if isinstance(m_or_counters, list):
+            return m_or_counters[start_i]
+        else:
+            return m_or_counters
     # Implements a find operation if `find` is > -1, otherwise just counts.
     # Based on `recur_count_prefixes_of_permutations_with_copies`, but explicitly
     # managing the continuation (so it can grows as deep as needed), and with two
@@ -306,7 +373,7 @@ def k_prefixes_of_permutations_with_copies(q: int, m: int, first_n: int, find: i
                         find -= multiplier
             elif start_i >= q:
                 value = 0
-            elif ((q - start_i) * m) < need_n:
+            elif available_after(start_i) < need_n:
                 value = 0
             else:
                 m_value = memo.get((start_i, need_n), None)
@@ -325,7 +392,7 @@ def k_prefixes_of_permutations_with_copies(q: int, m: int, first_n: int, find: i
             v, start_i, need_n, count, buckets, multiplier, this_mult = state
             next_mult = count_interleavings(v, need_n)
             count += value * this_mult
-            if v < min(m, need_n):
+            if v < min(available_at(start_i), need_n):
                 ks.append((DoNext, (v+1, start_i, need_n, count, buckets, multiplier, next_mult)))
             else:
                 ks.append((DoRecord, (v, start_i, need_n, count, next_mult)))

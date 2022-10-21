@@ -15,6 +15,7 @@ from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import If, Iff, And, Or, Not
 from sweetpea.primitives import DerivedFactor, DerivedLevel, Factor, Level, SimpleLevel
 from sweetpea.internal.argcheck import argcheck, make_istuple
+from sweetpea.internal.weight import combination_weight
 
 
 def validate_factor(block: Block, factor: Factor) -> None:
@@ -157,12 +158,15 @@ class Cross(Constraint):
             flattened_combinations = list(chain.from_iterable(crossing_combinations))
             iffs = list(map(lambda n: Iff(state_vars[n], And([*flattened_combinations[n]])), range(len(state_vars))))
 
-            # Step 3: Constrain each crossing to occur exactly once in each `crossing_size`
-            # set of trials, or at most once in a last set of trials that is less than
+            # Step 2c: Get weight associated with each combination.
+            combination_weights = [combination_weight(tuple(c.values())) for c in trial_combinations]
+
+            # Step 3: Constrain each crossing to occur exactly according to its weight in each `crossing_size`
+            # set of trials, or at most that much in a last set of trials that is less than
             # `crossing_size` in length.
-            states = list(chunk(state_vars, crossing_size))
+            states = list(chunk(state_vars, len(trial_combinations)))
             transposed = cast(List[List[int]], list(map(list, zip(*states))))
-            reqss = map(lambda l: Cross.__add_once_constraint(l, crossing_size), transposed)
+            reqss = map(lambda l, w: Cross.__add_weight_constraint(l, w, crossing_size), transposed, combination_weights)
             backend_request.ll_requests += list(chain.from_iterable(reqss))
 
             (cnf, new_fresh) = block.cnf_fn(And(iffs), fresh)
@@ -171,17 +175,17 @@ class Cross(Constraint):
             backend_request.fresh = new_fresh
 
     @staticmethod
-    def __add_once_constraint(variables: List[int], crossing_size: int) -> List[LowLevelRequest]:
-        """Constrain to one of each `crossing_size` sequence of variables, and at
+    def __add_weight_constraint(variables: List[int], weight: int, crossing_size: int) -> List[LowLevelRequest]:
+        """Constrain to a weight of each `crossing_size` sequence of variables, and at
         at most one for an ending sequence that is less than `crossing_size` in length.
         """
         to_add = len(variables)
         reqs = cast(List[LowLevelRequest], [])
         while to_add > 0:
             if (to_add >= crossing_size):
-                reqs.append(LowLevelRequest("EQ", 1, variables[:crossing_size]))
+                reqs.append(LowLevelRequest("EQ", weight, variables[:crossing_size]))
             else:
-                reqs.append(LowLevelRequest("LT", 2, variables))
+                reqs.append(LowLevelRequest("LT", weight+1, variables))
             variables = variables[crossing_size:]
             to_add -= crossing_size
         return reqs
@@ -495,7 +499,6 @@ class AtLeastKInARow(_KInARow):
 
         # Request sublists for k+1 to allow us to determine the transition
         sublists = self._build_variable_sublists(block, level, self.k + 1)
-        print(sublists)
         implications = []
         if sublists:
             # Starting corner case
