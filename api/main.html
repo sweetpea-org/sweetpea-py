@@ -120,6 +120,7 @@
 <li class="toctree-l2"><a class="reference internal" href="derivations.html">Derivations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="constraints.html">Constraints</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sampling_strategies.html">Sampling Strategies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="legacy.html">Legacy</a></li>
 </ul>
 </li>
 </ul>
@@ -159,7 +160,7 @@ using <a class="reference internal" href="#sweetpea.synthesize_trials" title="sw
 <dt class="sig sig-object py" id="sweetpea.Block">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">Block</span></span><a class="headerlink" href="#sweetpea.Block" title="Permalink to this definition"></a></dt>
 <dd><p>Abstract class representing an experiment description, which can be
-turned into a sequence of trials with <code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code>.</p>
+turned into a sequence of trials with <a class="reference internal" href="#sweetpea.synthesize_trials" title="sweetpea.synthesize_trials"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code></a>.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -222,8 +223,8 @@ would otherwise appear.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>design</strong> (<em>List</em><em>[</em><em>Factor</em><em>]</em>) – the factors that make up the design</p></li>
-<li><p><strong>crossing</strong> (<em>List</em><em>[</em><em>Factor</em><em>]</em>) – factors that are fully crossed in the block’s trials,
+<li><p><strong>design</strong> (<em>List</em><em>[</em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>]</em>) – the factors that make up the design</p></li>
+<li><p><strong>crossing</strong> (<em>List</em><em>[</em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>]</em>) – factors that are fully crossed in the block’s trials,
 which must be a subset of the <cite>design</cite> list</p></li>
 <li><p><strong>constraints</strong> (<em>List</em><em>[</em><a class="reference internal" href="constraints.html#sweetpea.Constraint" title="sweetpea.Constraint"><em>Constraint</em></a><em>]</em>) – constraints that every sequence of trials must
 satify; see <a class="reference internal" href="constraints.html#constraints"><span class="std std-ref">Constraints</span></a></p></li>
@@ -232,7 +233,7 @@ combination in <cite>crossing</cite> must
 appear in a block of trials; a
 false value is appropriate if
 combinations are excluded through
-an <code class="xref py py-func docutils literal notranslate"><span class="pre">exclude()</span></code> constraint</p></li>
+an <code class="xref py py-class docutils literal notranslate"><span class="pre">Exclude</span></code> constraint</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -265,14 +266,14 @@ across crossings in a given trial.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>design</strong> (<em>List</em><em>[</em><em>Factor</em><em>]</em>) – the factors that make up the design</p></li>
-<li><p><strong>crossings</strong> (<em>List</em><em>[</em><em>List</em><em>[</em><em>Factor</em><em>]</em><em>]</em>) – a list of crossings, where each crossing is a
+<li><p><strong>design</strong> (<em>List</em><em>[</em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>]</em>) – the factors that make up the design</p></li>
+<li><p><strong>crossings</strong> (<em>List</em><em>[</em><em>List</em><em>[</em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>]</em><em>]</em>) – a list of crossings, where each crossing is a
 list of factors that are fully crossed in the
 block’s trials; the factors in each crossing must
 be a subset of the <cite>design</cite> list</p></li>
 <li><p><strong>constraints</strong> (<em>List</em><em>[</em><a class="reference internal" href="constraints.html#sweetpea.Constraint" title="sweetpea.Constraint"><em>Constraint</em></a><em>]</em>) – constraints that every sequence of trials must
 satify; see <a class="reference internal" href="constraints.html#constraints"><span class="std std-ref">Constraints</span></a></p></li>
-<li><p><strong>require_complete_crossing</strong> – same as for <code class="xref py py-func docutils literal notranslate"><span class="pre">multiple_cross_block()</span></code></p></li>
+<li><p><strong>require_complete_crossing</strong> – same as for <a class="reference internal" href="#sweetpea.MultiCrossBlock" title="sweetpea.MultiCrossBlock"><code class="xref py py-func docutils literal notranslate"><span class="pre">MultiCrossBlock()</span></code></a></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -305,7 +306,7 @@ example, 1 sample would correspond to a single run
 of the experiment with a random ordering of the trials
 (subject to the experiment’s constraints)</p></li>
 <li><p><strong>sampling_strategy</strong> (<a class="reference internal" href="sampling_strategies.html#sweetpea.Gen" title="sweetpea.Gen"><em>Gen</em></a>) – how a random set of trials is generated; the default is currently
-<code class="xref py py-class docutils literal notranslate"><span class="pre">IterateGen</span></code>, but this is subject to change</p></li>
+<a class="reference internal" href="sampling_strategies.html#sweetpea.IterateGen" title="sweetpea.IterateGen"><code class="xref py py-class docutils literal notranslate"><span class="pre">IterateGen</span></code></a>, but this is subject to change</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -354,7 +355,7 @@ trials are ignored. Trial indices in <cite>trials</cite> count from 0.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>block</strong> (<a class="reference internal" href="#sweetpea.Block" title="sweetpea.Block"><em>Block</em></a>) – the experiment description that was provided to <a class="reference internal" href="#sweetpea.synthesize_trials" title="sweetpea.synthesize_trials"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code></a></p></li>
 <li><p><strong>experiments</strong> (<em>List</em><em>[</em><em>Dict</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a><em>, </em><em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a><em>]</em><em>]</em><em>]</em>) – sequences generated by <a class="reference internal" href="#sweetpea.synthesize_trials" title="sweetpea.synthesize_trials"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code></a></p></li>
-<li><p><strong>factors</strong> (<em>List</em><em>[</em><em>Factor</em><em>]</em>) – an alernative to <cite>block</cite> supplying factors to use as a crossing</p></li>
+<li><p><strong>factors</strong> (<em>List</em><em>[</em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>]</em>) – an alernative to <cite>block</cite> supplying factors to use as a crossing</p></li>
 <li><p><strong>trials</strong> (<em>List</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em>) – the indices of trials to tabulate, defaults to all trials</p></li>
 </ul>
 </dd>
