@@ -156,23 +156,20 @@
 <dt class="sig sig-object py" id="sweetpea.Factor">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">Factor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">levels</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.Factor" title="Permalink to this definition"></a></dt>
 <dd><p>A factor for use in an experiment design.</p>
-<p>The levels of a factor can be plain <code class="xref py py-class docutils literal notranslate"><span class="pre">Level</span></code>
-values, any kind of non-<code class="xref py py-class docutils literal notranslate"><span class="pre">Level</span></code> value (which is
-implicitly coerced to a <code class="xref py py-class docutils literal notranslate"><span class="pre">Level</span></code> value), or
-<code class="xref py py-class docutils literal notranslate"><span class="pre">DerivedLevel</span></code> values. In the last case, the
+<p>The levels of a factor can be plain <a class="reference internal" href="#sweetpea.Level" title="sweetpea.Level"><code class="xref py py-class docutils literal notranslate"><span class="pre">Level</span></code></a>
+values, any kind of non-<a class="reference internal" href="#sweetpea.Level" title="sweetpea.Level"><code class="xref py py-class docutils literal notranslate"><span class="pre">Level</span></code></a> value (which is
+implicitly coerced to a <a class="reference internal" href="#sweetpea.Level" title="sweetpea.Level"><code class="xref py py-class docutils literal notranslate"><span class="pre">Level</span></code></a> value), or
+<a class="reference internal" href="#sweetpea.DerivedLevel" title="sweetpea.DerivedLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">DerivedLevel</span></code></a> values. In the last case, the
 result is a <em>derived factor</em>. The <cite>levels</cite> list must
 either contain all derived levels or all values that are
-note derived levels.</p>
-<p>If a string occurs multiple times in <cite>levels</cite>, each
-instance is a a distinct level. Since the levels have
-the same name, using the level name in contraints or
-derving other factors will effectively refer to all of
-the levels with the same name.</p>
+not derived levels. The names of the levels must be
+distinct; create a level with a weight to get the
+effect of multiple levels with he same name.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>name</strong> – the factor’s name</p></li>
-<li><p><strong>levels</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#list" title="(in Python v3.7)"><em>list</em></a>) – the factor’s levels</p></li>
+<li><p><strong>levels</strong> (<em>List</em><em>[</em><a class="reference internal" href="#sweetpea.Level" title="sweetpea.Level"><em>Level</em></a><em>]</em>) – the factor’s levels</p></li>
 </ul>
 </dd>
 </dl>
@@ -230,24 +227,29 @@ name, any one of them might be returned.</p>
 <dd><p>A level for use in a non-derived factor. A level object
 can be used for only one factor.</p>
 <p>If <cite>weight</cite> is provided as a value greater than 1, it
-affects how the level is used in crossings: combined
-<cite>weight</cite> times with each combination of other factors’
-levels in a crossing. Providing a <cite>weight</cite> is greater
-than 1 is thus conceptually similar to having multiple
-levels with the same name, but the would-be copies for a
-weighted level are not distinct. Consequently, a
-sampling strategy without replacement (see <code class="xref py py-class docutils literal notranslate"><span class="pre">Gen</span></code>)
-will produce fewer samples than it would for separate
-levels that use the same name. Along similar lines, a
-<code class="xref py py-class docutils literal notranslate"><span class="pre">DerivedLevel</span></code> can have a weight grater than 1
-(to affect crossings), but cannot be included in a level
+affects how the level is used in crossings, causing it
+to be combined <cite>weight</cite> times with each combination of
+other factors’ levels in a crossing. That’s conceptually
+similar to having multiple levels with the same <cite>name</cite>,
+but as long as the level’s factor is part of a block’s
+crossing, the <cite>weight</cite> crossing occurrences of the level
+are not considered distinct. Consequently, a sampling
+strategy without replacement (see <a class="reference internal" href="sampling_strategies.html#sweetpea.Gen" title="sweetpea.Gen"><code class="xref py py-class docutils literal notranslate"><span class="pre">Gen</span></code></a>) will
+produce fewer samples than it would for separate levels
+that use the same name. Along similar lines, a
+<a class="reference internal" href="#sweetpea.DerivedLevel" title="sweetpea.DerivedLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">DerivedLevel</span></code></a> can have a weight greater than 1
+to affect crossings, but cannot be included in a level
 multiple times, because each derived level’s predicate
-must be distinct.</p>
-<p>A <cite>weight</cite> value has no effect on a level within an
-uncrossed factor. To increase the frequency of a
-non-derived level name relative to other names, use the
-same name for multiple levels within the enclosing
-factor.</p>
+must match a different set of inputs.</p>
+<p>For a non-derived level whose factor is not crossed (or,
+more generally, is not in all crossings in a
+<a class="reference internal" href="main.html#sweetpea.MultiCrossBlock" title="sweetpea.MultiCrossBlock"><code class="xref py py-func docutils literal notranslate"><span class="pre">MultiCrossBlock()</span></code></a>), a <cite>weight</cite> value has the same
+effect as duplicating the level’s name. That is, the
+would-be copies are treated as distinct, which means
+that sampling with replacement is biased toward levels
+with greater weight. For sampling strategies without
+replacement, the weight thus increases the number of
+samples that are considered distinct.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -267,9 +269,9 @@ factor.</p>
 
 </dd></dl>
 
-<dl class="py function">
+<dl class="py class">
 <dt class="sig sig-object py" id="sweetpea.DerivedLevel">
-<span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">DerivedLevel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">derivation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.DerivedLevel" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">DerivedLevel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">derivation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.DerivedLevel" title="Permalink to this definition"></a></dt>
 <dd><p>Creates a derived level, which depends on the levels of
 other factors in a design.</p>
 <dl class="field-list simple">
@@ -296,7 +298,7 @@ other factors in a design.</p>
 <dd><p>Creates a derived level that acts as an “else” case,
 matching any arguments that other derived levels do not
 match. An “else” derived level can appear only once
-among the levels supplied to <a class="reference internal" href="#sweetpea.Factor" title="sweetpea.Factor"><code class="xref py py-func docutils literal notranslate"><span class="pre">Factor()</span></code></a>, and only in
+among the levels supplied to <a class="reference internal" href="#sweetpea.Factor" title="sweetpea.Factor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Factor</span></code></a>, and only in
 combination with other derived levels.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>

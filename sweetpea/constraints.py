@@ -6,7 +6,6 @@ from copy import deepcopy
 from typing import List, Tuple, Any, Union, cast, Dict, Callable
 from itertools import chain, product
 from math import ceil
-from itertools import chain
 
 from sweetpea.base_constraint import Constraint
 from sweetpea.internal.iter import chunk, chunk_list
@@ -356,12 +355,18 @@ class _KInARow(Constraint):
         else:
             return self.level[0].uses_factor(f)
 
-    def desugar(self) -> List[Constraint]:
+    def desugar(self, replacements: dict) -> List[Constraint]:
         constraints = cast(List[Constraint], [self])
 
-        # Generate the constraint for each level in the factor.
         if isinstance(self.level, Factor):
-            levels = self.level.levels  # Get the actual levels out of the factor.
+            level = replacements.get(self.level, self.level)
+        else:
+            level = (replacements.get(self.level[0], self.level[0]),
+                     replacements.get(self.level[0], self.level[1]))
+
+        # Generate the constraint for each level in the factor.
+        if isinstance(level, Factor):
+            levels = level.levels  # Get the actual levels out of the factor.
             level_tuples = list(map(lambda level: (self.level, level), levels))
 
             constraints = []
@@ -369,6 +374,10 @@ class _KInARow(Constraint):
                 constraint_copy = deepcopy(self)
                 constraint_copy.level = t
                 constraints.append(constraint_copy)
+        elif level != self.level:
+            constraint_copy = deepcopy(self)
+            constraint_copy.level = level
+            constraints = [constraint_copy]
 
         return constraints
 
@@ -640,6 +649,11 @@ class Exclude(Constraint):
     def uses_factor(self, f: Factor) -> bool:
         return self.factor.uses_factor(f)
 
+    def desugar(self, replacements: dict) -> List:
+        factor = replacements.get(self.factor, self.factor)
+        level = replacements.get(self.level, self.level)
+        return [Exclude(factor, level)]
+
     def extract_simplelevel(self, block: Block, level: DerivedLevel) -> List[Dict[Factor, SimpleLevel]]:
         """Recursively deciphers the excluded level to a list of combinations
         basic levels."""
@@ -721,6 +735,11 @@ class Reify(Constraint):
 
     def potential_sample_conforms(self, sample: dict) -> bool:
         return True
+
+    def desugar(self, replacements: dict) -> List:
+        factor = replacements.get(self.factor, self.factor)
+        return [Reify(factor)]
+
 
 def minimum_trials(trials):
     return MinimumTrials(trials)

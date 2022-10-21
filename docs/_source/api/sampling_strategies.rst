@@ -8,7 +8,7 @@ Sampling Strategies
            Abstract class for a sampling strategy (i.e., a generator
            of trials).
 
-           A subclass of :class:`Gen` can be used instead of an
+           A subclass of :class:`.Gen` can be used instead of an
            instance to mean the same sampling strategy as an instance
            with default arguments.
 
@@ -16,19 +16,20 @@ Sampling Strategies
            different guarantee about coverage of the space of possible
            trial sequences. A guarantee of uniformity means that is a
            single trial sequence is requested via
-           :func:`synthesize_trials`, the generated sequence is chosen
+           :func:`.synthesize_trials`, the generated sequence is chosen
            randomly among all trial sequences that fit the constraints
            of the experiment definition, and all such trial sequences
            are eqaully likely to be reported.
 
-           *Replacement*: Different subclasses of `Gen` provide
+           *Replacement*: Different subclasses of :class:`.Gen` provide
            different behavior when multiple trial sequences are
-           requested with a single call to :func:`synthesize_trials`.
-           Some strategies produce sample with replacement, producing
+           requested with a single call to :func:`.synthesize_trials`.
+           Some strategies sample with replacement, producing
            independently chosen results. Others sample without
            replacement, which means they are potentially capable of
-           counting the total number of solutions.
-           
+           counting the total number of trial sequences that satisfy the
+           experiment's constraints.
+
 .. class:: sweetpea.UniGen
 
            *Uniformity*: Generates trials with a guarantee of
@@ -37,7 +38,7 @@ Sampling Strategies
            succeed for non-trial designs.
 
            *Replacement*: Generating multiple trials in one call to
-           :func:`synthesize_trials` produces indepedent results. That
+           :func:`.synthesize_trials` produces indepedent results. That
            is, the single call is the same as separate calls that each
            generate one sequence of trials.
 
@@ -50,7 +51,7 @@ Sampling Strategies
            no formal guarantee of uniformity.
 
            *Replacement*: Generating multiple trials in one call to
-           :func:`synthesize_trials` produces indepedent results. That
+           :func:`.synthesize_trials` produces indepedent results. That
            is, the single call is the same as separate calls that each
            generate one sequence of trials.
 
@@ -64,7 +65,7 @@ Sampling Strategies
            time if the search space is large.
 
            *Without Replacement*: When multiple trials are generated
-           in one call to :func:`synthesize_trials`, each of the
+           in one call to :func:`.synthesize_trials`, each of the
            results is constrained to be distinct. The number of
            returned experiments will be less than the requested number
            if the pool of possible trial sequences is exhausted.
@@ -87,11 +88,11 @@ Sampling Strategies
            *Non-Uniformity*: Generates trials by repeatedly finding
            solutions to an experiment design's constraints, but with
            no guarantee of uniform coverage or even randomness (i.e.,
-           each separate use of :func:`synthesize_trials` with this
+           each separate use of :func:`.synthesize_trials` with this
            stragegy may produce the same result).
 
            *Without Replacement*: When multiple trials are generated
-           in one call to :func:`synthesize_trials`, each of the
+           in one call to :func:`.synthesize_trials`, each of the
            results is constrained to be distinct. The number of
            returned experiments will be less than the requested number
            if the pool of possible trial sequences is exhausted.

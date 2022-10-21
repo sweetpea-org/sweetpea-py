@@ -4,7 +4,7 @@ Derivations
 ===========
 
 A `Derivation` is identifies combinations of factor levels that select
-another level that is constructed with :class:`DerivedLevel`.
+another level that is constructed with :class:`.DerivedLevel`.
 
 .. class:: sweetpea.Derivation()
 
@@ -55,7 +55,7 @@ another level that is constructed with :class:`DerivedLevel`.
               combination of levels from other factors in the current
               trial and multiple preceding trials.
 
-              This function generalizes :class:`Transition` to select a
+              This function generalizes :class:`.Transition` to select a
               level depending on multiple trials, and where the
               preceding trials are separated by `stride`-1 intervening
               trials.

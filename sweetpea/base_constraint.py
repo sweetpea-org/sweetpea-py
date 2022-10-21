@@ -25,7 +25,7 @@ class Constraint(ABC):
     def is_complex_for_combinatoric(self) -> bool:
         return True
 
-    def desugar(self) -> List:
+    def desugar(self, replacements: dict) -> List:
         """Some constraints accept shorthand representations. (Like accepting a
         whole factor, rather than individual factor and level name pairs.)
 

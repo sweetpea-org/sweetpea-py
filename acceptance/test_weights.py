@@ -31,8 +31,7 @@ def test_correct_solutions_with_plain_level_weight():
     block        = CrossBlock(design, crossing, constraints)
 
     check_consistent_solutions(block, 180)
-    
-@pytest.mark.slow
+
 def test_correct_solutions_with_plain_level_weight_and_min_trials():
     color = Factor("color",  [Level("red", 1), "blue"])
     size = Factor("size",  ["big", Level("small", 2)])    
@@ -45,6 +44,7 @@ def test_correct_solutions_with_plain_level_weight_and_min_trials():
 
     check_consistent_solutions(block, 720)
 
+@pytest.mark.slow
 def test_correct_solutions_with_derived_level_weight():
     color = Factor("color",  ["red", "blue"])
     size = Factor("size",  ["big", "small"])
@@ -82,3 +82,62 @@ def test_correct_solutions_with_transition_level_weight():
     
     check_consistent_solutions(CrossBlock(design, crossing, []), 36)
     check_consistent_solutions(CrossBlock(design, crossing, constraints), 324)
+
+def test_uncrossed_level_weight():
+    color = Factor("color",  ["red", "blue"])
+    size = Factor("size",  ["big", Level("small", 2)])
+
+    design       = [color, size]
+    crossing     = [color]
+    block        = CrossBlock(design, crossing, [])
+
+    check_consistent_solutions(CrossBlock(design, crossing, []), 18)
+    check_consistent_solutions(CrossBlock(design, crossing, [MinimumTrials(3)]), 108)
+    
+    experiments  = synthesize_trials(CrossBlock(design, crossing, []), 1000, RandomGen)
+    totals = {}
+    totals['big'] = 0
+    totals['small'] = 0
+    for e in experiments:
+        for l in e['size']:
+            totals[l] += 1
+
+    assert totals['small'] == totals['big'] * 2
+    assert set(experiments[0].keys()) == set(['color', 'size'])
+
+def test_two_uncrossed_level_weight():
+    same = Factor("same", "one")
+    color = Factor("color",  ["red", Level("blue", 4)])
+    size = Factor("size",  ["big", Level("medium", 2), Level("small", 3)])
+
+    design       = [same, color, size]
+    crossing     = [same]
+    block        = CrossBlock(design, crossing, [])
+
+    experiments  = synthesize_trials(CrossBlock(design, crossing, []), 1000, RandomGen)
+    assert len(experiments) == 1000
+
+    assert set(experiments[0].keys()) == set(['color', 'size', 'same'])
+
+    totals = {}
+    totals['red'] = 0
+    totals['blue'] = 0
+    totals['big'] = 0
+    totals['medium'] = 0
+    totals['small'] = 0
+    for e in experiments:
+        for l in e['size']:
+            totals[l] += 1
+        for l in e['color']:
+            totals[l] += 1
+
+    # These counts can fail, but with very low probability
+
+    assert totals['small'] < totals['big'] * 4
+    assert totals['small'] > totals['big'] * 2
+    
+    assert totals['medium'] < totals['big'] * 3
+    assert totals['medium'] > totals['big'] * 1
+    
+    assert totals['blue'] < totals['red'] * 5
+    assert totals['blue'] > totals['red'] * 3

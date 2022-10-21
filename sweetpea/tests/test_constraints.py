@@ -493,7 +493,7 @@ def test_atmostkinarow_validate():
 
 def __run_kinarow(c: Constraint, block: Block = block) -> BackendRequest:
     backend_request = BackendRequest(block.variables_per_sample() + 1)
-    for dc in c.desugar():
+    for dc in c.desugar({}):
         dc.apply(block, backend_request)
     return backend_request
 

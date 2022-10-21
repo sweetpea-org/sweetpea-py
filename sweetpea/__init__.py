@@ -42,7 +42,7 @@ __all__ = [
 
 from functools import reduce
 from typing import Dict, List, Optional, Tuple, Any, Union, cast
-from itertools import product
+from itertools import product, chain
 import csv
 
 from sweetpea.derivation_processor import DerivationProcessor
@@ -50,9 +50,10 @@ from sweetpea.logic import to_cnf_tseitin
 from sweetpea.blocks import Block, FullyCrossBlock
 from sweetpea.blocks import CrossBlock as CrossBlock_class
 from sweetpea.primitives import (
-    Factor, Level, SimpleLevel, DerivedLevel, ElseLevel,
+    Factor, SimpleFactor, DerivedFactor, Level, SimpleLevel, DerivedLevel, ElseLevel,
     DerivationWindow, WithinTrialDerivationWindow, TransitionDerivationWindow,
-    Window, WithinTrial, Transition, AcrossTrials
+    Window, WithinTrial, Transition, AcrossTrials,
+    HiddenName
 )
 from sweetpea.constraints import (
     Consistency, Constraint, Derivation, FullyCross, MultipleCross, MultipleCrossBlock,
@@ -117,9 +118,10 @@ def CrossBlock(design: List[Factor],
     argcheck(who, design, make_islistof(Factor), "list of Factors for design")
     argcheck(who, crossing, make_islistof(Factor), "list of Factors for crossing")
     argcheck(who, constraints, make_islistof(Constraint), "list of Constraints for constraints")
+    design,crossings,replacements = __desugar_factors_with_weights(design, [crossing])
     all_constraints = cast(List[Constraint], [FullyCross(), Consistency()]) + constraints
-    all_constraints = __desugar_constraints(all_constraints) #expand the constraints into a form we can process.
-    block = FullyCrossBlock(design, [crossing], all_constraints, require_complete_crossing, who=who)
+    all_constraints = __desugar_constraints(all_constraints, replacements) #expand the constraints into a form we can process.
+    block = FullyCrossBlock(design, crossings, all_constraints, require_complete_crossing, who=who)
     block.constraints += DerivationProcessor.generate_derivations(block)
     if (not list(filter(lambda c: c.is_complex_for_combinatoric(), constraints))
           and not list(filter(lambda f: f.has_complex_window, design))):
@@ -176,17 +178,72 @@ def MultiCrossBlock(design: List[Factor],
     argcheck(who, design, make_islistof(Factor), "list of Factors for design")
     argcheck(who, crossings, make_islistof(make_islistof(Factor)), "list of list of Factors for crossings")
     argcheck(who, constraints, make_islistof(Constraint), "list of Constraints for constraints")
+    design,crossings,replacements = __desugar_factors_with_weights(design, crossings)
     all_constraints = cast(List[Constraint], [MultipleCross(), Consistency()]) + constraints
-    all_constraints = __desugar_constraints(all_constraints) #expand the constraints into a form we can process.
+    all_constraints = __desugar_constraints(all_constraints, replacements) #expand the constraints into a form we can process.
     block = MultipleCrossBlock(design, crossings, all_constraints, require_complete_crossing, who="MultiCrossBlock")
     block.constraints += DerivationProcessor.generate_derivations(block)
     return block
 
+def __desugar_factors_with_weights(design: List[Factor], crossings: List[List[Factor]]) -> Tuple[List[Factor], List[List[Factor]], dict]:
+    # When a derived factor has weighted levels and is in the
+    # crossing, then the weight have to be handed by sampling, because
+    # it doesn't work to have multiple levels in a derived factor that
+    # match the same cases. If a derived factor is not in the
+    # crossing, the weights are irrelevnt, because other factors
+    # chosen for a combination determine a derived level.
+    #
+    # For a non-derived factor, weighting is effecively the same as
+    # having multiple levels with the same name. Still, as long as a
+    # factor with weights is used in the crossing (all of them, in the
+    # case of multiple crossings), then we leave the weights in place
+    # and handling them in sampling.
+    #
+    # But when a non-derived factor with weights is not in (all of
+    # the) crossing(s), we desugar to a factor with multiple levels
+    # that have the same name. That makes the biasing effect of
+    # weighting work for formula-based samplers, and it geneally means
+    # that samplers do not have to handle the weights specifically.
+    #
+    # To desugar, we create new factors and levels, and we rewrite all
+    # constraints and derived factors to refer to the new ones. Each
+    # desugared factor has two replacements: a non-derived factors
+    # with the weights turned into multiple levels, and a derived
+    # factor that has the same level names as before. The derived
+    # factor is needed in case a constraint refers to an weighted
+    # level that gets expanded in the non-derived factor.
+    #
+    # The `replacements` dictionary maps a level to its replacement,
+    # and it maps factor to a list of two factors: the derived
+    # replacement and non-derived replacement.
+    #
+    weighted = []
+    for f in design:
+        if (not isinstance(f, DerivedFactor)) and any([l.weight > 1 for l in f.levels]):
+            if all([not f in c for c in crossings]):
+                weighted.append(f)
+    if not weighted:
+        # No desugaring needed
+        return (design, crossings, {})
+    else:
+        # Desugaring needed
+        replacements = cast(dict, {})
+        for f in weighted:
+            # Adds to `replacements`:
+            cast(SimpleFactor, f).desugar_weights(replacements)
+        for f in design:
+            if isinstance(f, DerivedFactor):
+                # Uses `replacements`:
+                f.desugar_for_weights(replacements)
+        # Returned `replacements` is also used for constraint desugaring
+        return (list(chain.from_iterable([replacements.get(f, [f]) for f in design])),
+                [[replacements.get(f, [f, f])[1] for f in c] for c in crossings],
+                replacements)
 
-def __desugar_constraints(constraints: List[Constraint]) -> List[Constraint]:
+def __desugar_constraints(constraints: List[Constraint], replacements: dict) -> List[Constraint]:
     desugared_constraints = []
     for c in constraints:
-        desugared_constraints.extend(c.desugar())
+        desugared_constraints.extend(c.desugar(replacements))
     return desugared_constraints
 
 
@@ -216,7 +273,13 @@ def simplify_experiments(experiments: List[Dict]) -> List[List[Tuple[str, ...]]]
 
 def experiments_to_tuples(block: Block,
                           experiments: List[dict]):
-    return _experiments_to_tuples(experiments, [f.name for f in block.design])
+    return _experiments_to_tuples(experiments, [cast(str, f.name) for f in __filter_hidden(block.design)])
+
+def __filter_hidden(design: List[Factor]) -> List[Factor]:
+    return list(filter(lambda f: not isinstance(f.name, HiddenName), design))
+
+def __filter_hidden_keys(d: dict) -> dict:
+    return {name: d[name] for name in filter(lambda name: not isinstance(name, HiddenName), d.keys())}
 
 def print_experiments(block: Block, experiments: List[dict]):
     """Displays the generated experiments in a human-friendly form.
@@ -230,7 +293,7 @@ def print_experiments(block: Block, experiments: List[dict]):
         :func:`.synthesize_trials_non_uniform`, or
         :func:`.synthesize_trials_uniform`).
     """
-    nested_assignment_strs = [list(map(lambda l: f.name + " " + str(l.name), f.levels)) for f in block.design]
+    nested_assignment_strs = [list(map(lambda l: cast(str, f.name) + " " + str(l.name), f.levels)) for f in __filter_hidden(block.design)]
     column_widths = list(map(lambda l: max(list(map(len, l))), nested_assignment_strs))
 
     format_str = reduce(lambda a, b: a + '{{:<{}}} | '.format(b), column_widths, '')[:-3] + '\n'
@@ -294,7 +357,7 @@ def tabulate_experiments(block: Block = None,
 
         # initialize table
         for f in factors:
-            tabulation[f.name] = list()
+            tabulation[cast(str, f.name)] = list()
             factor_levels: List[str] = list()
             for l in f.levels:
                 factor_levels.append(l.name)
@@ -339,7 +402,7 @@ def tabulate_experiments(block: Block = None,
         design.append(proportion_factor)
 
         # print tabulation
-        nested_assignment_strs = [list(map(lambda l: f.name + " " + l.name, f.levels)) for f
+        nested_assignment_strs = [list(map(lambda l: cast(str, f.name) + " " + l.name, f.levels)) for f
                                   in design]
         column_widths = list(map(lambda l: max(list(map(len, l))), nested_assignment_strs))
 
@@ -391,7 +454,7 @@ def experiment_to_csv(experiments: List[dict], file_prefix: str = "experiment"):
 def save_experiments_csv(block: Block,
                          experiments: List[dict],
                          file_prefix: str = "experiment"):
-    return _experiments_to_csv(experiments, [f.name for f in block.design], file_prefix)
+    return _experiments_to_csv(experiments, [cast(str, f.name) for f in __filter_hidden(block.design)], file_prefix)
 
 def synthesize_trials_non_uniform(block: Block, samples: int) -> List[dict]:
     """Synthesizes experimental trials with non-uniform sampling. See
@@ -505,7 +568,7 @@ def synthesize_trials(block: Block,
         starting(sampling_strategy)
         sampling_result = sampling_strategy.sample_object(block, samples)
 
-    return list(map(lambda e: block.add_implied_levels(e), sampling_result.samples))
+    return list(map(lambda e: __filter_hidden_keys(block.add_implied_levels(e)), sampling_result.samples))
 
 
 # TODO: This function isn't called anywhere, so it should be removed.

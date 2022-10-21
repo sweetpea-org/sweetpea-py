@@ -13,9 +13,9 @@ __all__ = [
 
 from copy import deepcopy
 from dataclasses import InitVar, dataclass, field
-from itertools import product
+from itertools import product, chain
 from random import randint
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, cast
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union, cast
 
 from sweetpea.internal.iter import chunk_list
 
@@ -67,6 +67,8 @@ class Level:
     #                   ...
     _weight: int = field(init=False)
 
+    _synthesized: bool = field(init=False)
+
     def __new__(cls, *_, **__):
         if cls == Level:
             return super().__new__(SimpleLevel)
@@ -74,7 +76,7 @@ class Level:
             return super().__new__(cls)
 
     def __post_init__(self):
-        pass
+        self._synthesized = False
 
     def __str__(self) -> str:
         return f"Level<{self.name}>"
@@ -96,7 +98,6 @@ class Level:
 
     def uses_factor(self, factor):
         return False
-
 
 @dataclass(eq=False)
 class SimpleLevel(Level):
@@ -124,6 +125,15 @@ class SimpleLevel(Level):
     def __repr__(self) -> str:
         return self.__str__()
 
+    def desugar_weight(self, replacements: dict):
+        levels = [Level(self.name) for i in range(self.weight)]
+        # Multiple levels with the same name only create trouble for constraints
+        # that refer to levels. When we desugar, the generated levels will not
+        # have been referenced by constraints (and any reference to the old level
+        # is replaced to a reference to a derived level), so duplicates are ok:
+        for l in levels:
+            l._synthesized = True
+        return levels
 
 @dataclass(eq=False)
 class DerivedLevel(Level):
@@ -221,6 +231,15 @@ class DerivedLevel(Level):
     def __repr__(self) -> str:
         return "Derived" + self.__str__()
 
+    def desugar_for_weights(self, replacements: dict):
+        l = DerivedLevel(self.name,
+                         DerivationWindow(self.window.predicate,
+                                          [replacements.get(f, [f, f])[0] for f in self.window.factors],
+                                          self.window.width,
+                                          self.window.stride))
+        replacements[self] = l
+        
+
 @dataclass(eq=False)
 class ElseLevel(Level):
     # TODO: I'm honestly not sure what this kind of level is for, semantically.
@@ -259,12 +278,14 @@ class ElseLevel(Level):
                                   first_level.window.stride)
         return DerivedLevel(self.name, window, self.weight)
 
-
 ###############################################################################
 ##
 ## Factors
 ##
 
+class HiddenName:
+    def __init__(self, name: str):
+        self.name = name
 
 @dataclass
 class Factor:
@@ -325,8 +346,8 @@ class Factor:
         use them.
     """
 
-    #: The name of this factor.
-    name: str
+    #: The name of this factor. A synthesized factor may be mutated to hide its name
+    name: Union[str, HiddenName]
 
     #: The levels used during factor initialization.
     initial_levels: InitVar[Sequence[Any]]
@@ -337,10 +358,10 @@ class Factor:
     #: A mapping from level names to levels for constant-time lookup.
     _level_map: Dict[str, Level] = field(init=False, default_factory=dict)
 
-    def __new__(cls, name: str, initial_levels: Sequence[Any], *_, **__) -> Factor:
+    def __new__(cls, name: Union[str, HiddenName], initial_levels: Sequence[Any], *_, **__) -> Factor:
         # Ensure we got a string for a name. This requirement is imposed for
         # backwards compatibility, but it should be handled by type-checking.
-        if not isinstance(name, str):
+        if not isinstance(name, (str, HiddenName)):
             raise ValueError(f"Factor name not a string: {name}.")
         # Check if we're initializing this from `Factor` directly or one of its
         # subclasses.
@@ -373,6 +394,8 @@ class Factor:
         for level in self.levels:
             if hasattr(level, "factor"):
                 raise ValueError(f"Level already belongs to a factor: {level.name}")
+            if level.name in self._level_map and not level._synthesized:
+                raise ValueError(f"Multiple levels with the same name: {level.name}")
             self._level_map[level.name] = level
             level.factor = self
 
@@ -526,6 +549,16 @@ class SimpleFactor(Factor):
     def first_level(self) -> SimpleLevel:
         return cast(SimpleLevel, self.levels[0])
 
+    def desugar_weights(self, replacements: dict):
+        levelss = [l.desugar_weight(replacements) for l in self.levels]
+        flat_f = Factor(self.name, list(chain.from_iterable(levelss)))
+        names = list(map(lambda name: (name, DerivedLevel(name, WithinTrial(lambda n: n == name, [flat_f]))),
+                         [l.name for l in self.levels]))
+        derived_levels = {name: derived_level for name, derived_level in names}
+        for l in self.levels:
+            replacements[l] = derived_levels[l.name]
+        derived_f = DerivedFactor(HiddenName(cast(str, self.name)), list(derived_levels.values()))
+        replacements[self] = [derived_f, flat_f]
 
 @dataclass
 class DerivedFactor(Factor):
@@ -617,6 +650,13 @@ class DerivedFactor(Factor):
                 return l
         raise RuntimeError("no matching trial found when filling in a sample")
 
+    def desugar_for_weights(self, replacements: dict):
+        if any([any([f in replacements for f in l.window.factors]) for l in self.levels]):
+            for l in self.levels:
+                l.desugar_for_weights(replacements)
+            f = DerivedFactor(self.name, [replacements[l] for l in self.levels])
+            replacements[self] = [f, f]
+
 ###############################################################################
 ##
 ## Derivation Windows
@@ -681,6 +721,7 @@ class DerivationWindow:
         #       be handled with type-checking.
         if not callable(self.predicate):
             raise TypeError(f"DerivationWindow expected predicate function; got {self.predicate}.")
+        
         for factor in self.factors:
             if not isinstance(factor, Factor):
                 raise TypeError(f"DerivationWindow must be composed of Factors; got {factor}.")
@@ -727,7 +768,6 @@ class DerivationWindow:
         return (self.width > 1
                 or self.stride > 1
                 or self.first_factor.has_complex_window)
-
 
 @dataclass
 class WithinTrialDerivationWindow(DerivationWindow):

@@ -1,7 +1,7 @@
 import operator as op
 import pytest
 
-from sweetpea.primitives import Factor, DerivedLevel, ElseLevel, WithinTrial, Transition, Window
+from sweetpea.primitives import Factor, DerivedLevel, ElseLevel, WithinTrial, Transition, Window, Level
 
 color = Factor("color", ["red", "blue"])
 text = Factor("text", ["red", "blue"])
@@ -39,6 +39,12 @@ def test_factor_validation():
     # Empty list
     with pytest.raises(ValueError):
         Factor("name", [])
+
+    # Duplicate level names
+    with pytest.raises(ValueError):
+        Factor("name", ["level1", "level1"])
+    with pytest.raises(ValueError):
+        Factor("name", [Level("level1"), Level("level1")])
 
     # Valid level types, but not uniform.
     with pytest.raises(ValueError):

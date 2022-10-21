@@ -62,20 +62,20 @@ class DerivationProcessor:
                 cross_product: List[Tuple[Level, ...]] = level.get_dependent_cross_product()
                 valid_tuples: List[Tuple[Level, ...]] = []
                 for level_tuple in cross_product:
-                    names = [level.name for level in level_tuple]
+                    args = [level.name for level in level_tuple]
                     if level.window.width != 1:
                         # NOTE: mypy doesn't like this, but I'm not rewriting
                         #       it right now. Need to replace `chunk_list` with
                         #       a better version.
-                        names = list(chunk_list(names, level.window.width))  # type: ignore
-                    result = level.window.predicate(*names)
+                        args = list(chunk_list(args, level.window.width))  # type: ignore
+                    result = level.window.predicate(*args)
                     if not isinstance(result, bool):
                         raise ValueError(f"Expected derivation predicate to return bool; got {type(result)}.")
-                    if level.window.predicate(*names):
+                    if result:
                         valid_tuples.append(level_tuple)
                         if level_tuple in according_level:
                             raise ValueError(f"Factor {factor.name} matches {according_level[level_tuple].name} and "
-                                             f"{level.name} with assignment {names}.")
+                                             f"{level.name} with assignment {args}.")
                         according_level[level_tuple] = level
 
                 if not valid_tuples:

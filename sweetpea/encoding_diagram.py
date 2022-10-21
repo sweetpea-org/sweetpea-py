@@ -44,7 +44,7 @@ def __generate_encoding_diagram(blk: Block) -> str:
         level_name_widths = [max(largest_number_len, l) for l in list(map(len, level_names))]
 
         level_names_width = sum(level_name_widths) + len(level_names) - 1  # Extra length for spaces in between names.
-        factor_header_width = max(len(f.name), level_names_width)
+        factor_header_width = max(len(f.name) if isinstance(f.name, str) else 0, level_names_width)
         header_widths.append(factor_header_width)
 
         # If the header is longer than the level widths combined, then they need to be lengthened.
@@ -63,7 +63,7 @@ def __generate_encoding_diagram(blk: Block) -> str:
         row_format_str += ' |'
 
     header_format_str = reduce(lambda a, b: a + ' {{:^{}}} |'.format(b), header_widths, '| {:>7} |')
-    factor_names = list(map(lambda f: f.name, blk.design))
+    factor_names = list(map(lambda f: f.name if isinstance(f.name, str) else f.name.name, blk.design))
     header_str = header_format_str.format(*["Trial"] + factor_names)
     row_width = len(header_str)
 
