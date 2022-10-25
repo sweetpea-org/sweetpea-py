@@ -14,23 +14,35 @@ explanation of factorial experimental designs and how to build and manipulate
 them in SweetPea can be found in [the SweetPea
 Guide](https://sweetpea-org.github.io).
 
-SweetPea includes a synthesizer to generate unbiased sequences of trials that
-satisfy the design's constraints. In the most general case, SweetPea compiles an
-experimental design into a boolean satisfiability formula that is passed to a
-SAT sampler.
+SweetPea includes a synthesizer to generate sequences of trials that
+satisfy the design's constraints. The goal is to generate sequences
+that are unbiased: every possible sequence of trials that satifies the
+design constraints is equally likely to be generated, which avoids
+correlations that are not part of the experiment's definition. With
+current technologies, SweetPea achieves that goal for designs with
+either simple constraints or a small number of combinations. SweetPea
+can also generate samples that seem uniform in practice for
+medium-sized designs, although without a formal guarantee. Generating
+unbiased samples for large designs remains an area of active research
+and development.
 
-Currently, SweetPea uses the [Unigen SAT
-sampler](https://bitbucket.org/kuldeepmeel/unigen). Unigen provides statistical
-guarantees that the solutions it finds are approximately uniformly probable in
-the space of all valid solutions. Unfortunately, sampling this way is not
-tractable for all designs that can be expressed with SweetPea, and improving
-sampling strategies is a primary direction for ongoing work.
-
-
-## Disclaimer
-
-SweetPea is still under active development, and therefore the interface and API
-may change. Please use with caution!
+For designs that do not involve constraints that span trials within a
+sequence, SweetPea can directly sample with combinatoric techniques.
+Realistic designs often involve transition constraints or other
+cross-trial constraints, however. For those cases, SweetPea's primary
+sampling strategy compiles an experiment design into a boolean
+formula; compilation ensures a 1-to-1 correspondence between distinct
+satisfying assignments to the boolean formula and distinct trial
+sequences, so that uniformly sampling solutions to the boolean formula
+imples a unform sample of trial sequences. SweetPea uses
+[CMSGen](https://github.com/kuldeepmeel/cmsgen) and
+[UniGen](https://github.com/kuldeepmeel/unigen) to sample solutions to
+the boolean formula. CMSGen generates samples that appear to be well
+distributed in practice, but CMSGen lacks a formal guarantee of
+uniformity. UniGen provides statistical guarantees that the solutions
+it finds are approximately uniformly probable, but its approach is
+tractable only for the smallest designs that are expressed with
+SweetPea.
 
 
 ## Dependencies
@@ -50,13 +62,11 @@ SweetPea can be installed from PyPI via `pip`:
 
     $ pip install sweetpea
 
-This version may lag behind the current development version.
-
 
 ### Installing from Source
 
-To get the most up-to-date version of SweetPea, clone this repository, install
-SweetPea's dependencies, and install SweetPea itself:
+Clone this repository, install SweetPea's dependencies, and install
+SweetPea itself:
 
     $ git clone https://github.com/sweetpea-org/sweetpea-py.git
     $ cd sweetpea-py
