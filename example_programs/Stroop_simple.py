@@ -2,12 +2,11 @@
 import sys
 sys.path.append("..")
 
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
-from sweetpea.constraints import at_most_k_in_a_row, minimum_trials
-from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
-
-from time import time
-
+from sweetpea import (
+    Factor, DerivedLevel, WithinTrial, Transition, AtMostKInARow,
+    CrossBlock, synthesize_trials, print_experiments, tabulate_experiments,
+    CMSGen, IterateGen, RandomGen
+)
 
 """
 Stroop Task
@@ -82,23 +81,21 @@ resp_transition = Factor("response_transition", [
 # DEFINE SEQUENCE CONSTRAINTS
 
 k = 7
-constraints = [at_most_k_in_a_row(k, resp_transition)]
+constraints = [AtMostKInARow(k, resp_transition)]
 
 # DEFINE EXPERIMENT
 
 design       = [color, word, congruency, resp_transition, response]
-crossing     = [color, resp_transition]
-block        = fully_cross_block(design, crossing, constraints)
+crossing     = [color, word, resp_transition]
+block        = CrossBlock(design, crossing, constraints)
 
 # SOLVE
 
-times = []
-start = time()
-experiments  = synthesize_trials_non_uniform(block, 5)
-end = time()
-times += [end - start]
+experiments  = synthesize_trials(block, 5, CMSGen)
+# Or:
+# experiments  = synthesize_trials(block, 5, IterateGen)
+# experiments  = synthesize_trials(block, 5, RandomGen(acceptable_error=3))
 
-print(sum(times) / len(times))
-print(times)
+print_experiments(block, experiments)
 
-# print_experiments(block, experiments)
+# tabulate_experiments(block, experiments)

@@ -7,9 +7,8 @@ from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.constraints import at_most_k_in_a_row
 from sweetpea.encoding_diagram import print_encoding_diagram
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
-from sweetpea.tests.test_utils import get_level_from_name
 from sweetpea.server import build_cnf
-from acceptance import path_to_cnf_files
+from acceptance import path_to_cnf_files, reset_expected_solutions
 
 
 direction = Factor("direction", ["up", "down"])
@@ -29,7 +28,6 @@ repeated_color_factor = Factor("repeated color?", [
 ])
 
 
-@pytest.mark.slow
 @pytest.mark.parametrize('design', [[direction, color, text, congruent_factor],
                                     [congruent_factor, direction, color, text],
                                     [direction, congruent_factor, color, text]])
@@ -68,7 +66,7 @@ def test_correct_solution_count_when_transition_in_crossing_and_unconstrained(de
 @pytest.mark.parametrize('design', permutations([direction, color, repeated_color_factor]))
 def test_correct_solution_count_when_transition_in_crossing_and_constrained(design):
     crossing = [direction, repeated_color_factor]
-    constraints = [at_most_k_in_a_row(1, (color, get_level_from_name(color, "red")))]
+    constraints = [at_most_k_in_a_row(1, (color, "red"))]
 
     block  = fully_cross_block(design, crossing, constraints)
     experiments  = synthesize_trials_non_uniform(block, 100)
@@ -78,13 +76,14 @@ def test_correct_solution_count_when_transition_in_crossing_and_constrained(desi
 
 def test_correct_solution_count_when_transition_in_crossing_and_constrained_cnf(design=[direction, color, repeated_color_factor]):
     crossing = [direction, repeated_color_factor]
-    constraints = [at_most_k_in_a_row(1, (color, get_level_from_name(color, "red")))]
+    constraints = [at_most_k_in_a_row(1, (color, "red"))]
 
     block  = fully_cross_block(design, crossing, constraints)
     cnf = build_cnf(block)
 
-    # with open(path_to_cnf_files+'/test_correct_solution_count_when_transition_in_crossing_and_constrained.cnf', 'w') as f:
-    #     f.write(cnf.as_unigen_string())
+    if reset_expected_solutions:
+        with open(path_to_cnf_files+'/test_correct_solution_count_when_transition_in_crossing_and_constrained.cnf', 'w') as f:
+            f.write(cnf.as_unigen_string())
     with open(path_to_cnf_files+'/test_correct_solution_count_when_transition_in_crossing_and_constrained.cnf', 'r') as f:
         old_cnf = f.read()
 

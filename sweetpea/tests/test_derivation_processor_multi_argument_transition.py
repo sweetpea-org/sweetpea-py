@@ -2,7 +2,7 @@ import operator as op
 import pytest
 
 from sweetpea.primitives import Factor, DerivedLevel, Transition
-from sweetpea.constraints import Derivation
+from sweetpea.constraints import Derivation, Reify
 from sweetpea.derivation_processor import DerivationProcessor
 from sweetpea import fully_cross_block
 
@@ -27,7 +27,7 @@ change = Factor("change", [one_level, other_level])
 
 design      = [color, text, change]
 crossing    = [color, text]
-block       = fully_cross_block(design, crossing, [])
+block       = fully_cross_block(design, crossing, [Reify(change)])
 
 
 # Encoding diagram minus 1

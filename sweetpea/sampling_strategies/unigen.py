@@ -1,5 +1,4 @@
 from math import ceil, log
-from sweetpea.constraints import minimum_trials
 from tqdm import tqdm
 import sys
 
@@ -8,21 +7,23 @@ from typing import List, cast
 from sweetpea.sampling_strategies.base import SamplingStrategy, SamplingResult
 from sweetpea.blocks import Block
 from sweetpea.core import sample_uniform, CNF
+from sweetpea.constraints import minimum_trials
 
 """
 This strategy relies fully on Unigen to produce the desired number of samples.
 """
-class UnigenSamplingStrategy(SamplingStrategy):
+class UniGen(SamplingStrategy):
 
     @staticmethod
-    def sample(block: Block, sample_count: int, min_search: bool=False) -> SamplingResult:
+    def class_name():
+        return 'UniGen'
+
+    @staticmethod
+    def sample(block: Block, sample_count: int, min_search: bool=False, use_cmsgen=False) -> SamplingResult:
 
         backend_request = block.build_backend_request()
-        if block.errors:
-            for e in block.errors:
-                print(e)
-                if "WARNING" not in e:
-                    return SamplingResult([], {})
+        if block.show_errors():
+            return SamplingResult([], {})
 
         solutions = sample_uniform(
             sample_count,
@@ -30,7 +31,8 @@ class UnigenSamplingStrategy(SamplingStrategy):
             backend_request.fresh - 1,
             block.variables_per_sample(),
             backend_request.get_requests_as_generation_requests(),
-            False)
+            use_docker=False,
+            use_cmsgen=use_cmsgen)
 
         # This section deals with the problem caused by a corner case created
         # by at_least_k_in_a_row_constraint. I.e. in some cases this cotnraint
@@ -84,3 +86,5 @@ class UnigenSamplingStrategy(SamplingStrategy):
 
         result = list(map(lambda s: SamplingStrategy.decode(block, s.assignment), solutions))
         return SamplingResult(result, {})
+
+UnigenSamplingStrategy = UniGen

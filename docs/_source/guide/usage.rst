@@ -3,12 +3,6 @@
 Using SweetPea
 ==============
 
-.. note::
-
-    We are constantly seeking to improve the user interface of the SweetPea
-    language. If something seems difficult or unintuitive to you, please let us
-    know by :ref:`filing an issue <issues>`!
-
 So you've decided to design a factorial experiment. That's excellent! Factorial
 experimental designs are a great way to build repeatable experiments with
 multiple independent variables. Let's design our experiment in words first, and
@@ -45,7 +39,7 @@ independent variables *factors* in the realm of factorial design.
     congruent or incongruent. This is a form of *derived factor*, and we'll come
     back to it later.
 
-To test this effect, we will construct a series of *trials* to administer to a
+To test this effect, we can construct a series of *trials* to administer to a
 participant, where each trial is a single color+text pairing. For this
 experiment, we will use the three colors red, green, and blue, and we will also
 use the names of those colors as the text. All together, this gives us 9
@@ -109,7 +103,7 @@ To put it together, we do:
     >>> color = Factor("color", ["red", "blue", "green"])
     >>> block = fully_cross_block([color, text], [color, text], [])
     >>> experiments = synthesize_trials_non_uniform(block, 1)
-    Sampling 1 trial sequences using the class <class 'sweetpea.sampling_strategies.uniform_combinatoric.UniformCombinatoricSamplingStrategy'>
+    Sampling 1 trial sequences using the Uniform Combinatoric Sampling Strategy
 
 The result of this synthesis is based on pseudo-random number generation, and so
 the output will not be the same every time. However, when we ran the code to

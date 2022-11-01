@@ -1,15 +1,3 @@
-"""This module provides the fundamental primitives used by the SweetPea
-domain-specific language.
-
-A Note on Deprecations
-''''''''''''''''''''''
-
-A number of functions, classes, methods, and attributes in this file are marked
-as *deprecated*. These are preserved for backwards compatibility, but will
-eventually be removed in favor of alternative forms.
-"""
-
-
 # NOTE: This import allows for forward references in type annotations.
 from __future__ import annotations
 
@@ -18,8 +6,6 @@ __all__ = [
     'Level', 'SimpleLevel', 'DerivedLevel', 'ElseLevel',
     'Factor', 'SimpleFactor', 'DerivedFactor',
     'DerivationWindow', 'WithinTrialDerivationWindow', 'TransitionDerivationWindow',
-    # Backwards compatibility:
-    'get_external_level_name', 'get_internal_level_name',
     'WithinTrial', 'Transition', 'Window',
     'simple_level', 'derived_level', 'else_level', 'factor', 'within_trial', 'transition', 'window',
 ]
@@ -27,9 +13,11 @@ __all__ = [
 
 from copy import deepcopy
 from dataclasses import InitVar, dataclass, field
-from itertools import product
+from itertools import product, chain
 from random import randint
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, cast
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union, cast
+
+from sweetpea.internal.iter import chunk_list
 
 
 ###############################################################################
@@ -38,69 +26,15 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, cast
 ##
 
 
-"""
-
-TODO: REMOVE
-
-Level weights are relative. They are positive integer values*, where the value
-represents the number of variables devoted to that level. If we imagine two
-factors with a few levels, all with the default weight of 1:
-
-    f0 = Factor('color', ['red', 'blue', 'green'])
-    f1 = Factor('text', ['red', 'blue'])
-
-and convert them into a CNF formula, we will have one variable per level:
-
-    (1 ∨ 2 ∨ 3) ∧ (4 ∨ 5 ∨ 6)
-
-If we adjust one of the `color` levels to have a weight of `2`, though:
-
-    f0 = Factor('color', ['red', SimpleLevel('blue', 2), 'green'])
-    f1 = Factor('text', ['red', 'blue'])
-
-The formula would instead look like:
-
-    (1 ∨ 2 ∨ 3 ∨ 4) ∧ (5 ∨ 6 ∨ 7)
-
-The `blue` level now has two variables: `3` and `4`. When sampling, this gives
-that level two opportunities to be chosen for every one time either of the
-other levels could be chosen.
-
-* They don't have to be positive integers forever. Eventually, they can support
-varieties of values for greater configuration, but for the moment we'll stick
-with the integers.
-
-"""
-
-
 @dataclass
 class Level:
     """A discrete value that a :class:`.Factor` can hold.
-
-    .. note::
-
-        Do not directly instantiate :class:`.Level`. Instead, construct one of
-        the subclasses:
-
-        - :class:`.SimpleLevel`
-        - :class:`.DerivedLevel`
-        - :class:`.ElseLevel`
 
     For more on levels, consult :ref:`the guide <guide_factorial_levels>`.
     """
 
     #: The name of the level.
     name: str
-
-    # TODO: I think we can get rid of `Level.internal_name` and replace it with
-    #       some other mechanism. See the TODO notes in `Level.__post_init__`.
-    #: The internal name, which is meant to be unique among levels.
-    #:
-    #: .. deprecated:: 0.1.0
-    #:
-    #:     This attribute will be removed. It should not be used outside of
-    #:     this module.
-    internal_name: str = field(init=False)
 
     # TODO: There is probably a way to make this smoother. As it stands,
     #       factors are responsible for registering themselves with their
@@ -129,56 +63,41 @@ class Level:
     #               def __post_init__(self, ..., weight: int):
     #                   ...
     #                   self._weight = weight
+    #                   self.weight = weight
     #                   ...
     _weight: int = field(init=False)
 
+    _synthesized: bool = field(init=False)
+
     def __new__(cls, *_, **__):
         if cls == Level:
-            raise ValueError(f"Cannot directly instantiate {cls.__name__}.")
-        return super().__new__(cls)
+            return super().__new__(SimpleLevel)
+        else:
+            return super().__new__(cls)
 
     def __post_init__(self):
-        # NOTE: This conversion exists for backwards compatibility.
-        if not isinstance(self.name, str):
-            self.name = str(self.name)
-        # TODO: Using random integers seems insecure. Perhaps use UUIDs or a
-        #       global (module-level) incremented counter.
-        # TODO: Alternatively, because this is only used for the `__eq__`
-        #       implementation, we could potentially remove this altogether and
-        #       simply switch to using `is` checks (which is a more secure way
-        #       of doing the same thing). The downside there is that this
-        #       requires users of SweetPea to understand the distinction
-        #       between `==` and `is`, which adds a bit of a barrier for an
-        #       audience that is not primarily made of programmers.
-        self.internal_name = self.name + f"{randint(0, 99999):05d}"
-
-    def __hash__(self) -> int:
-        return hash(self.internal_name)
-
-    def __eq__(self, other) -> bool:
-        if not isinstance(other, type(self)):
-            return False
-        return self.internal_name == other.internal_name
+        self._synthesized = False
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}<{self.name}>"
+        return f"Level<{self.name}>"
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def __hash__(self) -> int:
+        return hash(self.name)
+
+    def __eq__(self, other) -> bool:
+        # only equal when it's the same object:
+        return id(self) == id(other)
 
     @property
     def weight(self) -> int:
         """The level's weight."""
         return self._weight
 
-    # TODO: REMOVE. (backwards compatibility)
-    @property
-    def external_name(self) -> str:
-        """An alias for :attr:`.Level.name`.
-
-        .. deprecated:: 0.1.0
-
-            This property will be removed in favor of :attr:`.Level.name`.
-        """
-        return self.name
-
+    def uses_factor(self, factor):
+        return False
 
 @dataclass(eq=False)
 class SimpleLevel(Level):
@@ -201,7 +120,20 @@ class SimpleLevel(Level):
     def __post_init__(self, weight: int):  # type: ignore # pylint: disable=arguments-differ
         super().__post_init__()
         self._weight = weight
+        self.weight = weight # type: ignore
 
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def desugar_weight(self, replacements: dict):
+        levels = [Level(self.name) for i in range(self.weight)]
+        # Multiple levels with the same name only create trouble for constraints
+        # that refer to levels. When we desugar, the generated levels will not
+        # have been referenced by constraints (and any reference to the old level
+        # is replaced to a reference to a derived level), so duplicates are ok:
+        for l in levels:
+            l._synthesized = True
+        return levels
 
 @dataclass(eq=False)
 class DerivedLevel(Level):
@@ -237,6 +169,7 @@ class DerivedLevel(Level):
         if not isinstance(self.window, DerivationWindow):
             raise TypeError(f"DerivedLevel must be given a DerivationWindow; got {type(self.window).__name__}.")
         self._weight = weight
+        self.weight = weight # type: ignore
         # Verify internal factors' strides.
         for factor in self.window.factors:
             if (isinstance(factor, DerivedFactor)
@@ -244,27 +177,9 @@ class DerivedLevel(Level):
                 and factor.levels[0].window.stride > 1):
                 raise ValueError(f"{type(self).__name__} does not accept factors with stride > 1, but factor "
                                  f"{factor.name} has window with stride {factor.first_level.window.stride}.")
-        # Expand the factors. Each factor gets duplicated according to the
-        # derivation window width.
-        # TODO: Why is `DerivedLevel` manipulating the internal state of
-        #       `DerivationWindow`? This should probably be moved to a
-        #       `DerivationWindow` method.
-        # TODO: This could probably be handled a different way, too.
-        # FIXME: Okay, this is becoming a nuisance.
-        #        In the original code, this expansion modifies the
-        #        `window.args` --- but it does not modify the `window.argc`
-        #        that was set on object initialization. This `window.argc`
-        #        value is then used in `DerivationProcessor.shift_window`. This
-        #        means that we need to preserve the *initial* count of factors
-        #        when we expand the factor list.
-        #            The takeaway is that this is an awful way to handle this,
-        #        because we are clearly not meant to be *actually* expanding
-        #        the factors. We need a less confusing --- and more
-        #        semantically consistent --- way of managing this information.
-        expanded_factors: List[Factor] = []
-        for factor in self.window.factors:
-            expanded_factors.extend([factor] * self.window.width)
-        self.window.factors = expanded_factors
+        # Depth helps order of filling in levels when derived factors depend
+        # on other derived factors
+        self._depth = max(map(lambda f: f._get_depth(), self.window.factors))
 
     def get_dependent_cross_product(self) -> List[Tuple[Level, ...]]:
         """Produces a list of n-tuples, where each tuple represents a unique
@@ -296,8 +211,34 @@ class DerivedLevel(Level):
 
         :rtype: typing.List[typing.Tuple[.Level, ...]]
         """
-        return list(product(*(factor.levels for factor in self.window.factors)))
+        return list(product(*(factor.levels for factor in self.window.factors for i in range(self.window.width))))
 
+    def uses_factor(self, f: Factor):
+        return any(list(map(lambda wf: wf.uses_factor(f), self.window.factors)))
+
+    def _trial_arguments(self, sample: dict, i :int) -> list:
+        """Check whether trial i (zero-based) in the sample matches this level's predicate."""
+        window = self.window
+        args = []
+        for f in window.factors:
+            levels = sample[f]
+            for j in range(window.width):
+                args.append(levels[i-(window.width-1)+j].name)
+        if window.width > 1:
+            args = list(chunk_list(args, window.width))
+        return args
+
+    def __repr__(self) -> str:
+        return "Derived" + self.__str__()
+
+    def desugar_for_weights(self, replacements: dict):
+        l = DerivedLevel(self.name,
+                         DerivationWindow(self.window.predicate,
+                                          [replacements.get(f, [f, f])[0] for f in self.window.factors],
+                                          self.window.width,
+                                          self.window.stride))
+        replacements[self] = l
+        
 
 @dataclass(eq=False)
 class ElseLevel(Level):
@@ -317,6 +258,7 @@ class ElseLevel(Level):
     def __post_init__(self, weight: int):  # type: ignore # pylint: disable=arguments-differ
         super().__post_init__()
         self._weight = weight
+        self.weight = weight # type: ignore
 
     def derive_level_from_levels(self, other_levels: List[DerivedLevel]) -> DerivedLevel:
         """Converts the :class:`.ElseLevel` into a :class:`.DerivedLevel` by
@@ -330,28 +272,20 @@ class ElseLevel(Level):
         if not other_levels:
             return DerivedLevel(self.name, WithinTrialDerivationWindow(lambda: False, []))
         first_level = other_levels[0]
-        # TODO: This is very odd. We only take every *n*th factor from the
-        #       derivation window (where *n* is the window's width). This is
-        #       because the initializer for `DerivedLevel`s expands the list of
-        #       factors to duplicate by the width.
-        #           It seems like this should be rethought. Why go through the
-        #       trouble of duplicating the factors only to de-duplicate them
-        #       later? Perhaps `DerivedLevel`s need a different internal
-        #       representation to avoid this real duplication.
-        factors = first_level.window.factors[::first_level.window.width]
-        # TODO: This exhibits the same issue as the preceding TODO.
         window = DerivationWindow(lambda *args: not any(map(lambda l: l.window.predicate(*args), other_levels)),
-                                  factors,
+                                  first_level.window.factors,
                                   first_level.window.width,
                                   first_level.window.stride)
-        return DerivedLevel(self.name, window)
-
+        return DerivedLevel(self.name, window, self.weight)
 
 ###############################################################################
 ##
 ## Factors
 ##
 
+class HiddenName:
+    def __init__(self, name: str):
+        self.name = name
 
 @dataclass
 class Factor:
@@ -367,8 +301,8 @@ class Factor:
 
     During :class:`.Factor` construction, the first :class:`.Level` in the
     :attr:`~.Factor.initial_levels` is dynamically type-checked. If it's a
-    :class:`.DerivedLevel` or :class:`.ElseLevel`, a `.DerivedFactor` will be
-    initialized. Otherwise, a `.SimpleFactor` will be initialized.
+    :class:`.DerivedLevel` or :class:`.ElseLevel`, a :class:`.DerivedFactor` will be
+    initialized. Otherwise, a :class:`.SimpleFactor` will be initialized.
 
     In all cases, the :attr:`~.Factor.initial_levels` will be processed. This
     step ensures that all of a factor's :attr:`~.Factor.levels` will always be
@@ -412,8 +346,8 @@ class Factor:
         use them.
     """
 
-    #: The name of this factor.
-    name: str
+    #: The name of this factor. A synthesized factor may be mutated to hide its name
+    name: Union[str, HiddenName]
 
     #: The levels used during factor initialization.
     initial_levels: InitVar[Sequence[Any]]
@@ -424,10 +358,10 @@ class Factor:
     #: A mapping from level names to levels for constant-time lookup.
     _level_map: Dict[str, Level] = field(init=False, default_factory=dict)
 
-    def __new__(cls, name: str, initial_levels: Sequence[Any], *_, **__) -> Factor:
+    def __new__(cls, name: Union[str, HiddenName], initial_levels: Sequence[Any], *_, **__) -> Factor:
         # Ensure we got a string for a name. This requirement is imposed for
         # backwards compatibility, but it should be handled by type-checking.
-        if not isinstance(name, str):
+        if not isinstance(name, (str, HiddenName)):
             raise ValueError(f"Factor name not a string: {name}.")
         # Check if we're initializing this from `Factor` directly or one of its
         # subclasses.
@@ -452,24 +386,16 @@ class Factor:
         for level in initial_levels:
             if isinstance(level, Level):
                 pass
-            elif isinstance(level, str):
-                level = SimpleLevel(level)
-            elif (isinstance(level, (tuple, list))
-                  and len(level) == 2
-                  and isinstance(level[0], str)
-                  and isinstance(level[1], int)):
-                level = SimpleLevel(level[0], level[1])
             else:
                 level = SimpleLevel(str(level))
             real_levels.append(level)
         # Then we do any necessary post-processing of the levels.
         self.levels = self._process_initial_levels(real_levels)
-        # Lastly, ensure all the levels have distinct names. We also use this
-        # step to initialize the internal level map, which allows for constant-
-        # time lookup of levels by name.
         for level in self.levels:
-            if level.name in self._level_map:
-                raise ValueError(f"Factor {self.name} instantiated with duplicate level {level.name}.")
+            if hasattr(level, "factor"):
+                raise ValueError(f"Level already belongs to a factor: {level.name}")
+            if level.name in self._level_map and not level._synthesized:
+                raise ValueError(f"Multiple levels with the same name: {level.name}")
             self._level_map[level.name] = level
             level.factor = self
 
@@ -493,27 +419,30 @@ class Factor:
         return new_instance
 
     def __eq__(self, other) -> bool:
-        if not isinstance(other, type(self)):
-            return False
-        return self.name == other.name and self.levels == other.levels
+        # only equal when it's the same object:
+        return id(self) == id(other)
 
     def __str__(self) -> str:
-        levels_string = '[' + ', '.join(map(str, self.levels)) + ']'
-        return f"{type(self).__name__}<{self.name} | {levels_string}>"
+        # levels_string = '[' + ', '.join(map(str, self.levels)) + ']'
+        # return f"Factor<{self.name} | {levels_string}>"
+        return f"Factor<{self.name}>"
+
+    def __repr__(self) -> str:
+        return self.__str__()
 
     def __hash__(self) -> int:
         return hash(self.name)
 
-    def __getitem__(self, name: str) -> Level:
+    def __getitem__(self, name) -> Level:
         value = self.get_level(name)
         if value is None:
             raise KeyError(f"Factor {self.name} has no level named {name}.")
         return value
 
-    def __contains__(self, name: str) -> bool:
-        return name in self._level_map
+    def __contains__(self, name) -> bool:
+        return name in self.levels
 
-    def get_level(self, name: str) -> Optional[Level]:
+    def get_level(self, name) -> Optional[Level]:
         """Returns a :class:`.Level` instance corresponding to the given name,
         if it exists within this factor. Otherwise, returns ``None``.
         """
@@ -524,32 +453,6 @@ class Factor:
     def first_level(self) -> Level:
         """The first :class:`.Level` in this factor."""
         return self.levels[0]
-
-    # TODO: Convert to a property. (backwards compatibility)
-    # NOTE: Alternatively, we should maybe instead prefer an actual type check
-    #       in most spots in the code since that will give accurate type
-    #       checking feedback.
-    def is_derived(self) -> bool:
-        """Whether this factor is derived.
-
-        .. deprecated:: 0.1.0
-
-            Instead of using this function, we recommend doing a dynamic type
-            check with :func:`isinstance`. This provides the same semantic
-            information to the programmer while also providing greater type
-            guarantees when using a static type checker, such as mypy.
-
-            .. code-block:: python
-
-                factor: Factor = ...
-                if isinstance(factor, DerivedFactor):
-                    # Code requiring a derived factor.
-                    ...
-                else:
-                    # Code if it's not a derived factor.
-                    ...
-        """
-        return isinstance(self, DerivedFactor)
 
     @property
     def has_complex_window(self) -> bool:
@@ -588,34 +491,16 @@ class Factor:
         return (trial_number >= acc_width(window)
                 and (trial_number - window.width) % window.stride == 0)
 
-    # TODO: REMOVE. (backwards compatibility)
-    @property
-    def factor_name(self) -> str:
-        """An alias for :attr:`.Factor.name` for backwards compatibility.
+    def uses_factor(self, f: Factor):
+        return self == f
 
-        .. deprecated:: 0.1.0
+    def _get_depth(self):
+        if not isinstance(self, DerivedFactor):
+            return 0
+        return max(map(lambda l: cast(DerivedLevel, l)._depth, self.levels))+1
 
-            This property will be removed in favor of :attr:`.Factor.name`.
-        """
-        return self.name
-
-    # TODO: REMOVE. (backwards compatibility)
-    def has_level(self, name: str) -> bool:
-        """Whether the given level name corresponds to a level in this factor.
-
-        .. deprecated:: 0.1.0
-
-            This method will be removed in favor of straightforward membership
-            checks, such as:
-
-            .. code-block:: python
-
-                factor: Factor = ...
-                if 'level_name' in factor:
-                    ...
-        """
-        return name in self
-
+    def level_weight_sum(self):
+        return sum([l.weight for l in self.levels])
 
 @dataclass
 class SimpleFactor(Factor):
@@ -654,13 +539,26 @@ class SimpleFactor(Factor):
     def __eq__(self, other) -> bool:  # pylint: disable=useless-super-delegation
         return super().__eq__(other)
 
-    def get_level(self, name: str) -> Optional[SimpleLevel]:
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def get_level(self, name) -> Optional[SimpleLevel]:
         return cast(Optional[SimpleLevel], super().get_level(name))
 
     @property
     def first_level(self) -> SimpleLevel:
         return cast(SimpleLevel, self.levels[0])
 
+    def desugar_weights(self, replacements: dict):
+        levelss = [l.desugar_weight(replacements) for l in self.levels]
+        flat_f = Factor(self.name, list(chain.from_iterable(levelss)))
+        names = list(map(lambda name: (name, DerivedLevel(name, WithinTrial(lambda n: n == name, [flat_f]))),
+                         [l.name for l in self.levels]))
+        derived_levels = {name: derived_level for name, derived_level in names}
+        for l in self.levels:
+            replacements[l] = derived_levels[l.name]
+        derived_f = DerivedFactor(HiddenName(cast(str, self.name)), list(derived_levels.values()))
+        replacements[self] = [derived_f, flat_f]
 
 @dataclass
 class DerivedFactor(Factor):
@@ -730,13 +628,34 @@ class DerivedFactor(Factor):
     def __eq__(self, other) -> bool:  # pylint: disable=useless-super-delegation
         return super().__eq__(other)
 
-    def get_level(self, name: str) -> Optional[DerivedLevel]:
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def get_level(self, name) -> Optional[DerivedLevel]:
         return cast(Optional[DerivedLevel], super().get_level(name))
 
     @property
     def first_level(self) -> DerivedLevel:
         return cast(DerivedLevel, self.levels[0])
 
+    def uses_factor(self, f: Factor):
+        return (self == f) or any(list(map(lambda l: l.uses_factor(f), self.levels)))
+
+    def select_level_for_sample(self, i: int, sample: dict) -> Any:
+        """Get level name for trial i (zero-based) depending on
+        values of other factors already in the sample."""
+        args = self.levels[0]._trial_arguments(sample, i)
+        for l in self.levels:
+            if l.window.predicate(*args):
+                return l
+        raise RuntimeError("no matching trial found when filling in a sample")
+
+    def desugar_for_weights(self, replacements: dict):
+        if any([any([f in replacements for f in l.window.factors]) for l in self.levels]):
+            for l in self.levels:
+                l.desugar_for_weights(replacements)
+            f = DerivedFactor(self.name, [replacements[l] for l in self.levels])
+            replacements[self] = [f, f]
 
 ###############################################################################
 ##
@@ -797,15 +716,12 @@ class DerivationWindow:
     #: The stride of this window.
     stride: int
 
-    #: The number of factors that originally came in, disregarding any
-    #: expansion caused by a :class:`.DerivedLevel` changing things.
-    initial_factor_count: int = field(init=False)
-
     def __post_init__(self):
         # NOTE: We check the types for backwards compatibility, but it should
         #       be handled with type-checking.
         if not callable(self.predicate):
             raise TypeError(f"DerivationWindow expected predicate function; got {self.predicate}.")
+        
         for factor in self.factors:
             if not isinstance(factor, Factor):
                 raise TypeError(f"DerivationWindow must be composed of Factors; got {factor}.")
@@ -820,7 +736,6 @@ class DerivationWindow:
             if factor.name in found_factor_names:
                 raise ValueError(f"Derivations do not accept repeated factors. Factor repeated: {factor.name}.")
             found_factor_names.add(factor.name)
-        self.initial_factor_count = len(self.factors)
 
     @property
     def size(self) -> Tuple[int, int]:
@@ -853,35 +768,6 @@ class DerivationWindow:
         return (self.width > 1
                 or self.stride > 1
                 or self.first_factor.has_complex_window)
-
-    # TODO: REMOVE. (backwards compatibility)
-    @property
-    def args(self) -> List[Factor]:
-        """An alias for :attr:`.DerivationWindow.factors`.
-
-        :rtype: typing.List[.Factor]
-
-        .. deprecated:: 0.1.0
-
-            This property will be removed in favor of
-            :attr:`.DerivationWindow.factors`.
-        """
-        return self.factors
-
-    # TODO: REMOVE. (backwards compatibility)
-    @property
-    def fn(self) -> Callable:
-        """An alias for :attr:`.DerivationWindow.predicate`.
-
-        :rtype: Callable
-
-        .. deprecated:: 0.1.0
-
-            This property will be removed in favor of
-            :attr:`.DerivationWindow.predicate`.
-        """
-        return self.predicate
-
 
 @dataclass
 class WithinTrialDerivationWindow(DerivationWindow):
@@ -934,72 +820,31 @@ class TransitionDerivationWindow(DerivationWindow):
 ##
 ## TODO: Rewrite SweetPea's internal implementation in order to remove these!
 
-
-def get_external_level_name(level: Level) -> str:
-    """Returns :attr:`.Level.name`.
-
-    .. deprecated:: 0.1.0
-
-        This function will be removed in favor of :attr:`.Level.name`.
-    """
-    return level.name
-
-
-# TODO: This shouldn't be used in any other module anyway. Uses of this
-#       function should instead do `==` comparison of levels.
-def get_internal_level_name(level: Level) -> str:
-    """Returns :attr:`.Level.internal_name`.
-
-    .. deprecated:: 0.1.0
-
-        This function will be removed. It should not be used outside of this
-        module.
-    """
-    return level.internal_name
-
-
 #### Class aliases.
 
-#: An alias for :class:`.WithinTrialDerivationWindow`.
-#:
-#: .. deprecated:: 0.1.0
-#:
-#:     This class will be removed in favor of
-#:     :class:`.WithinTrialDerivationWindow`.
+#: A preferred alias for :class:`.WithinTrialDerivationWindow`.
 WithinTrial = WithinTrialDerivationWindow
 
-#: An alias for :class:`.TransitionDerivationWindow`.
-#:
-#: .. deprecated:: 0.1.0
-#:
-#:     This class will be removed in favor of
-#:     :class:`.TransitionDerivationWindow`.
+#: A preferred alias for :class:`.TransitionDerivationWindow`.
 Transition = TransitionDerivationWindow
 
-#: An alias for :class:`.DerivationWindow`.
-#:
-#: .. deprecated:: 0.1.0
-#:
-#:     This class will be removed in favor of
-#:     :class:`.DerivationWindow`.
+#: A compatibility alias for :class:`.DerivationWindow`.
 Window = DerivationWindow
 
+#: A preferred alias for :class:`.DerivationWindow`.
+AcrossTrials = Window
 
 #### Noun-form function aliases.
 
 def simple_level(name: str, weight: Optional[int] = None) -> SimpleLevel:
-    """A function alias for :class:`.SimpleLevel`.
-
-    .. deprecated:: 0.1.2
-
-        This function will be removed in favor of direct instantiation of
-        :class:`.SimpleLevel`.
+    """A compatibility alias for direct instantiation of :class:`.SimpleLevel`.
 
     :param name:
         The name of the level.
 
     :param weight:
         An optional weight for the level.
+
     """
     if weight is None:
         return SimpleLevel(name)
@@ -1007,12 +852,7 @@ def simple_level(name: str, weight: Optional[int] = None) -> SimpleLevel:
 
 
 def derived_level(name: str, derivation: Window, weight: Optional[int] = None) -> DerivedLevel:
-    """A function alias for :class:`.DerivedLevel`.
-
-    .. deprecated:: 0.1.2
-
-        This function will be removed in favor of direct instantiation of
-        :class:`.DerivedLevel`.
+    """A compatibility alias for direct instantiation of :class:`.DerivedLevel`.
 
     :param name:
         The name of the level.
@@ -1022,6 +862,7 @@ def derived_level(name: str, derivation: Window, weight: Optional[int] = None) -
 
     :param weight:
         An optional weight for the level.
+
     """
     if weight is None:
         return DerivedLevel(name, derivation)
@@ -1029,11 +870,7 @@ def derived_level(name: str, derivation: Window, weight: Optional[int] = None) -
 
 
 def else_level(name: str, weight: Optional[int] = None) -> ElseLevel:
-    """A function alias for :class:`.ElseLevel`.
-
-    .. deprecated:: 0.1.2
-
-        This function will be removed in favor of direct instantiation of
+    """A compatibility alias for direct instantiation of
         :class:`.ElseLevel`.
 
     :param name:
@@ -1041,6 +878,7 @@ def else_level(name: str, weight: Optional[int] = None) -> ElseLevel:
 
     :param weight:
         An optional weight for the level.
+
     """
     if weight is None:
         return ElseLevel(name)
@@ -1048,29 +886,21 @@ def else_level(name: str, weight: Optional[int] = None) -> ElseLevel:
 
 
 def factor(name: str, levels: Sequence[Any]) -> Factor:
-    """A function alias for :class:`.Factor`.
-
-    .. deprecated:: 0.1.2
-
-        This function will be removed in favor of direct instantiation of
-        :class:`.Factor`.
+    """A compatibility alias for direct instantiation of :class:`.Factor`.
 
     :param name:
         The name of the factor.
 
     :param levels:
         A sequence of levels for the factor.
+
     """
     return Factor(name, levels)
 
 
 def within_trial(fn: Callable, args: List[Factor]) -> WithinTrialDerivationWindow:
-    """A function alias for :class:`.WithinTrialDerivationWindow`.
-
-    .. deprecated:: 0.1.2
-
-        This function will be removed in favor of direct instantiation of
-        :class:`.WithinTrialDerivationWindow`.
+    """A compatibility alias for direct instantiation of
+       :class:`.WithinTrialDerivationWindow`.
 
     :param fn:
         A predicate function. See :class:`.WithinTrialDerivationWindow`.
@@ -1078,17 +908,14 @@ def within_trial(fn: Callable, args: List[Factor]) -> WithinTrialDerivationWindo
     :param args:
         A list of :class:`Factors <.Factor>`. See
         :class:`.WithinTrialDerivationWindow`.
+
     """
     return WithinTrialDerivationWindow(fn, args)
 
 
 def transition(fn: Callable, args: List[Factor]) -> TransitionDerivationWindow:
-    """A function alias for :class:`.TransitionDerivationWindow`.
-
-    .. deprecated:: 0.1.2
-
-        This function will be removed in favor of direct instantiation of
-        :class:`.TransitionDerivationWindow`.
+    """A compatibility alias for direct instantiation of
+       :class:`.TransitionDerivationWindow`.
 
     :param fn:
         A predicate function. See :class:`.TransitionDerivationWindow`.
@@ -1096,17 +923,14 @@ def transition(fn: Callable, args: List[Factor]) -> TransitionDerivationWindow:
     :param args:
         A list of :class:`Factors <.Factor>`. See
         :class:`.TransitionDerivationWindow`.
+
     """
     return TransitionDerivationWindow(fn, args)
 
 
 def window(fn: Callable, args: List[Factor], width: int, stride: int) -> DerivationWindow:
-    """A function alias for :class:`.DerivationWindow`.
-
-    .. deprecated:: 0.1.2
-
-        This function will be removed in favor of direct instantiation of
-        :class:`.DerivationWindow`.
+    """A compatibility alias for direct instantiation of
+       :class:`.AcrossTrials`.
 
     :param fn:
         A predicate function. See :class:`.DerivationWindow`.
@@ -1120,5 +944,6 @@ def window(fn: Callable, args: List[Factor], width: int, stride: int) -> Derivat
 
     :param stride:
         The stride of the window.
+
     """
     return DerivationWindow(fn, args, width, stride)

@@ -4,6 +4,8 @@
 from abc import ABC, abstractmethod
 from typing import List
 
+from sweetpea.primitives import Factor
+
 
 class Constraint(ABC):
     """Generic interface for constraints."""
@@ -24,7 +26,10 @@ class Constraint(ABC):
     # def apply_ILP(self, block, prob) -> None:
     #     pass
 
-    def desugar(self) -> List:
+    def is_complex_for_combinatoric(self) -> bool:
+        return True
+
+    def desugar(self, replacements: dict) -> List:
         """Some constraints accept shorthand representations. (Like accepting a
         whole factor, rather than individual factor and level name pairs.)
 
@@ -34,3 +39,18 @@ class Constraint(ABC):
         before proceding.
         """
         return [self]
+
+    def uses_factor(self, f: Factor) -> bool:
+        """Reports whether the given factor is relevant to the constraint, and
+        can return False when a factor is known to be relevant to the
+        crossing or some other constraint.
+        """
+        return False
+
+    @abstractmethod
+    def potential_sample_conforms(self, sample: dict) -> bool:
+        """For rejection sampling, checks whether a given potential sample
+        matches a constraint, as long as crossing, exclusion for non-complex factors, and
+        minimum-trial contraints are already satisfied.
+        """
+        pass

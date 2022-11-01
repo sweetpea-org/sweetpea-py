@@ -5,7 +5,7 @@ from random import shuffle
 
 from sweetpea.primitives import Factor, SimpleLevel, DerivedLevel
 from sweetpea.constraints import at_most_k_in_a_row
-from sweetpea.internal import get_all_levels
+from sweetpea.internal.levels import get_all_levels
 from sweetpea.derivation_processor import DerivationProcessor
 import os
 
@@ -15,7 +15,7 @@ def __assert_atmostkinarow_pair(k: int, level: Tuple[Factor, Union[SimpleLevel, 
         assert sublist not in [e[level[0]][i:i+k+1] for i in range(len(e[level[0]]) - (k + 1))]
 
 def __assert_atmostkinarow_factor(k: int, f: Factor, experiments: List[dict]) -> None:
-    factor_name = f.factor_name
+    factor_name = f.name
     for level in f.levels:
         sublist = list(repeat(level.name, k + 1))
         for e in experiments:
@@ -40,5 +40,10 @@ def shuffled_design_sample(input, num):
     perms = list(permutations(input))
     shuffle(perms)
     return perms[:num]
+
+# Set to True to reset recorded files that have specific CNF encodings,
+# but leave as False to perform regression tests where the CNF should
+# not change:
+reset_expected_solutions = False
 
 path_to_cnf_files = os.path.dirname(os.path.abspath(__file__)) + "/cnf_files"

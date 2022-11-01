@@ -67,7 +67,7 @@ def ripple_carry_dimacs(num_digits: int) -> List[str]:
 def pop_count_dimacs(num_digits: int) -> List[str]:
     cnf = CNF()
     variables = cnf.get_n_fresh(num_digits)
-    cnf.pop_count(variables)
+    cnf.pop_count(variables, 0)
     all_inputs = permute_complements(variables)
     result_cnfs = [CNF([[x] for x in xs]) + cnf for xs in all_inputs]
     return [result_cnf.as_dimacs_string() for result_cnf in result_cnfs]

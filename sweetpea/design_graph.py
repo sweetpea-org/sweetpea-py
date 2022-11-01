@@ -25,7 +25,7 @@ class DesignGraph():
 
         for f in design:
             # Add the factor as a node.
-            g.add_node(f.factor_name)
+            g.add_node(f.name)
 
             # Simple factors (not derived) are the leaves.
             if not isinstance(f, DerivedFactor):
@@ -33,8 +33,8 @@ class DesignGraph():
 
             # Add directed edges between this factor and all factors that it depends on.
             for l in f.levels:
-                for depended_on_factor in l.window.args:
-                    g.add_edge(f.factor_name, depended_on_factor.factor_name)
+                for depended_on_factor in l.window.factors:
+                    g.add_edge(f.name, depended_on_factor.name)
 
         return g
 

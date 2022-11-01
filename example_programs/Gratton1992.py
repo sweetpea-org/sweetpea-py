@@ -2,8 +2,12 @@
 import sys
 sys.path.append("..")
 
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
-from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
+from sweetpea import (
+    Factor, DerivedLevel, WithinTrial, Transition,
+    CrossBlock, synthesize_trials, print_experiments, 
+    CMSGen, RandomGen
+)
+
 import numpy as np
 
 """
@@ -92,11 +96,11 @@ constraints = []
 
 design       = [target_direction, congruency, flanker_direction, congruency_transition, correct_response, response_transition]
 crossing     = [target_direction, congruency_transition, response_transition]
-block        = fully_cross_block(design, crossing, constraints)
+block        = CrossBlock(design, crossing, constraints)
 
 # SOLVE
 
-experiments  = synthesize_trials_non_uniform(block, 5)
+experiments  = synthesize_trials(block, 5, RandomGen)
 
 print_experiments(block, experiments)
 

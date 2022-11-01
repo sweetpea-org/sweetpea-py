@@ -6,10 +6,9 @@ from itertools import permutations
 from sweetpea import fully_cross_block
 from sweetpea.blocks import Block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window, SimpleLevel
-from sweetpea.constraints import Constraint, Consistency, FullyCross, Derivation, AtMostKInARow, ExactlyKInARow, Exclude
+from sweetpea.constraints import Constraint, Consistency, FullyCross, Derivation, AtMostKInARow, ExactlyKInARow, Exclude, Reify
 from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import And, Or, If, Iff, Not, to_cnf_tseitin
-from sweetpea.tests.test_utils import get_level_from_name
 
 color = Factor("color", ["red", "blue"])
 text  = Factor("text",  ["red", "blue"])
@@ -35,8 +34,7 @@ congruent_bookend = Factor("congruent bookend?", [
 
 design = [color, text, con_factor]
 crossing = [color, text]
-block = fully_cross_block(design, crossing, [])
-
+block = fully_cross_block(design, crossing, [Reify(con_factor)])
 
 def test_consistency():
     # From standard example
@@ -71,7 +69,7 @@ def test_consistency():
 
 @pytest.mark.parametrize('design', permutations([color, text, color_repeats_factor]))
 def test_consistency_with_transition(design):
-    block = fully_cross_block(design, [color, text], [])
+    block = fully_cross_block(design, [color, text], [Reify(color_repeats_factor)])
 
     backend_request = BackendRequest(0)
     Consistency.apply(block, backend_request)
@@ -84,7 +82,8 @@ def test_consistency_with_transition(design):
 
 @pytest.mark.parametrize('design', permutations([color, text, color_repeats_factor, text_repeats_factor]))
 def test_consistency_with_multiple_transitions(design):
-    block = fully_cross_block(design, [color, text], [])
+    block = fully_cross_block(design, [color, text], [Reify(color_repeats_factor),
+                                                      Reify(text_repeats_factor)])
 
     backend_request = BackendRequest(0)
     Consistency.apply(block, backend_request)
@@ -103,7 +102,8 @@ def test_consistency_with_transition_first_and_uneven_level_lengths():
         DerivedLevel("no",  Window(no_fn, [color3], 3, 1))
     ])
 
-    block = fully_cross_block([color3_repeats_factor, color3, text], [color3, text], [])
+    block = fully_cross_block([color3_repeats_factor, color3, text], [color3, text],
+                              [Reify(color3_repeats_factor)])
 
     backend_request = BackendRequest(0)
     Consistency.apply(block, backend_request)
@@ -126,7 +126,7 @@ def test_consistency_with_transition_first_and_uneven_level_lengths():
 def test_consistency_with_general_window():
     design = [color, text, congruent_bookend]
     crossing = [color, text]
-    block = fully_cross_block(design, crossing, [])
+    block = fully_cross_block(design, crossing, [Reify(congruent_bookend)])
 
     backend_request = BackendRequest(0)
     Consistency.apply(block, backend_request)
@@ -160,10 +160,10 @@ def test_fully_cross_simple():
     assert backend_request.fresh == 66
     assert backend_request.cnfs == [expected_cnf]
     assert backend_request.ll_requests == [
-        LowLevelRequest("GT", 0, [17, 21, 25, 29]),
-        LowLevelRequest("GT", 0, [18, 22, 26, 30]),
-        LowLevelRequest("GT", 0, [19, 23, 27, 31]),
-        LowLevelRequest("GT", 0, [20, 24, 28, 32])
+        LowLevelRequest("EQ", 1, [17, 21, 25, 29]),
+        LowLevelRequest("EQ", 1, [18, 22, 26, 30]),
+        LowLevelRequest("EQ", 1, [19, 23, 27, 31]),
+        LowLevelRequest("EQ", 1, [20, 24, 28, 32])
     ]
 
 
@@ -181,10 +181,10 @@ def test_fully_cross_with_constraint():
     assert backend_request.fresh == 74
     assert backend_request.cnfs == [expected_cnf]
     assert backend_request.ll_requests == [
-        LowLevelRequest("GT", 0, [25, 29, 33, 37]),
-        LowLevelRequest("GT", 0, [26, 30, 34, 38]),
-        LowLevelRequest("GT", 0, [27, 31, 35, 39]),
-        LowLevelRequest("GT", 0, [28, 32, 36, 40])
+        LowLevelRequest("EQ", 1, [25, 29, 33, 37]),
+        LowLevelRequest("EQ", 1, [26, 30, 34, 38]),
+        LowLevelRequest("EQ", 1, [27, 31, 35, 39]),
+        LowLevelRequest("EQ", 1, [28, 32, 36, 40])
     ]
 
 
@@ -194,7 +194,7 @@ def test_fully_cross_with_constraint():
 def test_fully_cross_with_transition_in_design(design):
     block = fully_cross_block(design,
                               [color, text],
-                              [])
+                              list(map(Reify, design)))
 
     backend_request = BackendRequest(23)
     FullyCross.apply(block, backend_request)
@@ -209,10 +209,10 @@ def test_fully_cross_with_transition_in_design(design):
     assert backend_request.fresh == 72
     assert backend_request.cnfs == [expected_cnf]
     assert backend_request.ll_requests == [
-        LowLevelRequest("GT", 0, [23, 27, 31, 35]),
-        LowLevelRequest("GT", 0, [24, 28, 32, 36]),
-        LowLevelRequest("GT", 0, [25, 29, 33, 37]),
-        LowLevelRequest("GT", 0, [26, 30, 34, 38])
+        LowLevelRequest("EQ", 1, [23, 27, 31, 35]),
+        LowLevelRequest("EQ", 1, [24, 28, 32, 36]),
+        LowLevelRequest("EQ", 1, [25, 29, 33, 37]),
+        LowLevelRequest("EQ", 1, [26, 30, 34, 38])
     ]
 
 
@@ -235,10 +235,10 @@ def test_fully_cross_with_uncrossed_simple_factors():
     assert backend_request.fresh == 74
     assert backend_request.cnfs == [expected_cnf]
     assert backend_request.ll_requests == [
-        LowLevelRequest("GT", 0, [25, 29, 33, 37]),
-        LowLevelRequest("GT", 0, [26, 30, 34, 38]),
-        LowLevelRequest("GT", 0, [27, 31, 35, 39]),
-        LowLevelRequest("GT", 0, [28, 32, 36, 40])
+        LowLevelRequest("EQ", 1, [25, 29, 33, 37]),
+        LowLevelRequest("EQ", 1, [26, 30, 34, 38]),
+        LowLevelRequest("EQ", 1, [27, 31, 35, 39]),
+        LowLevelRequest("EQ", 1, [28, 32, 36, 40])
     ]
 
 
@@ -262,54 +262,53 @@ def test_fully_cross_with_transition_in_crossing():
     assert backend_request.fresh == 78
     assert backend_request.cnfs == [expected_cnf]
     assert backend_request.ll_requests == [
-        LowLevelRequest("GT", 0, [29, 33, 37, 41]),
-        LowLevelRequest("GT", 0, [30, 34, 38, 42]),
-        LowLevelRequest("GT", 0, [31, 35, 39, 43]),
-        LowLevelRequest("GT", 0, [32, 36, 40, 44])
+        LowLevelRequest("EQ", 1, [29, 33, 37, 41]),
+        LowLevelRequest("EQ", 1, [30, 34, 38, 42]),
+        LowLevelRequest("EQ", 1, [31, 35, 39, 43]),
+        LowLevelRequest("EQ", 1, [32, 36, 40, 44])
     ]
 
 
-# def test_fully_cross_with_exclude():
-#     color = Factor("color", ["red", "blue", "green"])
-#     text =  Factor("text",  ["red", "blue"])
+def test_fully_cross_with_exclude():
+    color = Factor("color", ["red", "blue", "green"])
+    text =  Factor("text",  ["red", "blue"])
 
-#     def illegal_stimulus(color, text):
-#         return color == "green" and text == "blue"
+    def illegal_stimulus(color, text):
+        return color == "green" and text == "blue"
 
-#     def legal_stimulus(color, text):
-#         return not illegal_stimulus(color, text)
+    def legal_stimulus(color, text):
+        return not illegal_stimulus(color, text)
 
-#     stimulus_configuration = Factor("stimulus configuration", [
-#         DerivedLevel("legal",   WithinTrial(legal_stimulus, [color, text])),
-#         DerivedLevel("illegal", WithinTrial(illegal_stimulus, [color, text]))
-#     ])
+    stimulus_configuration = Factor("stimulus configuration", [
+        DerivedLevel("legal",   WithinTrial(legal_stimulus, [color, text])),
+        DerivedLevel("illegal", WithinTrial(illegal_stimulus, [color, text]))
+    ])
 
-#     block = fully_cross_block([color, text, stimulus_configuration],
-#                               [color, text],
-#                               [Exclude(stimulus_configuration, get_level_from_name(stimulus_configuration, "illegal"))],
-#                               require_complete_crossing=False)
+    block = fully_cross_block([color, text, stimulus_configuration],
+                              [color, text],
+                              [Exclude(stimulus_configuration, "illegal")],
+                              require_complete_crossing=False)
 
-#     backend_request = BackendRequest(36)
-#     FullyCross.apply(block, backend_request)
+    backend_request = BackendRequest(36)
+    FullyCross.apply(block, backend_request)
 
-#     (expected_cnf, _) = to_cnf_tseitin(And([
-#         Iff(36, And([ 1, 4 ])), Iff(37, And([ 1, 5 ])), Iff(38, And([ 2, 4 ])), Iff(39, And([ 2, 5 ])), Iff(40, And([ 3, 4 ])), Iff(41, And([ 3, 5 ])),
-#         Iff(42, And([ 8, 11])), Iff(43, And([ 8, 12])), Iff(44, And([ 9, 11])), Iff(45, And([ 9, 12])), Iff(46, And([10, 11])), Iff(47, And([10, 12])),
-#         Iff(48, And([15, 18])), Iff(49, And([15, 19])), Iff(50, And([16, 18])), Iff(51, And([16, 19])), Iff(52, And([17, 18])), Iff(53, And([17, 19])),
-#         Iff(54, And([22, 25])), Iff(55, And([22, 26])), Iff(56, And([23, 25])), Iff(57, And([23, 26])), Iff(58, And([24, 25])), Iff(59, And([24, 26])),
-#         Iff(60, And([29, 32])), Iff(61, And([29, 33])), Iff(62, And([30, 32])), Iff(63, And([30, 33])), Iff(64, And([31, 32])), Iff(65, And([31, 33]))
-#     ]), 66)
+    (expected_cnf, _) = to_cnf_tseitin(And([
+        Iff(36, And([ 1, 4 ])), Iff(37, And([ 1, 5 ])), Iff(38, And([ 2, 4 ])), Iff(39, And([ 2, 5 ])), Iff(40, And([ 3, 4 ])),
+        Iff(41, And([ 8, 11])), Iff(42, And([ 8, 12])), Iff(43, And([ 9, 11])), Iff(44, And([ 9, 12])), Iff(45, And([10, 11])),
+        Iff(46, And([15, 18])), Iff(47, And([15, 19])), Iff(48, And([16, 18])), Iff(49, And([16, 19])), Iff(50, And([17, 18])),
+        Iff(51, And([22, 25])), Iff(52, And([22, 26])), Iff(53, And([23, 25])), Iff(54, And([23, 26])), Iff(55, And([24, 25])),
+        Iff(56, And([29, 32])), Iff(57, And([29, 33])), Iff(58, And([30, 32])), Iff(59, And([30, 33])), Iff(60, And([31, 32]))
+    ]), 61)
 
-#     assert backend_request.fresh == 127
-#     assert backend_request.cnfs == [expected_cnf]
-#     assert backend_request.ll_requests == [
-#         LowLevelRequest("GT", 0, [36, 42, 48, 54, 60]),
-#         LowLevelRequest("GT", 0, [37, 43, 49, 55, 61]),
-#         LowLevelRequest("GT", 0, [38, 44, 50, 56, 62]),
-#         LowLevelRequest("GT", 0, [39, 45, 51, 57, 63]),
-#         LowLevelRequest("GT", 0, [40, 46, 52, 58, 64]),
-#         LowLevelRequest("GT", 0, [41, 47, 53, 59, 65])
-#     ]
+    assert backend_request.fresh == 112
+    assert backend_request.cnfs == [expected_cnf]
+    assert backend_request.ll_requests == [
+        LowLevelRequest("EQ", 1, [36, 41, 46, 51, 56]),
+        LowLevelRequest("EQ", 1, [37, 42, 47, 52, 57]),
+        LowLevelRequest("EQ", 1, [38, 43, 48, 53, 58]),
+        LowLevelRequest("EQ", 1, [39, 44, 49, 54, 59]),
+        LowLevelRequest("EQ", 1, [40, 45, 50, 55, 60])
+    ]
 
 
 def test_derivation():
@@ -479,19 +478,22 @@ def test_atmostkinarow_validate():
         AtMostKInARow(SimpleLevel("yo"), color)
 
     # Levels must either be a factor/level tuple, or a Factor.
-    AtMostKInARow(1, (color, get_level_from_name(color, "red")))
+    AtMostKInARow(1, (color, "red"))
     AtMostKInARow(1, color)
 
     with pytest.raises(ValueError):
         AtMostKInARow(1, 42)
 
     with pytest.raises(ValueError):
-        AtMostKInARow(1, (color, get_level_from_name(color, "red"), "oops"))
+        AtMostKInARow(1, (color, "red", "oops"))
+
+    with pytest.raises(ValueError):
+        AtMostKInARow(1, (color, "no such level"))
 
 
 def __run_kinarow(c: Constraint, block: Block = block) -> BackendRequest:
     backend_request = BackendRequest(block.variables_per_sample() + 1)
-    for dc in c.desugar():
+    for dc in c.desugar({}):
         dc.apply(block, backend_request)
     return backend_request
 
@@ -503,33 +505,33 @@ def test_atmostkinarow():
         LowLevelRequest("LT", 4, [2,  8, 14, 20])
     ]
 
-    backend_request = __run_kinarow(AtMostKInARow(1, (color, get_level_from_name(color, "red"))))
+    backend_request = __run_kinarow(AtMostKInARow(1, (color, "red")))
     assert backend_request.ll_requests == [
         LowLevelRequest("LT", 2, [1,  7 ]),
         LowLevelRequest("LT", 2, [7,  13]),
         LowLevelRequest("LT", 2, [13, 19])
     ]
 
-    backend_request = __run_kinarow(AtMostKInARow(2, (color, get_level_from_name(color, "red"))))
+    backend_request = __run_kinarow(AtMostKInARow(2, (color, "red")))
     assert backend_request.ll_requests == [
         LowLevelRequest("LT", 3, [1, 7,  13]),
         LowLevelRequest("LT", 3, [7, 13, 19])
     ]
 
-    backend_request = __run_kinarow(AtMostKInARow(1, (color, get_level_from_name(color, "blue"))))
+    backend_request = __run_kinarow(AtMostKInARow(1, (color, "blue")))
     assert backend_request.ll_requests == [
         LowLevelRequest("LT", 2, [2,  8 ]),
         LowLevelRequest("LT", 2, [8,  14]),
         LowLevelRequest("LT", 2, [14, 20])
     ]
 
-    backend_request = __run_kinarow(AtMostKInARow(2, (color, get_level_from_name(color, "blue"))))
+    backend_request = __run_kinarow(AtMostKInARow(2, (color, "blue")))
     assert backend_request.ll_requests == [
         LowLevelRequest("LT", 3, [2, 8,  14]),
         LowLevelRequest("LT", 3, [8, 14, 20])
     ]
 
-    backend_request = __run_kinarow(AtMostKInARow(3, (con_factor, get_level_from_name(con_factor, "con"))))
+    backend_request = __run_kinarow(AtMostKInARow(3, (con_factor, "con")))
     assert backend_request.ll_requests == [
         LowLevelRequest("LT", 4, [5, 11, 17, 23])
     ]
@@ -537,11 +539,11 @@ def test_atmostkinarow():
 
 def test_atmostkinarow_disallows_k_of_zero():
     with pytest.raises(ValueError):
-        AtMostKInARow(0, (con_factor, get_level_from_name(con_factor, "con")))
+        AtMostKInARow(0, (con_factor, "con"))
 
 
 def test_nomorethankinarow_sugar():
-    backend_request = __run_kinarow(AtMostKInARow(1, (color, get_level_from_name(color, "red"))))
+    backend_request = __run_kinarow(AtMostKInARow(1, (color, "red")))
     assert backend_request.ll_requests == [
         LowLevelRequest("LT", 2, [1,  7 ]),
         LowLevelRequest("LT", 2, [7,  13]),
@@ -551,15 +553,15 @@ def test_nomorethankinarow_sugar():
 
 @pytest.mark.parametrize('design', permutations([color, text, color_repeats_factor]))
 def test_atmostkinarow_with_transition(design):
-    block = fully_cross_block(design, [color, text], [])
+    block = fully_cross_block(design, [color, text], list(map(Reify, design)))
 
-    backend_request = __run_kinarow(AtMostKInARow(1, (color_repeats_factor, get_level_from_name(color_repeats_factor, "yes"))), block)
+    backend_request = __run_kinarow(AtMostKInARow(1, (color_repeats_factor, "yes")), block)
     assert backend_request.ll_requests == [
         LowLevelRequest("LT", 2, [17, 19]),
         LowLevelRequest("LT", 2, [19, 21])
     ]
 
-    backend_request = __run_kinarow(AtMostKInARow(1, (color_repeats_factor, get_level_from_name(color_repeats_factor, "no"))), block)
+    backend_request = __run_kinarow(AtMostKInARow(1, (color_repeats_factor, "no")), block)
     assert backend_request.ll_requests == [
         LowLevelRequest("LT", 2, [18, 20]),
         LowLevelRequest("LT", 2, [20, 22])
@@ -569,15 +571,15 @@ def test_atmostkinarow_with_transition(design):
 def test_atmostkinarow_with_multiple_transitions():
     block = fully_cross_block([color, text, color_repeats_factor, text_repeats_factor],
                               [color, text],
-                              [])
+                              [Reify(color_repeats_factor), Reify(text_repeats_factor)])
 
-    backend_request = __run_kinarow(AtMostKInARow(1, (text_repeats_factor, get_level_from_name(text_repeats_factor, "yes"))), block)
+    backend_request = __run_kinarow(AtMostKInARow(1, (text_repeats_factor, "yes")), block)
     assert backend_request.ll_requests == [
         LowLevelRequest("LT", 2, [23, 25]),
         LowLevelRequest("LT", 2, [25, 27])
     ]
 
-    backend_request = __run_kinarow(AtMostKInARow(1, (text_repeats_factor, get_level_from_name(text_repeats_factor, "no"))), block)
+    backend_request = __run_kinarow(AtMostKInARow(1, (text_repeats_factor, "no")), block)
     assert backend_request.ll_requests == [
         LowLevelRequest("LT", 2, [24, 26]),
         LowLevelRequest("LT", 2, [26, 28])
@@ -585,7 +587,7 @@ def test_atmostkinarow_with_multiple_transitions():
 
 
 def test_exactlykinarow():
-    backend_request = __run_kinarow(ExactlyKInARow(1, (color, get_level_from_name(color, "red"))))
+    backend_request = __run_kinarow(ExactlyKInARow(1, (color, "red")))
     (expected_cnf, expected_fresh) = to_cnf_tseitin(And([
         If(1, Not(7)),
         If(And([Not(1), 7]), Not(13)),
@@ -595,7 +597,7 @@ def test_exactlykinarow():
     assert backend_request.fresh == expected_fresh
     assert backend_request.cnfs == [expected_cnf]
 
-    backend_request = __run_kinarow(ExactlyKInARow(2, (color, get_level_from_name(color, "red"))))
+    backend_request = __run_kinarow(ExactlyKInARow(2, (color, "red")))
     (expected_cnf, expected_fresh) = to_cnf_tseitin(And([
         If(1, And([7, Not(13)])),
         If(And([Not(1), 7]), And([13, Not(19)])),
@@ -606,7 +608,7 @@ def test_exactlykinarow():
     assert backend_request.fresh == expected_fresh
     assert backend_request.cnfs == [expected_cnf]
 
-    backend_request = __run_kinarow(ExactlyKInARow(3, (color, get_level_from_name(color, "red"))))
+    backend_request = __run_kinarow(ExactlyKInARow(3, (color, "red")))
     (expected_cnf, expected_fresh) = to_cnf_tseitin(And([
         If(1, And([7, 13, Not(19)])),
         If(And([Not(1), 7]), And([13, 19])),
@@ -620,22 +622,22 @@ def test_exactlykinarow():
 
 def test_exactlykinarow_disallows_k_of_zero():
     with pytest.raises(ValueError):
-        ExactlyKInARow(0, (color, get_level_from_name(color, "red")))
+        ExactlyKInARow(0, (color, "red"))
 
 
 def test_kinarow_with_bad_factor():
     bogus_factor = Factor("f", ["a", "b", "c"])
     with pytest.raises(ValueError):
-        fully_cross_block(design, crossing, [ExactlyKInARow(2, (bogus_factor, get_level_from_name(bogus_factor, "a")))])
+        fully_cross_block(design, crossing, [ExactlyKInARow(2, (bogus_factor, "a"))])
 
 
 def test_exclude():
-    f = Exclude(color, get_level_from_name(color, "red"))
+    f = Exclude(color, "red")
     backend_request = BackendRequest(0)
     f.apply(block, backend_request)
     assert backend_request.cnfs == [And([-1, -7, -13, -19])]
 
-    f = Exclude(con_factor, get_level_from_name(con_factor, "con"))
+    f = Exclude(con_factor, "con")
     backend_request = BackendRequest(0)
     f.apply(block, backend_request)
     assert backend_request.cnfs == [And([-5, -11, -17, -23])]
@@ -646,7 +648,7 @@ def test_exclude_with_transition():
                               [color, text],
                               [])
 
-    c = Exclude(color_repeats_factor, get_level_from_name(color_repeats_factor, "yes"))
+    c = Exclude(color_repeats_factor, "yes")
     backend_request = BackendRequest(0)
     c.apply(block, backend_request)
     assert backend_request.cnfs == [And([-17, -19, -21])]
@@ -657,7 +659,7 @@ def test_exclude_with_general_window():
                               [color, text],
                               [])
 
-    c = Exclude(congruent_bookend, get_level_from_name(congruent_bookend, "yes"))
+    c = Exclude(congruent_bookend, "yes")
     backend_request = BackendRequest(0)
     c.apply(block, backend_request)
     assert backend_request.cnfs == [And([-17, -19])]
@@ -678,7 +680,7 @@ def test_exclude_with_reduced_crossing():
         DerivedLevel("illegal", WithinTrial(illegal_stimulus, [color, text]))
     ])
 
-    c = Exclude(stimulus_configuration, get_level_from_name(stimulus_configuration, "illegal"))
+    c = Exclude(stimulus_configuration, "illegal")
     block = fully_cross_block([color, text, stimulus_configuration],
                               [color, text],
                               [c],
@@ -709,7 +711,7 @@ def test_exclude_with_three_derived_levels():
                                  make_k_diff_level(1),
                                  make_k_diff_level(2)]);
 
-    exclude_constraint = Exclude(changed, get_level_from_name(changed, "2"))
+    exclude_constraint = Exclude(changed, "2")
 
     design       = [color, text, changed]
     crossing     = [color, text]

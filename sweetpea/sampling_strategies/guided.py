@@ -23,6 +23,10 @@ because trial selections early on can prune the remaining search space unevenly.
 class GuidedSamplingStrategy(SamplingStrategy):
 
     @staticmethod
+    def class_name():
+        return 'Guided Sampling Strategy'
+
+    @staticmethod
     def sample(block: Block, sample_count: int) -> SamplingResult:
 
         samples = cast(List[dict], [])

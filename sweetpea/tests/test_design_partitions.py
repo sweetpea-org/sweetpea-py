@@ -4,6 +4,7 @@ import pytest
 from sweetpea import fully_cross_block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial
 from sweetpea.design_partitions import DesignPartitions
+from sweetpea.constraints import Reify
 
 
 color      = Factor("color",      ["red", "blue"])
@@ -19,17 +20,16 @@ color_red  = Factor("color red", [
 
 design   = [color, text, congruency, color_red]
 crossing = [color, congruency]
-block    = fully_cross_block(design, crossing, [])
-
+block    = fully_cross_block(design, crossing, list(map(Reify, design)))
 
 def test_get_crossed_factors():
     partitions = DesignPartitions(block)
-    assert partitions.get_crossed_factors() == crossing
+    assert partitions.get_crossed_noncomplex_factors() == crossing
 
 
 def test_get_crossed_factors_derived():
     partitions = DesignPartitions(block)
-    assert partitions.get_crossed_factors_derived() == [congruency]
+    assert partitions.get_crossed_noncomplex_derived_factors() == [congruency]
 
 
 def test_get_uncrossed_basic_factors():
@@ -49,6 +49,6 @@ def test_get_uncrossed_basic_independent_factors():
 
 def test_get_uncrossed_derived_factors():
     partitions = DesignPartitions(block)
-    assert partitions.get_uncrossed_derived_factors() == [color_red]
+    assert partitions.get_uncrossed_derived_and_complex_derived_factors() == [color_red]
 
 

@@ -1,31 +1,36 @@
 """This module provides constraints for CNF generation."""
 
-
+import operator as op
 from abc import abstractmethod
 from copy import deepcopy
-from typing import List, Tuple, Any, Union, cast, Dict
+from typing import List, Tuple, Any, Union, cast, Dict, Callable
 from itertools import chain, product
+from math import ceil
 
 from sweetpea.base_constraint import Constraint
-from sweetpea.internal import chunk, chunk_list
+from sweetpea.internal.iter import chunk, chunk_list
 from sweetpea.blocks import Block, FullyCrossBlock, MultipleCrossBlock
 from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import If, Iff, And, Or, Not
-from sweetpea.primitives import DerivedFactor, DerivedLevel, Factor, Level, SimpleLevel, get_internal_level_name
+from sweetpea.primitives import DerivedFactor, DerivedLevel, Factor, Level, SimpleLevel
+from sweetpea.internal.argcheck import argcheck, make_istuple
+from sweetpea.internal.weight import combination_weight
 
 from pulp import LpProblem, LpVariable, lpSum
 
-def validate_factor_and_level(block: Block, factor: Factor, level: Union[SimpleLevel, DerivedLevel]) -> None:
+def validate_factor(block: Block, factor: Factor) -> None:
     if not block.has_factor(factor):
         raise ValueError(("A factor with name '{}' wasn't found in the design. "
                           "Are you sure the factor was included, and that the name is spelled "
-                          "correctly?").format(factor.factor_name))
+                          "correctly?").format(factor.name))
 
-    if not factor.has_level(level.name):
-        raise ValueError(("A level with name '{}' wasn't found in the '{}' factor, "
-                          "Are you sure the level name is spelled correctly?").format(
-                              get_internal_level_name(level),
-                              factor.factor_name))
+def validate_factor_and_level(block: Block, factor: Factor, level: Union[SimpleLevel, DerivedLevel]) -> None:
+    validate_factor(block, factor)
+
+    if not level in factor:
+        raise ValueError(("A level with name '{}' wasn't found in the '{}' factor").format(
+                              level.name,
+                              factor.name))
 
 
 class Consistency(Constraint):
@@ -62,13 +67,13 @@ class Consistency(Constraint):
     def apply(block: Block, backend_request: BackendRequest) -> None:
         next_var = 1
         for _ in range(block.trials_per_sample()):
-            for f in filter(lambda f: not f.has_complex_window, block.design):
+            for f in filter(lambda f: not f.has_complex_window, block.act_design):
                 number_of_levels = len(f.levels)
                 new_request = LowLevelRequest("EQ", 1, list(range(next_var, next_var + number_of_levels)))
                 backend_request.ll_requests.append(new_request)
                 next_var += number_of_levels
 
-        for f in filter(lambda f: f.has_complex_window, block.design):
+        for f in filter(lambda f: f.has_complex_window, block.act_design):
             variables_for_factor = block.variables_for_factor(f)
             var_list = list(map(lambda n: n + next_var, range(variables_for_factor)))
             chunks = list(chunk_list(var_list, len(f.levels)))
@@ -91,8 +96,11 @@ class Consistency(Constraint):
         #     backend_request.ll_requests += list(map(lambda v: LowLevelRequest("EQ", 1, v), chunks))
         #     next_var += variables_for_factor
 
+    def potential_sample_conforms(self, sample: dict) -> bool:
+        # conformance by construction in combinatoric
+        return True
 
-class FullyCross(Constraint):
+class Cross(Constraint):
     """We represent the fully crossed constraint by allocating additional
     boolean variables to represent each unique state. Only factors in crossing
     will contribute to the number of states (there may be factors in the design
@@ -131,63 +139,6 @@ class FullyCross(Constraint):
     def validate(self, block: Block) -> None:
         pass
 
-    @staticmethod
-    def apply(block: FullyCrossBlock, backend_request: BackendRequest) -> None:
-        fresh = backend_request.fresh
-
-        # Step 1: Get a list of the trials that are involved in the crossing.
-        crossing_size = max(block.min_trials, block.crossing_size())
-        crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t),
-                                                        block.crossing[0])),
-                                      range(1, block.trials_per_sample() + 1)))
-        crossing_trials = crossing_trials[:crossing_size]
-
-        # Step 2: For each trial, cross all levels of all factors in the crossing.
-        crossing_factors = list(map(lambda t: (list(product(*[block.factor_variables_for_trial(f, t)
-                                                              for f in block.crossing[0]]))),
-                                    crossing_trials))
-
-        # Step 3: For each trial, cross all levels of all design-only factors in the crossing.
-        design_factors = cast(List[List[List[int]]], [])
-        design_factors = list(map(lambda _: [], crossing_trials))
-        for f in list(filter(lambda f: f not in block.crossing[0] and not f.has_complex_window, block.design)):
-            for i, t in enumerate(crossing_trials):
-                design_factors[i].append(block.factor_variables_for_trial(f, t))
-        design_combinations = cast(List[List[Tuple[int, ...]]], [])
-        design_combinations = list(map(lambda l: list(product(*l)), design_factors))
-
-        # Step 4: For each trial, combine each of the crossing factors with all of the design-only factors.
-        crossings = cast(List[List[List[Tuple[int, ...]]]], [])
-        for i, t in enumerate(crossing_trials):
-            crossings.append(list(map(lambda c: [c] + design_combinations[i] ,crossing_factors[i])))
-
-        # Step 5: Remove crossings that are not possible.
-        # From here on ignore all values other than the first in every list.
-        crossings = block.filter_excluded_derived_levels(crossings)
-
-        # Step 6: Allocate additional variables to represent each crossing.
-        num_state_vars = list(map(lambda c: len(c), crossings))
-        state_vars = list(range(fresh, fresh + sum(num_state_vars)))
-        fresh += sum(num_state_vars)
-
-        # Step 7: Associate each state variable with its crossing.
-        flattened_crossings = list(chain.from_iterable(crossings))
-        iffs = list(map(lambda n: Iff(state_vars[n], And([*flattened_crossings[n][0]])), range(len(state_vars))))
-
-        # Step 8: Constrain each crossing to occur in only one trial.
-        states = list(chunk(state_vars, block.crossing_size()))
-        transposed = cast(List[List[int]], list(map(list, zip(*states))))
-
-        # We Use n < 2 rather than n = 1 here because they may exclude some levels from the crossing.
-        # This ensures that there won't be duplicates, while still allowing some to be missing.
-        # backend_request.ll_requests += list(map(lambda l: LowLevelRequest("LT", 2, l), transposed))
-        backend_request.ll_requests += list(map(lambda l: LowLevelRequest("GT", 0, l), transposed))
-
-        (cnf, new_fresh) = block.cnf_fn(And(iffs), fresh)
-
-        backend_request.cnfs.append(cnf)
-        backend_request.fresh = new_fresh
-
     # def apply_ILP(block: Block, prob: LpProblem):
     #     num_trials = block.trials_per_sample()
     #     crossing = LpVariable(num_trials, num_trials)
@@ -199,78 +150,91 @@ class FullyCross(Constraint):
     #         val *= factor_level_lengths[i]
     #         factor_level_lengths[i] = val
 
-        # for i in num_trials:
-        #     for j in num_trials:
-        #         rhs = 0
-        #         for f in block.crossing[0]:
-        #             prob += 2*crossing[i][j] <= color[int(j/crossing_t)][i] + text[j%crossing_t][i]
-        #             prob += crossing[i][j] - color[int(j/crossing_t)][i] - text[j%crossing_t][i] >= -1
+    #     for i in num_trials:
+    #         for j in num_trials:
+    #             rhs = 0
+    #             for f in block.crossing[0]:
+    #                 prob += 2*crossing[i][j] <= color[int(j/crossing_t)][i] + text[j%crossing_t][i]
+    #                 prob += crossing[i][j] - color[int(j/crossing_t)][i] - text[j%crossing_t][i] >= -1
 
-        #     prob += lpSum([crossing[n][i] for n in num_trials]) == 1
-
-
-
-class MultipleCross(Constraint):
-    def validate(self, block: Block) -> None:
-        pass
+    #         prob += lpSum([crossing[n][i] for n in num_trials]) == 1
 
     @staticmethod
     def apply(block: MultipleCrossBlock, backend_request: BackendRequest) -> None:
-        # Treat each crossing seperately, and repeat the same process as fullycross
-        for c in block.crossing:
+        # Treat each crossing seperately, but they're related by shared variables, which
+        # are the per-trial, per-level variables of factors used in multiple crossings
+        for c in block.crossings:
             fresh = backend_request.fresh
 
-            # Step 1: Get a list of the trials that are involved in the crossing.
-            crossing_size = max(block.min_trials, block.crossing_size())
-            crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t),
-                                                            c)),
+            # Step 1a: Get a list of the trials that are involved in the crossing. That list
+            # omits leading trials that will be present to initialize transitions, and the
+            # number of trials may have been reduced by exclusions.
+            crossing_size = block.crossing_size(c);
+            trial_count = max(block.min_trials, crossing_size)
+            crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t), c)),
                                           range(1, block.trials_per_sample() + 1)))
-            crossing_trials = crossing_trials[:crossing_size]
+            crossing_trials = crossing_trials[:trial_count]
 
-            # Step 2: For each trial, cross all levels of all factors in the crossing.
-            crossing_factors = list(map(lambda t: (list(product(*[block.factor_variables_for_trial(f, t) for f in c]))), crossing_trials))
+            # Step 1b: For each trial, cross all levels of all factors in the crossing.
+            # We exclude any combination that is dsiallowed by implicit or explicit exlcusions.
+            level_lists = [list(f.levels) for f in c]
+            crossings = [{level.factor: level for level in levels} for levels in product(*level_lists)]
+            trial_combinations = list(filter(lambda c: not block.is_excluded_or_inconsistent_combination(c), crossings))
+            crossing_combinations = [[block.encode_combination(c, t) for c in trial_combinations] for t in crossing_trials]
+            # Each trial is now represented in `crossing_factors` by a list
+            # of potential level combinations, where each level combination is represented
+            # as tuple of CNF variables.
 
-            # Step 3: For each trial, cross all levels of all design-only factors in the crossing.
-            design_factors = cast(List[List[List[int]]], [])
-            design_factors = list(map(lambda _: [], crossing_trials))
-            for f in list(filter(lambda f: f not in c and not f.has_complex_window, block.design)):
-                for i, t in enumerate(crossing_trials):
-                    design_factors[i].append(block.factor_variables_for_trial(f, t))
-            design_combinations = cast(List[List[Tuple[int, ...]]], [])
-            design_combinations = list(map(lambda l: list(product(*l)), design_factors))
+            # Step 2a: Allocate additional variables to represent each crossing in each trial.
+            num_state_vars = len(crossing_combinations) * len(crossing_combinations[0])
+            state_vars = list(range(fresh, fresh + num_state_vars))
+            fresh += num_state_vars
 
-            # Step 4: For each trial, combine each of the crossing factors with all of the design-only factors.
-            crossings = cast(List[List[List[Tuple[int, ...]]]], [])
-            for i, t in enumerate(crossing_trials):
-                crossings.append(list(map(lambda c: [c] + design_combinations[i], crossing_factors[i])))
+            # Step 2b: Associate each state variable with its combination in each trial.
+            flattened_combinations = list(chain.from_iterable(crossing_combinations))
+            iffs = list(map(lambda n: Iff(state_vars[n], And([*flattened_combinations[n]])), range(len(state_vars))))
 
-            # Step 5: Remove crossings that are not possible.
-            # From here on ignore all values other than the first in every list.
-            crossings = block.filter_excluded_derived_levels(crossings)
+            # Step 2c: Get weight associated with each combination.
+            combination_weights = [combination_weight(tuple(c.values())) for c in trial_combinations]
 
-            # Step 6: Allocate additional variables to represent each crossing.
-            num_state_vars = list(map(lambda c: len(c), crossings))
-            state_vars = list(range(fresh, fresh + sum(num_state_vars)))
-            fresh += sum(num_state_vars)
-
-            # Step 7: Associate each state variable with its crossing.
-            flattened_crossings = list(chain.from_iterable(crossings))
-            iffs = list(map(lambda n: Iff(state_vars[n], And([*flattened_crossings[n][0]])), range(len(state_vars))))
-
-            # Step 8: Constrain each crossing to occur in only one trial.
-            states = list(chunk(state_vars, block.crossing_size()))
+            # Step 3: Constrain each crossing to occur exactly according to its weight in each `crossing_size`
+            # set of trials, or at most that much in a last set of trials that is less than
+            # `crossing_size` in length.
+            states = list(chunk(state_vars, len(trial_combinations)))
             transposed = cast(List[List[int]], list(map(list, zip(*states))))
-
-            # We Use n < 2 rather than n = 1 here because they may exclude some levels from the crossing.
-            # This ensures that there won't be duplicates, while still allowing some to be missing.
-            # backend_request.ll_requests += list(map(lambda l: LowLevelRequest("LT", 2, l), transposed))
-            backend_request.ll_requests += list(map(lambda l: LowLevelRequest("GT", 0, l), transposed))
+            reqss = map(lambda l, w: Cross.__add_weight_constraint(l, w, crossing_size), transposed, combination_weights)
+            backend_request.ll_requests += list(chain.from_iterable(reqss))
 
             (cnf, new_fresh) = block.cnf_fn(And(iffs), fresh)
 
             backend_request.cnfs.append(cnf)
             backend_request.fresh = new_fresh
 
+    @staticmethod
+    def __add_weight_constraint(variables: List[int], weight: int, crossing_size: int) -> List[LowLevelRequest]:
+        """Constrain to a weight of each `crossing_size` sequence of variables, and at
+        at most one for an ending sequence that is less than `crossing_size` in length.
+        """
+        to_add = len(variables)
+        reqs = cast(List[LowLevelRequest], [])
+        while to_add > 0:
+            if (to_add >= crossing_size):
+                reqs.append(LowLevelRequest("EQ", weight, variables[:crossing_size]))
+            else:
+                reqs.append(LowLevelRequest("LT", weight+1, variables))
+            variables = variables[crossing_size:]
+            to_add -= crossing_size
+        return reqs
+
+    def potential_sample_conforms(self, sample: dict) -> bool:
+        # conformance by construction in combinatoric
+        return True
+            
+class FullyCross(Cross):
+    """Covered by Cross"""
+
+class MultipleCross(Cross):
+    """Covered by Cross"""
 
 class Derivation(Constraint):
     """A derivation such as::
@@ -385,6 +349,12 @@ class Derivation(Constraint):
     def __str__(self):
         return str(self.__dict__)
 
+    def uses_factor(self, f: Factor) -> bool:
+        return any(list(map(lambda l: l.uses_factor(f), self.factor.levels)))
+
+    def potential_sample_conforms(self, sample: dict) -> bool:
+        return True
+
 
 class _KInARow(Constraint):
     def __init__(self, k, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]]):
@@ -393,30 +363,47 @@ class _KInARow(Constraint):
         self.__validate()
 
     def __validate(self) -> None:
+        who = self.__class__.__name__
+
         if not isinstance(self.k, int):
-            raise ValueError("k must be an integer.")
+            raise ValueError(f"{who}: k must be an integer, received {self.k}")
 
         if self.k <= 0:
-            raise ValueError("k must be greater than 0. If you're trying to exclude a particular level, "
-                             "please use the 'Exclude' constraint.")
+            raise ValueError(f"{who}: k must be greater than 0; if you're trying to exclude a particular level, "
+                             f"use the 'Exclude' constraint")
 
-        if not (isinstance(self.level, Factor) or \
-                (isinstance(self.level, tuple) and \
-                 len(self.level) == 2 and \
-                 isinstance(self.level[0], Factor) and \
-                 (isinstance(self.level[1], SimpleLevel)
-                 or isinstance(self.level[1], DerivedLevel)))):
-            raise ValueError("level must be either a Factor or a Tuple[Factor, DerivedLevel or SimpleLevel].")
+        if isinstance(self.level, Factor):
+            pass
+        elif isinstance(self.level, tuple) and len(self.level) == 2:
+            if not (isinstance(self.level[1], SimpleLevel) or isinstance(self.level[1], DerivedLevel)):
+                l = self.level[0].get_level(self.level[1])
+                if not l:
+                    raise ValueError(f"{who}: not a level in factor {self.level[0]}: {self.level[1]}")
+                self.level = (self.level[0], l)
+        else:
+            raise ValueError(f"{who}: expected either a Factor or a tuple of Factor and Level, given {self.level}")
 
     def validate(self, block: Block) -> None:
         validate_factor_and_level(block, self.level[0], self.level[1])
 
-    def desugar(self) -> List[Constraint]:
+    def uses_factor(self, f: Factor) -> bool:
+        if isinstance(self.level, Factor):
+            return self.level.uses_factor(f)
+        else:
+            return self.level[0].uses_factor(f)
+
+    def desugar(self, replacements: dict) -> List[Constraint]:
         constraints = cast(List[Constraint], [self])
 
-        # Generate the constraint for each level in the factor.
         if isinstance(self.level, Factor):
-            levels = self.level.levels  # Get the actual levels out of the factor.
+            level = replacements.get(self.level, self.level)
+        else:
+            level = (replacements.get(self.level[0], self.level[0]),
+                     replacements.get(self.level[0], self.level[1]))
+
+        # Generate the constraint for each level in the factor.
+        if isinstance(level, Factor):
+            levels = level.levels  # Get the actual levels out of the factor.
             level_tuples = list(map(lambda level: (self.level, level), levels))
 
             constraints = []
@@ -424,6 +411,10 @@ class _KInARow(Constraint):
                 constraint_copy = deepcopy(self)
                 constraint_copy.level = t
                 constraints.append(constraint_copy)
+        elif level != self.level:
+            constraint_copy = deepcopy(self)
+            constraint_copy.level = level
+            constraints = [constraint_copy]
 
         return constraints
 
@@ -444,6 +435,32 @@ class _KInARow(Constraint):
     @abstractmethod
     def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], backend_request: BackendRequest) -> None:
         pass
+
+    def potential_sample_conforms(self, sample: dict) -> bool:
+        factor = self.level[0]
+        level = self.level[1]
+
+        level_list = sample[factor]
+        counts = []
+        count = 0
+        for l in level_list:
+            if count > 0 and l != level:
+                counts.append(count)
+                count = 0
+            elif l == level:
+                count += 1
+
+        if count > 0:
+            counts.append(count)
+
+        return self._potential_counts_conform(counts)
+
+    @abstractmethod
+    def _potential_counts_conform(self, counts: List[int]) -> bool:
+        pass
+
+    def _potential_counts_conform_individually(self, counts: List[int], fn: Callable[[int, int], bool]) -> bool:
+        return all(map(lambda n: fn(n, self.k), counts))
 
 
 def at_most_k_in_a_row(k, levels):
@@ -488,6 +505,9 @@ class AtMostKInARow(_KInARow):
     def __str__(self):
         return str(self.__dict__)
 
+    def _potential_counts_conform(self, counts: List[int]) -> bool:
+        return self._potential_counts_conform_individually(counts, op.le)
+
 
 def at_least_k_in_a_row(k, levels):
     """This is more complicated that AtMostKInARow. We collect all the boolean
@@ -525,7 +545,6 @@ class AtLeastKInARow(_KInARow):
 
         # Request sublists for k+1 to allow us to determine the transition
         sublists = self._build_variable_sublists(block, level, self.k + 1)
-
         implications = []
         if sublists:
             # Starting corner case
@@ -548,6 +567,9 @@ class AtLeastKInARow(_KInARow):
 
     def __str__(self):
         return str(self.__dict__)
+
+    def _potential_counts_conform(self, counts: List[int]) -> bool:
+        return self._potential_counts_conform_individually(counts, op.ge)
 
 
 def exactly_k(k ,levels):
@@ -574,6 +596,9 @@ class ExactlyK(_KInARow):
 
     def __str__(self):
         return str(self.__dict__)
+
+    def _potential_counts_conform(self, counts: List[int]) -> bool:
+        return sum(counts) == self.k
 
 
 def exactly_k_in_a_row(k, levels):
@@ -616,7 +641,6 @@ class ExactlyKInARow(_KInARow):
                 implications.append(If(l[idx], l[idx + 1]))
 
         (cnf, new_fresh) = block.cnf_fn(And(implications), backend_request.fresh)
-
         backend_request.cnfs.append(cnf)
         backend_request.fresh = new_fresh
 
@@ -629,6 +653,9 @@ class ExactlyKInARow(_KInARow):
     def __str__(self):
         return str(self.__dict__)
 
+    def _potential_counts_conform(self, counts: List[int]) -> bool:
+        return self._potential_counts_conform_individually(counts, op.eq)
+
 
 def exclude(factor, levels):
     return Exclude(factor, levels)
@@ -638,7 +665,15 @@ class Exclude(Constraint):
     def __init__(self, factor, level):
         self.factor = factor
         self.level = level
-        # TODO: validation
+        who = "Exclude"
+        argcheck(who, factor, Factor, "a Factor")
+        if not isinstance(level, Level):
+            l = factor.get_level(level)
+            if not l:
+                raise ValueError(f"{who}: not a level in factor {factor}: {level}")
+            self.level = l
+        elif level not in factor.levels:
+            raise RuntimeError(f"{who}: given level is not in given factor: {level} not in {factor}")
 
     def validate(self, block: Block) -> None:
         validate_factor_and_level(block, self.factor, self.level)
@@ -647,6 +682,14 @@ class Exclude(Constraint):
         # Store the basic factor-level combnations resulting in the derived excluded factor in the block
         if isinstance(self.level, DerivedLevel) and not self.factor.has_complex_window:
             block.excluded_derived.extend(self.extract_simplelevel(block, self.level))
+
+    def uses_factor(self, f: Factor) -> bool:
+        return self.factor.uses_factor(f)
+
+    def desugar(self, replacements: dict) -> List:
+        factor = replacements.get(self.factor, self.factor)
+        level = replacements.get(self.level, self.level)
+        return [Exclude(factor, level)]
 
     def extract_simplelevel(self, block: Block, level: DerivedLevel) -> List[Dict[Factor, SimpleLevel]]:
         """Recursively deciphers the excluded level to a list of combinations
@@ -694,6 +737,46 @@ class Exclude(Constraint):
     def __str__(self):
         return str(self.__dict__)
 
+    def is_complex_for_combinatoric(self) -> bool:
+        return False
+
+    def potential_sample_conforms(self, sample: dict) -> bool:
+        # conformance by construction in combinatoric for simple factors, but
+        # we have to check exlcusions based on complex factors
+        if self.factor.has_complex_window:
+            levels = sample[self.factor]
+            level = self.level
+            for l in levels:
+                if l == level:
+                    return False
+        return True
+
+
+class Reify(Constraint):
+    """The only purpose of this constraint is to make a factor
+    non-implied, so that it's exposed to a constraint solver."""
+    def __init__(self, factor):
+        self.factor = factor
+
+    def validate(self, block: Block) -> None:
+        validate_factor(block, self.factor)
+
+    def apply(self, block: Block, backend_request: BackendRequest) -> None:
+        """Do nothing."""
+
+    def uses_factor(self, f: Factor) -> bool:
+        return self.factor.uses_factor(f)
+
+    def is_complex_for_combinatoric(self) -> bool:
+        return False
+
+    def potential_sample_conforms(self, sample: dict) -> bool:
+        return True
+
+    def desugar(self, replacements: dict) -> List:
+        factor = replacements.get(self.factor, self.factor)
+        return [Reify(factor)]
+
 
 def minimum_trials(trials):
     return MinimumTrials(trials)
@@ -702,13 +785,18 @@ def minimum_trials(trials):
 class MinimumTrials(Constraint):
     def __init__(self, trials):
         self.trials = trials
+        who = "MinimumTrials"
+        argcheck(who, trials, int, "an integer")
         # TODO: validation
+
+    def is_complex_for_combinatoric(self) -> bool:
+        return False
 
     def validate(self, block: Block) -> None:
         if self.trials <= 0 and not isinstance(self.trials, int):
             raise ValueError("Minimum trials must be a positive integer.")
 
-    def apply(self, block: Block, backend_request: BackendRequest) -> None:
+    def apply(self, block: Block, backend_request: Union[BackendRequest, None]) -> None:
         if block.min_trials:
             block.min_trials = max([block.min_trials, self.trials])
         else:
@@ -722,3 +810,6 @@ class MinimumTrials(Constraint):
 
     def __str__(self):
         return str(self.__dict__)
+
+    def potential_sample_conforms(self, sample: dict) -> bool:
+        return True

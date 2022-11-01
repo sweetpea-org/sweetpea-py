@@ -87,40 +87,18 @@ directly constructed with :func:`sweetpea.primitives.DerivedLevel`.
 
 Derivations can also be constrained by :term:`derivation windows <derivation
 window>`, which allow for specifying specific manners in which different levels
-from multiple factors can interact across trial boundaries. There are three
-kinds of derivation windows:
+from multiple factors can interact across trial boundaries:
 
-- :ref:`Basic windows <guide_factorial_derivations_basic_windows>`, from which
-  other windows are made.
-- :ref:`Transition windows <guide_factorial_derivations_transition_windows>`,
-  which constrain derivations across trial transition points.
 - :ref:`Within-trial windows
-  <guide_factorial_derivations_within-trial_windows>`, which provide windows
-  that look only within a single given trial.
+  <guide_factorial_derivations_within-trial_windows>`
+  look only within a single given trial.
+- :ref:`Transition windows <guide_factorial_derivations_transition_windows>`,
+  look at a trial and the previous one, so it can describe transitions between
+  two consecutive trials.
+- :ref:`General windows <guide_factorial_derivations_basic_windows>` are defined
+  in terms of a trial and any number of preceding trials.
 
 These are explained more below.
-
-
-.. _guide_factorial_derivations_basic_windows:
-
-Basic Windows
-^^^^^^^^^^^^^
-
-A basic :term:`derivation window`
-(:class:`sweetpea.primitives.DerivationWindow`) creates a level that is selected
-depending on a combination of levels from other factors in the current trial and
-zero or more preceding trials.
-
-
-.. _guide_factorial_derivations_transition_windows:
-
-Transition Windows
-^^^^^^^^^^^^^^^^^^
-
-A :term:`transition window <derivation window, transition>`
-(:class:`sweetpea.primitives.TransitionDerivationWindow`) describes a level that
-is selected depending on a combination of levels from other factors in the
-current trial and the immediately preceding trial.
 
 
 .. _guide_factorial_derivations_within-trial_windows:
@@ -131,6 +109,31 @@ Within-Trial Windows
 The :term:`within-trial windows <derivation window, within-trial>`
 (:class:`sweetpea.primitives.WithinTrialDerivationWindow`) describe a level that
 is selected depending on levels from other factors, all within the same trial.
+For example, when one factor is a color and another factor is the text of a color name,
+each trial can be categozied as “congurent” or “incongrent” individually.
+
+.. _guide_factorial_derivations_transition_windows:
+
+Transition Windows
+^^^^^^^^^^^^^^^^^^
+
+A :term:`transition window <derivation window, transition>`
+(:class:`sweetpea.primitives.TransitionDerivationWindow`) describes a level that
+is selected depending on a combination of levels from other factors in the
+current trial and the immediately preceding trial. For example, a trial
+might be categorized as “same” if it is categorized as “congurent”
+and the previous trial was also categorized as “congurent”.
+
+
+.. _guide_factorial_derivations_basic_windows:
+
+General Windows
+^^^^^^^^^^^^^^^
+
+A general :term:`derivation window`
+(:class:`sweetpea.primitives.DerivationWindow`) creates a level that is selected
+depending on a combination of levels from other factors in the current trial and
+zero or more preceding trials.
 
 
 .. _guide_factorial_glossary:
@@ -139,6 +142,17 @@ Glossary
 --------
 
 .. glossary::
+
+    constraint
+      An element of an :term:`experiment design` that affects the generation of
+      :term:`trials <trial>` for the experiment. For example, a constraint
+      may exclude a particular combination of levels, it may prevent a certain
+      number of levels from appearing in consecutive sequences, or it may
+      increase the number of :term:`trials <trial>` in an experiment
+      by establishing a minimum trial count.
+
+    crossing
+      Short for :term:`experiment crossing`.
 
     derivation
       An artificial :term:`level` that results from the combination of other
@@ -160,6 +174,28 @@ Glossary
 
     derived level
       See :term:`derivation`.
+
+    design
+      Short for :term:`experiment design`.
+
+    experiment
+      Usually, a particular instantiation of a sequence of :term:`trials <trial>`
+      for an experiment design. When clear from context, “experiment” may be used
+      instead as a shorthand for :term:`experiment design`.
+
+    experiment crossing
+      A subset of the :term:`factors <factor>` that define an
+      experiment. Except as modified by exclusions and minimum-trials
+      :term:`constraints <constraint>`, a sequence of :term:`trials <trial>` for an
+      experiment combines every possible :term:`level` of each :term:`factor`
+      in the crossing with every :term:`level` of every other :term:`factor`
+      in the crossing. For a :term:`factor` that is not in the crossing,
+      a :term:`level` is assigned independently or based on explicit
+      :term:`constraints <constraint>` or :term:`derived levels <derived level>`.
+
+    experiment design
+      The set of factors and coonstraints that define an experiment
+      and that determine the :term:`trials <trial>` of the experiment.
 
     factor
       An independent variable in a factorial experiment, composed of finitely
@@ -201,10 +237,11 @@ Glossary
       See :term:`derivation window, transition`.
 
     trial
-      An individual repetition of an experiment. A minimum number of trials must
-      be run to obtain sufficient evidence to draw conclusions, and this number
-      is determined in part by the number of :term:`factors <factor>` and
-      :term:`levels <level>`.
+      An individual event in an experiment that is defined by a
+      combination of levels. The numebr of trials contained in an
+      experiment is determined in part by the number of :term:`factors
+      <factor>` and :term:`levels <level>` in the experiment design
+      and the way that they are crossed.
 
     window
       See :term:`derivation window`.

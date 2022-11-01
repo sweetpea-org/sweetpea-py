@@ -6,11 +6,10 @@ import operator as op
 from typing import Any, Dict, List, Tuple, cast
 from functools import reduce
 
-# TODO: Fix this Derivation name collision.
 from sweetpea.primitives import DerivationWindow, DerivedFactor, DerivedLevel, Level
 from sweetpea.blocks import Block
 from sweetpea.constraints import Derivation
-from sweetpea.internal import chunk_list
+from sweetpea.internal.iter import chunk_list
 
 
 class DerivationProcessor:
@@ -52,6 +51,8 @@ class DerivationProcessor:
             returns a list of tuples. Each tuple is structured as:
             ``(index of the derived level, list of dependent levels)``
         """
+        # We include implied factors in `derived_factors` so we check the mapping of levels,
+        # but we'll only add to `accum` if the factor is non-implied
         derived_factors: List[DerivedFactor] = [factor for factor in block.design if isinstance(factor, DerivedFactor)]
         accum = []
 
@@ -61,32 +62,40 @@ class DerivationProcessor:
                 cross_product: List[Tuple[Level, ...]] = level.get_dependent_cross_product()
                 valid_tuples: List[Tuple[Level, ...]] = []
                 for level_tuple in cross_product:
-                    names = [level.name for level in level_tuple]
+                    args = [level.name for level in level_tuple]
                     if level.window.width != 1:
                         # NOTE: mypy doesn't like this, but I'm not rewriting
                         #       it right now. Need to replace `chunk_list` with
                         #       a better version.
-                        names = list(chunk_list(names, level.window.width))  # type: ignore
-                    result = level.window.predicate(*names)
+                        args = list(chunk_list(args, level.window.width))  # type: ignore
+                    result = level.window.predicate(*args)
                     if not isinstance(result, bool):
                         raise ValueError(f"Expected derivation predicate to return bool; got {type(result)}.")
-                    if level.window.predicate(*names):
+                    if result:
                         valid_tuples.append(level_tuple)
                         if level_tuple in according_level:
                             raise ValueError(f"Factor {factor.name} matches {according_level[level_tuple].name} and "
-                                             f"{level.name} with assignment {names}.")
+                                             f"{level.name} with assignment {args}.")
                         according_level[level_tuple] = level
 
                 if not valid_tuples:
-                    print(f"WARNING: There is no assignment that matches factor {factor.name} with level {level.name}.")
+                    in_crossing = block.factor_in_crossing(factor)
+                    # Solvers can go wrong if a crossing level is not even possible:
+                    maybe_warning = "WARNING: " if (not in_crossing) or not block.require_complete_crossing else ""
+                    maybe_crossing = "crossed " if in_crossing else ""
+                    not_satisfiable = "not satisfiable" if block.require_complete_crossing else "incomplete"
+                    conclusion = f", which means that the crossing is {not_satisfiable}" if in_crossing else ""
+                    block.errors.add(f"{maybe_warning}No matches to the {maybe_crossing}factor"
+                                     f" '{factor.name}' predicate for level\n '{level.name}'{conclusion}.")
 
-                valid_indices = [[block.first_variable_for_level(level.factor, level) for level in valid_tuple]
-                                 for valid_tuple in valid_tuples]
-                shifted_indices = DerivationProcessor.shift_window(valid_indices,
-                                                                   level.window,
-                                                                   block.variables_per_trial())
-                level_index = block.first_variable_for_level(factor, level)
-                accum.append(Derivation(level_index, shifted_indices, factor))
+                if factor in block.act_design:
+                    valid_indices = [[block.first_variable_for_level(level.factor, level) for level in valid_tuple]
+                                     for valid_tuple in valid_tuples]
+                    shifted_indices = DerivationProcessor.shift_window(valid_indices,
+                                                                       level.window,
+                                                                       block.variables_per_trial())
+                    level_index = block.first_variable_for_level(factor, level)
+                    accum.append(Derivation(level_index, shifted_indices, factor))
         return accum
 
     @staticmethod
@@ -104,7 +113,7 @@ class DerivationProcessor:
                      window: DerivationWindow,
                      trial_size: int
                      ) -> List[List[int]]:
-        """This is a helper function that shifts the indices of
+        """This is a helper function that shifts< the indices of
         :func:`.DerivationProcessor.generate_derivations`.
 
         E.g., if it's a ``Transition(op.eq, [color, color])`` (i.e., "repeat"
@@ -131,7 +140,7 @@ class DerivationProcessor:
 
         shifted_idxs = cast(List[List[int]], [])
         shifted_sublists = cast(List[List[int]], [])
-        argc = window.initial_factor_count
+        argc = len(window.factors)
         for idx_list in indices:
             sublist_size = len(idx_list) // argc
             sublists = chunk_list(idx_list, sublist_size)

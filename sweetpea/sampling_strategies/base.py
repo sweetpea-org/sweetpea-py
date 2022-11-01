@@ -3,7 +3,7 @@ from typing import List, cast
 from itertools import repeat
 
 from sweetpea.blocks import Block
-from sweetpea.internal import intersperse
+from sweetpea.internal.iter import intersperse
 
 
 """
@@ -14,11 +14,10 @@ class SamplingResult:
         self.samples = samples
         self.metrics = metrics
 
-
 """
 Generic interface for sampling strategies.
 """
-class SamplingStrategy(ABC):
+class Gen(ABC):
 
     """
     Sample some number of trial sequences for the given block.
@@ -56,7 +55,7 @@ class SamplingStrategy(ABC):
 
         # Simple factors
         tuples = list(map(lambda v: block.decode_variable(v), simple_variables))
-        string_tuples = list(map(lambda t: (t[0].factor_name, t[1].external_name), tuples))
+        string_tuples = list(map(lambda t: (t[0].name, t[1].name), tuples))
         for (factor_name, level_name) in string_tuples:
             if factor_name not in experiment:
                 experiment[factor_name] = []
@@ -64,7 +63,7 @@ class SamplingStrategy(ABC):
 
         # Complex factors - The challenge here is knowing when to insert '', rather than using the variables.
         # Start after 'width' trials, and shift 'stride' trials for each variable.
-        complex_factors = list(filter(lambda f: f.has_complex_window, block.design))
+        complex_factors = list(filter(lambda f: f.has_complex_window, block.act_design))
         for f in complex_factors:
             # Get variables for this factor
             start = block.first_variable_for_level(f, f.levels[0]) + 1
@@ -73,7 +72,7 @@ class SamplingStrategy(ABC):
 
             # Get the level names for the variables in the solution.
             level_tuples = list(map(lambda v: block.decode_variable(v), variables))
-            level_names = list(map(lambda t: (t[1].external_name), level_tuples))
+            level_names = list(map(lambda t: (t[1].name), level_tuples))
 
             # Intersperse empty strings for the trials to which this factor does not apply.
             #level_names = list(intersperse('', level_names, f.levels[0].window.stride - 1))
@@ -81,6 +80,12 @@ class SamplingStrategy(ABC):
             level_names_fill = []
             for n in range(block.trials_per_sample()):
                 level_names_fill.append(level_names.pop(0) if f.applies_to_trial(n+1) else '')
-            experiment[f.factor_name] = level_names_fill
+            experiment[f.name] = level_names_fill
 
         return experiment
+
+    @staticmethod
+    def class_name():
+        return "Unknown Sampling Strategy"
+
+SamplingStrategy = Gen
