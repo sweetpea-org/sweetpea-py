@@ -20,9 +20,9 @@ class Constraint(ABC):
     def apply(self, block, backend_request) -> None:
         pass
 
-    @abstractmethod
-    def apply_ILP(self, block, prob) -> None:
-        pass
+    # @abstractmethod
+    # def apply_ILP(self, block, prob) -> None:
+    #     pass
 
     def desugar(self) -> List:
         """Some constraints accept shorthand representations. (Like accepting a

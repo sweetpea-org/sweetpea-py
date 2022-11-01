@@ -271,7 +271,7 @@ class Block:
         prob = LpProblem("Sweetpea")
 
         num_trials = range(0, self.trials_per_sample())
-        for factor in design:
+        for factor in self.design:
             num_levels = len(factor.levels)
             fac = LpVariable.dicts(factor.name, (num_levels, num_trials), cat="Binary")
             self.variables_ILP[factor.name] = fac

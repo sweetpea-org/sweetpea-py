@@ -248,6 +248,7 @@ def download_and_extract_asset_zip_for_release(to_bin_dir: Path,
     #       latter is a "file-like object" and ZipFile claims it accepts
     #       those).
     with NamedTemporaryFile(suffix='.zip') as temp_file:
+        temp_file.close()
         temp_file_path = Path(temp_file.name)
         with urlopen(request) as url_file:
             temp_file_path.write_bytes(url_file.read())

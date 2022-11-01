@@ -1,6 +1,6 @@
 from pulp import *
 
-prob = LpProblem("2*2")
+prob = LpProblem("2by2")
 
 # init
 crossing_c = 2
@@ -26,12 +26,14 @@ for n in num_trials:
 # complete crossing
 for i in num_trials:
     for j in num_trials:
+        # crossing = 1 implies that color = 1 and text = 1
         prob += 2*crossing[i][j] <= color[int(j/crossing_t)][i] + text[j%crossing_t][i]
+        # crossing = 0 implies that color = 0 or text = 0
         prob += crossing[i][j] - color[int(j/crossing_t)][i] - text[j%crossing_t][i] >= -1
 
     prob += lpSum([crossing[n][i] for n in num_trials]) == 1
 
-prob.writeLP("2*2_pulp.lp")
+prob.writeLP("2by2_pulp.lp")
 
 prob.solve()
 
@@ -48,4 +50,4 @@ for n in num_trials:
         if value(text[r][n]) == 1:
             print("\tText: ", r)
 
-prob.writeLP("2*2_pulp.lp")
+prob.writeLP("2by2_pulp.lp")
