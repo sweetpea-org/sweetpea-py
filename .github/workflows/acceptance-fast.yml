@@ -32,7 +32,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Update pip
-        run: pip install --upgrade pip
+        run: python -m pip install --upgrade pip
       - name: Set up SweetPea's Python package dependencies
         run: pip install -r sweetpea/requirements.txt
       - name: Checkout executables
