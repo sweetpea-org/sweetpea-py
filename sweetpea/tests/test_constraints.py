@@ -6,7 +6,7 @@ from itertools import permutations
 from sweetpea import fully_cross_block
 from sweetpea.blocks import Block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window, SimpleLevel
-from sweetpea.constraints import Constraint, Consistency, FullyCross, Derivation, AtMostKInARow, ExactlyKInARow, Exclude, Reify
+from sweetpea.constraints import Constraint, Consistency, FullyCross, Derivation, AtMostKInARow, ExactlyKInARow, AtLeastKInARow, Exclude, Reify
 from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import And, Or, If, Iff, Not, to_cnf_tseitin
 
@@ -497,6 +497,28 @@ def __run_kinarow(c: Constraint, block: Block = block) -> BackendRequest:
         dc.apply(block, backend_request)
     return backend_request
 
+def test_atleastkinarow():
+    backend_request = __run_kinarow(AtLeastKInARow(2, (color, "red")))
+    (expected_cnf, expected_fresh) = to_cnf_tseitin(And([
+        If(1, And([7])),
+        If(And([Not(1), 7]), And([13])),
+        If(And([Not(7), 13]), And([19])),
+        If(19, And([13])),
+    ]), 25)
+
+    assert backend_request.fresh == expected_fresh
+    assert backend_request.cnfs == [expected_cnf]
+
+
+    backend_request = __run_kinarow(AtLeastKInARow(3, (color, "red")))
+    (expected_cnf, expected_fresh) = to_cnf_tseitin(And([
+        If(1, And([7, 13])),
+        If(And([Not(1), 7]), And([13, 19])),
+        If(19, And([7, 13])),
+    ]), 25)
+
+    assert backend_request.fresh == expected_fresh
+    assert backend_request.cnfs == [expected_cnf]
 
 def test_atmostkinarow():
     backend_request = __run_kinarow(AtMostKInARow(3, color))
@@ -629,6 +651,8 @@ def test_kinarow_with_bad_factor():
     bogus_factor = Factor("f", ["a", "b", "c"])
     with pytest.raises(ValueError):
         fully_cross_block(design, crossing, [ExactlyKInARow(2, (bogus_factor, "a"))])
+
+
 
 
 def test_exclude():
