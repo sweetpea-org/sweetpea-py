@@ -318,8 +318,8 @@ class Factor:
        :class:`.SimpleLevel` with the :class:`str` as its name and the
        :class:`int` as its weight.
 
-    4. Anything else is converted into a :class:`.SimpleLevel` by using its
-       string representation as a level name.
+    4. Anything else is converted into a :class:`.SimpleLevel` by using it
+       as a level name.
 
     .. note::
 
@@ -333,8 +333,7 @@ class Factor:
         The levels comprising this factor. The list can be made of anything,
         but any values in the list that are not instances of :class:`.Level` or
         one of its subclasses will be converted into :class:`.SimpleLevel`
-        instances by using their string representation, as determined by
-        ``SimpleLevel(str(value))``.
+        instances using ``SimpleLevel(value)``.
     :type initial_levels: typing.Sequence[Any]
 
     :rtype: .Factor
@@ -380,14 +379,13 @@ class Factor:
         return instance
 
     def __post_init__(self, initial_levels: Sequence[Any]):
-        # First, we convert the given initial levels into actual `Level`s. To
-        # ensure the input list is untouched, we copy any levels that came in.
+        # First, we convert the given initial levels into actual `Level`s.
         real_levels: List[Level] = []
         for level in initial_levels:
             if isinstance(level, Level):
                 pass
             else:
-                level = SimpleLevel(str(level))
+                level = SimpleLevel(level)
             real_levels.append(level)
         # Then we do any necessary post-processing of the levels.
         self.levels = self._process_initial_levels(real_levels)
