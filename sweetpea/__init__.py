@@ -320,18 +320,17 @@ def tabulate_experiments(block: Block = None,
         :func:`.synthesize_trials_uniform`).
 
     :param factors:
-        An optional :class:`list` of :class:`Factors <.Factor>`...
-
-        .. todo::
-
-            Finish specification of this parameter.
+        An optional, though practically needed :class:`list` of :class:`Factors <.Factor>`.
+        This list selects the factors of interest that are subsets of
+        the design factors. More precisely, the names of these factors
+        must be a subset of the design factor's names. (Given that :func:`.syntheseize_trials`
+        reports results in terms of factor and level names, the design's factor and
+        level objects no longer matter).
 
     :param trials:
-        An optional :class:`list` of :class:`ints <int>`...
-
-        .. todo::
-
-            Finish specification of this parameter.
+        An optional :class:`list` of :class:`ints <int>` that specifies the indices of trials to
+        be tabulated with the same indices being applied for every sequence. The paramater's
+        default is to include all trials in the tabulation.
     """
     if factors is None and block is None:
         raise RuntimeError("tabulate_experiments: expected a `block` or `factors` argument")
