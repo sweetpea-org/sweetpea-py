@@ -120,6 +120,7 @@
 <li class="toctree-l2"><a class="reference internal" href="derivations.html">Derivations</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Constraints</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sampling_strategies.html">Sampling Strategies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="legacy.html">Legacy</a></li>
 </ul>
 </li>
 </ul>
@@ -165,7 +166,30 @@ level.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>factor</strong> (<a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a>) – the factor whose levels are named by <cite>levels</cite></p></li>
+<li><p><strong>factor</strong> (<a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a>) – the factor whose levels is named by <cite>level</cite></p></li>
+<li><p><strong>level</strong> (<em>Union</em><em>[</em><a class="reference internal" href="factors.html#sweetpea.Level" title="sweetpea.Level"><em>Level</em></a><em>, </em><em>Any</em><em>]</em>) – a level or name of a level among <cite>factor</cite>’s levels</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#sweetpea.Constraint" title="sweetpea.Constraint">Constraint</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sweetpea.Pin">
+<span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">Pin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.Pin" title="Permalink to this definition"></a></dt>
+<dd><p>Constrains an experiment to require the specified level
+at the specified trial index. A negative trial index
+refers to a trial releative to the end of a sequence;
+for example, -1 refers to the last trial. If <cite>index</cite> is
+not in range for trials in an experiment, then the
+constraint will be unsatisfiable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>index</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – a trial index, counting forward from 0 or backward from -1</p></li>
+<li><p><strong>factor</strong> (<a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a>) – the factor whose level is named by <cite>level</cite></p></li>
 <li><p><strong>level</strong> (<em>Union</em><em>[</em><a class="reference internal" href="factors.html#sweetpea.Level" title="sweetpea.Level"><em>Level</em></a><em>, </em><em>Any</em><em>]</em>) – a level or name of a level among <cite>factor</cite>’s levels</p></li>
 </ul>
 </dd>

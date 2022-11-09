@@ -6,7 +6,7 @@ from itertools import permutations
 from sweetpea import fully_cross_block
 from sweetpea.blocks import Block
 from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, Window, SimpleLevel
-from sweetpea.constraints import Constraint, Consistency, FullyCross, Derivation, AtMostKInARow, ExactlyKInARow, AtLeastKInARow, Exclude, Reify
+from sweetpea.constraints import Constraint, Consistency, FullyCross, Derivation, AtMostKInARow, ExactlyKInARow, AtLeastKInARow, Exclude, Pin, Reify
 from sweetpea.backend import LowLevelRequest, BackendRequest
 from sweetpea.logic import And, Or, If, Iff, Not, to_cnf_tseitin
 
@@ -744,3 +744,19 @@ def test_exclude_with_three_derived_levels():
     backend_request = BackendRequest(0)
     exclude_constraint.apply(block, backend_request)
     assert backend_request.cnfs == [And([-57, -60, -63, -66, -69, -72, -75, -78])]
+
+def test_pin():
+    f = Pin(0, color, "red")
+    backend_request = BackendRequest(0)
+    f.apply(block, backend_request)
+    assert backend_request.cnfs == [And([1])]
+
+    f = Pin(-1, con_factor, "con")
+    backend_request = BackendRequest(0)
+    f.apply(block, backend_request)
+    assert backend_request.cnfs == [And([23])]
+
+    f = Pin(1000, color, "red")
+    backend_request = BackendRequest(0)
+    f.apply(block, backend_request)
+    assert backend_request.cnfs == [And([1, -1])]

@@ -619,24 +619,25 @@ class ExactlyKInARow(_KInARow):
     def _potential_counts_conform(self, counts: List[int]) -> bool:
         return self._potential_counts_conform_individually(counts, op.eq)
 
+def filter_factor_and_level(who, factor, level):
+    argcheck(who, factor, Factor, "a Factor")
+    if not isinstance(level, Level):
+        l = factor.get_level(level)
+        if not l:
+            raise ValueError(f"{who}: not a level in factor {factor}: {level}")
+        level = l
+    elif level not in factor.levels:
+        raise RuntimeError(f"{who}: given level is not in given factor: {level} not in {factor}")
+    return (factor, level)
 
 def exclude(factor, levels):
     return Exclude(factor, levels)
 
-
 class Exclude(Constraint):
     def __init__(self, factor, level):
+        factor, level = filter_factor_and_level("Exclude", factor, level)
         self.factor = factor
         self.level = level
-        who = "Exclude"
-        argcheck(who, factor, Factor, "a Factor")
-        if not isinstance(level, Level):
-            l = factor.get_level(level)
-            if not l:
-                raise ValueError(f"{who}: not a level in factor {factor}: {level}")
-            self.level = l
-        elif level not in factor.levels:
-            raise RuntimeError(f"{who}: given level is not in given factor: {level} not in {factor}")
 
     def validate(self, block: Block) -> None:
         validate_factor_and_level(block, self.factor, self.level)
@@ -714,6 +715,71 @@ class Exclude(Constraint):
                     return False
         return True
 
+class Pin(Constraint):
+    def __init__(self, index, factor, level):
+        factor, level = filter_factor_and_level("Pin", factor, level)
+        self.index = index
+        self.factor = factor
+        self.level = level
+
+    def _get_trial_number(self, block) -> int:
+        num_trials = block.trials_per_sample()
+        if self.index < 0:
+            trial_no = num_trials + self.index
+        else:
+            trial_no = self.index
+        if (trial_no >= 0) and (trial_no < num_trials):
+            return trial_no
+        else:
+            return -1
+
+    def validate(self, block: Block) -> None:
+        validate_factor_and_level(block, self.factor, self.level)
+        if self._get_trial_number(block) < 0:
+            num_trials = block.trials_per_sample()
+            block.errors.add("WARNING: Pin constraint unsatisfiable, because "
+                             + str(self.index) + " is out of range for " + str(num_trials) + " trials")
+
+    def uses_factor(self, f: Factor) -> bool:
+        return self.factor.uses_factor(f)
+
+    def desugar(self, replacements: dict) -> List:
+        factor = replacements.get(self.factor, self.factor)
+        level = replacements.get(self.level, self.level)
+        return [Pin(self.index, factor, level)]
+
+    def apply(self, block: Block, backend_request: BackendRequest) -> None:
+        trial_no = self._get_trial_number(block)
+        if trial_no >= 0:
+            var = block.get_variable(trial_no+1, (self.factor, self.level))
+            backend_request.cnfs.append(And([var]))
+        else:
+            backend_request.cnfs.append(And([1, -1]))
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    def __repr__(self):
+        return str(self.__dict__)
+
+    def __str__(self):
+        return str(self.__dict__)
+
+    def is_complex_for_combinatoric(self) -> bool:
+        return True
+
+    def potential_sample_conforms(self, sample: dict) -> bool:
+        levels = sample[self.factor]
+        num_trials = len(levels)
+        if self.index < 0:
+            trial_no = num_trials + self.index
+        else:
+            trial_no = self.index
+
+        if (trial_no >= 0) and (trial_no < num_trials):
+            return levels[trial_no] == self.level
+        else:
+            return False
 
 class Reify(Constraint):
     """The only purpose of this constraint is to make a factor

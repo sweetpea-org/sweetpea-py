@@ -18,7 +18,7 @@ __all__ = [
     'Derivation', 'WithinTrial', 'Transition', 'AcrossTrials',
 
     'Constraint',
-    'Exclude', 'MinimumTrials', 'ExactlyK',
+    'Exclude', 'Pin', 'MinimumTrials', 'ExactlyK',
     'AtMostKInARow', 'AtLeastKInARow',
     'ExactlyKInARow',
 
@@ -57,7 +57,7 @@ from sweetpea.primitives import (
 )
 from sweetpea.constraints import (
     Consistency, Constraint, Derivation, FullyCross, MultipleCross, MultipleCrossBlock,
-    Exclude, MinimumTrials, ExactlyK, AtMostKInARow, AtLeastKInARow, ExactlyKInARow,
+    Exclude, Pin, MinimumTrials, ExactlyK, AtMostKInARow, AtLeastKInARow, ExactlyKInARow,
     at_most_k_in_a_row, at_least_k_in_a_row, exactly_k, exactly_k_in_a_row, exclude, minimum_trials
 )
 from sweetpea.sampling_strategies.base import SamplingStrategy, Gen

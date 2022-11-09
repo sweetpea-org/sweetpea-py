@@ -13,7 +13,24 @@ Constraints
               Constrains an experiment to disallow the specified
               level.
 
-              :param factor: the factor whose levels are named by `levels`
+              :param factor: the factor whose levels is named by `level`
+              :type factor: Factor
+              :param level: a level or name of a level among `factor`'s levels
+              :type level: Union[Level, Any]
+              :rtype: Constraint
+
+.. function:: sweetpea.Pin(index, factor, level)
+
+              Constrains an experiment to require the specified level
+              at the specified trial index. A negative trial index
+              refers to a trial releative to the end of a sequence;
+              for example, -1 refers to the last trial. If `index` is
+              not in range for trials in an experiment, then the
+              constraint will be unsatisfiable.
+
+              :param index: a trial index, counting forward from 0 or backward from -1
+              :type index: int
+              :param factor: the factor whose level is named by `level`
               :type factor: Factor
               :param level: a level or name of a level among `factor`'s levels
               :type level: Union[Level, Any]

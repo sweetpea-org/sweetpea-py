@@ -257,18 +257,18 @@ class Block:
             variables.append(self.factor_variables_for_trial(f, t))
 
         return variables
+    
+    def _encode_variable(self, f: Factor, l: Level, trial: int):
+        offset = self.first_variable_for_level(f, l)
+        previous_trials = self._get_previous_trials_variable_count(f, trial)
+        if f.has_complex_window:
+            offset += len(f.levels) * previous_trials
+        else:
+            offset += self.variables_per_trial() * previous_trials
+        return offset+1
 
     def encode_combination(self, combination: Dict[Factor, Level], trial: int):
-        def encode_variable(f: Factor, l: Level, trial: int):
-            offset = self.first_variable_for_level(f, l)
-            previous_trials = self._get_previous_trials_variable_count(f, trial)
-            if f.has_complex_window:
-                offset += len(f.levels) * previous_trials
-            else:
-                offset += self.variables_per_trial() * previous_trials
-            return offset+1
-
-        return tuple([encode_variable(f, l, trial) for f,l in combination.items()])
+        return tuple([self._encode_variable(f, l, trial) for f,l in combination.items()])
 
     def decode_variable(self, variable: int) -> Tuple[Factor, Union[SimpleLevel, DerivedLevel]]:
         """Given a variable number from the SAT formula, this method will
@@ -342,11 +342,7 @@ class Block:
         return the SAT variable that represents that selection. Only works for
         factors without complex windows at the moment.
         """
-        f = level[0]
-        if f.has_complex_window:
-            raise ValueError("get_variable doens't handle complex windows yet! factor={}".format(f))
-
-        return self.build_variable_list(level)[trial_number - 1]
+        return self._encode_variable(level[0], level[1], trial_number)
 
     def build_variable_list(self, level_pair: Tuple[Factor, Union[SimpleLevel, DerivedLevel]]) -> List[int]:
         """Given a specific level (factor + level pair), this method will
