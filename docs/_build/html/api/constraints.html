@@ -213,16 +213,16 @@ of minimum trials.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="sweetpea.AtMostKInARow">
-<span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">AtMostKInARow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor_and_level</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.AtMostKInARow" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">AtMostKInARow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.AtMostKInARow" title="Permalink to this definition"></a></dt>
 <dd><p>Constrains an experiment to allow at most <cite>k</cite>
 consecutive trials with the level identified by
-<cite>factor_and_level</cite>.</p>
+<cite>level</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>k</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – the maximum number of consecutive repetitions
 to allow</p></li>
-<li><p><strong>factor_and_level</strong> (<em>Union</em><em>[</em><em>Tuple</em><em>[</em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>, </em><a class="reference internal" href="factors.html#sweetpea.Level" title="sweetpea.Level"><em>Level</em></a><em>]</em><em>, </em><em>Tuple</em><em>[</em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>, </em><em>Any</em><em>]</em><em>, </em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>]</em>) – either a tuple containing a factor and one of its levels,
+<li><p><strong>level</strong> (<em>Union</em><em>[</em><em>Tuple</em><em>[</em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>, </em><a class="reference internal" href="factors.html#sweetpea.Level" title="sweetpea.Level"><em>Level</em></a><em>]</em><em>, </em><em>Tuple</em><em>[</em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>, </em><em>Any</em><em>]</em><em>, </em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>]</em>) – either a tuple containing a factor and one of its levels,
 a tuple containing a factor and the name of one of its levels,
 or just a factor; the last case is a shorthand for a separate
 constraint for each of the factor’s levels</p></li>
@@ -236,16 +236,16 @@ constraint for each of the factor’s levels</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="sweetpea.AtLeastKInARow">
-<span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">AtLeastKInARow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor_and_level</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.AtLeastKInARow" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">AtLeastKInARow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.AtLeastKInARow" title="Permalink to this definition"></a></dt>
 <dd><p>Constrains an experiment so that when the level
-identified by <cite>factor_and_level</cite> appears in a trial, it
+identified by <cite>level</cite> appears in a trial, it
 also appears in at least <cite>k</cite>-1 adjacent trials.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>k</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – the minimum number of consecutive repetitions
 to require</p></li>
-<li><p><strong>factor_and_level</strong> (<em>Union</em><em>[</em><em>Tuple</em><em>[</em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>, </em><a class="reference internal" href="factors.html#sweetpea.Level" title="sweetpea.Level"><em>Level</em></a><em>]</em><em>, </em><em>Tuple</em><em>[</em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>, </em><em>Any</em><em>]</em><em>, </em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>]</em>) – like <a class="reference internal" href="#sweetpea.AtMostKInARow" title="sweetpea.AtMostKInARow"><code class="xref py py-func docutils literal notranslate"><span class="pre">AtMostKInARow()</span></code></a></p></li>
+<li><p><strong>level</strong> (<em>Union</em><em>[</em><em>Tuple</em><em>[</em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>, </em><a class="reference internal" href="factors.html#sweetpea.Level" title="sweetpea.Level"><em>Level</em></a><em>]</em><em>, </em><em>Tuple</em><em>[</em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>, </em><em>Any</em><em>]</em><em>, </em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>]</em>) – like <a class="reference internal" href="#sweetpea.AtMostKInARow" title="sweetpea.AtMostKInARow"><code class="xref py py-func docutils literal notranslate"><span class="pre">AtMostKInARow()</span></code></a></p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -256,7 +256,7 @@ to require</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="sweetpea.ExactlyKInARow">
-<span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">ExactlyKInARow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factor_and_level</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.ExactlyKInARow" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">ExactlyKInARow</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.ExactlyKInARow" title="Permalink to this definition"></a></dt>
 <dd><p>Constrains an experiment so that when the level
 identified by <cite>factor_and_level</cite> appears in a trial, it
 also appears in exactly <cite>k</cite>-1 adjacent trials.</p>
@@ -264,7 +264,7 @@ also appears in exactly <cite>k</cite>-1 adjacent trials.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>k</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – the number of repetitions to require</p></li>
-<li><p><strong>factor_and_level</strong> (<em>Union</em><em>[</em><em>Tuple</em><em>[</em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>, </em><a class="reference internal" href="factors.html#sweetpea.Level" title="sweetpea.Level"><em>Level</em></a><em>]</em><em>, </em><em>Tuple</em><em>[</em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>, </em><em>Any</em><em>]</em><em>, </em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>]</em>) – like <a class="reference internal" href="#sweetpea.AtMostKInARow" title="sweetpea.AtMostKInARow"><code class="xref py py-func docutils literal notranslate"><span class="pre">AtMostKInARow()</span></code></a></p></li>
+<li><p><strong>level</strong> (<em>Union</em><em>[</em><em>Tuple</em><em>[</em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>, </em><a class="reference internal" href="factors.html#sweetpea.Level" title="sweetpea.Level"><em>Level</em></a><em>]</em><em>, </em><em>Tuple</em><em>[</em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>, </em><em>Any</em><em>]</em><em>, </em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>]</em>) – like <a class="reference internal" href="#sweetpea.AtMostKInARow" title="sweetpea.AtMostKInARow"><code class="xref py py-func docutils literal notranslate"><span class="pre">AtMostKInARow()</span></code></a></p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -282,7 +282,7 @@ also appears in exactly <cite>k</cite>-1 adjacent trials.</p>
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>k</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – the number of repetitions to require</p></li>
-<li><p><strong>factor_and_level</strong> (<em>Union</em><em>[</em><em>Tuple</em><em>[</em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>, </em><a class="reference internal" href="factors.html#sweetpea.Level" title="sweetpea.Level"><em>Level</em></a><em>]</em><em>, </em><em>Tuple</em><em>[</em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>, </em><em>Any</em><em>]</em><em>, </em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>]</em>) – like <a class="reference internal" href="#sweetpea.AtMostKInARow" title="sweetpea.AtMostKInARow"><code class="xref py py-func docutils literal notranslate"><span class="pre">AtMostKInARow()</span></code></a></p></li>
+<li><p><strong>level</strong> (<em>Union</em><em>[</em><em>Tuple</em><em>[</em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>, </em><a class="reference internal" href="factors.html#sweetpea.Level" title="sweetpea.Level"><em>Level</em></a><em>]</em><em>, </em><em>Tuple</em><em>[</em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>, </em><em>Any</em><em>]</em><em>, </em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>]</em>) – like <a class="reference internal" href="#sweetpea.AtMostKInARow" title="sweetpea.AtMostKInARow"><code class="xref py py-func docutils literal notranslate"><span class="pre">AtMostKInARow()</span></code></a></p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
