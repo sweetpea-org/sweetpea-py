@@ -24,12 +24,12 @@ JSONDict = Dict[str, Any]
 
 
 @contextmanager
-def temporary_cnf_file(base_path: Path = Path('.')) -> Iterator[Path]:
+def temporary_cnf_file(base_path: Path = Path('.'), suffix: str = ".cnf") -> Iterator[Path]:
     """Returns a :class:`pathlib.Path` to a new, local file in the directory of
     the given path with a ``.cnf`` suffix. When used as a context manager
     (recommended), the file will be deleted when it leaves the context scope.
     """
-    cnf_file = base_path / Path(str(generate_uuid())).with_suffix('.cnf')
+    cnf_file = base_path / Path(str(generate_uuid())).with_suffix(suffix)
     try:
         yield cnf_file
     finally:
