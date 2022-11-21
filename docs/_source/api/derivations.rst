@@ -49,7 +49,7 @@ another level that is constructed with :class:`.DerivedLevel`.
               :type factors: List(Factor)
               :rtype: Derivation
 
-.. function:: sweetpea.AcrossTrials(predicate, factors, width, stride)
+.. function:: sweetpea.AcrossTrials(predicate, factors, width, stride, start)
 
               Creates a level that is selected depending on a
               combination of levels from other factors in the current
@@ -81,5 +81,13 @@ another level that is constructed with :class:`.DerivedLevel`.
                              considered when selecting the new,
                              derived level
               :type stride: int
+              :param start: the first trail (counting from 0) that
+                            the derivation's fctor will have a level;
+                            if this number combined with the width
+                            means that factors in `factors` will not
+                            have a level, then `predicate` must handle
+                            `None` values in the correspond arguments
+                            and indices
+              :type start: int
               :type factors: List(Factor)
               :rtype: Derivation

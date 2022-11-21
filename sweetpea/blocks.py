@@ -83,6 +83,8 @@ class Block:
                     raise RuntimeError(f"{who}: factor in crossing is not in design: {f}")
                 if f.name in names:
                     raise RuntimeError(f"{who}: multiple factors have the same name: {f.name}")
+                if f.has_complex_window and cast(DerivedLevel, f.first_level).window.stride > 1:
+                    raise RuntimeError(f"{who}: factor with stride > 1 not allowed in crossing: {f.name}")
                 names.add(f.name)
         # Ensure basic factors of derived levels in design form complete subset
         # of all declared basic factors.
@@ -396,7 +398,10 @@ class Block:
                                 for idx, df in enumerate(w.factors):
                                     for j in range(w.width):
                                         shift = w.width - j - 1
-                                        args.append(results[df.name][i-shift])
+                                        if i-shift >= 0:
+                                            args.append(results[df.name][i-shift])
+                                        else:
+                                            args.append(None)
                                 if w.width > 1:
                                     args = list(chunk_list(args, w.width))
                                 if w.predicate(*args):

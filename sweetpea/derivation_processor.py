@@ -10,7 +10,7 @@ from sweetpea.primitives import DerivationWindow, DerivedFactor, DerivedLevel, L
 from sweetpea.blocks import Block
 from sweetpea.constraints import Derivation
 from sweetpea.internal.iter import chunk_list
-
+from sweetpea.internal.beforestart import BeforeStart
 
 class DerivationProcessor:
 
@@ -55,14 +55,13 @@ class DerivationProcessor:
         # but we'll only add to `accum` if the factor is non-implied
         derived_factors: List[DerivedFactor] = [factor for factor in block.design if isinstance(factor, DerivedFactor)]
         accum = []
-
         for factor in derived_factors:
             according_level: Dict[Tuple[Any, ...], DerivedLevel] = {}
             for level in factor.levels:
                 cross_product: List[Tuple[Level, ...]] = level.get_dependent_cross_product()
                 valid_tuples: List[Tuple[Level, ...]] = []
                 for level_tuple in cross_product:
-                    args = [level.name for level in level_tuple]
+                    args = [(level.name if not isinstance(level, BeforeStart) else None) for level in level_tuple]
                     if level.window.width != 1:
                         # NOTE: mypy doesn't like this, but I'm not rewriting
                         #       it right now. Need to replace `chunk_list` with
@@ -89,7 +88,10 @@ class DerivationProcessor:
                                      f" '{factor.name}' predicate for level\n '{level.name}'{conclusion}.")
 
                 if factor in block.act_design:
-                    valid_indices = [[block.first_variable_for_level(level.factor, level) for level in valid_tuple]
+                    # A `BeforeStart` in a tuple means that it should only be used for an early trial
+                    # where the corresponding level is not yet available
+                    valid_indices = [[(block.first_variable_for_level(level.factor, level) if not isinstance(level, BeforeStart) else level)
+                                      for level in valid_tuple]
                                      for valid_tuple in valid_tuples]
                     shifted_indices = DerivationProcessor.shift_window(valid_indices,
                                                                        level.window,
@@ -109,11 +111,11 @@ class DerivationProcessor:
             return list(chunk_list(level_strings, level.window.width))
 
     @staticmethod
-    def shift_window(indices: List[List[int]],
+    def shift_window(indices: List[List[object]],
                      window: DerivationWindow,
                      trial_size: int
-                     ) -> List[List[int]]:
-        """This is a helper function that shifts< the indices of
+                     ) -> List[List[object]]:
+        """This is a helper function that shifts the indices of
         :func:`.DerivationProcessor.generate_derivations`.
 
         E.g., if it's a ``Transition(op.eq, [color, color])`` (i.e., "repeat"
@@ -138,14 +140,21 @@ class DerivationProcessor:
         #     sublists = chunk_list(index_list, sublist_size)
         #     shifted_sublists =
 
-        shifted_idxs = cast(List[List[int]], [])
-        shifted_sublists = cast(List[List[int]], [])
+        shifted_idxs = cast(List[List[object]], [])
+        shifted_sublists = cast(List[List[object]], [])
         argc = len(window.factors)
         for idx_list in indices:
             sublist_size = len(idx_list) // argc
             sublists = chunk_list(idx_list, sublist_size)
-            shifted_sublists = [reduce(lambda l, idx: l + [idx + len(l) * trial_size], idx_list, [])
-                                for idx_list in sublists]
+            shifted_sublists = []
+            for idx_list in sublists:
+                l = cast(List[object], [])
+                for i, idx in enumerate(idx_list):
+                    if isinstance(idx, BeforeStart):
+                        l.append(BeforeStart(idx.ready_at - i + 1))
+                    else:
+                        l.append(cast(int, idx) + i * trial_size)
+                shifted_sublists.append(l)
             shifted_idxs.append(list(reduce(op.add, shifted_sublists, [])))
 
         return shifted_idxs

@@ -15,6 +15,7 @@ from sweetpea.logic import If, Iff, And, Or, Not
 from sweetpea.primitives import DerivedFactor, DerivedLevel, Factor, Level, SimpleLevel
 from sweetpea.internal.argcheck import argcheck, make_istuple
 from sweetpea.internal.weight import combination_weight
+from sweetpea.internal.beforestart import BeforeStart
 
 
 def validate_factor(block: Block, factor: Factor) -> None:
@@ -236,6 +237,9 @@ class Derivation(Constraint):
 
         11 iff (7 and 9) or (8 and 10)
 
+    When a dependent_idx has `BeforeStart`, then it should only apply early
+    where the corresponding level is not available.
+
     90% sure this is the correct way to generalize to derivations involving 2+
     levels & various windowsizes. One test is the experiment::
 
@@ -247,7 +251,7 @@ class Derivation(Constraint):
 
     def __init__(self,
                  derived_idx: int,
-                 dependent_idxs: List[List[int]],
+                 dependent_idxs: List[List[object]],
                  factor: DerivedFactor) -> None:
         self.derived_idx = derived_idx
         self.dependent_idxs = dependent_idxs
@@ -289,13 +293,33 @@ class Derivation(Constraint):
         f = self.factor
         window = f.levels[0].window
         t = 0
+        delta = window.start_delta
         for n in range(trial_count):
             if not f.applies_to_trial(n + 1):
                 continue
-
             num_levels = len(f.levels)
             get_trial_size = lambda x: trial_size if x < block.grid_variables() else len(block.decode_variable(x+1)[0].levels)
-            or_clause = Or(list(And(list(map(lambda x: x + (t * window.stride * get_trial_size(x) + 1), l))) for l in self.dependent_idxs))
+
+            # Only keep clauses where all `BeforeStarts` apply and all indices are in range:
+            ands = []
+            for l in self.dependent_idxs:
+                vars = cast(List[int], [])
+                ok = True
+                for x in l:
+                    if isinstance(x, BeforeStart):
+                        if x.ready_at <= n:
+                            ok = False
+                            break
+                    else:
+                        new_x = x + ((t + delta) * window.stride * get_trial_size(x) + 1)
+                        if new_x < 0:
+                            ok = False
+                            break
+                        vars.append(new_x)
+                if ok:
+                    ands.append(And(vars))
+
+            or_clause = Or(ands)
             iffs.append(Iff(self.derived_idx + (t * num_levels) + 1, or_clause))
             t += 1
         (cnf, new_fresh) = block.cnf_fn(And(iffs), backend_request.fresh)
