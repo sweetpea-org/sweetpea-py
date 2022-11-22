@@ -7,74 +7,8 @@ from sympy.stats import UniformSum, sample
 import numpy as np
 import gurobipy as gp
 
-# class RandomPermutation(object):
-#     def __init__(self, row_values, num_trials):
-#         self.used_permutations = set()
-#         self.row_values = np.array(row_values)
-#         self.num_trials = num_trials
-    
-#     def next(self):
-#         rnd_indices = np.random.choice(len(self.row_values), self.num_trials, replace=False)
-#         p = self.row_values[rnd_indices]
-#         while str(rnd_indices) in self.used_permutations:
-#             rnd_indices = np.random.choice(len(self.row_values), self.num_trials, replace=False)
-#             p = self.row_values[rnd_indices]
-#         self.used_permutations.add(str(rnd_indices))
-#         return list(p)
-
-# def GenerateCrossings(simple_factors, num_trials):
-#     row_values = [[x] for x in range(simple_factors[0][1])]
-#     for j in range(1, len(simple_factors)):
-#         row_values = [x + [y] for x in row_values for y in range(simple_factors[j][1])]
-
-#     factor_values = RandomPermutation(row_values, num_trials)
-
-#     # for i in row_trials:
-#     #     if not factor_values:
-#     #         factor_values = row_values
-#     #     else:
-#     #         factor_values = [x + y for x in factor_values for y in row_values]
-#     return factor_values
-
-# def SolveP(prob, e, simple_factors):
-#     num_trials = len(e)
-#     for n in range(num_trials):
-#         row = list(e[n])
-#         for l in range(len(row)):
-#             factor = simple_factors[l][0]
-#             prob += factor[row[l]][n] == 1
-    
-#     prob.solve(PULP_CBC_CMD(msg=0))
-
-#     status = LpStatus[prob.status]
-#     if status == 'Infeasible':
-#         return False
-#     return True
-
-# def SampleExperiment(prob, crossings, simple_factors):
-#     e = crossings.next()
-#     solution = False
-#     while not solution:
-#         temp_prob = prob.copy()
-#         solution = SolveP(temp_prob, e, simple_factors)
-#         if solution:
-#             prob = temp_prob.copy() 
-#             return prob
-
-#     # no crossing is valid!
-#     raise Exception()
-
-# Notes from meeting:
-#
-# rejection sampling
-# (1) no repeats and achieves every solution
-# (2) might be 2^n at worst
-#
-# unit tests
-# 1 factor 4 levels (each experiment 1/4 of time)
-# 1 factor 4 levels + constraint (no level 0) (each experiment 1/3)
-# 1 factor 2 trials + constraint (never repeats) (each experiment 1/12 since 16 - 4)
-
+# This file is a prototype for implementing constraints with ILP to understand
+# how each constraint can be translated
 
 # Consistency constraint
 #   prob = lpProblem
@@ -370,8 +304,6 @@ prob = LpProblem("Example_ILP", LpMaximize)
 simple_factors, derived_factors, num_trials = RunProgram(prob)
 
 # Solve and Print
-
-# Idea: .opb files
 prob.writeLP("Example_ILP.lp")
 times = []
 for i in range(1):

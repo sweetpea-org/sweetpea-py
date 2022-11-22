@@ -285,6 +285,16 @@ class CNF(SimpleSequence[Clause]):
     def __str__(self) -> str:
         return ''.join(str(clause) + ' 0\n' for clause in reversed(self._vals))
 
+    def as_opb_string(self) -> str:
+        def count_false_var(clause : List[int]):
+            return len(list(v for v in clause if str(v)[0] == '-'))
+
+        return '\n'.join(' '.join(map(lambda v : '-1 v' + str(v)[1:]
+                                    if str(v)[0] == '-'
+                                    else '+1 v' + str(v), clause)) \
+                                + ' >= ' + str(-count_false_var(clause) + 1) + ' ;'
+                                for clause in reversed(self._vals))
+
     def as_dimacs_string(self, fresh_variable_count: Optional[int] = None) -> str:
         """Represents the :class:`CNF` as a string in the DIMACS format.
 

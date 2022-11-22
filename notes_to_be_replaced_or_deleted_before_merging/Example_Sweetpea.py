@@ -7,6 +7,8 @@ from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea.constraints import at_most_k_in_a_row, minimum_trials
 from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
 
+# This file was for testing SweetPea against the ILP prototype
+
 crossing_c = 3
 crossing_t = 3
 # crossing_third = 6

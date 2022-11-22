@@ -46,8 +46,6 @@ class Block:
         self.excluded_derived = cast(List[Dict[Factor, SimpleLevel]], [])
         self.require_complete_crossing = require_complete_crossing
         self.errors = cast(Set[str], set())
-        self.variables_ILP = cast(dict[str: LpVariable], {})
-        self.__validate()
         self.act_design = list(filter(lambda f: not self.factor_is_implied(f), self.design))
         self._trials_per_sample = None
         self._simple_tuples = cast(Optional[List[Tuple[Factor, Union[SimpleLevel, DerivedLevel]]]], None)
@@ -339,23 +337,6 @@ class Block:
             c.apply(self, backend_request)
 
         return backend_request
-
-    def build_ILP_solver(self) -> LpProblem:
-        prob = LpProblem("Sweetpea")
-
-        num_trials = range(0, self.trials_per_sample())
-        for factor in self.design:
-            num_levels = len(factor.levels)
-            fac = LpVariable.dicts(factor.name, (num_levels, num_trials), cat="Binary")
-            self.variables_ILP[factor.name] = fac
-
-        from sweetpea.constraints import MinimumTrials
-        for c in self.constraints:
-            if isinstance(c, MinimumTrials):
-                continue
-            c.apply_ILP(self, prob)
-
-        return prob
 
     def get_variable(self, trial_number: int, level: Tuple[Factor, Any]) -> int:
         """Given a trial number (1-based), factor, and level, this method will

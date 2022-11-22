@@ -18,6 +18,7 @@ from typing import Tuple
 from .docker_utility import DEFAULT_DOCKER_MODE_ON, docker_run
 from .executables import DEFAULT_DOWNLOAD_IF_MISSING, UNIGEN_EXE, CMSGEN_EXE, ensure_executable_available
 from .tool_error import ToolError
+from ..utility import temporary_cnf_file
 
 
 __all__ = ['DEFAULT_DOCKER_MODE_ON', 'UnigenError', 'call_unigen']
@@ -57,12 +58,12 @@ def call_unigen_cli(input_file: Path,
     seed = random.randint(999999999)
     command = [str(unigen_exe), str(input_file), "--samples="+str(sample_count), "--seed="+str(seed)]
     if use_cmsgen:
-        output = NamedTemporaryFile(delete=True)
-        command.append("--samplefile="+output.name)
-        result = run(command, capture_output=True)  # noqa
-        samples = output.read().decode()
-        output.close()
-        return (result, samples)
+        with temporary_cnf_file(suffix = ".out") as output_file:
+            command.append("--samplefile="+output_file.name)
+            result = run(command, capture_output=True)  # noqa
+            with open(output_file, 'r') as output:
+                samples = output.read()
+                return (result, samples)
     else:
         # NOTE: flake8 doesn't seem to handle the calls to `run` correctly, but
         #       mypy reports everything is fine here so we `noqa` to prevent flake8

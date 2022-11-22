@@ -80,22 +80,6 @@ class Consistency(Constraint):
             backend_request.ll_requests += list(map(lambda v: LowLevelRequest("EQ", 1, v), chunks))
             next_var += variables_for_factor
 
-    # def apply_ILP(block: Block, prob: LpProblem):
-    #     for trial_num in range(block.trials_per_sample()):
-    #         for f in filter(lambda f: not f.has_complex_window, block.design):
-    #             number_of_levels = len(f.levels)
-    #             lp_variable = block.variables_ILP[f.name]
-    #             prob += lpSum([lp_variable[level_num][trial_num] for level_num in number_of_levels]) == 1
-
-        # TODO: understand and implement complex windows
-
-        # for f in filter(lambda f: f.has_complex_window, block.design):
-        #     variables_for_factor = block.variables_for_factor(f)
-        #     var_list = list(map(lambda n: n + next_var, range(variables_for_factor)))
-        #     chunks = list(chunk_list(var_list, len(f.levels)))
-        #     backend_request.ll_requests += list(map(lambda v: LowLevelRequest("EQ", 1, v), chunks))
-        #     next_var += variables_for_factor
-
     def potential_sample_conforms(self, sample: dict) -> bool:
         # conformance by construction in combinatoric
         return True
@@ -138,26 +122,6 @@ class Cross(Constraint):
 
     def validate(self, block: Block) -> None:
         pass
-
-    # def apply_ILP(block: Block, prob: LpProblem):
-    #     num_trials = block.trials_per_sample()
-    #     crossing = LpVariable(num_trials, num_trials)
-
-    #     factor_level_lengths = list(map(lambda f: len(f.levels), block.crossing[0]))
-
-    #     val = 1
-    #     for i in range(len(factor_level_lengths) - 1):
-    #         val *= factor_level_lengths[i]
-    #         factor_level_lengths[i] = val
-
-    #     for i in num_trials:
-    #         for j in num_trials:
-    #             rhs = 0
-    #             for f in block.crossing[0]:
-    #                 prob += 2*crossing[i][j] <= color[int(j/crossing_t)][i] + text[j%crossing_t][i]
-    #                 prob += crossing[i][j] - color[int(j/crossing_t)][i] - text[j%crossing_t][i] >= -1
-
-    #         prob += lpSum([crossing[n][i] for n in num_trials]) == 1
 
     @staticmethod
     def apply(block: MultipleCrossBlock, backend_request: BackendRequest) -> None:
