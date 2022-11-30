@@ -15,7 +15,7 @@ __all__ = [
     
     'Factor', 'Level', 'DerivedLevel', 'ElseLevel',
 
-    'Derivation', 'WithinTrial', 'Transition', 'AcrossTrials',
+    'Derivation', 'WithinTrial', 'Transition', 'Window',
 
     'Constraint',
     'Exclude', 'Pin', 'MinimumTrials', 'ExactlyK',
@@ -28,7 +28,7 @@ __all__ = [
     # --------------------------------------------------
     # For backward compatibility:
 
-    'Window', 'SimpleLevel', 'DerivationWindow', 'WithinTrialDerivationWindow', 'TransitionDerivationWindow',
+    'AcrossTrials', 'SimpleLevel', 'DerivationWindow', 'WithinTrialDerivationWindow', 'TransitionDerivationWindow',
 
     'at_most_k_in_a_row', 'at_least_k_in_a_row', 'exactly_k', 'exactly_k_in_a_row', 'exclude', 'minimum_trials',
 

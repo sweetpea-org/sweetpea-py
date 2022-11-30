@@ -11,7 +11,9 @@ Factors and Levels
               :class:`.DerivedLevel` values. In the last case, the
               result is a *derived factor*. The `levels` list must
               either contain all derived levels or all values that are
-              not derived levels. The names of the levels must be
+              not derived levels, and the levels must all use a
+              compatible derivation as described in :ref:`derivations`.
+              The names of the levels must be
               distinct; create a level with a weight to get the
               effect of multiple levels with he same name.
 
@@ -89,7 +91,8 @@ Factors and Levels
 .. class:: sweetpea.DerivedLevel(name, derivation, weight=1)
 
               Creates a derived level, which depends on the levels of
-              other factors in a design.
+              other factors in a design. All derived levels for one factor
+              must use compatible derivations as described in :ref:`derivations`.
 
               :param name: the level's name, which can be any value
               :param derivation: a condition on other factors' levels; see
@@ -106,7 +109,8 @@ Factors and Levels
               matching any arguments that other derived levels do not
               match. An “else” derived level can appear only once
               among the levels supplied to :class:`.Factor`, and only in
-              combination with other derived levels.
+              combination with other derived levels. It is compatible
+              with any derivation described in :ref:`derivations`.
 
               :param name: the level's name, which can be any value
               :param weight: the level's weight
