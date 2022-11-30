@@ -103,7 +103,7 @@ Factors and Levels
               :returns: a derived level
               :rtype: Level
 
-.. function:: sweetpea.ElseLevel(name, weight=1)
+.. class:: sweetpea.ElseLevel(name, weight=1)
 
               Creates a derived level that acts as an “else” case,
               matching any arguments that other derived levels do not
