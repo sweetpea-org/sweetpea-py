@@ -162,7 +162,9 @@ implicitly coerced to a <a class="reference internal" href="#sweetpea.Level" tit
 <a class="reference internal" href="#sweetpea.DerivedLevel" title="sweetpea.DerivedLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">DerivedLevel</span></code></a> values. In the last case, the
 result is a <em>derived factor</em>. The <cite>levels</cite> list must
 either contain all derived levels or all values that are
-not derived levels. The names of the levels must be
+not derived levels, and the levels must all use a
+compatible derivation as described in <a class="reference internal" href="derivations.html#derivations"><span class="std std-ref">Derivations</span></a>.
+The names of the levels must be
 distinct; create a level with a weight to get the
 effect of multiple levels with he same name.</p>
 <dl class="field-list simple">
@@ -273,7 +275,8 @@ samples that are considered distinct.</p>
 <dt class="sig sig-object py" id="sweetpea.DerivedLevel">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">DerivedLevel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">derivation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.DerivedLevel" title="Permalink to this definition"></a></dt>
 <dd><p>Creates a derived level, which depends on the levels of
-other factors in a design.</p>
+other factors in a design. All derived levels for one factor
+must use compatible derivations as described in <a class="reference internal" href="derivations.html#derivations"><span class="std std-ref">Derivations</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -292,14 +295,15 @@ other factors in a design.</p>
 </dl>
 </dd></dl>
 
-<dl class="py function">
+<dl class="py class">
 <dt class="sig sig-object py" id="sweetpea.ElseLevel">
-<span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">ElseLevel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.ElseLevel" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">ElseLevel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.ElseLevel" title="Permalink to this definition"></a></dt>
 <dd><p>Creates a derived level that acts as an “else” case,
 matching any arguments that other derived levels do not
 match. An “else” derived level can appear only once
 among the levels supplied to <a class="reference internal" href="#sweetpea.Factor" title="sweetpea.Factor"><code class="xref py py-class docutils literal notranslate"><span class="pre">Factor</span></code></a>, and only in
-combination with other derived levels.</p>
+combination with other derived levels. It is compatible
+with any derivation described in <a class="reference internal" href="derivations.html#derivations"><span class="std std-ref">Derivations</span></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
