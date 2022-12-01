@@ -17,7 +17,6 @@ from sweetpea.internal.argcheck import argcheck, make_istuple
 from sweetpea.internal.weight import combination_weight
 from sweetpea.internal.beforestart import BeforeStart
 
-
 def validate_factor(block: Block, factor: Factor) -> None:
     if not block.has_factor(factor):
         raise ValueError(("A factor with name '{}' wasn't found in the design. "

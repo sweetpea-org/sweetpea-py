@@ -23,7 +23,7 @@ __all__ = [
     'ExactlyKInARow',
 
     'Gen', 'RandomGen', 'IterateGen', 
-    'CMSGen', 'UniGen',
+    'CMSGen', 'UniGen', 'IterateGurobiGen',
 
     # --------------------------------------------------
     # For backward compatibility:
@@ -65,6 +65,7 @@ from sweetpea.sampling_strategies.non_uniform import NonUniformSamplingStrategy,
 from sweetpea.sampling_strategies.unigen import UnigenSamplingStrategy, UniGen
 from sweetpea.sampling_strategies.cmsgen import CMSGenSamplingStrategy, CMSGen
 from sweetpea.sampling_strategies.uniform_combinatoric import UniformCombinatoricSamplingStrategy, RandomGen
+from sweetpea.sampling_strategies.gurobi import IterateGurobiGen
 from sweetpea.server import build_cnf
 from sweetpea.core.cnf import Var
 from sweetpea.internal.argcheck import argcheck, make_islistof

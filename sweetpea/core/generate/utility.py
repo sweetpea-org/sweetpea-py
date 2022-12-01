@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from enum import Enum, auto
+from io import TextIOWrapper
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, NamedTuple, Optional
 from uuid import uuid4 as generate_uuid
@@ -169,3 +170,24 @@ def combine_and_save_cnf(filename: Path,
     print("Encoding experiment constraints...")
     combined_cnf = combine_cnf_with_requests(initial_cnf, fresh, support, generation_requests)
     save_cnf(filename, combined_cnf, fresh, support)
+
+def combine_and_save_opb(filename: Path,
+                         cnf: CNF,
+                         support: int,
+                         generation_requests: List[GenerationRequest]):
+    print("Encoding experiment constraints...")
+
+    with open(filename, 'a') as opb_file:
+        opb_file.write(cnf.as_opb_string())
+
+        for request in generation_requests:
+            if request.assertion_type is AssertionType.EQ:
+                comparison = ' = ' + str(request.k)
+            elif request.assertion_type is AssertionType.LT:
+                comparison = ' <= ' + str(request.k - 1)
+            elif request.assertion_type is AssertionType.GT:
+                comparison = ' >= ' + str(request.k - 1)
+            else:
+                raise ValueError(f"invalid assertion type: {request.assertion_type}")
+            opb_file.write('\n' + ' '.join(map(lambda x :  '+1 v' + str(x), request.boolean_values)) \
+                                    + comparison + ' ; ')

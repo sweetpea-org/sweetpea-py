@@ -21,7 +21,6 @@ from sweetpea.design_graph import DesignGraph
 from sweetpea.internal.iter import chunk_list
 from sweetpea.internal.weight import combination_weight
 
-
 class Block:
     """Abstract class for Blocks. Contains the required data, and defines
     abstract methods that other blocks _must_ implement in order to work
