@@ -96,3 +96,20 @@ Sampling Strategies
            results is constrained to be distinct. The number of
            returned experiments will be less than the requested number
            if the pool of possible trial sequences is exhausted.
+
+.. class:: sweetpea.IterateGurobiGen
+
+           Like :class:`.IterateGen`, but uses Gurobi and requires
+           that the ``gurobipy`` package has been installed.
+
+           *Non-Uniformity*: Generates trials by repeatedly finding
+           solutions to an experiment design's constraints, but with
+           no guarantee of uniform coverage or even randomness (i.e.,
+           each separate use of :func:`.synthesize_trials` with this
+           stragegy may produce the same result).
+
+           *Without Replacement*: When multiple trials are generated
+           in one call to :func:`.synthesize_trials`, each of the
+           results is constrained to be distinct. The number of
+           returned experiments will be less than the requested number
+           if the pool of possible trial sequences is exhausted.

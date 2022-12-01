@@ -250,6 +250,23 @@ returned experiments will be less than the requested number
 if the pool of possible trial sequences is exhausted.</p>
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="sweetpea.IterateGurobiGen">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">IterateGurobiGen</span></span><a class="headerlink" href="#sweetpea.IterateGurobiGen" title="Permalink to this definition"></a></dt>
+<dd><p>Like <a class="reference internal" href="#sweetpea.IterateGen" title="sweetpea.IterateGen"><code class="xref py py-class docutils literal notranslate"><span class="pre">IterateGen</span></code></a>, but uses Gurobi and requires
+that the <code class="docutils literal notranslate"><span class="pre">gurobipy</span></code> package has been installed.</p>
+<p><em>Non-Uniformity</em>: Generates trials by repeatedly finding
+solutions to an experiment design’s constraints, but with
+no guarantee of uniform coverage or even randomness (i.e.,
+each separate use of <a class="reference internal" href="main.html#sweetpea.synthesize_trials" title="sweetpea.synthesize_trials"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code></a> with this
+stragegy may produce the same result).</p>
+<p><em>Without Replacement</em>: When multiple trials are generated
+in one call to <a class="reference internal" href="main.html#sweetpea.synthesize_trials" title="sweetpea.synthesize_trials"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code></a>, each of the
+results is constrained to be distinct. The number of
+returned experiments will be less than the requested number
+if the pool of possible trial sequences is exhausted.</p>
+</dd></dl>
+
 </section>
 
 
