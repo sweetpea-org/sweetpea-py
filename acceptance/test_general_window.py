@@ -2,11 +2,8 @@ import pytest
 
 from itertools import permutations
 
-from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
-from sweetpea.constraints import at_most_k_in_a_row, exclude
-from sweetpea.encoding_diagram import print_encoding_diagram
-from sweetpea.primitives import Factor, DerivedLevel, Window
-from sweetpea.server import build_cnf
+from sweetpea import * 
+from sweetpea._internal.server import build_cnf
 from acceptance import path_to_cnf_files, reset_expected_solutions
 
 # Basic setup
@@ -26,8 +23,8 @@ def test_correct_solution_count_when_unconstrained(design):
     crossing = [color, text]
     constraints = []
 
-    block  = fully_cross_block(design, crossing, constraints)
-    experiments  = synthesize_trials_non_uniform(block, 100)
+    block  = CrossBlock(design, crossing, constraints)
+    experiments  = synthesize_trials(block, 100, IterateGen)
 
     assert len(experiments) == 24
 
@@ -37,10 +34,10 @@ def test_correct_solution_count_when_bookends_must_be_congruent(design):
     crossing = [color, text]
 
     # Require both bookends to be congruent.
-    constraints = [exclude(congruent_bookend, "no")]
+    constraints = [Exclude(congruent_bookend["no"])]
 
-    block  = fully_cross_block(design, crossing, constraints)
-    experiments  = synthesize_trials_non_uniform(block, 100)
+    block  = CrossBlock(design, crossing, constraints)
+    experiments  = synthesize_trials(block, 100, IterateGen)
 
     assert len(experiments) == 4
 
@@ -50,10 +47,10 @@ def test_correct_solution_count_when_bookends_must_not_be_congruent(design):
     crossing = [color, text]
 
     # Require both bookends to not be congruent.
-    constraints = [exclude(congruent_bookend, "yes")]
+    constraints = [Exclude(congruent_bookend["yes"])]
 
-    block  = fully_cross_block(design, crossing, constraints)
-    experiments  = synthesize_trials_non_uniform(block, 100)
+    block  = CrossBlock(design, crossing, constraints)
+    experiments  = synthesize_trials(block, 100, IterateGen)
 
     assert len(experiments) == 4
 
@@ -63,10 +60,10 @@ def test_correct_solution_count_when_bookends_must_not_match_each_other(design):
     crossing = [color, text]
 
     # Require both bookends to be incongruent with each other.
-    constraints = [at_most_k_in_a_row(1, congruent_bookend)]
+    constraints = [AtMostKInARow(1, congruent_bookend)]
 
-    block  = fully_cross_block(design, crossing, constraints)
-    experiments  = synthesize_trials_non_uniform(block, 100)
+    block  = CrossBlock(design, crossing, constraints)
+    experiments  = synthesize_trials(block, 100, IterateGen)
 
     assert len(experiments) == 16
 
@@ -74,9 +71,9 @@ def test_correct_solution_count_when_bookends_must_not_match_each_other_cnf(desi
     crossing = [color, text]
 
     # Require both bookends to be incongruent with each other.
-    constraints = [at_most_k_in_a_row(1, congruent_bookend)]
+    constraints = [AtMostKInARow(1, congruent_bookend)]
 
-    block  = fully_cross_block(design, crossing, constraints)
+    block  = CrossBlock(design, crossing, constraints)
     cnf = build_cnf(block)
 
     if reset_expected_solutions:

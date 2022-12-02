@@ -11,8 +11,12 @@ SweetPea
 SweetPea is a domain-specific language for specifying factorial experimental
 designs and synthesizing trial sequences from those design specifications. An
 explanation of factorial experimental designs and how to build and manipulate
-them in SweetPea can be found in [the SweetPea
-Guide](https://sweetpea-org.github.io).
+them in SweetPea can be found in [the SweetPea Guide](https://sweetpea-org.github.io).
+
+> See also the [paper](https://link.springer.com/article/10.3758/s13428-021-01598-2)
+> describing SweetPea, but beware that the API has changed. The main changes are
+> replacing most functions with classes, changing some function names, and
+> simplifying the organization to just a `sweetpea` module that exports everything.
 
 SweetPea includes a synthesizer to generate sequences of trials that
 satisfy the design's constraints. The goal is to generate sequences

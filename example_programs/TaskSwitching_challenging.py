@@ -92,7 +92,7 @@ otherwise switch
 """
 
 def task_repeat(color, motion, size):
-    return (color[0] == color[1]) or (motion[0] == motion[1]) or (size[0] == size[1])
+    return (color[0] == color[-1]) or (motion[0] == motion[-1]) or (size[0] == size[-1])
 
 def task_switch(color, motion, size):
     return not task_repeat(color, motion, size)
@@ -123,7 +123,7 @@ if right-left then task transition = switch
 """
 
 def response_repeat(response):
-    return (response[0] == response[1])
+    return (response[0] == response[-1])
 
 def response_switch(response):
     return not response_repeat(response)

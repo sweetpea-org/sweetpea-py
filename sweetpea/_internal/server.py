@@ -3,9 +3,9 @@
 
 from typing import List
 
-from sweetpea.blocks import Block
-from sweetpea.core import CNF, combine_cnf_with_requests, cnf_is_satisfiable
-from sweetpea.logic import And, cnf_to_json
+from sweetpea._internal.block import Block
+from sweetpea._internal.core import CNF, combine_cnf_with_requests, cnf_is_satisfiable
+from sweetpea._internal.logic import And, cnf_to_json
 
 
 def build_cnf(block: Block) -> CNF:

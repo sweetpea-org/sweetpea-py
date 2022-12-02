@@ -7,15 +7,16 @@ from typing import List, Tuple, Any, Union, cast, Dict, Callable
 from itertools import chain, product
 from math import ceil
 
-from sweetpea.base_constraint import Constraint
-from sweetpea.internal.iter import chunk, chunk_list
-from sweetpea.blocks import Block, FullyCrossBlock, MultipleCrossBlock
-from sweetpea.backend import LowLevelRequest, BackendRequest
-from sweetpea.logic import If, Iff, And, Or, Not
-from sweetpea.primitives import DerivedFactor, DerivedLevel, Factor, Level, SimpleLevel
-from sweetpea.internal.argcheck import argcheck, make_istuple
-from sweetpea.internal.weight import combination_weight
-from sweetpea.internal.beforestart import BeforeStart
+from sweetpea._internal.base_constraint import Constraint
+from sweetpea._internal.iter import chunk, chunk_list
+from sweetpea._internal.block import Block
+from sweetpea._internal.cross_block import MultiCrossBlock
+from sweetpea._internal.backend import LowLevelRequest, BackendRequest
+from sweetpea._internal.logic import If, Iff, And, Or, Not
+from sweetpea._internal.primitive import DerivedFactor, DerivedLevel, Factor, Level, SimpleLevel
+from sweetpea._internal.argcheck import argcheck, make_istuple
+from sweetpea._internal.weight import combination_weight
+from sweetpea._internal.beforestart import BeforeStart
 
 def validate_factor(block: Block, factor: Factor) -> None:
     if not block.has_factor(factor):
@@ -123,7 +124,7 @@ class Cross(Constraint):
         pass
 
     @staticmethod
-    def apply(block: MultipleCrossBlock, backend_request: BackendRequest) -> None:
+    def apply(block: MultiCrossBlock, backend_request: BackendRequest) -> None:
         # Treat each crossing seperately, but they're related by shared variables, which
         # are the per-trial, per-level variables of factors used in multiple crossings
         for c in block.crossings:
@@ -192,12 +193,6 @@ class Cross(Constraint):
     def potential_sample_conforms(self, sample: dict) -> bool:
         # conformance by construction in combinatoric
         return True
-            
-class FullyCross(Cross):
-    """Covered by Cross"""
-
-class MultipleCross(Cross):
-    """Covered by Cross"""
 
 class Derivation(Constraint):
     """A derivation such as::
@@ -343,7 +338,7 @@ class Derivation(Constraint):
 
 
 class _KInARow(Constraint):
-    def __init__(self, k, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]]):
+    def __init__(self, k, level):
         self.k = k
         self.level = level
         self.__validate()
@@ -358,44 +353,30 @@ class _KInARow(Constraint):
             raise ValueError(f"{who}: k must be greater than 0; if you're trying to exclude a particular level, "
                              f"use the 'Exclude' constraint")
 
-        if isinstance(self.level, Factor):
-            pass
-        elif isinstance(self.level, tuple) and len(self.level) == 2:
-            if not (isinstance(self.level[1], SimpleLevel) or isinstance(self.level[1], DerivedLevel)):
-                l = self.level[0].get_level(self.level[1])
-                if not l:
-                    raise ValueError(f"{who}: not a level in factor {self.level[0]}: {self.level[1]}")
-                self.level = (self.level[0], l)
-        else:
-            raise ValueError(f"{who}: expected either a Factor or a tuple of Factor and Level, given {self.level}")
+        self.level = filter_level(who, self.level, True)
 
     def validate(self, block: Block) -> None:
-        validate_factor_and_level(block, self.level[0], self.level[1])
+        validate_factor_and_level(block, self.level.get_factor(), self.level)
 
     def uses_factor(self, f: Factor) -> bool:
         if isinstance(self.level, Factor):
             return self.level.uses_factor(f)
         else:
-            return self.level[0].uses_factor(f)
+            return self.level.factor.uses_factor(f)
 
     def desugar(self, replacements: dict) -> List[Constraint]:
         constraints = cast(List[Constraint], [self])
 
-        if isinstance(self.level, Factor):
-            level = replacements.get(self.level, self.level)
-        else:
-            level = (replacements.get(self.level[0], self.level[0]),
-                     replacements.get(self.level[0], self.level[1]))
+        level = replacements.get(self.level, self.level)
 
         # Generate the constraint for each level in the factor.
         if isinstance(level, Factor):
             levels = level.levels  # Get the actual levels out of the factor.
-            level_tuples = list(map(lambda level: (self.level, level), levels))
 
             constraints = []
-            for t in level_tuples:
+            for l in levels:
                 constraint_copy = deepcopy(self)
-                constraint_copy.level = t
+                constraint_copy.level = l
                 constraints.append(constraint_copy)
         elif level != self.level:
             constraint_copy = deepcopy(self)
@@ -405,13 +386,10 @@ class _KInARow(Constraint):
         return constraints
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
-        # By this point, level should be a Tuple containing the factor and the level.
+        # By this point, level should be a level tht has a factor.
         # Block construction is expected to flatten out constraints applied to whole factors so
         # that the constraint is applied to each level of the factor.
-        if isinstance(self.level, tuple) and len(self.level) == 2:
-            self.apply_to_backend_request(block, self.level, backend_request)
-        else:
-            raise ValueError("Unrecognized levels specification in AtMostKInARow constraint: " + str(self.level))
+        self.apply_to_backend_request(block, (self.level.factor, self.level), backend_request)
 
     def _build_variable_sublists(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], sublist_length: int) -> List[List[int]]:
         var_list = block.build_variable_list(level)
@@ -423,8 +401,8 @@ class _KInARow(Constraint):
         pass
 
     def potential_sample_conforms(self, sample: dict) -> bool:
-        factor = self.level[0]
-        level = self.level[1]
+        level = self.level
+        factor = level.factor
 
         level_list = sample[factor]
         counts = []
@@ -449,7 +427,7 @@ class _KInARow(Constraint):
         return all(map(lambda n: fn(n, self.k), counts))
 
 
-def at_most_k_in_a_row(k, levels):
+class AtMostKInARow(_KInARow):
     """This desugars pretty directly into the llrequests. The only thing to do
     here is to collect all the boolean vars that match the same level & pair
     them up according to k.
@@ -472,10 +450,6 @@ def at_most_k_in_a_row(k, levels):
         sum(1, 7, 13)  LT 3
         sum(7, 13, 19) LT 3
     """
-    return AtMostKInARow(k, levels)
-
-
-class AtMostKInARow(_KInARow):
     def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], backend_request: BackendRequest) -> None:
         sublists = self._build_variable_sublists(block, level, self.k + 1)
 
@@ -495,7 +469,7 @@ class AtMostKInARow(_KInARow):
         return self._potential_counts_conform_individually(counts, op.le)
 
 
-def at_least_k_in_a_row(k, levels):
+class AtLeastKInARow(_KInARow):
     """This is more complicated that AtMostKInARow. We collect all the boolean
     vars that match the same level & pair them up according to k.
 
@@ -518,10 +492,6 @@ def at_least_k_in_a_row(k, levels):
         If(And(!1, 7)) Then (13, 19)
         If(19) Then (7, 13)   --------This is a corner case
     """
-    return AtLeastKInARow(k, levels)
-
-
-class AtLeastKInARow(_KInARow):
     def __init__(self, k, levels):
         super().__init__(k, levels)
         self.max_trials_required = cast(int, None)
@@ -558,14 +528,10 @@ class AtLeastKInARow(_KInARow):
         return self._potential_counts_conform_individually(counts, op.ge)
 
 
-def exactly_k(k ,levels):
+class ExactlyK(_KInARow):
     """Requires that if the given level exists at all, it must exist in a trial
     exactly ``k`` times.
     """
-    return ExactlyK(k, levels)
-
-
-class ExactlyK(_KInARow):
     def apply_to_backend_request(self,
                                  block: Block,
                                  level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]],
@@ -587,14 +553,10 @@ class ExactlyK(_KInARow):
         return sum(counts) == self.k
 
 
-def exactly_k_in_a_row(k, levels):
+class ExactlyKInARow(_KInARow):
     """Requires that if the given level exists at all, it must exist in a
     sequence of exactly K.
     """
-    return ExactlyKInARow(k, levels)
-
-
-class ExactlyKInARow(_KInARow):
     def apply_to_backend_request(self,
                                  block: Block,
                                  level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]],
@@ -642,24 +604,33 @@ class ExactlyKInARow(_KInARow):
     def _potential_counts_conform(self, counts: List[int]) -> bool:
         return self._potential_counts_conform_individually(counts, op.eq)
 
-def filter_factor_and_level(who, factor, level):
-    argcheck(who, factor, Factor, "a Factor")
-    if not isinstance(level, Level):
-        l = factor.get_level(level)
-        if not l:
-            raise ValueError(f"{who}: not a level in factor {factor}: {level}")
-        level = l
-    elif level not in factor.levels:
-        raise RuntimeError(f"{who}: given level is not in given factor: {level} not in {factor}")
-    return (factor, level)
-
-def exclude(factor, levels):
-    return Exclude(factor, levels)
+def filter_level(who, level, factor_ok: bool = False):
+    if factor_ok and isinstance(level, Factor):
+        return level
+    elif isinstance(level, Level):
+        if hasattr(level, 'factor'):
+            return level
+        raise ValueError(f"{who}: level does not belong to a factor: {level}")
+    elif isinstance(level, tuple) and len(level) == 2 and isinstance(level[0], Factor):
+        if isinstance(level[1], SimpleLevel) or isinstance(level[1], DerivedLevel):
+            if level[1] not in level[0]:
+                raise ValueError(f"{who}: level {level[0]} is not in factor {level[1]}")
+            return level[1]
+        else:
+            l = level[0].get_level(level[1])
+            if not l:
+                raise ValueError(f"{who}: not a level in factor {level[0]}: {level[1]}")
+            return l
+    else:
+        if factor_ok:
+            raise ValueError(f"{who}: expected either a Factor, Level, or a tuple of Factor and Level, given {level}")
+        else:
+            raise ValueError(f"{who}: expected either a Level or a tuple of Factor and Level, given {level}")
 
 class Exclude(Constraint):
-    def __init__(self, factor, level):
-        factor, level = filter_factor_and_level("Exclude", factor, level)
-        self.factor = factor
+    def __init__(self, level):
+        level = filter_level("Exclude", level)
+        self.factor = level.factor
         self.level = level
 
     def validate(self, block: Block) -> None:
@@ -674,9 +645,8 @@ class Exclude(Constraint):
         return self.factor.uses_factor(f)
 
     def desugar(self, replacements: dict) -> List:
-        factor = replacements.get(self.factor, self.factor)
         level = replacements.get(self.level, self.level)
-        return [Exclude(factor, level)]
+        return [Exclude(level)]
 
     def extract_simplelevel(self, block: Block, level: DerivedLevel) -> List[Dict[Factor, SimpleLevel]]:
         """Recursively deciphers the excluded level to a list of combinations
@@ -739,10 +709,10 @@ class Exclude(Constraint):
         return True
 
 class Pin(Constraint):
-    def __init__(self, index, factor, level):
-        factor, level = filter_factor_and_level("Pin", factor, level)
+    def __init__(self, index, level):
+        level = filter_level("Pin", level)
         self.index = index
-        self.factor = factor
+        self.factor = level.factor
         self.level = level
 
     def _get_trial_number(self, block) -> int:
@@ -767,9 +737,8 @@ class Pin(Constraint):
         return self.factor.uses_factor(f)
 
     def desugar(self, replacements: dict) -> List:
-        factor = replacements.get(self.factor, self.factor)
         level = replacements.get(self.level, self.level)
-        return [Pin(self.index, factor, level)]
+        return [Pin(self.index, level)]
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
         trial_no = self._get_trial_number(block)
@@ -828,10 +797,6 @@ class Reify(Constraint):
     def desugar(self, replacements: dict) -> List:
         factor = replacements.get(self.factor, self.factor)
         return [Reify(factor)]
-
-
-def minimum_trials(trials):
-    return MinimumTrials(trials)
 
 
 class MinimumTrials(Constraint):

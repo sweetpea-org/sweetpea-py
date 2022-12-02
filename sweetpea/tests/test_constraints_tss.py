@@ -3,12 +3,12 @@ import pytest
 
 from itertools import permutations
 
-from sweetpea import fully_cross_block
-from sweetpea.blocks import Block
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
-from sweetpea.constraints import Consistency, FullyCross, Derivation, AtMostKInARow, Reify
-from sweetpea.backend import LowLevelRequest, BackendRequest
-from sweetpea.logic import And, Or, Iff, to_cnf_tseitin
+from sweetpea import CrossBlock
+from sweetpea._internal.block import Block
+from sweetpea._internal.primitive import Factor, DerivedLevel, WithinTrial, Transition
+from sweetpea._internal.constraint import Consistency, Cross, Derivation, AtMostKInARow, Reify
+from sweetpea._internal.backend import LowLevelRequest, BackendRequest
+from sweetpea._internal.logic import And, Or, Iff, to_cnf_tseitin
 
 
 color  = Factor("color",  ["red", "blue"])
@@ -27,9 +27,9 @@ congruency = Factor("congruency", [
     DerivedLevel("inc", WithinTrial(color_motion_incongruent, [color, motion]))
 ])
 
-block = fully_cross_block([congruency, color, motion, task],
-                          [color, motion, task],
-                          [Reify(congruency)])
+block = CrossBlock([congruency, color, motion, task],
+                   [color, motion, task],
+                   [Reify(congruency)])
 
 
 def test_fully_cross_with_three_factors():
@@ -45,7 +45,7 @@ def test_fully_cross_with_three_factors():
     ]), 129)
 
     backend_request = BackendRequest(65)
-    FullyCross.apply(block, backend_request)
+    Cross.apply(block, backend_request)
 
     assert backend_request.fresh == 258
     assert backend_request.cnfs == [expected_cnf]

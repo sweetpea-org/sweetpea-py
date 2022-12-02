@@ -3,9 +3,9 @@
 
 from typing import List
 
-from sweetpea.logic import And, cnf_to_json
-from sweetpea.core import Var
-from sweetpea.core.generate.utility import GenerationRequest, AssertionType
+from sweetpea._internal.logic import And, cnf_to_json
+from sweetpea._internal.core import Var
+from sweetpea._internal.core.generate.utility import GenerationRequest, AssertionType
 
 
 class LowLevelRequest:

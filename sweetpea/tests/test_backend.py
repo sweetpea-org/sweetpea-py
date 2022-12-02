@@ -1,8 +1,8 @@
 import json
 import pytest
 
-from sweetpea.logic import And, Or
-from sweetpea.backend import LowLevelRequest, BackendRequest
+from sweetpea._internal.logic import And, Or
+from sweetpea._internal.backend import LowLevelRequest, BackendRequest
 
 
 def test_low_level_request_validation():

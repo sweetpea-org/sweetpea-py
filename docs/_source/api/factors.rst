@@ -11,7 +11,7 @@ Factors and Levels
               :class:`.DerivedLevel` values. In the last case, the
               result is a *derived factor*. The `levels` list must
               either contain all derived levels or all values that are
-              not derived levels, and the levels must all use a
+              not derived levels, and derived levels must all use a
               compatible derivation as described in :ref:`derivations`.
               The names of the levels must be
               distinct; create a level with a weight to get the
@@ -40,7 +40,7 @@ Factors and Levels
                 :returns: a level with the given name
                 :rtype: Level
 
-              .. method:: levels()
+              .. property:: levels
 
                 Returns the factor's levels.
 
@@ -61,8 +61,8 @@ Factors and Levels
               crossing, the `weight` crossing occurrences of the level
               are not considered distinct. Consequently, a sampling
               strategy without replacement (see :class:`.Gen`) will
-              produce fewer samples than it would for separate levels
-              that use the same name. Along similar lines, a
+              produce fewer samples than it would for separate levels.
+              Along similar lines, a
               :class:`.DerivedLevel` can have a weight greater than 1
               to affect crossings, but cannot be included in a level
               multiple times, because each derived level's predicate
@@ -70,7 +70,7 @@ Factors and Levels
 
               For a non-derived level whose factor is not crossed (or,
               more generally, is not in all crossings in a
-              :func:`.MultiCrossBlock`), a `weight` value has the same
+              :class:`.MultiCrossBlock`), a `weight` value has the same
               effect as duplicating the level's name. That is, the
               would-be copies are treated as distinct, which means
               that sampling with replacement is biased toward levels
@@ -85,7 +85,16 @@ Factors and Levels
 
               .. property:: name
 
-                 The level's name, which can be any kind of value.
+                The level's name, which can be any kind of value.
+
+              .. property:: factor
+
+                Returns the level's factor. This property exists only
+                for a :class:`.Level` object that is extracted from a
+                :class:`.Factor` object.
+
+                :returns: a factor
+                :rtype: Factor
 
 
 .. class:: sweetpea.DerivedLevel(name, derivation, weight=1)

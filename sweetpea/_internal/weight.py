@@ -1,7 +1,7 @@
 
 from typing import Tuple
 
-from sweetpea.primitives import Level
+from sweetpea._internal.primitive import Level
 
 def combination_weight(levels: Tuple[Level, ...]) -> int:
     n = 1

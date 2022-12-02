@@ -83,7 +83,7 @@ Derivations
 
 A :term:`derivation` (or :term:`derived level`) is a new level produced by
 combining other :term:`levels <level>`. This combination of levels can be
-directly constructed with :func:`sweetpea.primitives.DerivedLevel`.
+directly constructed with :func:`sweetpea.DerivedLevel`.
 
 Derivations can also be constrained by :term:`derivation windows <derivation
 window>`, which allow for specifying specific manners in which different levels
@@ -107,7 +107,7 @@ Within-Trial Windows
 ^^^^^^^^^^^^^^^^^^^^
 
 The :term:`within-trial windows <derivation window, within-trial>`
-(:class:`sweetpea.primitives.WithinTrialDerivationWindow`) describe a level that
+(:class:`sweetpea.WithinTrial`) describe a level that
 is selected depending on levels from other factors, all within the same trial.
 For example, when one factor is a color and another factor is the text of a color name,
 each trial can be categozied as “congurent” or “incongrent” individually.
@@ -118,7 +118,7 @@ Transition Windows
 ^^^^^^^^^^^^^^^^^^
 
 A :term:`transition window <derivation window, transition>`
-(:class:`sweetpea.primitives.TransitionDerivationWindow`) describes a level that
+(:class:`sweetpea.Transition`) describes a level that
 is selected depending on a combination of levels from other factors in the
 current trial and the immediately preceding trial. For example, a trial
 might be categorized as “same” if it is categorized as “congurent”
@@ -131,7 +131,7 @@ General Windows
 ^^^^^^^^^^^^^^^
 
 A general :term:`derivation window`
-(:class:`sweetpea.primitives.DerivationWindow`) creates a level that is selected
+(:class:`sweetpea.Window`) creates a level that is selected
 depending on a combination of levels from other factors in the current trial and
 zero or more preceding trials.
 

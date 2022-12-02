@@ -115,7 +115,14 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../api.html">SweetPea API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">SweetPea API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../api/main.html">Experiments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/factors.html">Factors and Levels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/derivations.html">Derivations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/constraints.html">Constraints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api/sampling_strategies.html">Sampling Strategies</a></li>
+</ul>
+</li>
 </ul>
 
         </div>
@@ -218,7 +225,7 @@ combination of factors and levels. In other words, we must have <span class="mat
 <span id="guide-factorial-derivations"></span><h2>Derivations<a class="headerlink" href="#derivations" title="Permalink to this heading"></a></h2>
 <p>A <a class="reference internal" href="#term-derivation"><span class="xref std std-term">derivation</span></a> (or <a class="reference internal" href="#term-derived-level"><span class="xref std std-term">derived level</span></a>) is a new level produced by
 combining other <a class="reference internal" href="#term-level"><span class="xref std std-term">levels</span></a>. This combination of levels can be
-directly constructed with <code class="xref py py-func docutils literal notranslate"><span class="pre">sweetpea.primitives.DerivedLevel()</span></code>.</p>
+directly constructed with <a class="reference internal" href="../api/factors.html#sweetpea.DerivedLevel" title="sweetpea.DerivedLevel"><code class="xref py py-func docutils literal notranslate"><span class="pre">sweetpea.DerivedLevel()</span></code></a>.</p>
 <p>Derivations can also be constrained by <a class="reference internal" href="#term-derivation-window"><span class="xref std std-term">derivation windows</span></a>, which allow for specifying specific manners in which different levels
 from multiple factors can interact across trial boundaries:</p>
 <ul class="simple">
@@ -234,7 +241,7 @@ in terms of a trial and any number of preceding trials.</p></li>
 <section id="within-trial-windows">
 <span id="guide-factorial-derivations-within-trial-windows"></span><h3>Within-Trial Windows<a class="headerlink" href="#within-trial-windows" title="Permalink to this heading"></a></h3>
 <p>The <a class="reference internal" href="#term-derivation-window-within-trial"><span class="xref std std-term">within-trial windows</span></a>
-(<code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.primitives.WithinTrialDerivationWindow</span></code>) describe a level that
+(<a class="reference internal" href="../api/derivations.html#sweetpea.WithinTrial" title="sweetpea.WithinTrial"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.WithinTrial</span></code></a>) describe a level that
 is selected depending on levels from other factors, all within the same trial.
 For example, when one factor is a color and another factor is the text of a color name,
 each trial can be categozied as “congurent” or “incongrent” individually.</p>
@@ -242,7 +249,7 @@ each trial can be categozied as “congurent” or “incongrent” individually
 <section id="transition-windows">
 <span id="guide-factorial-derivations-transition-windows"></span><h3>Transition Windows<a class="headerlink" href="#transition-windows" title="Permalink to this heading"></a></h3>
 <p>A <a class="reference internal" href="#term-derivation-window-transition"><span class="xref std std-term">transition window</span></a>
-(<code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.primitives.TransitionDerivationWindow</span></code>) describes a level that
+(<a class="reference internal" href="../api/derivations.html#sweetpea.Transition" title="sweetpea.Transition"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.Transition</span></code></a>) describes a level that
 is selected depending on a combination of levels from other factors in the
 current trial and the immediately preceding trial. For example, a trial
 might be categorized as “same” if it is categorized as “congurent”
@@ -251,7 +258,7 @@ and the previous trial was also categorized as “congurent”.</p>
 <section id="general-windows">
 <span id="guide-factorial-derivations-basic-windows"></span><h3>General Windows<a class="headerlink" href="#general-windows" title="Permalink to this heading"></a></h3>
 <p>A general <a class="reference internal" href="#term-derivation-window"><span class="xref std std-term">derivation window</span></a>
-(<code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.primitives.DerivationWindow</span></code>) creates a level that is selected
+(<a class="reference internal" href="../api/derivations.html#sweetpea.Window" title="sweetpea.Window"><code class="xref py py-class docutils literal notranslate"><span class="pre">sweetpea.Window</span></code></a>) creates a level that is selected
 depending on a combination of levels from other factors in the current trial and
 zero or more preceding trials.</p>
 </section>
@@ -354,7 +361,7 @@ and the way that they are crossed.</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2021, SweetPea Research Group.</p>
+    <p>&#169; Copyright 2022, SweetPea Research Group.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

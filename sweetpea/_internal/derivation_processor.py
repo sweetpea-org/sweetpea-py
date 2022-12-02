@@ -6,11 +6,11 @@ import operator as op
 from typing import Any, Dict, List, Tuple, cast
 from functools import reduce
 
-from sweetpea.primitives import DerivationWindow, DerivedFactor, DerivedLevel, Level
-from sweetpea.blocks import Block
-from sweetpea.constraints import Derivation
-from sweetpea.internal.iter import chunk_list
-from sweetpea.internal.beforestart import BeforeStart
+from sweetpea._internal.primitive import Window, DerivedFactor, DerivedLevel, Level
+from sweetpea._internal.block import Block
+from sweetpea._internal.constraint import Derivation
+from sweetpea._internal.iter import chunk_list, chunk_dict
+from sweetpea._internal.beforestart import BeforeStart
 
 class DerivationProcessor:
 
@@ -64,9 +64,9 @@ class DerivationProcessor:
                     args = [(level.name if not isinstance(level, BeforeStart) else None) for level in level_tuple]
                     if level.window.width != 1:
                         # NOTE: mypy doesn't like this, but I'm not rewriting
-                        #       it right now. Need to replace `chunk_list` with
+                        #       it right now. Need to replace `chunk_dict` with
                         #       a better version.
-                        args = list(chunk_list(args, level.window.width))  # type: ignore
+                        args = list(chunk_dict(args, level.window.width))  # type: ignore
                     result = level.window.predicate(*args)
                     if not isinstance(result, bool):
                         raise ValueError(f"Expected derivation predicate to return bool; got {type(result)}.")
@@ -108,11 +108,11 @@ class DerivationProcessor:
         if level.window.width == 1:
             return level_strings
         else:
-            return list(chunk_list(level_strings, level.window.width))
+            return list(chunk_dict(level_strings, level.window.width))
 
     @staticmethod
     def shift_window(indices: List[List[object]],
-                     window: DerivationWindow,
+                     window: Window,
                      trial_size: int
                      ) -> List[List[object]]:
         """This is a helper function that shifts the indices of

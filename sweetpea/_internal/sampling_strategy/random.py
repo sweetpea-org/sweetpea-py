@@ -7,22 +7,23 @@ from itertools import product
 from math import factorial, ceil
 from typing import List, cast, Tuple, Dict, Optional, Union, Any
 
-from sweetpea.blocks import Block, CrossBlock
-from sweetpea.combinatorics import (
+from sweetpea._internal.block import Block
+from sweetpea._internal.cross_block import CrossBlock
+from sweetpea._internal.combinatorics import (
     n_choose_m,
     extract_components, compute_jth_permutation_prefix, compute_jth_combination,
     count_prefixes_of_permutations_with_copies, compute_jth_prefix_of_permutations_with_copies,
     PermutationMemo
 )
-from sweetpea.design_partitions import DesignPartitions
-from sweetpea.logic import And
-from sweetpea.primitives import SimpleLevel, Factor, DerivedFactor, Level
-from sweetpea.sampling_strategies.base import SamplingStrategy, SamplingResult
-from sweetpea.constraints import Exclude, _KInARow, ExactlyKInARow, AtMostKInARow
-from sweetpea.internal.iter import chunk
-from sweetpea.internal.weight import combination_weight
+from sweetpea._internal.design_partition import DesignPartitions
+from sweetpea._internal.logic import And
+from sweetpea._internal.primitive import SimpleLevel, Factor, DerivedFactor, Level
+from sweetpea._internal.sampling_strategy.base import Gen, SamplingResult
+from sweetpea._internal.constraint import Exclude, _KInARow, ExactlyKInARow, AtMostKInARow
+from sweetpea._internal.iter import chunk
+from sweetpea._internal.weight import combination_weight
 
-class RandomGen(SamplingStrategy):
+class RandomGen(Gen):
     """This strategy represents the ideal. Valid sequences are uniformly
     sampled via a bijection from natural numbers to valid trial sequences.
 
@@ -30,7 +31,7 @@ class RandomGen(SamplingStrategy):
     """
 
     def __str__(self):
-        return UniformCombinatoricSamplingStrategy.class_name()
+        return RandomGen.class_name()
 
     @staticmethod
     def class_name():
@@ -38,18 +39,18 @@ class RandomGen(SamplingStrategy):
 
     @staticmethod
     def sample(block: Block, sample_count: int) -> SamplingResult:
-        return UniformCombinatoricSamplingStrategy.__sample(block, sample_count, 0)
+        return RandomGen.__sample(block, sample_count, 0)
 
     def __init__(self, acceptable_error):
         self.acceptable_error = acceptable_error
 
     def sample_object(self, block: Block, sample_count: int) -> SamplingResult:
-        return UniformCombinatoricSamplingStrategy.__sample(block, sample_count, self.acceptable_error)
+        return RandomGen.__sample(block, sample_count, self.acceptable_error)
 
     @staticmethod
     def __sample(block: Block, sample_count: int, acceptable_error: int) -> SamplingResult:
         # 1. Validate the block.
-        UniformCombinatoricSamplingStrategy.__validate(block)
+        RandomGen.__validate(block)
         metrics = {}
 
         if block.show_errors():
@@ -92,13 +93,13 @@ class RandomGen(SamplingStrategy):
             # into one complete run with the requested number of trials.
             run = solution_variabless[0][1] # the preamble solution, possibly empty
             for round in range(0, rounds_per_run + (1 if leftover > 0 else 0)):
-                run = UniformCombinatoricSamplingStrategy.__combine_round(run, solution_variabless[round+1][1])
+                run = RandomGen.__combine_round(run, solution_variabless[round+1][1])
 
             run = enumerator.fill_in_nonpreamble_uncrossed_derived(run, trials_per_run)
 
-            if UniformCombinatoricSamplingStrategy.__are_constraints_violated(cast(CrossBlock, block), run, enumerator,
-                                                                              rounds_per_run, leftover,
-                                                                              acceptable_error):
+            if RandomGen.__are_constraints_violated(cast(CrossBlock, block), run, enumerator,
+                                                    rounds_per_run, leftover,
+                                                    acceptable_error):
                 rejected += 1
                 if rejected % 10000 == 0:
                     if len(samples) > 0:
@@ -608,5 +609,3 @@ class UCSolutionEnumerator():
                     prod *= shapes[p]
                 s += prod
             return s
-
-UniformCombinatoricSamplingStrategy = RandomGen

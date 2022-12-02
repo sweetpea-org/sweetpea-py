@@ -1,11 +1,10 @@
 import operator as op
 import pytest
 
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial
-from sweetpea.server import build_cnf, is_cnf_still_sat
-from sweetpea.logic import And
-from sweetpea.constraints import Reify
-from sweetpea import fully_cross_block
+from sweetpea import Factor, DerivedLevel, WithinTrial, CrossBlock
+from sweetpea._internal.server import build_cnf, is_cnf_still_sat
+from sweetpea._internal.logic import And
+from sweetpea._internal.constraint import Reify
 from acceptance import path_to_cnf_files, reset_expected_solutions
 
 
@@ -19,7 +18,7 @@ con_level  = DerivedLevel("con", WithinTrial(op.eq, [color, text]))
 inc_level  = DerivedLevel("inc", WithinTrial(op.ne, [color, text]))
 con_factor = Factor("congruent?", [con_level, inc_level])
 
-block = fully_cross_block([color, text, con_factor], [color, text], [Reify(con_factor)])
+block = CrossBlock([color, text, con_factor], [color, text], [Reify(con_factor)])
 
 
 def test_is_cnf_still_sat_should_respond_correctly():

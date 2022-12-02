@@ -6,8 +6,8 @@ block in an experimental design.
 from math import factorial
 from typing import Dict
 
-from sweetpea.blocks import Block
-from sweetpea import __generate_cnf
+from sweetpea._internal.blocks import Block
+from sweetpea._internal.main import __generate_cnf
 
 
 def collect_design_metrics(block: Block) -> Dict:

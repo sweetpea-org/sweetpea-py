@@ -1,8 +1,8 @@
 Experiments
 ===========
 
-Create an experiment description using :func:`.CrossBlock` or
-:func:`.MultiCrossBlock`, then generate trials for the experiment
+Create an experiment description using :class:`.CrossBlock` or
+:class:`.MultiCrossBlock`, then generate trials for the experiment
 using :func:`.synthesize_trials`. Print generated trials using
 :func:`.print_experiments`.
 
@@ -11,14 +11,14 @@ using :func:`.synthesize_trials`. Print generated trials using
    Abstract class representing an experiment description, which can be
    turned into a sequence of trials with :func:`.synthesize_trials`.
            
-.. function:: sweetpea.CrossBlock(design, crossing, constraints, require_complete_crossing=True)
+.. class:: sweetpea.CrossBlock(design, crossing, constraints, require_complete_crossing=True)
 
    Creates an experiment description based on a set of factors and a
    subset them that are *crossed*.
 
-   The :func:`.CrossBlock` function is the main way of describing an
-   experiment. The result is an object that be used with a function
-   like :func:`.synthesize_trials`.
+   The :class:`.CrossBlock` class is the main way of describing an
+   experiment. The result is an object that be used with
+   :func:`.synthesize_trials` to generate trial sequences.
 
    The `design` argument lists all of the factors in the experiment
    design. When a sequence of trials is generated for the experiment,
@@ -40,29 +40,31 @@ using :func:`.synthesize_trials`. Print generated trials using
    the factors in `crossing`. This trial count can be adjusted by
    other elements of the design:
 
-   * :func:`.Exclude` constraints in `constraints` can exclude levels
+   * :class:`.Exclude` constraints in `constraints` can exclude levels
      of a crossed factor. In that case, as long as
      `require_complete_crossing` is set to false, combinations
      involving the factor are removed from the crossing.
 
    * When the levels of a derived factor in `crossing` have a window
      size N that is greater than 1, then N-1 additional preamble
-     trials are added to the start of the sequence, so that the
-     derived level is defined for the first trial that starts the
-     crossing sequence. When multiple derived factors are included in
-     the crossing, the one with the greatest window size determines
-     the number of preamble trials. The levels of non-derived factors
-     in the preamble trials are selected randomly and independently,
-     except that the combinations are subject to any requirements from
-     `constraints`, such as an :func:`.AtMostKInARow` constraint or an
-     :func:`.Exclude` constraint.
+     trials are normally added to the start of the sequence, so that
+     the derived level is defined for the first trial that starts the
+     crossing sequence. This behavior can be controlled in a derived
+     factor by specifying a starting trial. When multiple derived
+     factors are included in the crossing, the one with the latest
+     starting trial determines the number of preamble trials. The
+     levels of non-derived factors in the preamble trials are selected
+     randomly and independently, except that the combinations are
+     subject to any requirements from `constraints`, such as an
+     :class:`.AtMostKInARow` constraint or an :class:`.Exclude`
+     constraint.
 
    * When a derived-factor definition implicitly excludes certain
      combinations by the definition of its levels, then the number of
      trials in a crossing can be reduced, but only if
      `require_complete_crossing` is set to false.
 
-   * A :func:`.MinimumTrials` in `constraint` can increase the number
+   * A :class:`.MinimumTrials` in `constraint` can increase the number
      of trials in a sequence. Additional trials are added afterward by
      replicating the crossing as many times as needed to reach the
      required number of trials. Levels are selected for each
@@ -91,14 +93,16 @@ using :func:`.synthesize_trials`. Print generated trials using
    :return: a block description
    :rtype: Block
 
-.. function:: sweetpea.MultiCrossBlock(design, crossings, constraints, require_complete_crossing=True)
+.. class:: sweetpea.MultiCrossBlock(design, crossings, constraints, require_complete_crossing=True)
 
    Creates an experiment description as a block of trials based on
    multiple crossings.
 
-   The :func:`.MultiCrossBlock` function is like :func:`.CrossBlock`,
-   but it accepts multiple crossings in `crossings`, instead of a
-   single crossing.
+   The :class:`.MultiCrossBlock` class generalizes
+   :class:`.CrossBlock`, but it accepts multiple crossings in
+   `crossings`, instead of a single crossing. Since
+   :class:`.MultiCrossBlock` is more general, a :class:`.CrossBlock`
+   instance is also a :class:`.MultiCrossBlock` instance.
 
    The number of trials in each generated sequence for the experiment
    is determined by the *maximum* of number that would be determined
@@ -122,7 +126,7 @@ using :func:`.synthesize_trials`. Print generated trials using
    :param constraints: constraints that every sequence of trials must
                        satify; see :ref:`constraints`
    :type constraints: List[Constraint]
-   :param require_complete_crossing: same as for :func:`.MultiCrossBlock`
+   :param require_complete_crossing: same as for :class:`.MultiCrossBlock`
    :return: a block description
    :rtype: Block
 
@@ -132,13 +136,18 @@ using :func:`.synthesize_trials`. Print generated trials using
 
    Each block has a number of trials that is determined by the
    experiment's crossing, and each trial is a combination of levels
-   subject to implciit and explicit constraints in the experiment
+   subject to implcit and explicit constraints in the experiment
    description.
 
    The `sampling_strategy` argument determines properties of the
    resulting samples, such as whether each sequence reflects a
-   uniformly random choice over all valid sequences. See see
+   uniformly random choice over all valid sequences. See
    :ref:`sampling_strategies` for more information.
+
+   Note that the default sampling strategy *does not* provide a
+   guarantee of uniform sampling. The default is chosen to produce
+   a result as quickly as possible for the broadest range of
+   designs.
 
    :param block: the experiment description
    :type block: Block
@@ -176,7 +185,7 @@ using :func:`.synthesize_trials`. Print generated trials using
    Factors relevant to a crossing are normally extracted from `block`,
    but they can be specified separately as `factors`. When `block` is
    supplied, it must contain a single crossing, as opposed to a
-   multi-crossing block produced by :func:`.MultiCrossBlock`.
+   multi-crossing block produced by :class:`.MultiCrossBlock`.
 
    Normally, all trails in each sequence are tabulate. If 'trails` is
    provided, is lists trials that should be tabulated, and other

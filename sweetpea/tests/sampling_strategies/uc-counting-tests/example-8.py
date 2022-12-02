@@ -1,7 +1,6 @@
 import operator as op
 
-from sweetpea import fully_cross_block
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial
+from sweetpea import CrossBlock, Factor, DerivedLevel, WithinTrial
 
 color_list = ["red", "orange", "yellow", "green", "blue", "indigo"]
 color = Factor("color", color_list)
@@ -13,6 +12,6 @@ congruency = Factor("congruency", [
 
 design   = [color, text, congruency]
 crossing = [color, text]
-block    = fully_cross_block(design, crossing, [])
+block    = CrossBlock(design, crossing, [])
 
 # ASSERT COUNT = 371993326789901217467999448150835200000000

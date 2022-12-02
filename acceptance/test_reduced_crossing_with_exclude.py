@@ -1,13 +1,9 @@
 import pytest
 
 from acceptance import assert_no_repetition, path_to_cnf_files, reset_expected_solutions
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, factor, derived_level, within_trial
-from sweetpea.constraints import exclude
-from sweetpea.encoding_diagram import print_encoding_diagram
-from sweetpea import UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy
-from sweetpea import fully_cross_block, synthesize_trials, print_experiments
-from sweetpea.server import build_cnf
-from sweetpea.server import build_cnf
+from sweetpea import *
+from sweetpea._internal.encoding_diagram import print_encoding_diagram
+from sweetpea._internal.server import build_cnf
 
 color      = Factor("color",  ["red", "blue", "green"])
 word       = Factor("motion", ["red", "blue"])
@@ -23,34 +19,34 @@ stimulus_configuration = Factor("stimulus configuration", [
     DerivedLevel("illegal", WithinTrial(illegal_stimulus, [color, word]))
 ])
 
-constraints = [exclude(stimulus_configuration, "illegal")]
+constraints = [Exclude(stimulus_configuration["illegal"])]
 
 design       = [color, word, stimulus_configuration]
 crossing     = [color, word]
 
 
-@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 def test_no_solutions_without_override_flag(strategy):
-    block       = fully_cross_block(design, crossing, constraints)
+    block       = CrossBlock(design, crossing, constraints)
     experiments = synthesize_trials(block, 500, sampling_strategy=strategy)
 
     assert block.crossing_size() == 5
     assert len(experiments) == 0
     assert_no_repetition(experiments)
 
-@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 def test_correct_solution_count_with_override_flag(strategy):
-    block       = fully_cross_block(design, crossing, constraints, require_complete_crossing=False)
+    block       = CrossBlock(design, crossing, constraints, require_complete_crossing=False)
     experiments = synthesize_trials(block, 500, sampling_strategy=strategy)
 
     assert block.crossing_size() == 5
     assert len(experiments) == 120
     assert_no_repetition(experiments)  # FIXME
 
-@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 def test_correct_solution_count_with_exclusion_via_complex_factor(strategy):
     def illegal_stimulus(color, word):
-        return color[1] == "green" and word[1] == "blue"
+        return color[0] == "green" and word[0] == "blue"
     def legal_stimulus(color, word):
         return not illegal_stimulus(color, word)
 
@@ -59,21 +55,21 @@ def test_correct_solution_count_with_exclusion_via_complex_factor(strategy):
         DerivedLevel("illegal", Transition(illegal_stimulus, [color, word]))
     ])
 
-    constraints = [exclude(stimulus_configuration, "illegal")]
+    constraints = [Exclude(stimulus_configuration["illegal"])]
 
     design       = [color, word, stimulus_configuration]
     crossing     = [color, word]
 
-    block      = fully_cross_block(design, crossing, constraints,
-                                   require_complete_crossing=False)
+    block      = CrossBlock(design, crossing, constraints,
+                            require_complete_crossing=False)
     experiments = synthesize_trials(block=block, samples=150, sampling_strategy=strategy)
 
     assert len(experiments) == 120
 
-@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 def test_correct_solution_count_with_exclusion_via_nested_complex_factor(strategy):
     def unhappy_stimulus(color, word):
-        return color[1] == "green" and word[1] == "blue"
+        return color[0] == "green" and word[0] == "blue"
     def happy_stimulus(color, word):
         return not unhappy_stimulus(color, word)
     smiley = Factor("smiley", [
@@ -90,29 +86,29 @@ def test_correct_solution_count_with_exclusion_via_nested_complex_factor(strateg
         DerivedLevel("illegal", WithinTrial(illegal_stimulus, [smiley]))
     ])
 
-    constraints = [exclude(stimulus_configuration, "illegal")]
+    constraints = [Exclude(stimulus_configuration["illegal"])]
 
     design       = [color, word, smiley, stimulus_configuration]
     crossing     = [color, word]
 
-    block      = fully_cross_block(design, crossing, constraints,
-                                   require_complete_crossing=False)
+    block      = CrossBlock(design, crossing, constraints,
+                            require_complete_crossing=False)
     experiments = synthesize_trials(block=block, samples=150, sampling_strategy=strategy)
 
     assert len(experiments) == 120
 
-@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 def test_correct_solution_count_with_override_flag_and_multiple_trials_excluded(strategy):
     # With this constraint, there should only be ONE allowed crossing, and therefore one solution.
-    constraints = [exclude(stimulus_configuration, "legal")]
-    block       = fully_cross_block(design, crossing, constraints, require_complete_crossing=False)
+    constraints = [Exclude(stimulus_configuration["legal"])]
+    block       = CrossBlock(design, crossing, constraints, require_complete_crossing=False)
     experiments = synthesize_trials(block, 500, sampling_strategy=strategy)
 
     assert block.crossing_size() == 1
     assert len(experiments) == 1
     assert_no_repetition(experiments)
 
-@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 def test_correct_solution_count_with_crossing_levels_excluded(strategy):
     color = Factor("color", ['red', 'green'])
     size = Factor("size", ['small', 'med', 'large'])
@@ -125,10 +121,10 @@ def test_correct_solution_count_with_crossing_levels_excluded(strategy):
         DerivedLevel(name="down", window=WithinTrial(predicate=lambda a, b: b == 'large', factors=[color, size]))
     ])
 
-    block      = fully_cross_block(design=[color, size, match],
-                                   crossing=[color, match],
-                                   constraints=[exclude(color, red)],
-                                   require_complete_crossing=False)
+    block      = CrossBlock(design=[color, size, match],
+                            crossing=[color, match],
+                            constraints=[Exclude(red)],
+                            require_complete_crossing=False)
     experiments = synthesize_trials(block=block, samples=200, sampling_strategy=strategy)
 
     assert len(experiments) == 4
@@ -138,7 +134,7 @@ def test_correct_solution_count_with_crossing_levels_excluded(strategy):
         for l in e['color']:
             assert l != 'red'
 
-@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 def test_correct_solution_count_with_design_levels_excluded(strategy):
     color = Factor("color", ['red', 'green'])
     size = Factor("size", ['small', 'med', 'large'])
@@ -152,9 +148,9 @@ def test_correct_solution_count_with_design_levels_excluded(strategy):
     ])
     down = match.get_level('down')
 
-    block      = fully_cross_block(design=[color, size, match], crossing=[color, size],
-                                   constraints=[exclude(match, down)],
-                                   require_complete_crossing=False)
+    block      = CrossBlock(design=[color, size, match], crossing=[color, size],
+                            constraints=[Exclude(down)],
+                            require_complete_crossing=False)
     experiments = synthesize_trials(block=block, samples=200, sampling_strategy=strategy)
 
     assert len(experiments) == 24
@@ -164,11 +160,11 @@ def test_correct_solution_count_with_design_levels_excluded(strategy):
         for l in e['size']:
             assert l != 'large'
 
-@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 def test_correct_solution_with_extra_crossing_factor(strategy):
-    color      = factor("color",  ["red", "green", "blue", "brown"])
-    word       = factor("word", ["Red", "Green", "Blue", "Brown"])
-    location       = factor("location", ["up", "down", "left", "right"])
+    color      = Factor("color",  ["red", "green", "blue", "brown"])
+    word       = Factor("word", ["Red", "Green", "Blue", "Brown"])
+    location       = Factor("location", ["up", "down", "left", "right"])
 
     def is_response_left(color):
         return color == "red"
@@ -179,11 +175,11 @@ def test_correct_solution_with_extra_crossing_factor(strategy):
     def is_response_down(color):
         return color == "brown"
 
-    response = factor("response", [
-        derived_level("left", within_trial(is_response_left, [color])),
-        derived_level("right", within_trial(is_response_right, [color])),
-        derived_level("up", within_trial(is_response_up, [color])),
-        derived_level("down", within_trial(is_response_down, [color]))
+    response = Factor("response", [
+        DerivedLevel("left", WithinTrial(is_response_left, [color])),
+        DerivedLevel("right", WithinTrial(is_response_right, [color])),
+        DerivedLevel("up", WithinTrial(is_response_up, [color])),
+        DerivedLevel("down", WithinTrial(is_response_down, [color]))
     ])
 
     def is_congruent(color, word):
@@ -192,21 +188,21 @@ def test_correct_solution_with_extra_crossing_factor(strategy):
     def is_incongruent(color, word):
         return not is_congruent(color, word)
 
-    congruent = derived_level("congruent", within_trial(is_congruent, [color, word]))
-    incongruent = derived_level("incongruent", within_trial(is_incongruent, [color, word]))
+    congruent = DerivedLevel("congruent", WithinTrial(is_congruent, [color, word]))
+    incongruent = DerivedLevel("incongruent", WithinTrial(is_incongruent, [color, word]))
 
-    congruency = factor("congruency", [
+    congruency = Factor("congruency", [
         congruent,
         incongruent
     ])
 
 
-    constraints = [exclude(congruency, congruent)]
+    constraints = [Exclude(congruent)]
 
     design       = [color, word, response, congruency, location]
     crossing     = [color, word, location]
-    block        = fully_cross_block(design, crossing, constraints,
-                                     require_complete_crossing=False)
+    block        = CrossBlock(design, crossing, constraints,
+                              require_complete_crossing=False)
 
     experiments  = synthesize_trials(block, 1, sampling_strategy=strategy)
 
@@ -218,14 +214,14 @@ def test_correct_solution_with_extra_crossing_factor(strategy):
         assert not key in found
         found[key] = True
 
-@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 def test_correct_solution_with_just_one_factor(strategy):
     color = Factor("color", ['red', 'green'])
     red = color.get_level('red')
 
-    block      = fully_cross_block(design=[color], crossing=[color],
-                                   require_complete_crossing=False,
-                                   constraints=[exclude(color, red)])
+    block      = CrossBlock(design=[color], crossing=[color],
+                            require_complete_crossing=False,
+                            constraints=[Exclude(red)])
     experiments = synthesize_trials(block=block, samples=1, sampling_strategy=strategy)
 
     assert len(experiments[0]['color']) == 1
@@ -233,8 +229,8 @@ def test_correct_solution_with_just_one_factor(strategy):
 
 def test_correct_solution_count_with_override_flag_and_multiple_trials_excluded_cnf():
     # With this constraint, there should only be ONE allowed crossing, and therefore one solution.
-    constraints = [exclude(stimulus_configuration, "legal")]
-    block       = fully_cross_block(design, crossing, constraints, require_complete_crossing=False)
+    constraints = [Exclude(stimulus_configuration["legal"])]
+    block       = CrossBlock(design, crossing, constraints, require_complete_crossing=False)
     cnf = build_cnf(block)
 
     if reset_expected_solutions:
@@ -245,7 +241,7 @@ def test_correct_solution_count_with_override_flag_and_multiple_trials_excluded_
 
     assert old_cnf == cnf.as_unigen_string()  # FIXME
 
-@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 def test_correct_solutions_with_implicitly_excluded_crossing_due_to_derived_definition(strategy):
     def ugly_stimulus(color, word):
         return color == "green" and word == "red"
@@ -258,7 +254,7 @@ def test_correct_solutions_with_implicitly_excluded_crossing_due_to_derived_defi
 
 
     def unhappy_stimulus(color, word):
-        return color[1] == "green" and word[1] == "blue"
+        return color[0] == "green" and word[0] == "blue"
     def happy_stimulus(color, word):
         return not unhappy_stimulus(color, word)
     smiley = Factor("smiley", [
@@ -266,14 +262,14 @@ def test_correct_solutions_with_implicitly_excluded_crossing_due_to_derived_defi
         DerivedLevel("unhappy", Transition(unhappy_stimulus, [color, word]))
     ])
 
-    constraints = [exclude(aesthetic, "ugly")]
+    constraints = [Exclude(aesthetic["ugly"])]
 
     design       = [color, word, smiley, aesthetic]
     crossing     = [color, word, aesthetic]
 
 
-    block       = fully_cross_block(design, crossing, constraints, require_complete_crossing=False)
-    experiments = synthesize_trials(block, 4, sampling_strategy=UniformCombinatoricSamplingStrategy)
+    block       = CrossBlock(design, crossing, constraints, require_complete_crossing=False)
+    experiments = synthesize_trials(block, 4, sampling_strategy=RandomGen)
 
     assert block.crossing_size() == 5
     assert len(experiments) == 4

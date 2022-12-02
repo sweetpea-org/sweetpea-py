@@ -120,7 +120,6 @@
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Derivations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="constraints.html">Constraints</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sampling_strategies.html">Sampling Strategies</a></li>
-<li class="toctree-l2"><a class="reference internal" href="legacy.html">Legacy</a></li>
 </ul>
 </li>
 </ul>
@@ -155,7 +154,7 @@
 <p>A <cite>Derivation</cite> is identifies combinations of factor levels that select
 another level that is constructed with <a class="reference internal" href="factors.html#sweetpea.DerivedLevel" title="sweetpea.DerivedLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">DerivedLevel</span></code></a>. Derived
 levels for one factor must all have compatible derivations, which
-means that the must depend on the same factors in the same order, have
+means that they must depend on the same factors in the same order, have
 the same window width, same window stride, and the same starting
 trial. However, <a class="reference internal" href="factors.html#sweetpea.ElseLevel" title="sweetpea.ElseLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">ElseLevel</span></code></a> is compatible with any derivation,
 as long as other levels in the same factor have compatible derivations.</p>
@@ -165,13 +164,13 @@ as long as other levels in the same factor have compatible derivations.</p>
 <dd><p>Abstract class representing a derived-level specification.</p>
 </dd></dl>
 
-<dl class="py function">
+<dl class="py class">
 <dt class="sig sig-object py" id="sweetpea.WithinTrial">
-<span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">WithinTrial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predicate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.WithinTrial" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">WithinTrial</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predicate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.WithinTrial" title="Permalink to this definition"></a></dt>
 <dd><p>Describes a level that is selected depending on levels
 from other factors, all within the same trial. The level
-is equivalent to one created via <a class="reference internal" href="#sweetpea.Window" title="sweetpea.Window"><code class="xref py py-func docutils literal notranslate"><span class="pre">Window()</span></code></a> with a
-window width of 1 and a stride of 1.</p>
+is equivalent to one created via <a class="reference internal" href="#sweetpea.Window" title="sweetpea.Window"><code class="xref py py-class docutils literal notranslate"><span class="pre">Window</span></code></a> with a
+width of 1 and a stride of 1.</p>
 <p>The factors that the level depends on can be non-derived
 or derived, but any derived factor in <cite>factors</cite> must not
 have a window stride greater than 1.</p>
@@ -194,27 +193,27 @@ selected</p></li>
 </dl>
 </dd></dl>
 
-<dl class="py function">
+<dl class="py class">
 <dt class="sig sig-object py" id="sweetpea.Transition">
-<span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">Transition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predicate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.Transition" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">Transition</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predicate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.Transition" title="Permalink to this definition"></a></dt>
 <dd><p>Describes a level that is selected depending on a
 combination of levels from other factors in the current
 trial and the immediately preceding trial. The level
-is equivalent to one created via <a class="reference internal" href="#sweetpea.Window" title="sweetpea.Window"><code class="xref py py-func docutils literal notranslate"><span class="pre">Window()</span></code></a> with a
-window width of 2 and a stride of 1.</p>
-<p>The same as for <a class="reference internal" href="#sweetpea.WithinTrial" title="sweetpea.WithinTrial"><code class="xref py py-func docutils literal notranslate"><span class="pre">WithinTrial()</span></code></a>, any derived factor
+is equivalent to one created via <a class="reference internal" href="#sweetpea.Window" title="sweetpea.Window"><code class="xref py py-class docutils literal notranslate"><span class="pre">Window</span></code></a> with a
+width of 2 and a stride of 1.</p>
+<p>The same as for <a class="reference internal" href="#sweetpea.WithinTrial" title="sweetpea.WithinTrial"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithinTrial</span></code></a>, any derived factor
 in <cite>factors</cite> must not have a window stride greater
 than 1.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>predicate</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#list" title="(in Python v3.7)"><em>list</em></a><em>, </em><em>...</em><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a><em>]</em>) – a function that takes as many level
-lists as factors in <cite>factors</cite>; in each
-list, the first element (at index 0)
-is the level value for the previous
-trial, and the second element is the
+<li><p><strong>predicate</strong> (<em>Callable</em><em>[</em><em>[</em><em>Dict</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><em>Any</em><em>]</em><em>, </em><em>...</em><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a><em>]</em>) – a function that takes as many level
+dictionaries as factors in <cite>factors</cite>; in each
+dictionary, <code class="docutils literal notranslate"><span class="pre">-1</span></code> is mapped
+to the level value for the previous
+trial, and <code class="docutils literal notranslate"><span class="pre">0</span></code> is mapped to the
 level value for the current trial; the
-function should returns true if the
+function should return true if the
 combination of levels implies the
 result derivation</p></li>
 <li><p><strong>factors</strong> (<em>List</em><em>(</em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>)</em>) – a list of factors whose levels across
@@ -228,31 +227,32 @@ the returned derivation is selected</p></li>
 </dl>
 </dd></dl>
 
-<dl class="py function">
+<dl class="py class">
 <dt class="sig sig-object py" id="sweetpea.Window">
-<span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">Window</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predicate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stride</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.Window" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">Window</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">predicate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stride</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.Window" title="Permalink to this definition"></a></dt>
 <dd><p>Creates a level that is selected depending on a
 combination of levels from other factors in the current
 trial and multiple preceding trials.</p>
-<p>This function generalizes <code class="xref py py-class docutils literal notranslate"><span class="pre">WithinTrial</span></code> and
-<code class="xref py py-class docutils literal notranslate"><span class="pre">Transition</span></code> to select a level depending on
+<p>This class generalizes <a class="reference internal" href="#sweetpea.WithinTrial" title="sweetpea.WithinTrial"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithinTrial</span></code></a> and
+<a class="reference internal" href="#sweetpea.Transition" title="sweetpea.Transition"><code class="xref py py-class docutils literal notranslate"><span class="pre">Transition</span></code></a> to select a level depending on
 <cite>width</cite> consecutive trials, and where trials that are
 assigned a level value are separated by <cite>stride</cite>-1
 intervening trials. It also allows an initial <cite>start</cite>
 trial to override the default computation of a starting
 trial.</p>
-<p>The same as for <a class="reference internal" href="#sweetpea.WithinTrial" title="sweetpea.WithinTrial"><code class="xref py py-func docutils literal notranslate"><span class="pre">WithinTrial()</span></code></a>, any derived factor
+<p>The same as for <a class="reference internal" href="#sweetpea.WithinTrial" title="sweetpea.WithinTrial"><code class="xref py py-class docutils literal notranslate"><span class="pre">WithinTrial</span></code></a>, any derived factor
 in <cite>factors</cite> must not have a window stride greater
 than 1.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>predicate</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/stdtypes.html#list" title="(in Python v3.7)"><em>list</em></a><em>, </em><em>...</em><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a><em>]</em>) – a function that takes as many level
-lists as factors in <cite>factors</cite>; in each
-list, the first element (at index 0)
-is the level value for the earliest of
-<cite>width</cite> trials, and so on; the
-function should returns true if the
+<li><p><strong>predicate</strong> (<em>Callable</em><em>[</em><em>[</em><em>Dict</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>, </em><em>Any</em><em>]</em><em>, </em><em>...</em><em>]</em><em>, </em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a><em>]</em>) – a function that takes as many level
+dictionaries as factors in <cite>factors</cite>; in each
+dictionary, <code class="docutils literal notranslate"><span class="pre">0</span></code> is mapped to the
+level value for the latest of
+<cite>width</cite> trials, and so on coutning backwards
+to <code class="docutils literal notranslate"><span class="pre">1-width</span></code>; the
+function should return true if the
 combination of levels implies this
 level</p></li>
 <li><p><strong>factors</strong> (<em>List</em><em>(</em><a class="reference internal" href="factors.html#sweetpea.Factor" title="sweetpea.Factor"><em>Factor</em></a><em>)</em>) – a list of factors whose levels across
@@ -261,11 +261,11 @@ the returned derivation is selected</p></li>
 <li><p><strong>width</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – the number of trials of <cite>factors</cite> to
 consider when selecting the new, derived
 level</p></li>
-<li><p><strong>stride</strong> (<em>Optional</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em>) – one more than the number of trials to
+<li><p><strong>stride</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – one more than the number of trials to
 skip between the trials that are
 considered when selecting the new,
 derived level</p></li>
-<li><p><strong>start</strong> (<a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) – the first trail (counting from 0) that
+<li><p><strong>start</strong> (<em>Optional</em><em>[</em><a class="reference external" href="https://docs.python.org/3.7/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a><em>]</em>) – the first trail (counting from 0) that
 the derivation’s factor will have a level;
 a <cite>None</cite> value (the default) means that the
 first trial is automatically determined as
@@ -274,8 +274,7 @@ have a level for the trial and preceding <cite>width-1</cite> trials;
 if <cite>start</cite> combined with <cite>width</cite>
 means that factors in <cite>factors</cite> will not
 have a level for some trials, then <cite>predicate</cite> must handle
-<cite>None</cite> values in the corresponding arguments
-and indices</p></li>
+<cite>None</cite> values for the corresponding dictionaries and keys</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type</dt>
@@ -297,7 +296,7 @@ and indices</p></li>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2021, SweetPea Research Group.</p>
+    <p>&#169; Copyright 2022, SweetPea Research Group.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

@@ -2,10 +2,10 @@ import glob
 import os
 import pytest
 
-from sweetpea.logic import And, cnf_to_json
-from sweetpea.server import build_cnf
-from sweetpea.core import cnf_is_satisfiable, CNF
-from sweetpea.sampling_strategies.uniform_combinatoric import UCSolutionEnumerator
+from sweetpea._internal.logic import And, cnf_to_json
+from sweetpea._internal.server import build_cnf
+from sweetpea._internal.core import cnf_is_satisfiable, CNF
+from sweetpea._internal.sampling_strategy.random import UCSolutionEnumerator
 
 
 path_to_test_files = os.path.dirname(os.path.abspath(__file__)) + "/../sweetpea/tests/sampling_strategies/uc-counting-tests/*.py"

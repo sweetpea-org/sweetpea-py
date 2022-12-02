@@ -33,23 +33,23 @@ congruency  = Factor("congruency",  ["congruent", "incongruent", "neutral"])
 # DEFINE CONGRUENCY TRANSITION FACTOR
 
 def con_con(congruency):
-    return congruency[0] == "congruent" and congruency[1] == "congruent"
+    return congruency[-1] == "congruent" and congruency[0] == "congruent"
 def con_inc(congruency):
-    return congruency[0] == "congruent" and congruency[1] == "incongruent"
+    return congruency[-1] == "congruent" and congruency[0] == "incongruent"
 def con_ntr(congruency):
-    return congruency[0] == "congruent" and congruency[1] == "neutral"
+    return congruency[-1] == "congruent" and congruency[0] == "neutral"
 def inc_con(congruency):
-    return congruency[0] == "incongruent" and congruency[1] == "congruent"
+    return congruency[-1] == "incongruent" and congruency[0] == "congruent"
 def inc_inc(congruency):
-    return congruency[0] == "incongruent" and congruency[1] == "incongruent"
+    return congruency[-1] == "incongruent" and congruency[0] == "incongruent"
 def inc_ntr(congruency):
-    return congruency[0] == "incongruent" and congruency[1] == "neutral"
+    return congruency[-1] == "incongruent" and congruency[0] == "neutral"
 def ntr_con(congruency):
-    return congruency[0] == "neutral" and congruency[1] == "congruent"
+    return congruency[-1] == "neutral" and congruency[0] == "congruent"
 def ntr_inc(congruency):
-    return congruency[0] == "neutral" and congruency[1] == "incongruent"
+    return congruency[-1] == "neutral" and congruency[0] == "incongruent"
 def ntr_ntr(congruency):
-    return congruency[0] == "neutral" and congruency[1] == "neutral"
+    return congruency[-1] == "neutral" and congruency[0] == "neutral"
 
 
 congruency_transition = Factor("congruency_transition", [
@@ -67,7 +67,7 @@ congruency_transition = Factor("congruency_transition", [
 # DEFINE RESPONSE TRANSITION FACTOR
 
 def response_repeat(responses):
-    return responses[0] == responses[1]
+    return responses[-1] == responses[0]
 
 def response_switch(responses):
     return not response_repeat(responses)

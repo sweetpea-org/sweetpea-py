@@ -1,7 +1,6 @@
 import operator as op
 
-from sweetpea import fully_cross_block
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial
+from sweetpea import CrossBlock, Factor, DerivedLevel, WithinTrial
 
 # Stroop 3, but the text value must always follow color.
 color      = Factor("color",      ["red", "blue", "green"])
@@ -25,6 +24,6 @@ order = Factor("order", [
 
 design   = [color, text, order]
 crossing = [color, order]
-block    = fully_cross_block(design, crossing, [])
+block    = CrossBlock(design, crossing, [])
 
 # ASSERT COUNT = 5760

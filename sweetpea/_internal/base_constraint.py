@@ -4,7 +4,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from sweetpea.primitives import Factor
+from sweetpea._internal.primitive import Factor
 
 
 class Constraint(ABC):

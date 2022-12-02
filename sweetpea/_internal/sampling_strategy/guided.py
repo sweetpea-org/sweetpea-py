@@ -6,11 +6,11 @@ from itertools import product, chain
 from time import time
 from typing import List, cast
 
-from sweetpea.blocks import Block
-from sweetpea.core import CNF, cnf_is_satisfiable
-from sweetpea.logic import And, cnf_to_json
-from sweetpea.sampling_strategies.base import SamplingStrategy, SamplingResult
-from sweetpea.server import build_cnf
+from sweetpea._internal.block import Block
+from sweetpea._internal.core import CNF, cnf_is_satisfiable
+from sweetpea._internal.logic import And, cnf_to_json
+from sweetpea._internal.sampling_strategy.base import Gen, SamplingResult
+from sweetpea._internal.server import build_cnf
 
 
 """
@@ -20,11 +20,11 @@ guide the choices it makes.
 While sufficient in some cases, this strategy isn't guaranteed to produce uniform results
 because trial selections early on can prune the remaining search space unevenly.
 """
-class GuidedSamplingStrategy(SamplingStrategy):
+class GuidedGen(Gen):
 
     @staticmethod
     def class_name():
-        return 'Guided Sampling Strategy'
+        return 'GuidedGen'
 
     @staticmethod
     def sample(block: Block, sample_count: int) -> SamplingResult:
@@ -43,13 +43,13 @@ class GuidedSamplingStrategy(SamplingStrategy):
         for _ in range(sample_count):
             sample_metrics = cast(dict, {})
             t_start = time()
-            samples.append(GuidedSamplingStrategy.__generate_sample(block, cnf, sample_metrics))
+            samples.append(GuidedGen.__generate_sample(block, cnf, sample_metrics))
             sample_metrics['time'] = time() - t_start
             metrics['sample_metrics'].append(sample_metrics)
             metrics['solver_call_count'] += sample_metrics['solver_call_count']
 
         metrics['time'] = time() - overall_start
-        GuidedSamplingStrategy.__compute_additional_metrics(metrics)
+        GuidedGen.__compute_additional_metrics(metrics)
 
         return SamplingResult(samples, metrics)
 
@@ -78,7 +78,7 @@ class GuidedSamplingStrategy(SamplingStrategy):
             trial_metrics['potential_trials'] = len(potential_trials)
 
             # Use env var to switch between filtering and not
-            if GuidedSamplingStrategy.__prefilter_enabled():
+            if GuidedGen.__prefilter_enabled():
                 # Flatten the list
                 flat_vars = list(chain(*variables))
 
@@ -136,8 +136,8 @@ class GuidedSamplingStrategy(SamplingStrategy):
             sample_metrics['solver_call_count'] += tm['solver_call_count']
 
         # Flatten the committed trials into a list of integers and decode it.
-        solution = GuidedSamplingStrategy.__committed_to_solution(committed)
-        return SamplingStrategy.decode(block, solution)
+        solution = GuidedGen.__committed_to_solution(committed)
+        return Gen.decode(block, solution)
 
     @staticmethod
     def __committed_to_solution(committed: List[And]) -> List[int]:
@@ -178,7 +178,7 @@ class GuidedSamplingStrategy(SamplingStrategy):
         metrics['mean_sat_time'] = total_sat_time / total_sat
         metrics['mean_unsat_time'] = total_unsat_time / total_unsat
 
-        if GuidedSamplingStrategy.__prefilter_enabled():
+        if GuidedGen.__prefilter_enabled():
             total_prefiltered_out = 0
             for sample in metrics['sample_metrics']:
                 for trial in sample['trials']:

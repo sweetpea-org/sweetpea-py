@@ -1,5 +1,4 @@
-from sweetpea import fully_cross_block
-from sweetpea.primitives import Factor
+from sweetpea import CrossBlock, Factor
 
 
 color = Factor("color", ["red", "blue"])
@@ -7,6 +6,6 @@ text  = Factor("text",  ["red", "blue"])
 
 design   = [color, text]
 crossing = [color, text]
-block    = fully_cross_block(design, crossing, [])
+block    = CrossBlock(design, crossing, [])
 
 # ASSERT COUNT = 24
