@@ -19,7 +19,7 @@
     <script src="../../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="SweetPea API Documentation" href="../../api.html" />
+    <link rel="next" title="SweetPea API" href="../../api.html" />
     <link rel="prev" title="reStructuredText Style Guide" href="rest_style_guide.html" />
 <link rel="stylesheet" type="text/css"
       href="../../_static/css/custom.css" />
@@ -114,7 +114,14 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../../api.html">SweetPea API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">SweetPea API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../api/main.html">Experiments</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/factors.html">Factors and Levels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/derivations.html">Derivations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/constraints.html">Constraints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../api/sampling_strategies.html">Sampling Strategies</a></li>
+</ul>
+</li>
 </ul>
 
         </div>
@@ -298,10 +305,10 @@ given name by doing <code class="docutils literal notranslate"><span class="pre"
 <p>In all such cases, we strongly encourage placing a <code class="docutils literal notranslate"><span class="pre">NOTE</span></code>-style block comment
 on the preceding line explaining why the check was disabled. This should usually
 point to a documented issue to support the choice.</p>
-<p>For example, the two subclasses of <code class="xref py py-class docutils literal notranslate"><span class="pre">Level</span></code> (<code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleLevel</span></code> and
-<code class="xref py py-class docutils literal notranslate"><span class="pre">DerivedLevel</span></code>) override the <a class="reference external" href="https://docs.python.org/3.7/library/dataclasses.html#module-dataclasses" title="(in Python v3.7)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">dataclasses</span></code></a>-implemented
+<p>For example, the two subclasses of <a class="reference internal" href="../../api/factors.html#sweetpea.Level" title="sweetpea.Level"><code class="xref py py-class docutils literal notranslate"><span class="pre">Level</span></code></a> (<code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleLevel</span></code> and
+<a class="reference internal" href="../../api/factors.html#sweetpea.DerivedLevel" title="sweetpea.DerivedLevel"><code class="xref py py-class docutils literal notranslate"><span class="pre">DerivedLevel</span></code></a>) override the <a class="reference external" href="https://docs.python.org/3.7/library/dataclasses.html#module-dataclasses" title="(in Python v3.7)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">dataclasses</span></code></a>-implemented
 <code class="docutils literal notranslate"><span class="pre">__post_init__</span></code> methods with signatures that deviate from that of the base
-<code class="xref py py-class docutils literal notranslate"><span class="pre">Level</span></code> class. This is usually disallowed by the <a class="reference external" href="https://en.wikipedia.org/wiki/Liskov_substitution_principle">Liskov Substitution
+<a class="reference internal" href="../../api/factors.html#sweetpea.Level" title="sweetpea.Level"><code class="xref py py-class docutils literal notranslate"><span class="pre">Level</span></code></a> class. This is usually disallowed by the <a class="reference external" href="https://en.wikipedia.org/wiki/Liskov_substitution_principle">Liskov Substitution
 Principle</a>, which
 says that subclasses should have compatible method signatures with their
 parents. But this is a special case where such deviation is perfectly reasonable
@@ -339,13 +346,13 @@ seems that the mypy <code class="docutils literal notranslate"><span class="pre"
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="rest_style_guide.html" class="btn btn-neutral float-left" title="reStructuredText Style Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="../../api.html" class="btn btn-neutral float-right" title="SweetPea API Documentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../../api.html" class="btn btn-neutral float-right" title="SweetPea API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2021, SweetPea Research Group.</p>
+    <p>&#169; Copyright 2022, SweetPea Research Group.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
