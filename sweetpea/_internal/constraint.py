@@ -306,7 +306,7 @@ class Derivation(Constraint):
                             break
                     else:
                         new_x = x + ((t + delta) * window.stride * get_trial_size(x) + 1)
-                        if new_x < 0:
+                        if new_x <= 0:
                             ok = False
                             break
                         vars.append(new_x)
