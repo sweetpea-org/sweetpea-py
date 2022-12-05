@@ -151,7 +151,7 @@ class DerivationProcessor:
                 l = cast(List[object], [])
                 for i, idx in enumerate(idx_list):
                     if isinstance(idx, BeforeStart):
-                        l.append(BeforeStart(idx.ready_at - i + 1))
+                        l.append(BeforeStart(idx.ready_at+(len(idx_list) - i - 1)))
                     else:
                         l.append(cast(int, idx) + i * trial_size)
                 shifted_sublists.append(l)
