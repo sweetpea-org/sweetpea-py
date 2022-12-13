@@ -96,7 +96,7 @@ if motion-color then task Transition = switch
 """
 
 def task_repeat(tasks):
-    return tasks[0] == tasks[1]
+    return tasks[0] == tasks[-1]
 
 def task_switch(tasks):
     return not task_repeat(tasks)
@@ -116,7 +116,7 @@ if right-left then task Transition = switch
 """
 
 def response_repeat(responses):
-    return responses[0] == responses[1]
+    return responses[0] == responses[-1]
 
 def response_switch(responses):
     return not response_repeat(responses)

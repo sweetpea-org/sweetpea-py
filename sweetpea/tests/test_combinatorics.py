@@ -2,7 +2,7 @@ import pytest
 
 from math import factorial
 
-from sweetpea.combinatorics import (
+from sweetpea._internal.combinatorics import (
     extract_components, compute_jth_inversion_sequence, construct_permutation,
     compute_jth_combination, compute_jth_permutation_prefix,
     count_prefixes_of_permutations_with_copies, recur_count_prefixes_of_permutations_with_copies, k_prefixes_of_permutations_with_copies,

@@ -1,7 +1,7 @@
 import operator as op
 import pytest
 
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition, AcrossTrials
+from sweetpea._internal.primitive import Factor, DerivedLevel, WithinTrial, Transition, Window
 
 
 # Common variables for stroop.
@@ -23,6 +23,6 @@ text_repeats_factor = Factor("text repeats?", [
 ])
 
 congruent_bookend = Factor("congruent bookend?", [
-    DerivedLevel("yes", AcrossTrials(lambda color, text: color == text, [color, text], 1, 3)),
-    DerivedLevel("no",  AcrossTrials(lambda color, text: color != text, [color, text], 1, 3))
+    DerivedLevel("yes", Window(lambda color, text: color == text, [color, text], 1, 3)),
+    DerivedLevel("no",  Window(lambda color, text: color != text, [color, text], 1, 3))
 ])

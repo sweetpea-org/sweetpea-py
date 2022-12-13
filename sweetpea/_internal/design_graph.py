@@ -7,7 +7,7 @@ from typing import List
 
 import networkx as nx
 
-from sweetpea.primitives import DerivedFactor, Factor
+from sweetpea._internal.primitive import DerivedFactor, Factor
 
 
 class DesignGraph():

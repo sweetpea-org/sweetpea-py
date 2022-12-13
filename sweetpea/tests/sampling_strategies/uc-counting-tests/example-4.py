@@ -1,7 +1,6 @@
 import operator as op
 
-from sweetpea import fully_cross_block
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial
+from sweetpea import CrossBlock, Factor, DerivedLevel, WithinTrial
 
 
 color = Factor("color", ["red", "blue"])
@@ -14,6 +13,6 @@ direction  = Factor("direction",  ["up", "down"])
 
 design   = [color, text, congruency, direction]
 crossing = [color, text]
-block    = fully_cross_block(design, crossing, [])
+block    = CrossBlock(design, crossing, [])
 
 # ASSERT COUNT = 384

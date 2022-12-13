@@ -2,7 +2,7 @@
 
 
 from itertools import islice, tee, chain, repeat
-from typing import Any, Tuple, List, Iterator, Iterable
+from typing import Any, Tuple, List, Dict, Iterator, Iterable
 
 
 def chunk(it: Iterable[Any], size: int) -> Iterator[Tuple[Any, ...]]:
@@ -20,6 +20,15 @@ def chunk_list(it: Iterable[Any], size: int) -> Iterator[List[Any]]:
     it = iter(it)
     return iter(lambda: list(islice(it, size)), [])
 
+def chunk_dict(it: Iterable[Any], size: int) -> List[Dict[int, Any]]:
+    it = iter(it)
+    r = []
+    while True:
+        try:
+            r.append({i-size+1: next(it) for i in range(size)})
+        except StopIteration:
+            break
+    return r
 
 def pairwise(iterable):
     """Helper recipe from:

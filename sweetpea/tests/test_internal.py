@@ -1,15 +1,15 @@
 import operator as op
 
-from sweetpea.internal.levels import get_all_levels
-from sweetpea.internal.iter import intersperse
-from sweetpea.primitives import Factor, DerivedLevel, Transition
+from sweetpea._internal.level import get_all_levels
+from sweetpea._internal.iter import intersperse
+from sweetpea._internal.primitive import Factor, DerivedLevel, Transition
 
 
 color = Factor("color", ["red", "blue"])
 text  = Factor("text",  ["red", "blue", "green"])
 
-color_repeats_level   = DerivedLevel("yes", Transition(lambda colors: colors[0] == colors[1], [color]))
-color_no_repeat_level = DerivedLevel("no", Transition(lambda colors: colors[0] != colors[1], [color]))
+color_repeats_level   = DerivedLevel("yes", Transition(lambda colors: colors[0] == colors[-1], [color]))
+color_no_repeat_level = DerivedLevel("no", Transition(lambda colors: colors[0] != colors[-1], [color]))
 color_repeats_factor  = Factor("color repeats?", [color_repeats_level, color_no_repeat_level])
 
 def test_get_all_external_level_names():

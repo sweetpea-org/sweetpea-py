@@ -3,8 +3,8 @@ factors.
 """
 
 
-from sweetpea.blocks import Block
-from sweetpea.primitives import DerivedFactor
+from sweetpea._internal.block import Block
+from sweetpea._internal.primitive import DerivedFactor
 
 
 class DesignPartitions():

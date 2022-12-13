@@ -1,10 +1,10 @@
 import operator as op
 import pytest
 
-from sweetpea import fully_cross_block, minimum_trials
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial
-from sweetpea.constraints import Reify
-from sweetpea.sampling_strategies.uniform_combinatoric import UCSolutionEnumerator
+from sweetpea import CrossBlock
+from sweetpea._internal.primitive import Factor, DerivedLevel, WithinTrial
+from sweetpea._internal.constraint import Reify
+from sweetpea._internal.sampling_strategy.random import UCSolutionEnumerator
 
 color = Factor("color", ["red", "blue"])
 text  = Factor("text",  ["red", "blue"])
@@ -15,7 +15,7 @@ congruency = Factor("congruency", [
 
 crossing = [color, text]
 design = [color, text]
-block = fully_cross_block(design, crossing, [])
+block = CrossBlock(design, crossing, [])
 
 
 def test_generate_crossing_instances():
@@ -37,7 +37,7 @@ def test_generate_crossing_instances():
 
 
 def test_generate_source_combinations():
-    block = fully_cross_block([color, text, congruency], [congruency], list(map(Reify, design)))
+    block = CrossBlock([color, text, congruency], [congruency], list(map(Reify, design)))
     enumerator = UCSolutionEnumerator(block)
     crossing_source_combos = enumerator._UCSolutionEnumerator__generate_source_combinations()
     simplified_names = []
@@ -82,9 +82,9 @@ def test_generate_source_combinations():
 [23, {'color': ['blue', 'blue', 'red', 'red'], 'text': ['blue', 'red', 'blue', 'red']}]
 ])
 def test_generate_sample_basic_stroop(sequence_number, expected_solution):
-    block = fully_cross_block([color, text, congruency],
-                              [color, text],
-                              [Reify(congruency)]) # even so, will not show up in enumerator output
+    block = CrossBlock([color, text, congruency],
+                       [color, text],
+                       [Reify(congruency)]) # even so, will not show up in enumerator output
     enumerator = UCSolutionEnumerator(block)
     assert enumerator.factors_and_levels_to_names(enumerator.generate_sample(sequence_number)) == expected_solution
 
@@ -115,9 +115,9 @@ def test_generate_sample_basic_stroop(sequence_number, expected_solution):
 [23, {'color': ['blue', 'blue', 'red', 'red'], 'congruency': ['incongruent', 'congruent', 'incongruent', 'congruent'], 'text': ['red', 'blue', 'blue', 'red']}]
 ])
 def test_generate_sample_basic_stroop_variation(sequence_number, expected_solution):
-    block = fully_cross_block([color, text, congruency],
-                              [color, congruency],
-                              [])
+    block = CrossBlock([color, text, congruency],
+                       [color, congruency],
+                       [])
     enumerator = UCSolutionEnumerator(block)
     assert enumerator.factors_and_levels_to_names(enumerator.generate_sample(sequence_number)) == expected_solution
 
@@ -142,8 +142,8 @@ def test_generate_sample_basic_stroop_uneven_colors(sequence_number, expected_so
         DerivedLevel("incongruent", WithinTrial(op.ne, [color, text]))
     ])
 
-    block = fully_cross_block([color, text, congruency],
-                              [color, congruency],
-                              [])
+    block = CrossBlock([color, text, congruency],
+                       [color, congruency],
+                       [])
     enumerator = UCSolutionEnumerator(block)
     assert enumerator.factors_and_levels_to_names(enumerator.generate_sample(sequence_number)) == expected_solution

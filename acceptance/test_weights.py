@@ -5,12 +5,12 @@ from sweetpea import (
     MinimumTrials, WithinTrial, Transition,
     CrossBlock,
     synthesize_trials, print_experiments,
-    CMSGen, IterateGen, RandomGen
+    CMSGen, IterateSATGen, RandomGen
 )
 
 def check_consistent_solutions(block, expect):
     r_experiments  = synthesize_trials(block, 1000, RandomGen)
-    i_experiments  = synthesize_trials(block, 1000, IterateGen)
+    i_experiments  = synthesize_trials(block, 1000, IterateSATGen)
 
     assert len(r_experiments) == expect
     assert len(i_experiments) == expect
@@ -70,7 +70,7 @@ def test_correct_solutions_with_transition_level_weight():
 
     look = Factor("look",
                   [DerivedLevel("bolden",
-                                Transition(lambda c, s: c[1] == "red" and s[1] == "big",
+                                Transition(lambda c, s: c[0] == "red" and s[0] == "big",
                                            [color, size]),
                                 2),
                    ElseLevel("weaken", 1)])

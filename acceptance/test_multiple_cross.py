@@ -1,11 +1,8 @@
 import operator as op
 import pytest
 
-from sweetpea.primitives import Factor, DerivedLevel, WithinTrial, Transition
-from sweetpea.constraints import at_most_k_in_a_row, exactly_k_in_a_row, exclude, Reify
-from sweetpea import UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy
-from sweetpea import multiple_cross_block, synthesize_trials_non_uniform, synthesize_trials
-from sweetpea.server import build_cnf
+from sweetpea import *
+from sweetpea._internal.server import build_cnf
 from acceptance import shuffled_design_sample, path_to_cnf_files, reset_expected_solutions
 
 # Basic setup
@@ -21,17 +18,17 @@ con_factor = Factor("congruent?", [con_level, inc_level])
 
 # Repeated color Factor
 repeated_color_factor = Factor("repeated color?", [
-    DerivedLevel("yes", Transition(lambda colors: colors[0] == colors[1], [color])),
-    DerivedLevel("no",  Transition(lambda colors: colors[0] != colors[1], [color]))
+    DerivedLevel("yes", Transition(lambda colors: colors[0] == colors[-1], [color])),
+    DerivedLevel("no",  Transition(lambda colors: colors[0] != colors[-1], [color]))
 ])
 
 # Repeated text Factor
 repeated_text_factor = Factor("repeated text?", [
-    DerivedLevel("yes", Transition(lambda texts: texts[0] == texts[1], [text])),
-    DerivedLevel("no",  Transition(lambda texts: texts[0] != texts[1], [text]))
+    DerivedLevel("yes", Transition(lambda texts: texts[0] == texts[-1], [text])),
+    DerivedLevel("no",  Transition(lambda texts: texts[0] != texts[-1], [text]))
 ])
 
-@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 @pytest.mark.parametrize('add_transition', [False, True])
 def test_correct_solutions_with_different_crossing_sizes(strategy, add_transition):
     mix   = Factor("mix",  ["cake", "concrete", "tape"])
@@ -39,8 +36,8 @@ def test_correct_solutions_with_different_crossing_sizes(strategy, add_transitio
     crossing = [[color, text] + ([repeated_color_factor] if add_transition else []), [text, mix]]
     constraints = []
 
-    block  = multiple_cross_block(design, crossing, constraints)
-    experiments  = synthesize_trials(block, 10, UniformCombinatoricSamplingStrategy)
+    block  = MultiCrossBlock(design, crossing, constraints)
+    experiments  = synthesize_trials(block, 10, RandomGen)
 
     start = 1 if add_transition else 0
 
@@ -72,37 +69,37 @@ def test_correct_solutions_with_different_crossing_sizes(strategy, add_transitio
                 assert key not in seen
                 seen[key] = True
 
-@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 @pytest.mark.parametrize('design', shuffled_design_sample([color, text, mix], 6))
 def test_correct_solution_count(strategy, design):
     crossing = [[color, mix], [text, mix]]
     constraints = []
 
-    block  = multiple_cross_block(design, crossing, constraints)
+    block  = MultiCrossBlock(design, crossing, constraints)
     experiments  = synthesize_trials(block, 100, sampling_strategy=strategy)
 
     assert len(experiments) == 96
 
 
-@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 @pytest.mark.parametrize('design', shuffled_design_sample([color, text, mix, con_factor], 6))
 def test_correct_solution_count_with_congruence_factor_but_unconstrained(strategy, design):
     crossing = [[color, text], [text, mix]]
     constraints = []
 
-    block  = multiple_cross_block(design, crossing, constraints)
+    block  = MultiCrossBlock(design, crossing, constraints)
     experiments  = synthesize_trials(block, 100, sampling_strategy=strategy)
 
     assert len(experiments) == 96
 
 
-@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 @pytest.mark.parametrize('design', shuffled_design_sample([color, text, mix, con_factor], 6))
 def test_correct_solution_count_with_congruence_factor_and_constrained(strategy, design):
     crossing = [[color, text], [text, mix]]
-    constraints = [at_most_k_in_a_row(1, (con_factor, "con"))]
+    constraints = [AtMostKInARow(1, (con_factor, "con"))]
 
-    block  = multiple_cross_block(design, crossing, constraints)
+    block  = MultiCrossBlock(design, crossing, constraints)
     experiments  = synthesize_trials(block, 100, sampling_strategy=strategy)
 
     assert len(experiments) == 48
@@ -110,9 +107,9 @@ def test_correct_solution_count_with_congruence_factor_and_constrained(strategy,
 
 def test_correct_solution_count_with_congruence_factor_and_constrained_cnf(design=[color, text, mix, con_factor]):
     crossing = [[color, text], [text, mix]]
-    constraints = [at_most_k_in_a_row(1, (con_factor, "con"))]
+    constraints = [AtMostKInARow(1, (con_factor, "con"))]
 
-    block  = multiple_cross_block(design, crossing, constraints)
+    block  = MultiCrossBlock(design, crossing, constraints)
     cnf = build_cnf(block)
 
     if reset_expected_solutions:
@@ -124,13 +121,13 @@ def test_correct_solution_count_with_congruence_factor_and_constrained_cnf(desig
     assert old_cnf == cnf.as_unigen_string()
 
 
-@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 @pytest.mark.parametrize('design', shuffled_design_sample([color, text, mix, con_factor], 6))
 def test_correct_solution_count_with_congruence_factor_and_constrained_exactly(strategy, design):
     crossing = [[color, text], [text, mix]]
-    constraints = [exactly_k_in_a_row(2, con_factor)]
+    constraints = [ExactlyKInARow(2, con_factor)]
 
-    block  = multiple_cross_block(design, crossing, constraints)
+    block  = MultiCrossBlock(design, crossing, constraints)
     experiments  = synthesize_trials(block, 100, sampling_strategy=strategy)
 
     assert len(experiments) == 32
@@ -138,9 +135,9 @@ def test_correct_solution_count_with_congruence_factor_and_constrained_exactly(s
 
 def test_correct_solution_count_with_congruence_factor_and_constrained_exactly_cnf(design=[color, text, mix, con_factor]):
     crossing = [[color, text], [text, mix]]
-    constraints = [exactly_k_in_a_row(2, con_factor)]
+    constraints = [ExactlyKInARow(2, con_factor)]
 
-    block  = multiple_cross_block(design, crossing, constraints)
+    block  = MultiCrossBlock(design, crossing, constraints)
     cnf = build_cnf(block)
 
     if reset_expected_solutions:
@@ -151,64 +148,64 @@ def test_correct_solution_count_with_congruence_factor_and_constrained_exactly_c
 
     assert old_cnf == cnf.as_unigen_string()
 
-@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 @pytest.mark.parametrize('design', shuffled_design_sample([color, text, mix, repeated_color_factor], 6))
 def test_correct_solution_count_with_repeated_color_factor_but_unconstrained(strategy, design):
     crossing = [[color, text], [text, mix]]
     constraints = []
 
-    block  = multiple_cross_block(design, crossing, constraints)
+    block  = MultiCrossBlock(design, crossing, constraints)
     experiments  = synthesize_trials(block, 100, sampling_strategy=strategy)
 
     assert len(experiments) == 96
 
-@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 @pytest.mark.parametrize('design', shuffled_design_sample([color, text, mix, repeated_color_factor], 6))
 def test_correct_solution_count_with_repeated_color_factor_and_constrained(strategy, design):
     crossing = [[color, text], [mix, text]]
-    constraints = [at_most_k_in_a_row(1, (repeated_color_factor, "yes"))]
+    constraints = [AtMostKInARow(1, (repeated_color_factor, "yes"))]
 
-    block  = multiple_cross_block(design, crossing, constraints)
+    block  = MultiCrossBlock(design, crossing, constraints)
     experiments  = synthesize_trials(block, 100, sampling_strategy=strategy)
 
     # With only two colors, there can never be two color repetitions anyways,
     # so the total should still be the same.
     assert len(experiments) == 96
 
-@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 @pytest.mark.parametrize('design', shuffled_design_sample([color, text, mix, repeated_color_factor, repeated_text_factor], 6))
 def test_correct_solution_count_with_repeated_color_and_text_factors_but_unconstrained(strategy, design):
     crossing = [[color, text], [mix, text]]
     constraints = []
 
-    block  = multiple_cross_block(design, crossing, constraints)
+    block  = MultiCrossBlock(design, crossing, constraints)
     experiments  = synthesize_trials(block, 100, sampling_strategy=strategy)
 
     assert len(experiments) == 96
 
 
-@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 @pytest.mark.parametrize('design', shuffled_design_sample([color, text, mix, repeated_color_factor, repeated_text_factor], 6))
 def test_correct_solution_count_with_repeated_color_and_text_factors_and_constrained(strategy, design):
     crossing = [[color, text], [mix, text]]
     constraints = [
-        at_most_k_in_a_row(1, (repeated_color_factor, "yes")),
-        at_most_k_in_a_row(1, (repeated_text_factor, "yes"))
+        AtMostKInARow(1, (repeated_color_factor, "yes")),
+        AtMostKInARow(1, (repeated_text_factor, "yes"))
     ]
 
-    block  = multiple_cross_block(design, crossing, constraints)
+    block  = MultiCrossBlock(design, crossing, constraints)
     experiments  = synthesize_trials(block, 100, sampling_strategy=strategy)
 
     assert len(experiments) == 96
 
 
-@pytest.mark.parametrize('strategy', [UniformCombinatoricSamplingStrategy, NonUniformSamplingStrategy])
+@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 @pytest.mark.parametrize('design', shuffled_design_sample([color, text, mix, repeated_color_factor], 6))
 def test_correct_solution_count_with_repeated_color_factor_and_no_repetition_allowed(strategy, design):
     crossing = [[color, text], [mix, text]]
-    constraints = [exclude(repeated_color_factor, "yes")]
+    constraints = [Exclude(repeated_color_factor["yes"])]
 
-    block  = multiple_cross_block(design, crossing, constraints)
+    block  = MultiCrossBlock(design, crossing, constraints)
     experiments  = synthesize_trials(block, 100, sampling_strategy=strategy)
 
     assert len(experiments) == 32
@@ -216,9 +213,9 @@ def test_correct_solution_count_with_repeated_color_factor_and_no_repetition_all
 
 def test_correct_solution_count_with_repeated_color_factor_and_no_repetition_allowed_cnf(design=[color, text, mix, repeated_color_factor]):
     crossing = [[color, text], [mix, text]]
-    constraints = [exclude(repeated_color_factor, "yes")]
+    constraints = [Exclude(repeated_color_factor["yes"])]
 
-    block  = multiple_cross_block(design, crossing, constraints)
+    block  = MultiCrossBlock(design, crossing, constraints)
     cnf = build_cnf(block)
 
     if reset_expected_solutions:

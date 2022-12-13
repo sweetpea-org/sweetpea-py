@@ -13,7 +13,7 @@ Sampling Strategies
            with default arguments.
 
            *Uniformity*: Different subclasses of `Gen` provide
-           different guarantee about coverage of the space of possible
+           different guarantees about coverage of the space of possible
            trial sequences. A guarantee of uniformity means that is a
            single trial sequence is requested via
            :func:`.synthesize_trials`, the generated sequence is chosen
@@ -22,13 +22,41 @@ Sampling Strategies
            are eqaully likely to be reported.
 
            *Replacement*: Different subclasses of :class:`.Gen` provide
-           different behavior when multiple trial sequences are
+           different behaviors when multiple trial sequences are
            requested with a single call to :func:`.synthesize_trials`.
            Some strategies sample with replacement, producing
            independently chosen results. Others sample without
            replacement, which means they are potentially capable of
            counting the total number of trial sequences that satisfy the
            experiment's constraints.
+
+.. class:: sweetpea.UniformGen
+
+           Automatically selects among strategies that provide uniformity.
+           
+           *Uniformity*: Generates trials with a guarantee of
+           uniformity, a long as only one trial sequence is requested
+           at a time.
+
+           *Unspecified Replacement*: Generating multiple trials
+           sequences in a call to :func:`.synthesize_trials` may or
+           may not produce independent results.
+
+.. class:: sweetpea.IterateGen
+
+           Automatically selects among strategies that implement
+           non-replacement for a single request of multiple
+           experiments, but the strategy may or may not provide
+           uniformity for a single experiment.
+           
+           *Unspecified Uniformity*: Might not sample uniformly among
+           possible experiments.
+
+           *Without Replacement*: Generating multiple trials in one
+           call to :func:`.synthesize_trials` produces a list of
+           distinct trial sequences. The number of returned
+           experiments will be less than the requested number if the
+           pool of possible trial sequences is exhausted.
 
 .. class:: sweetpea.UniGen
 
@@ -38,7 +66,7 @@ Sampling Strategies
            succeed for non-trial designs.
 
            *Replacement*: Generating multiple trials in one call to
-           :func:`.synthesize_trials` produces indepedent results. That
+           :func:`.synthesize_trials` produces independent results. That
            is, the single call is the same as separate calls that each
            generate one sequence of trials.
 
@@ -51,7 +79,7 @@ Sampling Strategies
            no formal guarantee of uniformity.
 
            *Replacement*: Generating multiple trials in one call to
-           :func:`.synthesize_trials` produces indepedent results. That
+           :func:`.synthesize_trials` produces independent results. That
            is, the single call is the same as separate calls that each
            generate one sequence of trials.
 
@@ -83,7 +111,24 @@ Sampling Strategies
                                     to find
            :type acceptable_error: int
            
-.. class:: sweetpea.IterateGen
+.. class:: sweetpea.IterateSATGen
+
+           *Non-Uniformity*: Generates trials by repeatedly finding
+           solutions to an experiment design's constraints, but with
+           no guarantee of uniform coverage or even randomness (i.e.,
+           each separate use of :func:`.synthesize_trials` with this
+           stragegy may produce the same result).
+
+           *Without Replacement*: When multiple trials are generated
+           in one call to :func:`.synthesize_trials`, each of the
+           results is constrained to be distinct. The number of
+           returned experiments will be less than the requested number
+           if the pool of possible trial sequences is exhausted.
+
+.. class:: sweetpea.IterateILPGen
+
+           Like :class:`.IterateSATGen`, but uses Gurobi and requires
+           that the ``gurobipy`` package has been installed.
 
            *Non-Uniformity*: Generates trials by repeatedly finding
            solutions to an experiment design's constraints, but with

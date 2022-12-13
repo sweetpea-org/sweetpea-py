@@ -4,7 +4,7 @@
 from itertools import islice, tee, chain, repeat
 from typing import Any, Tuple, List, Iterator, Iterable, Union, cast
 
-from sweetpea.primitives import Factor, DerivedLevel, SimpleLevel
+from sweetpea._internal.primitive import Factor, DerivedLevel, SimpleLevel
 
 
 def get_all_levels(design: List[Factor]) -> List[Tuple[Factor, Union[SimpleLevel, DerivedLevel]]]:

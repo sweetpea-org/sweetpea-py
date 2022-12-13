@@ -68,7 +68,7 @@ response = Factor("response", [
 # DEFINE RESPONSE Transition FACTOR
 
 def response_repeat(response):
-    return response[0] == response[1]
+    return response[0] == response[-1]
 
 def response_switch(response):
     return not response_repeat(response)

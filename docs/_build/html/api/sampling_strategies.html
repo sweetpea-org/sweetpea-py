@@ -19,7 +19,6 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Legacy" href="legacy.html" />
     <link rel="prev" title="Constraints" href="constraints.html" />
 <link rel="stylesheet" type="text/css"
       href="../_static/css/custom.css" />
@@ -120,7 +119,6 @@
 <li class="toctree-l2"><a class="reference internal" href="derivations.html">Derivations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="constraints.html">Constraints</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Sampling Strategies</a></li>
-<li class="toctree-l2"><a class="reference internal" href="legacy.html">Legacy</a></li>
 </ul>
 </li>
 </ul>
@@ -161,7 +159,7 @@ of trials).</p>
 instance to mean the same sampling strategy as an instance
 with default arguments.</p>
 <p><em>Uniformity</em>: Different subclasses of <cite>Gen</cite> provide
-different guarantee about coverage of the space of possible
+different guarantees about coverage of the space of possible
 trial sequences. A guarantee of uniformity means that is a
 single trial sequence is requested via
 <a class="reference internal" href="main.html#sweetpea.synthesize_trials" title="sweetpea.synthesize_trials"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code></a>, the generated sequence is chosen
@@ -169,13 +167,41 @@ randomly among all trial sequences that fit the constraints
 of the experiment definition, and all such trial sequences
 are eqaully likely to be reported.</p>
 <p><em>Replacement</em>: Different subclasses of <a class="reference internal" href="#sweetpea.Gen" title="sweetpea.Gen"><code class="xref py py-class docutils literal notranslate"><span class="pre">Gen</span></code></a> provide
-different behavior when multiple trial sequences are
+different behaviors when multiple trial sequences are
 requested with a single call to <a class="reference internal" href="main.html#sweetpea.synthesize_trials" title="sweetpea.synthesize_trials"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code></a>.
 Some strategies sample with replacement, producing
 independently chosen results. Others sample without
 replacement, which means they are potentially capable of
 counting the total number of trial sequences that satisfy the
 experiment’s constraints.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sweetpea.UniformGen">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">UniformGen</span></span><a class="headerlink" href="#sweetpea.UniformGen" title="Permalink to this definition"></a></dt>
+<dd><p>Automatically selects among strategies that provide uniformity.</p>
+<p><em>Uniformity</em>: Generates trials with a guarantee of
+uniformity, a long as only one trial sequence is requested
+at a time.</p>
+<p><em>Unspecified Replacement</em>: Generating multiple trials
+sequences in a call to <a class="reference internal" href="main.html#sweetpea.synthesize_trials" title="sweetpea.synthesize_trials"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code></a> may or
+may not produce independent results.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sweetpea.IterateGen">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">IterateGen</span></span><a class="headerlink" href="#sweetpea.IterateGen" title="Permalink to this definition"></a></dt>
+<dd><p>Automatically selects among strategies that implement
+non-replacement for a single request of multiple
+experiments, but the strategy may or may not provide
+uniformity for a single experiment.</p>
+<p><em>Unspecified Uniformity</em>: Might not sample uniformly among
+possible experiments.</p>
+<p><em>Without Replacement</em>: Generating multiple trials in one
+call to <a class="reference internal" href="main.html#sweetpea.synthesize_trials" title="sweetpea.synthesize_trials"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code></a> produces a list of
+distinct trial sequences. The number of returned
+experiments will be less than the requested number if the
+pool of possible trial sequences is exhausted.</p>
 </dd></dl>
 
 <dl class="py class">
@@ -186,7 +212,7 @@ uniformity. Unfortunately, due to the difficulty of
 sampling with a guarantee, this stategy is unlikely to
 succeed for non-trial designs.</p>
 <p><em>Replacement</em>: Generating multiple trials in one call to
-<a class="reference internal" href="main.html#sweetpea.synthesize_trials" title="sweetpea.synthesize_trials"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code></a> produces indepedent results. That
+<a class="reference internal" href="main.html#sweetpea.synthesize_trials" title="sweetpea.synthesize_trials"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code></a> produces independent results. That
 is, the single call is the same as separate calls that each
 generate one sequence of trials.</p>
 </dd></dl>
@@ -200,7 +226,7 @@ detecting non-uniformity. This strategy may perform well in
 terms of sampling possible configurations, despite a having
 no formal guarantee of uniformity.</p>
 <p><em>Replacement</em>: Generating multiple trials in one call to
-<a class="reference internal" href="main.html#sweetpea.synthesize_trials" title="sweetpea.synthesize_trials"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code></a> produces indepedent results. That
+<a class="reference internal" href="main.html#sweetpea.synthesize_trials" title="sweetpea.synthesize_trials"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code></a> produces independent results. That
 is, the single call is the same as separate calls that each
 generate one sequence of trials.</p>
 </dd></dl>
@@ -236,9 +262,26 @@ to find</p>
 </dd></dl>
 
 <dl class="py class">
-<dt class="sig sig-object py" id="sweetpea.IterateGen">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">IterateGen</span></span><a class="headerlink" href="#sweetpea.IterateGen" title="Permalink to this definition"></a></dt>
+<dt class="sig sig-object py" id="sweetpea.IterateSATGen">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">IterateSATGen</span></span><a class="headerlink" href="#sweetpea.IterateSATGen" title="Permalink to this definition"></a></dt>
 <dd><p><em>Non-Uniformity</em>: Generates trials by repeatedly finding
+solutions to an experiment design’s constraints, but with
+no guarantee of uniform coverage or even randomness (i.e.,
+each separate use of <a class="reference internal" href="main.html#sweetpea.synthesize_trials" title="sweetpea.synthesize_trials"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code></a> with this
+stragegy may produce the same result).</p>
+<p><em>Without Replacement</em>: When multiple trials are generated
+in one call to <a class="reference internal" href="main.html#sweetpea.synthesize_trials" title="sweetpea.synthesize_trials"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code></a>, each of the
+results is constrained to be distinct. The number of
+returned experiments will be less than the requested number
+if the pool of possible trial sequences is exhausted.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sweetpea.IterateILPGen">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">IterateILPGen</span></span><a class="headerlink" href="#sweetpea.IterateILPGen" title="Permalink to this definition"></a></dt>
+<dd><p>Like <a class="reference internal" href="#sweetpea.IterateSATGen" title="sweetpea.IterateSATGen"><code class="xref py py-class docutils literal notranslate"><span class="pre">IterateSATGen</span></code></a>, but uses Gurobi and requires
+that the <code class="docutils literal notranslate"><span class="pre">gurobipy</span></code> package has been installed.</p>
+<p><em>Non-Uniformity</em>: Generates trials by repeatedly finding
 solutions to an experiment design’s constraints, but with
 no guarantee of uniform coverage or even randomness (i.e.,
 each separate use of <a class="reference internal" href="main.html#sweetpea.synthesize_trials" title="sweetpea.synthesize_trials"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code></a> with this
@@ -257,13 +300,12 @@ if the pool of possible trial sequences is exhausted.</p>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="constraints.html" class="btn btn-neutral float-left" title="Constraints" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="legacy.html" class="btn btn-neutral float-right" title="Legacy" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2021, SweetPea Research Group.</p>
+    <p>&#169; Copyright 2022, SweetPea Research Group.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

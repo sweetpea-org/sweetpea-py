@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from typing import List, cast
 from itertools import repeat
 
-from sweetpea.blocks import Block
-from sweetpea.internal.iter import intersperse
+from sweetpea._internal.block import Block
+from sweetpea._internal.iter import intersperse
 
 
 """
@@ -87,5 +87,3 @@ class Gen(ABC):
     @staticmethod
     def class_name():
         return "Unknown Sampling Strategy"
-
-SamplingStrategy = Gen

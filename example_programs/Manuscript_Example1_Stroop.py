@@ -1,14 +1,19 @@
 import sys
 sys.path.append("..")
 
-from sweetpea.primitives import factor, derived_level, within_trial
-from sweetpea.constraints import minimum_trials, exclude
-from sweetpea import fully_cross_block, synthesize_trials_non_uniform, print_experiments
+# Ported to new API
+
+from sweetpea import (
+    Factor, DerivedLevel, WithinTrial,
+    MinimumTrials,
+    CrossBlock, synthesize_trials,
+    print_experiments
+)
 
 # color and word factors
 
-color      = factor("color",  ["red", "blue", "green", "brown"])
-word       = factor("motion", ["red", "blue", "green", "brown"])
+color      = Factor("color",  ["red", "blue", "green", "brown"])
+word       = Factor("motion", ["red", "blue", "green", "brown"])
 
 # congruency factor
 
@@ -18,10 +23,10 @@ def congruent(color, word):
 def incongruent(color, word):
     return not congruent(color, word)
 
-conLevel = derived_level("con", within_trial(congruent,   [color, word]))
-incLevel = derived_level("inc", within_trial(incongruent,   [color, word]))
+conLevel = DerivedLevel("con", WithinTrial(congruent,   [color, word]))
+incLevel = DerivedLevel("inc", WithinTrial(incongruent,   [color, word]))
 
-congruency = factor("congruency", [
+congruency = Factor("congruency", [
     conLevel,
     incLevel
 ])
@@ -37,23 +42,23 @@ def response_left(color):
 def response_right(color):
     return color == "brown"
 
-response = factor("response", [
-    derived_level("up", within_trial(response_up,   [color])),
-    derived_level("down", within_trial(response_down,   [color])),
-    derived_level("left", within_trial(response_left,   [color])),
-    derived_level("right", within_trial(response_right,   [color])),
+response = Factor("response", [
+    DerivedLevel("up", WithinTrial(response_up,   [color])),
+    DerivedLevel("down", WithinTrial(response_down,   [color])),
+    DerivedLevel("left", WithinTrial(response_left,   [color])),
+    DerivedLevel("right", WithinTrial(response_right,   [color])),
 ])
 
 # constraints
 
-constraints = [minimum_trials(20)]
+constraints = [MinimumTrials(20)]
 
 # experiment
 
 design       = [color, word, congruency, response]
 crossing     = [color, word]
-block        = fully_cross_block(design, crossing, constraints)
+block        = CrossBlock(design, crossing, constraints)
 
-experiments  = synthesize_trials_non_uniform(block, 1)
+experiments  = synthesize_trials(block, 1)
 
 print_experiments(block, experiments)

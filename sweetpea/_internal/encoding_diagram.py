@@ -4,9 +4,9 @@
 from itertools import repeat
 from functools import reduce
 
-from sweetpea.primitives import DerivedFactor
-from sweetpea.blocks import Block
-from sweetpea.internal.levels import get_all_levels
+from sweetpea._internal.primitive import DerivedFactor
+from sweetpea._internal.block import Block
+from sweetpea._internal.level import get_all_levels
 
 
 def print_encoding_diagram(blk: Block) -> None:

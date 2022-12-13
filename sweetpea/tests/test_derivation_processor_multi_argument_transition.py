@@ -1,10 +1,10 @@
 import operator as op
 import pytest
 
-from sweetpea.primitives import Factor, DerivedLevel, Transition
-from sweetpea.constraints import Derivation, Reify
-from sweetpea.derivation_processor import DerivationProcessor
-from sweetpea import fully_cross_block
+from sweetpea._internal.primitive import Factor, DerivedLevel, Transition
+from sweetpea._internal.constraint import Derivation, Reify
+from sweetpea._internal.derivation_processor import DerivationProcessor
+from sweetpea import CrossBlock
 
 
 color_list = ["red", "green"]
@@ -13,10 +13,10 @@ text  = Factor("text",  color_list)
 
 
 def one_different(colors, texts):
-    if (colors[0] == colors[1]):
-        return texts[0] != texts[1]
+    if (colors[0] == colors[-1]):
+        return texts[0] != texts[-1]
     else:
-        return texts[0] == texts[1]
+        return texts[0] == texts[-1]
 
 def other_different(colors, texts):
     return not one_different(colors, texts)
@@ -27,7 +27,7 @@ change = Factor("change", [one_level, other_level])
 
 design      = [color, text, change]
 crossing    = [color, text]
-block       = fully_cross_block(design, crossing, [Reify(change)])
+block       = CrossBlock(design, crossing, [Reify(change)])
 
 
 # Encoding diagram minus 1

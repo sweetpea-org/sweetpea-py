@@ -286,7 +286,7 @@ class CNF(SimpleSequence[Clause]):
         return ''.join(str(clause) + ' 0\n' for clause in reversed(self._vals))
 
     def as_opb_string(self) -> str:
-        def count_false_var(clause : List[int]):
+        def count_false_var(clause : Clause):
             return len(list(v for v in clause if str(v)[0] == '-'))
 
         return '\n'.join(' '.join(map(lambda v : '-1 v' + str(v)[1:]

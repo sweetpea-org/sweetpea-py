@@ -1,7 +1,8 @@
 import operator as op
 import pytest
 
-from sweetpea.primitives import Factor, DerivedLevel, ElseLevel, WithinTrial, Transition, Window, Level
+from sweetpea import Factor, DerivedLevel, ElseLevel, WithinTrial, Transition, Window, Level, CrossBlock
+from sweetpea import synthesize_trials, RandomGen
 
 color = Factor("color", ["red", "blue"])
 text = Factor("text", ["red", "blue"])
@@ -210,3 +211,33 @@ def test_base_window_validation():
     # Duplicated factors
     with pytest.raises(ValueError):
         DerivedLevel("name", WithinTrial(lambda x, y: x, [color, color]))
+
+def test_non_string_level_names():
+    number = Factor('number', [1, 2])
+
+    assert number[1].name == 1
+    assert number[1] == number.get_level(1)
+
+    assert number[2].name == 2
+    assert number[2] == number.get_level(2)
+
+    numbers = Factor('numbers', [(1, 2), (3, 4), (5, 6, 7)])
+
+    assert numbers[(1, 2)].name == (1, 2)
+    assert numbers[(1, 2)] == numbers.get_level((1, 2))
+
+    assert numbers[(3, 4)].name == (3, 4)
+    assert numbers[(5, 6, 7)].name == (5, 6, 7)
+
+    # Make sure non-string names are supplied to derived-level predicates
+    
+    def is_one(n): return n == 1
+    def is_two(n): return n == 2
+
+    one = DerivedLevel('one', WithinTrial(is_one, [number]))
+    two = DerivedLevel('two', WithinTrial(is_two, [number]))
+
+    derived = Factor("derived", [one,two])
+    t = synthesize_trials(CrossBlock([number, derived], [derived], []), 1, RandomGen)
+    assert len(t) == 1
+    

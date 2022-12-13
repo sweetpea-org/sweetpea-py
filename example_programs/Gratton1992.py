@@ -35,13 +35,13 @@ congruency  = Factor("congruency",  ["congruent", "incongruent"])
 # DEFINE CONGRUENCY TRANSITION FACTOR
 
 def con_con(congruency):
-    return congruency[0] == "congruent" and congruency[1] == "congruent"
+    return congruency[-1] == "congruent" and congruency[0] == "congruent"
 def con_inc(congruency):
-    return congruency[0] == "congruent" and congruency[1] == "incongruent"
+    return congruency[-1] == "congruent" and congruency[0] == "incongruent"
 def inc_con(congruency):
-    return congruency[0] == "incongruent" and congruency[1] == "congruent"
+    return congruency[-1] == "incongruent" and congruency[0] == "congruent"
 def inc_inc(congruency):
-    return congruency[0] == "incongruent" and congruency[1] == "incongruent"
+    return congruency[-1] == "incongruent" and congruency[0] == "incongruent"
 
 
 congruency_transition = Factor("congruency Transition", [
@@ -78,7 +78,7 @@ correct_response = Factor("correct response", [
 # DEFINE RESPONSE TRANSITION FACTOR
 
 def response_repeat(responses):
-    return responses[0] == responses[1]
+    return responses[-1] == responses[0]
 
 def response_switch(responses):
     return not response_repeat(responses)

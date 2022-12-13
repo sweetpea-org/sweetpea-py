@@ -90,20 +90,18 @@ To build this simple Stroop experiment, we import and use the following SweetPea
 language forms:
 
 * :class:`.Factor` --- constructs factors and their levels
-* :func:`.fully_cross_block` --- combines the factors to produce trials
-* :func:`.synthesize_trials_non_uniform` --- uses non-uniform sampling to
-  synthesize trial sequences
+* :class:`.CrossBlock` --- combines the factors to produce trials
+* :func:`.synthesize_trials` --- synthesizes trial sequences
 
 To put it together, we do:
 
 .. doctest::
 
-    >>> from sweetpea import Factor, fully_cross_block, synthesize_trials_non_uniform
+    >>> from sweetpea import Factor, CrossBlock, synthesize_trials
     >>> text = Factor("text", ["red", "blue", "green"])
     >>> color = Factor("color", ["red", "blue", "green"])
-    >>> block = fully_cross_block([color, text], [color, text], [])
-    >>> experiments = synthesize_trials_non_uniform(block, 1)
-    Sampling 1 trial sequences using the Uniform Combinatoric Sampling Strategy
+    >>> block = CrossBlock([color, text], [color, text], [])
+    >>> experiments = synthesize_trials(block, 1)
 
 The result of this synthesis is based on pseudo-random number generation, and so
 the output will not be the same every time. However, when we ran the code to
@@ -138,10 +136,10 @@ simplified representation of the experiment:
 
 .. doctest::
 
-    >>> from sweetpea import simplify_experiments
+    >>> from sweetpea import experiments_to_tuples
     >>> # We immediately access the first element of the returned list.
     >>> # This is because we only generated one trial run.
-    >>> simple = simplify_experiments(experiments)[0]
+    >>> simple = experiments_to_tuples(block, experiments)[0]
     >>> for pair in sorted(simple):
     ...     print(pair)
     ...
@@ -175,16 +173,15 @@ Simple Factors and Levels
 levels* are levels that are essentially just names and nothing more; they are
 not dependent on any other factors or levels.
 
-While it is possible to import the :class:`.SimpleLevel` class, it is usually
-not necessary. This is because simple levels can only be put into simple
-factors, which in turn can only consist of simple levels, and we can create
-simple levels implicitly during :class:`.Factor` initialization.
+While it is possible to import the :class:`.Level` class, it is
+usually not necessary (unless you want to assign weights to levels).
+Simple levels can only be put into simple factors, which in turn can
+only consist of simple levels, and we can create simple levels
+implicitly during :class:`.Factor` initialization.
 
 When you construct a :class:`.Factor`, you also pass a list of levels to it. If
 those levels are not instances of the :class:`.Level` class, SweetPea will
-automatically convert them into instances of :class:`.SimpleLevel`. (Usually,
-this is done by simply converting the value into a string, but see the
-documentation for all the details.)
+automatically convert them into instances of :class:`.Level`.
 
 To put all this information together: you can create a simple factor composed of
 simple levels by just using the :class:`.Factor` initializer:
@@ -306,13 +303,13 @@ directly by the :class:`.Factor` during initialization, :class:`.DerivedLevel`
 instances must be manually instantiated. :class:`DerivedLevels <.DerivedLevel>`
 also require a *derivation window* as an argument. We will discuss this more
 in-depth in a little bit, so for now just trust us that we want to use the
-:class:`.WithinTrialDerivationWindow` for this particular job:
+:class:`.WithinTrial` for this particular job:
 
 .. doctest::
 
-    >>> from sweetpea import DerivedLevel, WithinTrialDerivationWindow
-    >>> con_level = DerivedLevel("congruent", WithinTrialDerivationWindow(congruent, [color, text]))
-    >>> inc_level = DerivedLevel("incongruent", WithinTrialDerivationWindow(incongruent, [color, text]))
+    >>> from sweetpea import DerivedLevel, WithinTrial
+    >>> con_level = DerivedLevel("congruent", WithinTrial(congruent, [color, text]))
+    >>> inc_level = DerivedLevel("incongruent", WithinTrial(incongruent, [color, text]))
 
 Finally, we can construct the ``congruency`` factor:
 
@@ -320,7 +317,7 @@ Finally, we can construct the ``congruency`` factor:
 
     >>> congruency = Factor("congruency", [con_level, inc_level])
 
-Now when we create a full crossing using :func:`.fully_cross_block`, we will
+Now when we create a full crossing using :class:`.CrossBlock`, we will
 include the ``congruency`` factor with the rest of the design. However, it is
 *not* part of the crossing itself. The result of synthesizing trials from such a
 crossing will be a random arrangement of the following trials:
@@ -362,17 +359,17 @@ crossing will be a random arrangement of the following trials:
      - blue
      - congruent
 
-We can verify this by using the :func:`.simplify_experiments` function on the
+We can verify this by using the :func:`.experiments_to_tuples` function on the
 result of synthesizing one trial run from this design:
 
 .. doctest::
 
-    >>> from sweetpea import fully_cross_block, synthesize_trials_non_uniform, simplify_experiments
+    >>> from sweetpea import CrossBlock, synthesize_trials, experiments_to_tuples
     >>> design = [color, text, congruency]
     >>> crossing = [color, text]
-    >>> block = fully_cross_block(design, crossing, [])
-    >>> experiments = synthesize_trials_non_uniform(block, 1)
-    >>> for pair in sorted(simplify_experiments(experiments)[0]):
+    >>> block = CrossBlock(design, crossing, [])
+    >>> experiments = synthesize_trials(block, 1)
+    >>> for pair in sorted(experiments_to_tuples(block, experiments)[0]):
     ...     print(pair)
     ...
     ...
@@ -399,16 +396,16 @@ are six ``incongruent`` trials to just three ``congruent`` ones!
 
 Arbitrarily, we will choose to limit trial sequences such that only two
 ``incongruent`` trials may appear in a row. This will be accomplished using the
-:func:`~sweetpea.constraints.at_most_k_in_a_row` function.
+:func:`~sweetpea.AtMostKInARow` function.
 
 .. doctest::
 
     >>> # We resume from the previous session.
-    >>> from sweetpea.constraints import at_most_k_in_a_row
-    >>> congruency_constraint = at_most_k_in_a_row(2, congruency)
-    >>> block = fully_cross_block(design, crossing, [congruency_constraint])
-    >>> experiments = synthesize_trials_non_uniform(block, 3)
-    Sampling 3 trial sequences using the <class 'sweetpea.sampling_strategies.non_uniform.NonUniformSamplingStrategy'>
+    >>> from sweetpea import AtMostKInARow
+    >>> congruency_constraint = AtMostKInARow(2, congruency)
+    >>> block = CrossBlock(design, crossing, [congruency_constraint])
+    >>> experiments = synthesize_trials(block, 3)
+    Sampling 3 trial sequences
     >>> print_experiments(block, experiments)  # doctest: +SKIP
     3 trial sequences found.
     Experiment 0:
@@ -449,5 +446,5 @@ with the same ``congruency`` level selected. However, note that the constraint
 is *not* imposed across experiment boundaries: the final trial of the second
 experiment is ``incongruent``, and the first two trials of the third experiment
 are also ``incongruent``. This adds up to three consecutive trials! But this
-behavior is expected. The :func:`~sweetpea.constraints.at_most_k_in_a_row`
+behavior is expected. The :class:`~sweetpea.AtMostKInARow`
 constraint only looks *within* a given experiment, not across experiments.

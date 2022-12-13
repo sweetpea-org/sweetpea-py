@@ -1,4 +1,4 @@
-from sweetpea.logic import If, Iff, And, Or, Not, to_cnf_naive, to_cnf_switching, to_cnf_tseitin, cnf_to_json
+from sweetpea._internal.logic import If, Iff, And, Or, Not, to_cnf_naive, to_cnf_switching, to_cnf_tseitin, cnf_to_json
 
 
 def test_to_cnf_naive():
@@ -97,7 +97,7 @@ def test_cnf_to_json():
 
 
 def test_eliminate_iff():
-    from sweetpea.logic import __eliminate_iff
+    from sweetpea._internal.logic import __eliminate_iff
 
     # P -> Q  ==> (~P v Q)
     assert __eliminate_iff(If(1, 2)) == Or([Not(1), 2])
@@ -112,7 +112,7 @@ def test_eliminate_iff():
 
 
 def test_apply_demorgan():
-    from sweetpea.logic import __apply_demorgan
+    from sweetpea._internal.logic import __apply_demorgan
 
     # P ==> P, ~P ==> ~P
     assert __apply_demorgan(4) == 4
@@ -131,7 +131,7 @@ def test_apply_demorgan():
 
 
 def test_distribute_ors_naive():
-    from sweetpea.logic import __distribute_ors_naive
+    from sweetpea._internal.logic import __distribute_ors_naive
 
     # When f is int or Not, return it. (Not can only contain int, as we've
     # already applied DeMorgan's laws)
@@ -153,7 +153,7 @@ def test_distribute_ors_naive():
 
 
 def test_distribute_ors_switching():
-    from sweetpea.logic import __distribute_ors_switching
+    from sweetpea._internal.logic import __distribute_ors_switching
 
     # When lhs or rhs is a single variable, just distribute it.
     assert __distribute_ors_switching(Or([1, And([2, 3])]), 4) == (
@@ -191,7 +191,7 @@ def test_distribute_ors_switching():
 
 
 def test_tseitin_rep_variables():
-    from sweetpea.logic import __tseitin_rep, _Cache
+    from sweetpea._internal.logic import __tseitin_rep, _Cache
 
     clauses = []
     cache = _Cache(2)
@@ -201,7 +201,7 @@ def test_tseitin_rep_variables():
 
 
 def test_tseitin_rep_not():
-    from sweetpea.logic import __tseitin_rep, _Cache
+    from sweetpea._internal.logic import __tseitin_rep, _Cache
 
     # Should replace Not(var) with another variable
     clauses = []
@@ -224,7 +224,7 @@ def test_tseitin_rep_not():
 
 
 def test_tseitin_rep_if():
-    from sweetpea.logic import __tseitin_rep, _Cache
+    from sweetpea._internal.logic import __tseitin_rep, _Cache
 
     clauses = []
     cache = _Cache(3)
@@ -251,7 +251,7 @@ def test_tseitin_rep_if():
 
 
 def test_tseitin_rep_iff():
-    from sweetpea.logic import __tseitin_rep, _Cache
+    from sweetpea._internal.logic import __tseitin_rep, _Cache
 
     clauses = []
     cache = _Cache(3)
@@ -279,7 +279,7 @@ def test_tseitin_rep_iff():
 
 
 def test_tseitin_rep_and():
-    from sweetpea.logic import __tseitin_rep, _Cache
+    from sweetpea._internal.logic import __tseitin_rep, _Cache
 
     clauses = []
     cache = _Cache(4)
@@ -307,7 +307,7 @@ def test_tseitin_rep_and():
 
 
 def test_tseitin_rep_or():
-    from sweetpea.logic import __tseitin_rep, _Cache
+    from sweetpea._internal.logic import __tseitin_rep, _Cache
 
     clauses = []
     cache = _Cache(4)
@@ -335,7 +335,7 @@ def test_tseitin_rep_or():
 
 
 def test_tseitin_cache():
-    from sweetpea.logic import _Cache
+    from sweetpea._internal.logic import _Cache
 
     c = _Cache(5)
 

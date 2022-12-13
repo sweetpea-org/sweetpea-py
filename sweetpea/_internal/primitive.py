@@ -5,9 +5,7 @@ from __future__ import annotations
 __all__ = [
     'Level', 'SimpleLevel', 'DerivedLevel', 'ElseLevel',
     'Factor', 'SimpleFactor', 'DerivedFactor',
-    'DerivationWindow', 'WithinTrialDerivationWindow', 'TransitionDerivationWindow',
-    'WithinTrial', 'Transition', 'Window',
-    'simple_level', 'derived_level', 'else_level', 'factor', 'within_trial', 'transition', 'window',
+    'WithinTrial', 'Transition', 'Window'
 ]
 
 
@@ -17,7 +15,8 @@ from itertools import product, chain
 from random import randint
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union, cast
 
-from sweetpea.internal.iter import chunk_list
+from sweetpea._internal.iter import chunk_dict
+from sweetpea._internal.beforestart import BeforeStart
 
 
 ###############################################################################
@@ -99,6 +98,12 @@ class Level:
     def uses_factor(self, factor):
         return False
 
+    def get_factor(self) -> Factor:
+        if hasattr(self, 'factor'):
+            return cast(Factor, cast(Any, self).factor)
+        else:
+            raise Exception("no factor present")
+
 @dataclass(eq=False)
 class SimpleLevel(Level):
     """A simple :class:`.Level`, which only has a name.
@@ -139,7 +144,7 @@ class SimpleLevel(Level):
 class DerivedLevel(Level):
     """A :class:`.Level` representing the intersection of other levels,
     potentially from different :class:`Factors <.Factor>`. These are produced
-    through use of :class:`DerivationWindows <.DerivationWindow>`, which are
+    through use of :class:`Window <.Window>`, which are
     constraints on level selection during trial sampling.
 
     For more information on when to use derived levels, consult :ref:`the
@@ -149,12 +154,12 @@ class DerivedLevel(Level):
         The name of the level.
 
     :param window:
-        A :class:`.DerivationWindow` used in producing a cross product of this
+        A :class:`.Window` used in producing a cross product of this
         level.
     """
 
     #: The derivation window corresponding to this level.
-    window: DerivationWindow = field(compare=False)
+    window: Window = field(compare=False)
 
     weight: InitVar[int] = 1
 
@@ -166,8 +171,8 @@ class DerivedLevel(Level):
         super().__post_init__()
         # NOTE: This check is for backwards compatibility. It should instead be
         #       handled by type-checking.
-        if not isinstance(self.window, DerivationWindow):
-            raise TypeError(f"DerivedLevel must be given a DerivationWindow; got {type(self.window).__name__}.")
+        if not isinstance(self.window, Window):
+            raise TypeError(f"DerivedLevel must be given a Window; got {type(self.window).__name__}.")
         self._weight = weight
         self.weight = weight # type: ignore
         # Verify internal factors' strides.
@@ -184,6 +189,8 @@ class DerivedLevel(Level):
     def get_dependent_cross_product(self) -> List[Tuple[Level, ...]]:
         """Produces a list of n-tuples, where each tuple represents a unique
         combination of :class:`.Level` selections among all possibilities.
+        If a the derived level's start implies that not enough values are
+        ready, then a ``BeforeStart`` is included in the possibilities.
 
         For instance, if we have two :class:`Factors <.Factor>`, each with some
         :class:`Levels <.Level>`:
@@ -211,7 +218,17 @@ class DerivedLevel(Level):
 
         :rtype: typing.List[typing.Tuple[.Level, ...]]
         """
-        return list(product(*(factor.levels for factor in self.window.factors for i in range(self.window.width))))
+        def levels_of(factor, i):
+            ready_at = 0
+            if isinstance(factor, DerivedFactor) and factor.has_complex_window:
+                ready_at = factor.first_level.window.start
+            else:
+                ready_at = 0
+            if ready_at > self.window.start - self.window.width + i + 1:
+                return factor.levels + [BeforeStart(ready_at)]
+            else:
+                return factor.levels
+        return list(product(*(levels_of(factor, i) for factor in self.window.factors for i in range(self.window.width))))
 
     def uses_factor(self, f: Factor):
         return any(list(map(lambda wf: wf.uses_factor(f), self.window.factors)))
@@ -223,9 +240,13 @@ class DerivedLevel(Level):
         for f in window.factors:
             levels = sample[f]
             for j in range(window.width):
-                args.append(levels[i-(window.width-1)+j].name)
+                idx = i-(window.width-1)+j
+                if idx >= 0:
+                    args.append(levels[idx].name)
+                else:
+                    args.append(None)
         if window.width > 1:
-            args = list(chunk_list(args, window.width))
+            args = list(chunk_dict(args, window.width))
         return args
 
     def __repr__(self) -> str:
@@ -233,10 +254,11 @@ class DerivedLevel(Level):
 
     def desugar_for_weights(self, replacements: dict):
         l = DerivedLevel(self.name,
-                         DerivationWindow(self.window.predicate,
-                                          [replacements.get(f, [f, f])[0] for f in self.window.factors],
-                                          self.window.width,
-                                          self.window.stride))
+                         Window(self.window.predicate,
+                                [replacements.get(f, [f, f])[0] for f in self.window.factors],
+                                self.window.width,
+                                self.window.stride,
+                                self.window.start))
         replacements[self] = l
         
 
@@ -270,12 +292,13 @@ class ElseLevel(Level):
             constructing the new level.
         """
         if not other_levels:
-            return DerivedLevel(self.name, WithinTrialDerivationWindow(lambda: False, []))
+            return DerivedLevel(self.name, WithinTrial(lambda: False, []))
         first_level = other_levels[0]
-        window = DerivationWindow(lambda *args: not any(map(lambda l: l.window.predicate(*args), other_levels)),
-                                  first_level.window.factors,
-                                  first_level.window.width,
-                                  first_level.window.stride)
+        window = Window(lambda *args: not any(map(lambda l: l.window.predicate(*args), other_levels)),
+                        first_level.window.factors,
+                        first_level.window.width,
+                        first_level.window.stride,
+                        first_level.window.start)
         return DerivedLevel(self.name, window, self.weight)
 
 ###############################################################################
@@ -318,8 +341,8 @@ class Factor:
        :class:`.SimpleLevel` with the :class:`str` as its name and the
        :class:`int` as its weight.
 
-    4. Anything else is converted into a :class:`.SimpleLevel` by using its
-       string representation as a level name.
+    4. Anything else is converted into a :class:`.SimpleLevel` by using it
+       as a level name.
 
     .. note::
 
@@ -333,8 +356,7 @@ class Factor:
         The levels comprising this factor. The list can be made of anything,
         but any values in the list that are not instances of :class:`.Level` or
         one of its subclasses will be converted into :class:`.SimpleLevel`
-        instances by using their string representation, as determined by
-        ``SimpleLevel(str(value))``.
+        instances using ``SimpleLevel(value)``.
     :type initial_levels: typing.Sequence[Any]
 
     :rtype: .Factor
@@ -380,14 +402,13 @@ class Factor:
         return instance
 
     def __post_init__(self, initial_levels: Sequence[Any]):
-        # First, we convert the given initial levels into actual `Level`s. To
-        # ensure the input list is untouched, we copy any levels that came in.
+        # First, we convert the given initial levels into actual `Level`s.
         real_levels: List[Level] = []
         for level in initial_levels:
             if isinstance(level, Level):
                 pass
             else:
-                level = SimpleLevel(str(level))
+                level = SimpleLevel(level)
             real_levels.append(level)
         # Then we do any necessary post-processing of the levels.
         self.levels = self._process_initial_levels(real_levels)
@@ -466,6 +487,7 @@ class Factor:
         window = self.first_level.window
         return (window.width > 1
                 or window.stride > 1
+                or cast(int, window.start) > 0
                 or window.is_complex)
 
     def applies_to_trial(self, trial_number: int) -> bool:
@@ -482,14 +504,9 @@ class Factor:
         if not isinstance(self, DerivedFactor):
             return True
 
-        def acc_width(d: DerivationWindow) -> int:
-            if isinstance(d.first_factor, DerivedFactor) and d.first_factor.has_complex_window:
-                return d.width + acc_width(d.first_factor.first_level.window) - 1
-            return d.width
-
         window = self.first_level.window
-        return (trial_number >= acc_width(window)
-                and (trial_number - window.width) % window.stride == 0)
+        return (trial_number >= (cast(int, window.start)+1)
+                and (trial_number - (cast(int, window.start)+1)) % window.stride == 0)
 
     def uses_factor(self, f: Factor):
         return self == f
@@ -664,7 +681,7 @@ class DerivedFactor(Factor):
 
 
 @dataclass
-class DerivationWindow:
+class Window:
     """A mechanism to specify the window of a derivation. Derivation windows
     are used to inform a derivation based on levels from other factors in the
     current trial and, potentially, multiple preceding trials.
@@ -693,8 +710,18 @@ class DerivationWindow:
     :type width: int
 
     :param stride:
-        TODO DOC
+        How often the factor is derived. With a stride of ``1`` (the default),
+        the factor is derived for every trial starting with initial one. For
+        a larger stride, ``stride-1`` trials are skipped before the factor is
+        derived again.
     :type stride: int
+
+    :param start:
+        The first trial where this derivation applies. By default, the starting
+        trial is the first trial where the factors are all defined that this one
+        depends on. If the starting trial is before that, then the predicate
+        must be prepared to handle ``None`` as an argument level.
+    :type start: int
     """
 
     # TODO: I think that, if possible, this should be changed to some other
@@ -714,23 +741,40 @@ class DerivationWindow:
     width: int
 
     #: The stride of this window.
-    stride: int
+    stride: int = 1
+
+    # The starting trial, if not automatic; 0-based
+    start: Optional[int] = None
 
     def __post_init__(self):
         # NOTE: We check the types for backwards compatibility, but it should
         #       be handled with type-checking.
         if not callable(self.predicate):
-            raise TypeError(f"DerivationWindow expected predicate function; got {self.predicate}.")
+            raise TypeError(f"Window expected predicate function; got {self.predicate}.")
         
         for factor in self.factors:
             if not isinstance(factor, Factor):
-                raise TypeError(f"DerivationWindow must be composed of Factors; got {factor}.")
+                raise TypeError(f"Window must be composed of Factors; got {factor}.")
         # TODO: Validate the predicate accepts the same number of arguments as
         #       factors in `self.factors`.
         if self.width < 1:
             raise ValueError(f"A {type(self).__name__} derivation window must have a width of at least 1.")
         if self.stride < 1:
             raise ValueError(f"A {type(self).__name__} derivation window must have a stride of at least 1.")
+
+        default_start = self.width - 1
+        for factor in self.factors:
+            ready_at = 0
+            if isinstance(factor, DerivedFactor) and factor.has_complex_window:
+                ready_at = factor.first_level.window.start
+            ready_at = ready_at + self.width - 1
+            if ready_at > default_start:
+                default_start = ready_at
+        if (self.start == None):
+            self.start = default_start
+        elif self.start < 0:
+            raise ValueError(f"A {type(self).__name__} derivation window must have a start of at least 0.")
+        self.start_delta = self.start - default_start
         found_factor_names = set()
         for factor in self.factors:
             if factor.name in found_factor_names:
@@ -738,12 +782,12 @@ class DerivationWindow:
             found_factor_names.add(factor.name)
 
     @property
-    def size(self) -> Tuple[int, int]:
+    def size(self) -> Tuple[int, int, int]:
         """The width and stride of this derivation window as a pair.
 
-        :rtype: typing.Tuple[int, int]
+        :rtype: typing.Tuple[int, int, int]
         """
-        return (self.width, self.stride)
+        return (self.width, self.stride, cast(int, self.start))
 
     @property
     def first_factor(self) -> Factor:
@@ -770,7 +814,7 @@ class DerivationWindow:
                 or self.first_factor.has_complex_window)
 
 @dataclass
-class WithinTrialDerivationWindow(DerivationWindow):
+class WithinTrial(Window):
     """A derivation window that depends on levels from other factors, all
     within the same trial.
 
@@ -787,10 +831,11 @@ class WithinTrialDerivationWindow(DerivationWindow):
 
     width: int = field(default=1, init=False)
     stride: int = field(default=1, init=False)
+    start: Optional[int] = field(default=None, init=False)
 
 
 @dataclass
-class TransitionDerivationWindow(DerivationWindow):
+class Transition(Window):
     """A derivation window that depends on levels from other factors in the
     current trial and the immediately preceding trial.
     :class:`TransitionDerivations <.TransitionDerivation>` are used to
@@ -809,141 +854,4 @@ class TransitionDerivationWindow(DerivationWindow):
 
     width: int = field(default=2, init=False)
     stride: int = field(default=1, init=False)
-
-
-###############################################################################
-##
-## Backwards Compatibility
-##
-## These functions are provided to maintain compatibility with the existing
-## SweetPea implementation.
-##
-## TODO: Rewrite SweetPea's internal implementation in order to remove these!
-
-#### Class aliases.
-
-#: A preferred alias for :class:`.WithinTrialDerivationWindow`.
-WithinTrial = WithinTrialDerivationWindow
-
-#: A preferred alias for :class:`.TransitionDerivationWindow`.
-Transition = TransitionDerivationWindow
-
-#: A compatibility alias for :class:`.DerivationWindow`.
-Window = DerivationWindow
-
-#: A preferred alias for :class:`.DerivationWindow`.
-AcrossTrials = Window
-
-#### Noun-form function aliases.
-
-def simple_level(name: str, weight: Optional[int] = None) -> SimpleLevel:
-    """A compatibility alias for direct instantiation of :class:`.SimpleLevel`.
-
-    :param name:
-        The name of the level.
-
-    :param weight:
-        An optional weight for the level.
-
-    """
-    if weight is None:
-        return SimpleLevel(name)
-    return SimpleLevel(name, weight)
-
-
-def derived_level(name: str, derivation: Window, weight: Optional[int] = None) -> DerivedLevel:
-    """A compatibility alias for direct instantiation of :class:`.DerivedLevel`.
-
-    :param name:
-        The name of the level.
-
-    :param derivation:
-        The derivation window for this level.
-
-    :param weight:
-        An optional weight for the level.
-
-    """
-    if weight is None:
-        return DerivedLevel(name, derivation)
-    return DerivedLevel(name, derivation, weight)
-
-
-def else_level(name: str, weight: Optional[int] = None) -> ElseLevel:
-    """A compatibility alias for direct instantiation of
-        :class:`.ElseLevel`.
-
-    :param name:
-        The name of the level.
-
-    :param weight:
-        An optional weight for the level.
-
-    """
-    if weight is None:
-        return ElseLevel(name)
-    return ElseLevel(name, weight)
-
-
-def factor(name: str, levels: Sequence[Any]) -> Factor:
-    """A compatibility alias for direct instantiation of :class:`.Factor`.
-
-    :param name:
-        The name of the factor.
-
-    :param levels:
-        A sequence of levels for the factor.
-
-    """
-    return Factor(name, levels)
-
-
-def within_trial(fn: Callable, args: List[Factor]) -> WithinTrialDerivationWindow:
-    """A compatibility alias for direct instantiation of
-       :class:`.WithinTrialDerivationWindow`.
-
-    :param fn:
-        A predicate function. See :class:`.WithinTrialDerivationWindow`.
-
-    :param args:
-        A list of :class:`Factors <.Factor>`. See
-        :class:`.WithinTrialDerivationWindow`.
-
-    """
-    return WithinTrialDerivationWindow(fn, args)
-
-
-def transition(fn: Callable, args: List[Factor]) -> TransitionDerivationWindow:
-    """A compatibility alias for direct instantiation of
-       :class:`.TransitionDerivationWindow`.
-
-    :param fn:
-        A predicate function. See :class:`.TransitionDerivationWindow`.
-
-    :param args:
-        A list of :class:`Factors <.Factor>`. See
-        :class:`.TransitionDerivationWindow`.
-
-    """
-    return TransitionDerivationWindow(fn, args)
-
-
-def window(fn: Callable, args: List[Factor], width: int, stride: int) -> DerivationWindow:
-    """A compatibility alias for direct instantiation of
-       :class:`.AcrossTrials`.
-
-    :param fn:
-        A predicate function. See :class:`.DerivationWindow`.
-
-    :param args:
-        A list of :class:`Factors <.Factor>`. See
-        :class:`.DerivationWindow`.
-
-    :param width:
-        The width of the window.
-
-    :param stride:
-        The stride of the window.
-
-    """
-    return DerivationWindow(fn, args, width, stride)
+    start: int = field(default=1, init=False)

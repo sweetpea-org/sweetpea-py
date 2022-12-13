@@ -120,7 +120,6 @@
 <li class="toctree-l2"><a class="reference internal" href="derivations.html">Derivations</a></li>
 <li class="toctree-l2"><a class="reference internal" href="constraints.html">Constraints</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sampling_strategies.html">Sampling Strategies</a></li>
-<li class="toctree-l2"><a class="reference internal" href="legacy.html">Legacy</a></li>
 </ul>
 </li>
 </ul>
@@ -152,8 +151,8 @@
              
   <section id="experiments">
 <h1>Experiments<a class="headerlink" href="#experiments" title="Permalink to this heading"></a></h1>
-<p>Create an experiment description using <a class="reference internal" href="#sweetpea.CrossBlock" title="sweetpea.CrossBlock"><code class="xref py py-func docutils literal notranslate"><span class="pre">CrossBlock()</span></code></a> or
-<a class="reference internal" href="#sweetpea.MultiCrossBlock" title="sweetpea.MultiCrossBlock"><code class="xref py py-func docutils literal notranslate"><span class="pre">MultiCrossBlock()</span></code></a>, then generate trials for the experiment
+<p>Create an experiment description using <a class="reference internal" href="#sweetpea.CrossBlock" title="sweetpea.CrossBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">CrossBlock</span></code></a> or
+<a class="reference internal" href="#sweetpea.MultiCrossBlock" title="sweetpea.MultiCrossBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiCrossBlock</span></code></a>, then generate trials for the experiment
 using <a class="reference internal" href="#sweetpea.synthesize_trials" title="sweetpea.synthesize_trials"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code></a>. Print generated trials using
 <a class="reference internal" href="#sweetpea.print_experiments" title="sweetpea.print_experiments"><code class="xref py py-func docutils literal notranslate"><span class="pre">print_experiments()</span></code></a>.</p>
 <dl class="py class">
@@ -163,14 +162,14 @@ using <a class="reference internal" href="#sweetpea.synthesize_trials" title="sw
 turned into a sequence of trials with <a class="reference internal" href="#sweetpea.synthesize_trials" title="sweetpea.synthesize_trials"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code></a>.</p>
 </dd></dl>
 
-<dl class="py function">
+<dl class="py class">
 <dt class="sig sig-object py" id="sweetpea.CrossBlock">
-<span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">CrossBlock</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">design</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crossing</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">require_complete_crossing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.CrossBlock" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">CrossBlock</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">design</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crossing</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">require_complete_crossing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.CrossBlock" title="Permalink to this definition"></a></dt>
 <dd><p>Creates an experiment description based on a set of factors and a
 subset them that are <em>crossed</em>.</p>
-<p>The <a class="reference internal" href="#sweetpea.CrossBlock" title="sweetpea.CrossBlock"><code class="xref py py-func docutils literal notranslate"><span class="pre">CrossBlock()</span></code></a> function is the main way of describing an
-experiment. The result is an object that be used with a function
-like <a class="reference internal" href="#sweetpea.synthesize_trials" title="sweetpea.synthesize_trials"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code></a>.</p>
+<p>The <a class="reference internal" href="#sweetpea.CrossBlock" title="sweetpea.CrossBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">CrossBlock</span></code></a> class is the main way of describing an
+experiment. The result is an object that be used with
+<a class="reference internal" href="#sweetpea.synthesize_trials" title="sweetpea.synthesize_trials"><code class="xref py py-func docutils literal notranslate"><span class="pre">synthesize_trials()</span></code></a> to generate trial sequences.</p>
 <p>The <cite>design</cite> argument lists all of the factors in the experiment
 design. When a sequence of trials is generated for the experiment,
 each trial will have one level from each factor in <cite>design</cite>.</p>
@@ -189,26 +188,28 @@ number of trials starts as the product of the number of levels of
 the factors in <cite>crossing</cite>. This trial count can be adjusted by
 other elements of the design:</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="constraints.html#sweetpea.Exclude" title="sweetpea.Exclude"><code class="xref py py-func docutils literal notranslate"><span class="pre">Exclude()</span></code></a> constraints in <cite>constraints</cite> can exclude levels
+<li><p><a class="reference internal" href="constraints.html#sweetpea.Exclude" title="sweetpea.Exclude"><code class="xref py py-class docutils literal notranslate"><span class="pre">Exclude</span></code></a> constraints in <cite>constraints</cite> can exclude levels
 of a crossed factor. In that case, as long as
 <cite>require_complete_crossing</cite> is set to false, combinations
 involving the factor are removed from the crossing.</p></li>
 <li><p>When the levels of a derived factor in <cite>crossing</cite> have a window
 size N that is greater than 1, then N-1 additional preamble
-trials are added to the start of the sequence, so that the
-derived level is defined for the first trial that starts the
-crossing sequence. When multiple derived factors are included in
-the crossing, the one with the greatest window size determines
-the number of preamble trials. The levels of non-derived factors
-in the preamble trials are selected randomly and independently,
-except that the combinations are subject to any requirements from
-<cite>constraints</cite>, such as an <a class="reference internal" href="constraints.html#sweetpea.AtMostKInARow" title="sweetpea.AtMostKInARow"><code class="xref py py-func docutils literal notranslate"><span class="pre">AtMostKInARow()</span></code></a> constraint or an
-<a class="reference internal" href="constraints.html#sweetpea.Exclude" title="sweetpea.Exclude"><code class="xref py py-func docutils literal notranslate"><span class="pre">Exclude()</span></code></a> constraint.</p></li>
+trials are normally added to the start of the sequence, so that
+the derived level is defined for the first trial that starts the
+crossing sequence. This behavior can be controlled in a derived
+factor by specifying a starting trial. When multiple derived
+factors are included in the crossing, the one with the latest
+starting trial determines the number of preamble trials. The
+levels of non-derived factors in the preamble trials are selected
+randomly and independently, except that the combinations are
+subject to any requirements from <cite>constraints</cite>, such as an
+<a class="reference internal" href="constraints.html#sweetpea.AtMostKInARow" title="sweetpea.AtMostKInARow"><code class="xref py py-class docutils literal notranslate"><span class="pre">AtMostKInARow</span></code></a> constraint or an <a class="reference internal" href="constraints.html#sweetpea.Exclude" title="sweetpea.Exclude"><code class="xref py py-class docutils literal notranslate"><span class="pre">Exclude</span></code></a>
+constraint.</p></li>
 <li><p>When a derived-factor definition implicitly excludes certain
 combinations by the definition of its levels, then the number of
 trials in a crossing can be reduced, but only if
 <cite>require_complete_crossing</cite> is set to false.</p></li>
-<li><p>A <a class="reference internal" href="constraints.html#sweetpea.MinimumTrials" title="sweetpea.MinimumTrials"><code class="xref py py-func docutils literal notranslate"><span class="pre">MinimumTrials()</span></code></a> in <cite>constraint</cite> can increase the number
+<li><p>A <a class="reference internal" href="constraints.html#sweetpea.MinimumTrials" title="sweetpea.MinimumTrials"><code class="xref py py-class docutils literal notranslate"><span class="pre">MinimumTrials</span></code></a> in <cite>constraint</cite> can increase the number
 of trials in a sequence. Additional trials are added afterward by
 replicating the crossing as many times as needed to reach the
 required number of trials. Levels are selected for each
@@ -233,7 +234,7 @@ combination in <cite>crossing</cite> must
 appear in a block of trials; a
 false value is appropriate if
 combinations are excluded through
-an <code class="xref py py-class docutils literal notranslate"><span class="pre">Exclude</span></code> constraint</p></li>
+an <a class="reference internal" href="constraints.html#sweetpea.Exclude" title="sweetpea.Exclude"><code class="xref py py-class docutils literal notranslate"><span class="pre">Exclude</span></code></a> constraint</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -245,14 +246,16 @@ an <code class="xref py py-class docutils literal notranslate"><span class="pre"
 </dl>
 </dd></dl>
 
-<dl class="py function">
+<dl class="py class">
 <dt class="sig sig-object py" id="sweetpea.MultiCrossBlock">
-<span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">MultiCrossBlock</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">design</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crossings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">require_complete_crossing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.MultiCrossBlock" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">MultiCrossBlock</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">design</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">crossings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">require_complete_crossing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.MultiCrossBlock" title="Permalink to this definition"></a></dt>
 <dd><p>Creates an experiment description as a block of trials based on
 multiple crossings.</p>
-<p>The <a class="reference internal" href="#sweetpea.MultiCrossBlock" title="sweetpea.MultiCrossBlock"><code class="xref py py-func docutils literal notranslate"><span class="pre">MultiCrossBlock()</span></code></a> function is like <a class="reference internal" href="#sweetpea.CrossBlock" title="sweetpea.CrossBlock"><code class="xref py py-func docutils literal notranslate"><span class="pre">CrossBlock()</span></code></a>,
-but it accepts multiple crossings in <cite>crossings</cite>, instead of a
-single crossing.</p>
+<p>The <a class="reference internal" href="#sweetpea.MultiCrossBlock" title="sweetpea.MultiCrossBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiCrossBlock</span></code></a> class generalizes
+<a class="reference internal" href="#sweetpea.CrossBlock" title="sweetpea.CrossBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">CrossBlock</span></code></a>, but it accepts multiple crossings in
+<cite>crossings</cite>, instead of a single crossing. Since
+<a class="reference internal" href="#sweetpea.MultiCrossBlock" title="sweetpea.MultiCrossBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiCrossBlock</span></code></a> is more general, a <a class="reference internal" href="#sweetpea.CrossBlock" title="sweetpea.CrossBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">CrossBlock</span></code></a>
+instance is also a <a class="reference internal" href="#sweetpea.MultiCrossBlock" title="sweetpea.MultiCrossBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiCrossBlock</span></code></a> instance.</p>
 <p>The number of trials in each generated sequence for the experiment
 is determined by the <em>maximum</em> of number that would be determined
 by an individual crossing in <cite>crossings</cite>.</p>
@@ -273,7 +276,7 @@ block’s trials; the factors in each crossing must
 be a subset of the <cite>design</cite> list</p></li>
 <li><p><strong>constraints</strong> (<em>List</em><em>[</em><a class="reference internal" href="constraints.html#sweetpea.Constraint" title="sweetpea.Constraint"><em>Constraint</em></a><em>]</em>) – constraints that every sequence of trials must
 satify; see <a class="reference internal" href="constraints.html#constraints"><span class="std std-ref">Constraints</span></a></p></li>
-<li><p><strong>require_complete_crossing</strong> – same as for <a class="reference internal" href="#sweetpea.MultiCrossBlock" title="sweetpea.MultiCrossBlock"><code class="xref py py-func docutils literal notranslate"><span class="pre">MultiCrossBlock()</span></code></a></p></li>
+<li><p><strong>require_complete_crossing</strong> – same as for <a class="reference internal" href="#sweetpea.MultiCrossBlock" title="sweetpea.MultiCrossBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiCrossBlock</span></code></a></p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -291,12 +294,16 @@ satify; see <a class="reference internal" href="constraints.html#constraints"><s
 <dd><p>Given an experiment description, generates multiple blocks of trials.</p>
 <p>Each block has a number of trials that is determined by the
 experiment’s crossing, and each trial is a combination of levels
-subject to implciit and explicit constraints in the experiment
+subject to implcit and explicit constraints in the experiment
 description.</p>
 <p>The <cite>sampling_strategy</cite> argument determines properties of the
 resulting samples, such as whether each sequence reflects a
-uniformly random choice over all valid sequences. See see
+uniformly random choice over all valid sequences. See
 <a class="reference internal" href="sampling_strategies.html#sampling-strategies"><span class="std std-ref">Sampling Strategies</span></a> for more information.</p>
+<p>Note that the default sampling strategy <em>does not</em> provide a
+guarantee of uniform sampling. The default is chosen to produce
+a result as quickly as possible for the broadest range of
+designs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
@@ -346,7 +353,7 @@ example.</p>
 <p>Factors relevant to a crossing are normally extracted from <cite>block</cite>,
 but they can be specified separately as <cite>factors</cite>. When <cite>block</cite> is
 supplied, it must contain a single crossing, as opposed to a
-multi-crossing block produced by <a class="reference internal" href="#sweetpea.MultiCrossBlock" title="sweetpea.MultiCrossBlock"><code class="xref py py-func docutils literal notranslate"><span class="pre">MultiCrossBlock()</span></code></a>.</p>
+multi-crossing block produced by <a class="reference internal" href="#sweetpea.MultiCrossBlock" title="sweetpea.MultiCrossBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiCrossBlock</span></code></a>.</p>
 <p>Normally, all trails in each sequence are tabulate. If ‘trails` is
 provided, is lists trials that should be tabulated, and other
 trials are ignored. Trial indices in <cite>trials</cite> count from 0.</p>
@@ -415,7 +422,7 @@ names of levels selected for one trial</p>
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2021, SweetPea Research Group.</p>
+    <p>&#169; Copyright 2022, SweetPea Research Group.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
