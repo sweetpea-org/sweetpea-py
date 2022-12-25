@@ -18,7 +18,7 @@ __all__ = [
     'ExactlyKInARow',
 
     'Gen', 'RandomGen', 'IterateSATGen', 
-    'CMSGen', 'UniGen', 'IterateILPGen',
+    'CMSGen', 'UniGen', 'IterateILPGen', 'UniformILPGen',
     'UniformGen', 'IterateGen'
 ]
 
@@ -47,6 +47,7 @@ from sweetpea._internal.sampling_strategy.unigen import UniGen
 from sweetpea._internal.sampling_strategy.cmsgen import CMSGen
 from sweetpea._internal.sampling_strategy.random import RandomGen
 from sweetpea._internal.sampling_strategy.iterate_ilp import IterateILPGen
+from sweetpea._internal.sampling_strategy.uniform_ilp import UniformILPGen
 from sweetpea._internal.server import build_cnf
 from sweetpea._internal.core.cnf import Var
 from sweetpea._internal.argcheck import argcheck, make_islistof

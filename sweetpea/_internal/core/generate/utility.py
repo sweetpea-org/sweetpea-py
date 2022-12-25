@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from enum import Enum, auto
-from io import TextIOWrapper
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, NamedTuple, Optional
 from uuid import uuid4 as generate_uuid
@@ -173,7 +172,6 @@ def combine_and_save_cnf(filename: Path,
 
 def combine_and_save_opb(filename: Path,
                          cnf: CNF,
-                         support: int,
                          generation_requests: List[GenerationRequest]):
     print("Encoding experiment constraints...")
 
