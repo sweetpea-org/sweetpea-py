@@ -7,7 +7,7 @@ class UniformILPGen(Gen):
 
     @staticmethod
     def class_name():
-        return 'IterateILPGen'
+        return 'UniformILPGen'
 
     @staticmethod
     def sample(block: Block, sample_count: int) -> SamplingResult:
