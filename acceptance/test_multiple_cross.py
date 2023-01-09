@@ -225,3 +225,32 @@ def test_correct_solution_count_with_repeated_color_factor_and_no_repetition_all
         old_cnf = f.read()
 
     assert old_cnf == cnf.as_unigen_string()
+
+@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
+def test_works_with_much_smaller_first_crossing(strategy, design=[color, text, mix, repeated_color_factor]):
+    a = Factor("a", ["a1", "a2"])
+    b = Factor("b", ["b1", "b2"])
+    c = Factor("c", ["c1", "c2"])
+    design = [a, b, c]
+    crossing = [[c], [a,b]]
+    block=MultiCrossBlock(design,crossing,[])
+    
+    experiments = synthesize_trials(block, 1, strategy)
+    assert len(experiments[0]["a"]) == 4
+    
+    for e in experiments:
+        seen = {}
+        for i in range(0, 2):
+            key = e['c'][i]
+            assert key not in seen
+            seen[key] = True
+        seen = {}
+        for i in range(2, 4):
+            key = e['c'][i]
+            assert key not in seen
+            seen[key] = True
+        seen = {}
+        for i in range(0, 4):
+            key = (e['a'][i], e['b'][i])
+            assert key not in seen
+            seen[key] = True

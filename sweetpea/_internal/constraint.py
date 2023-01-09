@@ -125,6 +125,13 @@ class Cross(Constraint):
 
     @staticmethod
     def apply(block: MultiCrossBlock, backend_request: BackendRequest) -> None:
+        trial_count = 0
+        for c in block.crossings:
+            crossing_size = block.crossing_size(c)
+            if crossing_size > trial_count:
+                trial_count = crossing_size
+        trial_count = max(block.min_trials, crossing_size)
+
         # Treat each crossing seperately, but they're related by shared variables, which
         # are the per-trial, per-level variables of factors used in multiple crossings
         for c in block.crossings:
@@ -134,7 +141,6 @@ class Cross(Constraint):
             # omits leading trials that will be present to initialize transitions, and the
             # number of trials may have been reduced by exclusions.
             crossing_size = block.crossing_size(c);
-            trial_count = max(block.min_trials, crossing_size)
             crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t), c)),
                                           range(1, block.trials_per_sample() + 1)))
             crossing_trials = crossing_trials[:trial_count]
@@ -191,7 +197,7 @@ class Cross(Constraint):
         return reqs
 
     def potential_sample_conforms(self, sample: dict) -> bool:
-        # conformance by construction in combinatoric
+        # conformance by construction or direct checking in combinatoric
         return True
 
 class Derivation(Constraint):

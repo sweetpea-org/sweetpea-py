@@ -152,7 +152,7 @@ class RandomGen(Gen):
                     c_crossing_size = enumerator.crossing_sizes[i]
                     c_rounds_per_run = (run_length - start) // c_crossing_size
                     c_leftover = (run_length - start) % c_crossing_size
-                    for round in range(rounds_per_run):
+                    for round in range(c_rounds_per_run):
                         if not conds_match_weights(start, start + c_crossing_size, False):
                             return True
                         start += c_crossing_size
