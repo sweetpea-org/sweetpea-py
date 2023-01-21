@@ -3,27 +3,25 @@ sys.path.append("..")
 
 import sweetpea
 
-color = sweetpea.Factor('color', ['0', '1'])
-word = sweetpea.Factor('word', ['0', '1'])
+color = sweetpea.Factor('color', ['0', '1', '2', '3'])
+word = sweetpea.Factor('word', ['0', '1', '2', '3'])
 
 design = [color, word]
 crossing = [color]
-constraints = []
+constraints = [sweetpea.AtLeastKInARow(3, word)]
 block = sweetpea.CrossBlock(design, crossing, constraints)
 
-exp_count = dict()
+word_counts = [0] * 4
 seen = set()
-n = 100000
+n = 10000
 
 experiments = sweetpea.synthesize_trials(block, n, sweetpea.UniformILPGen)
 for i in range(n):
     total = ''.join(experiments[i]['color'] + experiments[i]['word'])
     seen.add(total)
-    if total in exp_count:
-        exp_count[total] += 1
-    else:
-        exp_count[total] = 1
+    for j in range(4):
+        word_counts[int(experiments[i]['word'][j])] += 1
 
 print(len(seen))
-print(exp_count)
+print(word_counts)
     

@@ -1,0 +1,42 @@
+import sys
+sys.path.append("..")
+
+import sweetpea
+
+color = sweetpea.Factor('color', ['0', '1', '2'])
+word = sweetpea.Factor('word', ['0', '1', '2'])
+
+def red(word):
+    return word == '0'
+
+def not_red(word):
+    return not red(word)
+
+
+not_red_level = sweetpea.DerivedLevel('0', sweetpea.WithinTrial(not_red,   [word]))
+red_level = sweetpea.DerivedLevel('1', sweetpea.WithinTrial(red,   [word]))
+
+is_red = sweetpea.Factor('is_red', [
+    red_level,
+    not_red_level
+])
+
+design = [color, word, is_red]
+crossing = [color, is_red]
+constraints = []
+block = sweetpea.CrossBlock(design, crossing, constraints)
+
+word_counts = [0] * 3
+seen = set()
+n = 10000
+
+experiments = sweetpea.synthesize_trials(block, n, sweetpea.UniformILPGen)
+for i in range(n):
+    total = ''.join(experiments[i]['color'] + experiments[i]['word'] + experiments[i]['is_red'])
+    seen.add(total)
+    for j in range(6):
+        word_counts[int(experiments[i]['word'][j])] += 1
+
+print(len(seen))
+print(word_counts)
+    

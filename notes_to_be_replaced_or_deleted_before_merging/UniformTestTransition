@@ -6,33 +6,32 @@ import sweetpea
 color = sweetpea.Factor('color', ['0', '1', '2', '3'])
 word = sweetpea.Factor('word', ['0', '1', '2', '3'])
 
-def congruent(color, word):
-    return color == word
+def color_repeat(color):
+    return color[0] == color[-1]
 
-def incongruent(color, word):
-    return not congruent(color, word)
+def color_switch(color):
+    return not color_repeat(color)
 
-
-conLevel = sweetpea.DerivedLevel('0', sweetpea.WithinTrial(congruent,   [color, word]))
-incLevel = sweetpea.DerivedLevel('1', sweetpea.WithinTrial(incongruent,   [color, word]))
-
-congruency = sweetpea.Factor('congruency', [
-    conLevel,
-    incLevel
+transition = sweetpea.Factor("transition", [
+    sweetpea.DerivedLevel("0", sweetpea.Transition(color_repeat, [color])),
+    sweetpea.DerivedLevel("1", sweetpea.Transition(color_switch, [color]))
 ])
 
-design = [color, word, congruency]
-crossing = [color, congruency]
+design = [color, word, transition]
+crossing = [color, transition]
 constraints = []
 block = sweetpea.CrossBlock(design, crossing, constraints)
 
 word_counts = [0] * 4
-n = 1000
+seen = set()
+n = 10000
 
-experiments = sweetpea.synthesize_trials(block, n, sweetpea.CMSGen)
+experiments = sweetpea.synthesize_trials(block, n, sweetpea.UniformILPGen)
 for i in range(n):
+    total = ''.join(experiments[i]['color'] + experiments[i]['word'] + experiments[i]['transition'])
+    seen.add(total)
     for j in range(8):
         word_counts[int(experiments[i]['word'][j])] += 1
 
+print(len(seen))
 print(word_counts)
-    
