@@ -87,11 +87,11 @@ def compute_solutions(filename: Path,
                         for v in model.getVars()]
             solution = sorted(solution, key=abs)[:support]
 
-            false_count = len(list(v for v in solution if v < 0))
-            model.addConstr(gp.quicksum([model.getVarByName('v' + str(s)) if s > 0 \
-                                            else -1 * model.getVarByName('v' + str(abs(s)))
-                                            for s in solution]) \
-                                    <= len(solution) - 1 - false_count)
+            # false_count = len(list(v for v in solution if v < 0))
+            # model.addConstr(gp.quicksum([model.getVarByName('v' + str(s)) if s > 0 \
+            #                                 else -1 * model.getVarByName('v' + str(abs(s)))
+            #                                 for s in solution]) \
+            #                         <= len(solution) - 1 - false_count)
 
             solutions.append(solution)
         return solutions

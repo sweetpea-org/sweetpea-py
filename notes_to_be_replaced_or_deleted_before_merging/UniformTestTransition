@@ -1,0 +1,38 @@
+import sys
+sys.path.append("..")
+
+import sweetpea
+
+color = sweetpea.Factor('color', ['0', '1', '2', '3'])
+word = sweetpea.Factor('word', ['0', '1', '2', '3'])
+
+def congruent(color, word):
+    return color == word
+
+def incongruent(color, word):
+    return not congruent(color, word)
+
+
+conLevel = sweetpea.DerivedLevel('0', sweetpea.WithinTrial(congruent,   [color, word]))
+incLevel = sweetpea.DerivedLevel('1', sweetpea.WithinTrial(incongruent,   [color, word]))
+
+congruency = sweetpea.Factor('congruency', [
+    conLevel,
+    incLevel
+])
+
+design = [color, word, congruency]
+crossing = [color, congruency]
+constraints = []
+block = sweetpea.CrossBlock(design, crossing, constraints)
+
+word_counts = [0] * 4
+n = 1000
+
+experiments = sweetpea.synthesize_trials(block, n, sweetpea.CMSGen)
+for i in range(n):
+    for j in range(8):
+        word_counts[int(experiments[i]['word'][j])] += 1
+
+print(word_counts)
+    

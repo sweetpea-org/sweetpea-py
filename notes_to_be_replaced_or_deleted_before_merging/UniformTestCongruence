@@ -1,0 +1,38 @@
+import sys
+sys.path.append("..")
+
+import sweetpea
+
+color = sweetpea.Factor('color', ['0', '1', '2', '3'])
+word = sweetpea.Factor('word', ['0', '1', '2', '3'])
+
+def color_repeat(color):
+    return color[0] == color[-1]
+
+def color_switch(color):
+    return not color_repeat(color)
+
+transition = sweetpea.Factor("transition", [
+    sweetpea.DerivedLevel("0", sweetpea.Transition(color_repeat, [color])),
+    sweetpea.DerivedLevel("1", sweetpea.Transition(color_switch, [color]))
+])
+
+design = [color, word, transition]
+crossing = [color, transition]
+constraints = []
+block = sweetpea.CrossBlock(design, crossing, constraints)
+
+word_counts = [0] * 4
+seen = set()
+n = 10000
+
+experiments = sweetpea.synthesize_trials(block, n, sweetpea.CMSGen)
+for i in range(n):
+    total = ''.join(experiments[i]['color'] + experiments[i]['word'] + experiments[i]['transition'])
+    seen.add(total)
+    for j in range(8):
+        word_counts[int(experiments[i]['word'][j])] += 1
+
+print(len(seen))
+print(word_counts)
+    

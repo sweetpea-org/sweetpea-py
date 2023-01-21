@@ -1,0 +1,26 @@
+import sys
+sys.path.append("..")
+
+import sweetpea
+
+color = sweetpea.Factor('color', ['0', '1'])
+word = sweetpea.Factor('word', ['0', '1'])
+
+design = [color, word]
+crossing = [color]
+constraints = []
+block = sweetpea.CrossBlock(design, crossing, constraints)
+
+exp_count = dict()
+n = 100000
+
+experiments = sweetpea.synthesize_trials(block, n, sweetpea.CMSGen)
+for i in range(n):
+    total = ''.join(experiments[i]['color'] + experiments[i]['word'])
+    if total in exp_count:
+        exp_count[total] += 1
+    else:
+        exp_count[total] = 1
+
+print(exp_count)
+    
