@@ -1,5 +1,6 @@
 # Make SweetPea visible regardless of whether it's been installed.
 import sys
+import time
 sys.path.append("..")
 
 from sweetpea import (
@@ -90,14 +91,22 @@ crossing     = [color, word, resp_transition]
 block        = CrossBlock(design, crossing, constraints)
 
 # SOLVE
+n = 1
+times = []
+for i in range(n):
+    start = time.time()
+    experiments = synthesize_trials(block, 5, UniformILPGen)
+    end = time.time()
+    times.append(end - start)
+print(sum(times)/n)
 
-experiments  = synthesize_trials(block, 5, CMSGen)
+
 # Or:
 # experiments  = synthesize_trials(block, 5, IterateGen)
 # experiments  = synthesize_trials(block, 5, IterateILPGen)
 # experiments  = synthesize_trials(block, 5, UniformILPGen)
 # experiments  = synthesize_trials(block, 5, RandomGen(acceptable_error=3))
 
-print_experiments(block, experiments)
+# print_experiments(block, experiments)
 
 # tabulate_experiments(block, experiments, [color, word])

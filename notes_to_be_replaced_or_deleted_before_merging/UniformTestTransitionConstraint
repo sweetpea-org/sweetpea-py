@@ -1,0 +1,48 @@
+import sys
+sys.path.append("..")
+
+import sweetpea
+
+color = sweetpea.Factor('color', ['0', '1'])
+word = sweetpea.Factor('word', ['0', '1'])
+
+def pattern(color, word):
+    return color[-1] == '0' and word[-1] == '0' and color[0] == '1' and word[0] == '1'
+
+def not_pattern(color, word):
+    return not pattern(color, word)
+
+
+not_pattern_level = sweetpea.DerivedLevel('0', sweetpea.Transition(not_pattern,   [color, word]))
+pattern_level = sweetpea.DerivedLevel('1', sweetpea.Transition(pattern,   [color, word]))
+
+is_pattern = sweetpea.Factor('is_pattern', [
+    pattern_level,
+    not_pattern_level
+])
+
+design = [color, word, is_pattern]
+crossing = [color, word]
+constraints = [sweetpea.Exclude(pattern_level)]
+block = sweetpea.CrossBlock(design, crossing, constraints)
+
+exp_count = dict()
+n = 10000
+
+experiments = sweetpea.synthesize_trials(block, n, sweetpea.UniformILPGen)
+for i in range(n):
+    total = [None] * (len(experiments[i]['color']) + len(experiments[i]['word']))
+    total[::2] = experiments[i]['color']
+    total[1::2] = experiments[i]['word']
+    total = ''.join(total)
+    if total in exp_count:
+        exp_count[total] += 1
+    else:
+        exp_count[total] = 1
+
+print('size: ' + str(len(exp_count)))
+
+ordered_keys = sorted(exp_count.keys())
+for k in ordered_keys:
+    print(str(k) + ': ' + str(exp_count[k]))
+    
