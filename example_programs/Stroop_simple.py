@@ -4,7 +4,7 @@ sys.path.append("..")
 
 from sweetpea import (
     Factor, DerivedLevel, WithinTrial, Transition, AtMostKInARow,
-    CrossBlock, synthesize_trials, print_experiments, tabulate_experiments, test_trial_sequence,
+    CrossBlock, synthesize_trials, print_experiments, tabulate_experiments,
     CMSGen, IterateGen, RandomGen, IterateILPGen
 )
 
@@ -28,7 +28,7 @@ design:
 # DEFINE COLOR AND WORD FACTORS
 
 color      = Factor("color",  ["red", "blue", "green", "brown"])
-word       = Factor("motion", ["red", "blue", "green", "brown"])
+word       = Factor("word", ["red", "blue", "green", "brown"])
 
 # DEFINE CONGRUENCY FACTOR
 
@@ -99,10 +99,4 @@ experiments  = synthesize_trials(block, 5, CMSGen)
 
 print_experiments(block, experiments)
 
-
-
-
-tabulate_experiments(block, experiments, [color, word])
-
-for experiment in experiments:
-    test_trial_sequence(block, experiment)
+# tabulate_experiments(block, experiments, [color, word])

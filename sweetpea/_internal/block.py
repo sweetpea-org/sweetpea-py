@@ -442,7 +442,7 @@ class Block:
         res = {}
         for factor in self.design:
             res[str(factor.name)] = True
-            for i in range(len(trial_sequence)):
+            for i in range(len(trial_sequence[factor.name])):
                 res[str(factor.name)] &= factor.test_trial(i, trial_sequence)
-        print(res)
+        return res
 

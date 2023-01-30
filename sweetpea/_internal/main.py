@@ -326,7 +326,9 @@ def test_trial_sequence(block: Block,
         :class:`dictionary <dict>` mapping each test name to a boolean value
         that represents if the test has been past.
     """
-    block.test_sequence_factors(trial_sequence)
+    res = {}
+    res['factors'] = block.test_sequence_factors(trial_sequence)
+    return res
 
 
 
