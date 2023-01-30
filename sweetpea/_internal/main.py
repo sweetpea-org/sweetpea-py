@@ -1,7 +1,7 @@
 # Everything in `__all_` is exported from the `sweetpea` module.
 
 __all__ = [
-    'synthesize_trials',
+    'synthesize_trials', 'test_trial_sequence',
 
     'print_experiments', 'tabulate_experiments', 
     'save_experiments_csv', 'experiments_to_tuples',
@@ -302,6 +302,32 @@ def synthesize_trials(block: Block,
         sampling_result = sampling_strategy.sample_object(block, samples)
 
     return list(map(lambda e: __filter_hidden_keys(block.add_implied_levels(e)), sampling_result.samples))
+
+
+def test_trial_sequence(block: Block,
+                      trial_sequence: List[dict],
+                      ) -> List[dict]:
+    """Given an experiment described with a :class:`.Block`, tests if :class:`list`
+    of trials mets the factors, constraints and crossings of the described experiment.
+
+
+    This function should be used on the :class:`.Block` produced by either
+    :func:`.fully_cross_block` or :func:`.multiple_cross_block`. Using that
+    :class:`.Block`, :func:`.synthesize_trials`.
+
+    :param block:
+        An experimental description as a :class:`.Block`.
+
+    :param trial_sequence:
+        A trial sequence in the form of a :class:`list`.
+
+    :returns:
+        A :class:`list` of trial sets. Each set is represented as a
+        :class:`dictionary <dict>` mapping each test name to a boolean value
+        that represents if the test has been past.
+    """
+    block.test_sequence_factors(trial_sequence)
+
 
 
 # TODO: This function isn't called anywhere, so it should be removed.

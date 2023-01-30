@@ -257,7 +257,7 @@ class Block:
             variables.append(self.factor_variables_for_trial(f, t))
 
         return variables
-    
+
     def _encode_variable(self, f: Factor, l: Level, trial: int):
         offset = self.first_variable_for_level(f, l)
         previous_trials = self._get_previous_trials_variable_count(f, trial)
@@ -321,7 +321,7 @@ class Block:
                     if not l.window.predicate(*args):
                         return True
         return False
-    
+
     def build_backend_request(self) -> BackendRequest:
         """Apply all constraints to build a :class:`.BackendRequest`. Formerly
         known as ``__desugar``.
@@ -431,3 +431,18 @@ class Block:
 
     def calculate_samples_required(self, samples):
         pass
+
+    def test_sequence_factors(self, trial_sequence) -> dict:
+        """Test if the factors in a given sequence meet the criteria defined for this factor
+
+        For example in a stroop experiment, if the derived factor congruency is defined as
+        equality between the factor word and color, then in the sequence the trials with
+        equal word and colors should be labeled congruent.
+        """
+        res = {}
+        for factor in self.design:
+            res[str(factor.name)] = True
+            for i in range(len(trial_sequence)):
+                res[str(factor.name)] &= factor.test_trial(i, trial_sequence)
+        print(res)
+

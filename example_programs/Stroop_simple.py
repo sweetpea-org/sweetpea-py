@@ -4,7 +4,7 @@ sys.path.append("..")
 
 from sweetpea import (
     Factor, DerivedLevel, WithinTrial, Transition, AtMostKInARow,
-    CrossBlock, synthesize_trials, print_experiments, tabulate_experiments,
+    CrossBlock, synthesize_trials, print_experiments, tabulate_experiments, test_trial_sequence,
     CMSGen, IterateGen, RandomGen, IterateILPGen
 )
 
@@ -99,4 +99,10 @@ experiments  = synthesize_trials(block, 5, CMSGen)
 
 print_experiments(block, experiments)
 
-# tabulate_experiments(block, experiments, [color, word])
+
+
+
+tabulate_experiments(block, experiments, [color, word])
+
+for experiment in experiments:
+    test_trial_sequence(block, experiment)

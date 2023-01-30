@@ -249,6 +249,8 @@ class DerivedLevel(Level):
             args = list(chunk_dict(args, window.width))
         return args
 
+
+
     def __repr__(self) -> str:
         return "Derived" + self.__str__()
 
@@ -260,6 +262,8 @@ class DerivedLevel(Level):
                                 self.window.stride,
                                 self.window.start))
         replacements[self] = l
+
+
         
 
 @dataclass(eq=False)
@@ -508,6 +512,7 @@ class Factor:
         return (trial_number >= (cast(int, window.start)+1)
                 and (trial_number - (cast(int, window.start)+1)) % window.stride == 0)
 
+
     def uses_factor(self, f: Factor):
         return self == f
 
@@ -518,6 +523,12 @@ class Factor:
 
     def level_weight_sum(self):
         return sum([l.weight for l in self.levels])
+
+    def test_trial(self, i, trial_sequence):
+        """Test if trial i of trial_sequence meets the criteria
+        If this is a regular factor this is always True
+        """
+        return True
 
 @dataclass
 class SimpleFactor(Factor):
@@ -673,6 +684,28 @@ class DerivedFactor(Factor):
                 l.desugar_for_weights(replacements)
             f = DerivedFactor(self.name, [replacements[l] for l in self.levels])
             replacements[self] = [f, f]
+
+    def test_trial(self, i, trial_sequence):
+        res = True
+        for level in self.levels:
+            if trial_sequence[self.name][i] == level.name:
+                args = []
+                for f in level.window.factors:
+                    levels = trial_sequence[f.name]
+                    for j in range(level.window.width):
+                        idx = i - (level.window.width - 1) + j
+                        if idx >= 0:
+                            args.append(levels[idx])
+                        else:
+                            args.append(None)
+                if level.window.width > 1:
+                    args = list(chunk_dict(args, level.window.width))
+                res &= level.window.predicate(*args)
+        return res
+
+
+
+
 
 ###############################################################################
 ##
