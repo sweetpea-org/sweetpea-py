@@ -233,16 +233,22 @@ class DerivedLevel(Level):
     def uses_factor(self, f: Factor):
         return any(list(map(lambda wf: wf.uses_factor(f), self.window.factors)))
 
-    def _trial_arguments(self, sample: dict, i :int) -> list:
-        """Check whether trial i (zero-based) in the sample matches this level's predicate."""
+    def _trial_arguments(self, sample: dict, i: int, sample_format: str = 'object') -> list:
+        """Returns the arguments used from sample trial i (zero-based) used in the level's predicate."""
         window = self.window
         args = []
         for f in window.factors:
-            levels = sample[f]
+            if sample_format == 'object':
+                levels = sample[f]
+            if sample_format == 'name':
+                levels = sample[f.name]
             for j in range(window.width):
                 idx = i-(window.width-1)+j
                 if idx >= 0:
-                    args.append(levels[idx].name)
+                    if sample_format == 'object':
+                        args.append(levels[idx].name)
+                    if sample_format == 'name':
+                        args.append(levels[idx])
                 else:
                     args.append(None)
         if window.width > 1:
@@ -689,17 +695,7 @@ class DerivedFactor(Factor):
         res = True
         for level in self.levels:
             if trial_sequence[self.name][i] == level.name:
-                args = []
-                for f in level.window.factors:
-                    levels = trial_sequence[f.name]
-                    for j in range(level.window.width):
-                        idx = i - (level.window.width - 1) + j
-                        if idx >= 0:
-                            args.append(levels[idx])
-                        else:
-                            args.append(None)
-                if level.window.width > 1:
-                    args = list(chunk_dict(args, level.window.width))
+                args = level._trial_arguments(trial_sequence, i, 'name')
                 res &= level.window.predicate(*args)
         return res
 
