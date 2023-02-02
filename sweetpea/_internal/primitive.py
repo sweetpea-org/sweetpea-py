@@ -233,22 +233,16 @@ class DerivedLevel(Level):
     def uses_factor(self, f: Factor):
         return any(list(map(lambda wf: wf.uses_factor(f), self.window.factors)))
 
-    def _trial_arguments(self, sample: dict, i: int, sample_format: str = 'object') -> list:
+    def _trial_arguments(self, sample: dict, i: int) -> list:
         """Returns the arguments used from sample trial i (zero-based) used in the level's predicate."""
         window = self.window
         args = []
         for f in window.factors:
-            if sample_format == 'object':
-                levels = sample[f]
-            if sample_format == 'name':
-                levels = sample[f.name]
+            levels = sample[f]
             for j in range(window.width):
                 idx = i-(window.width-1)+j
                 if idx >= 0:
-                    if sample_format == 'object':
-                        args.append(levels[idx].name)
-                    if sample_format == 'name':
-                        args.append(levels[idx])
+                    args.append(levels[idx].name)
                 else:
                     args.append(None)
         if window.width > 1:
@@ -694,8 +688,8 @@ class DerivedFactor(Factor):
     def test_trial(self, i, trial_sequence):
         res = True
         for level in self.levels:
-            if trial_sequence[self.name][i] == level.name:
-                args = level._trial_arguments(trial_sequence, i, 'name')
+            if trial_sequence[self][i] == level:
+                args = level._trial_arguments(trial_sequence, i)
                 res &= level.window.predicate(*args)
         return res
 

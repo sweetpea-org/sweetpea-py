@@ -1,7 +1,7 @@
 # Everything in `__all_` is exported from the `sweetpea` module.
 
 __all__ = [
-    'synthesize_trials', 'implementation_errors_in_trial_sequence',
+    'synthesize_trials', 'sample_mismatch_experiment',
 
     'print_experiments', 'tabulate_experiments',
     'save_experiments_csv', 'experiments_to_tuples',
@@ -315,9 +315,7 @@ def synthesize_trials(block: Block,
     return list(map(lambda e: __filter_hidden_keys(block.add_implied_levels(e)), sampling_result.samples))
 
 
-def implementation_errors_in_trial_sequence(block: Block,
-                                            trial_sequence: List[dict],
-                                            ) -> dict:
+def sample_mismatch_experiment(block: Block, sample: List[dict]) -> dict:
     """Given an experiment described with a :class:`.Block`, tests if :class:`list`
     of trials meets the factors, constraints and crossings of the described experiment.
 
@@ -329,23 +327,23 @@ def implementation_errors_in_trial_sequence(block: Block,
     :param block:
         An experimental description as a :class:`.Block`.
 
-    :param trial_sequence:
-        A trial sequence in the form of a :class:`list`.
+    :param sample:
+        A sample in the form of a :class:`list`.
 
     :returns:
-        A :class:`string` describing the errors. The string is empty if no
-        there are no implementation errors.
+        A :class:`dict` describing the mismatches. The entries of the dictionary lists the
+        mismatches in the categories factors, constraints and crossings
     """
     res = {}
-    factor_errors = block.implementation_errors_factors(trial_sequence)
+    factor_errors = block.sample_mismatch_factors(sample)
     if factor_errors:
         res['factors'] = factor_errors
-    constraint_errors = block.implementation_errors_constraints(trial_sequence)
+    constraint_errors = block.sample_mismatch_constraints(sample)
     if constraint_errors:
         res['constraints'] = constraint_errors
-    crossing_errors = block.implementation_errors_crossing(trial_sequence)
+    crossing_errors = block.sample_missmatch_crossing(sample)
     if crossing_errors:
-        res['crossings'] += crossing_errors
+        res['crossings'] = crossing_errors
     return res
 
 

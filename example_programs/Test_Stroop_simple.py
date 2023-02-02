@@ -5,7 +5,7 @@ sys.path.append("..")
 
 from sweetpea import (
     Factor, DerivedLevel, WithinTrial, Transition, AtMostKInARow, AtLeastKInARow, Exclude, ExactlyK,
-    CrossBlock, synthesize_trials, print_experiments, tabulate_experiments, implementation_errors_in_trial_sequence,
+    CrossBlock, synthesize_trials, print_experiments, tabulate_experiments, sample_mismatch_experiment,
     CMSGen, IterateGen, RandomGen, IterateILPGen
 )
 
@@ -95,7 +95,7 @@ resp_transition = Factor("response_transition", [
 # DEFINE SEQUENCE CONSTRAINTS
 
 k = 2
-constraints = [AtLeastKInARow(k, resp_transition), Exclude((color, 'blue'))]
+constraints = [AtLeastKInARow(k, resp_transition)]
 
 # DEFINE EXPERIMENT
 
@@ -105,9 +105,11 @@ block = CrossBlock(design, crossing, constraints)
 
 # SOLVE
 
+experiment_correct = synthesize_trials(block, 1)[0]
 
-# This sequence results in a positive test:
-experiment_correct = {'color': ['red', 'green', 'red', 'red'],
+
+# constraint and crossing error
+experiment_error_constraint = {'color': ['red', 'green', 'red', 'red'],
                       'word': ['red', 'red', 'green', 'blue'],
                       'response': ['up', 'left', 'up', 'up'],
                       'congruency': ['con', 'inc', 'inc', 'inc'],
@@ -134,12 +136,14 @@ experiment_error_response_transition = {'color': ['red', 'green', 'red', 'red'],
                                         'congruency': ['con', 'inc', 'inc', 'inc'],
                                         'response_transition': [None, 'repeat', 'switch', 'repeat']}
 
-test_correct = implementation_errors_in_trial_sequence(block, experiment_correct)
-test_error_response = implementation_errors_in_trial_sequence(block, experiment_error_response)
-test_error_congruency = implementation_errors_in_trial_sequence(block, experiment_error_congruency)
-test_error_response_transition = implementation_errors_in_trial_sequence(block, experiment_error_response_transition)
+test_correct = sample_mismatch_experiment(block, experiment_correct)
+test_error_constraint = sample_mismatch_experiment(block, experiment_error_constraint)
+test_error_response = sample_mismatch_experiment(block, experiment_error_response)
+test_error_congruency = sample_mismatch_experiment(block, experiment_error_congruency)
+test_error_response_transition = sample_mismatch_experiment(block, experiment_error_response_transition)
 
 print(test_correct)
+print(test_error_constraint)
 print(test_error_response)
 print(test_error_congruency)
 print(test_error_response_transition)
