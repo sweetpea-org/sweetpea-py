@@ -317,9 +317,9 @@ def synthesize_trials(block: Block,
 
 def implementation_errors_in_trial_sequence(block: Block,
                                             trial_sequence: List[dict],
-                                            ) -> List[dict]:
+                                            ) -> str:
     """Given an experiment described with a :class:`.Block`, tests if :class:`list`
-    of trials mets the factors, constraints and crossings of the described experiment.
+    of trials meets the factors, constraints and crossings of the described experiment.
 
 
     This function should be used on the :class:`.Block` produced by either
@@ -333,9 +333,8 @@ def implementation_errors_in_trial_sequence(block: Block,
         A trial sequence in the form of a :class:`list`.
 
     :returns:
-        A :class:`list` of trial sets. Each set is represented as a
-        :class:`dictionary <dict>` mapping each test name to a boolean value
-        that represents if the test has been past.
+        A :class:`string` describing the errors. The string is empty if no
+        there are no implementation errors.
     """
     res = ''
     factor_errors = block.report_implementation_errors_factors(trial_sequence)

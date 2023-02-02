@@ -464,8 +464,8 @@ class Block:
     def report_implementation_errors_crossing(self, trial_sequence) -> str:
         """Test if a given sequence meet the criteria defined for the crossings"""
         res = ''
-        for crossing in self.crossings:
-            print(crossing)
+        # for crossing in self.crossings:
+        #     print(crossing)
         return res
 
 
