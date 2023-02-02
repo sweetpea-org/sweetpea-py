@@ -317,7 +317,7 @@ def synthesize_trials(block: Block,
 
 def implementation_errors_in_trial_sequence(block: Block,
                                             trial_sequence: List[dict],
-                                            ) -> str:
+                                            ) -> dict:
     """Given an experiment described with a :class:`.Block`, tests if :class:`list`
     of trials meets the factors, constraints and crossings of the described experiment.
 
@@ -336,16 +336,16 @@ def implementation_errors_in_trial_sequence(block: Block,
         A :class:`string` describing the errors. The string is empty if no
         there are no implementation errors.
     """
-    res = ''
-    factor_errors = block.report_implementation_errors_factors(trial_sequence)
+    res = {}
+    factor_errors = block.implementation_errors_factors(trial_sequence)
     if factor_errors:
-        res += f'error in factors: {factor_errors[:-2]}\n'
-    constraint_errors = block.report_implementation_errors_constraints(trial_sequence)
+        res['factors'] = factor_errors
+    constraint_errors = block.implementation_errors_constraints(trial_sequence)
     if constraint_errors:
-        res += f'error in constraints: {constraint_errors[:-2]}\n'
-    crossing_errors = block.report_implementation_errors_crossing(trial_sequence)
+        res['constraints'] = constraint_errors
+    crossing_errors = block.implementation_errors_crossing(trial_sequence)
     if crossing_errors:
-        res += f'error in crossings: {crossing_errors[-2]}'
+        res['crossings'] += crossing_errors
     return res
 
 
