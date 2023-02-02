@@ -4,8 +4,8 @@ import sys
 sys.path.append("..")
 
 from sweetpea import (
-    Factor, DerivedLevel, WithinTrial, Transition, AtMostKInARow,
-    CrossBlock, synthesize_trials, print_experiments, tabulate_experiments, test_trial_sequence,
+    Factor, DerivedLevel, WithinTrial, Transition, AtMostKInARow, AtLeastKInARow, Exclude, ExactlyK,
+    CrossBlock, synthesize_trials, print_experiments, tabulate_experiments, implementation_errors_in_trial_sequence,
     CMSGen, IterateGen, RandomGen, IterateILPGen
 )
 
@@ -94,8 +94,8 @@ resp_transition = Factor("response_transition", [
 
 # DEFINE SEQUENCE CONSTRAINTS
 
-k = 7
-constraints = [AtMostKInARow(k, resp_transition)]
+k = 2
+constraints = [AtLeastKInARow(k, resp_transition), Exclude((color, 'blue'))]
 
 # DEFINE EXPERIMENT
 
@@ -134,10 +134,10 @@ experiment_error_response_transition = {'color': ['red', 'green', 'red', 'red'],
                                         'congruency': ['con', 'inc', 'inc', 'inc'],
                                         'response_transition': [None, 'repeat', 'switch', 'repeat']}
 
-test_correct = test_trial_sequence(block, experiment_correct)
-test_error_response = test_trial_sequence(block, experiment_error_response)
-test_error_congruency = test_trial_sequence(block, experiment_error_congruency)
-test_error_response_transition = test_trial_sequence(block, experiment_error_response_transition)
+test_correct = implementation_errors_in_trial_sequence(block, experiment_correct)
+test_error_response = implementation_errors_in_trial_sequence(block, experiment_error_response)
+test_error_congruency = implementation_errors_in_trial_sequence(block, experiment_error_congruency)
+test_error_response_transition = implementation_errors_in_trial_sequence(block, experiment_error_response_transition)
 
 print(test_correct)
 print(test_error_response)

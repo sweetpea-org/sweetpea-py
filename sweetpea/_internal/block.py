@@ -432,17 +432,41 @@ class Block:
     def calculate_samples_required(self, samples):
         pass
 
-    def test_sequence_factors(self, trial_sequence) -> dict:
+    def report_implementation_errors_factors(self, trial_sequence) -> str:
         """Test if the factors in a given sequence meet the criteria defined for this factor
 
         For example in a stroop experiment, if the derived factor congruency is defined as
         equality between the factor word and color, then in the sequence the trials with
         equal word and colors should be labeled congruent.
         """
-        res = {}
+        res = ''
         for factor in self.design:
-            res[str(factor.name)] = True
+            factor_test = True
             for i in range(len(trial_sequence[factor.name])):
-                res[str(factor.name)] &= factor.test_trial(i, trial_sequence)
+                factor_test &= factor.test_trial(i, trial_sequence)
+            if not factor_test:
+                res += factor.name + '; '
         return res
+
+    def report_implementation_errors_constraints(self, trial_sequence) -> str:
+        """Test if the factors in a given sequence meet the criteria defined for this constraints"""
+        res = ''
+        for constraint in self.constraints:
+            if not constraint.potential_sample_conforms(trial_sequence, 'name'):
+                pretty_name = constraint.__class__.__name__
+                if hasattr(constraint, 'k'):
+                    pretty_name += f', {constraint.k}'
+                if hasattr(constraint, 'level'):
+                    pretty_name += f', {constraint.level}'
+                res += pretty_name + '; '
+        return res
+
+    def report_implementation_errors_crossing(self, trial_sequence) -> str:
+        """Test if a given sequence meet the criteria defined for the crossings"""
+        res = ''
+        for crossing in self.crossings:
+            print(crossing)
+        return res
+
+
 

@@ -80,7 +80,7 @@ class Consistency(Constraint):
             backend_request.ll_requests += list(map(lambda v: LowLevelRequest("EQ", 1, v), chunks))
             next_var += variables_for_factor
 
-    def potential_sample_conforms(self, sample: dict) -> bool:
+    def potential_sample_conforms(self, sample: dict, sample_format: str = 'object') -> bool:
         # conformance by construction in combinatoric
         return True
 
@@ -196,7 +196,7 @@ class Cross(Constraint):
             to_add -= crossing_size
         return reqs
 
-    def potential_sample_conforms(self, sample: dict) -> bool:
+    def potential_sample_conforms(self, sample: dict, sample_format: str = 'object') -> bool:
         # conformance by construction or direct checking in combinatoric
         return True
 
@@ -339,7 +339,7 @@ class Derivation(Constraint):
     def uses_factor(self, f: Factor) -> bool:
         return any(list(map(lambda l: l.uses_factor(f), self.factor.levels)))
 
-    def potential_sample_conforms(self, sample: dict) -> bool:
+    def potential_sample_conforms(self, sample: dict, sample_format: str = 'object') -> bool:
         return True
 
 
@@ -406,20 +406,25 @@ class _KInARow(Constraint):
     def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], backend_request: BackendRequest) -> None:
         pass
 
-    def potential_sample_conforms(self, sample: dict) -> bool:
+    def potential_sample_conforms(self, sample: dict, sample_format: str = 'object') -> bool:
         level = self.level
         factor = level.factor
-
-        level_list = sample[factor]
+        if sample_format == 'object':
+            level_list = sample[factor]
+        if sample_format == 'name':
+            level_list = sample[factor.name]
         counts = []
         count = 0
         for l in level_list:
-            if count > 0 and l != level:
+            if sample_format == 'object':
+                compare = level
+            if sample_format == 'name':
+                compare = level.name
+            if count > 0 and l != compare:
                 counts.append(count)
                 count = 0
-            elif l == level:
+            elif l == compare:
                 count += 1
-
         if count > 0:
             counts.append(count)
 
@@ -703,12 +708,16 @@ class Exclude(Constraint):
     def is_complex_for_combinatoric(self) -> bool:
         return False
 
-    def potential_sample_conforms(self, sample: dict) -> bool:
+    def potential_sample_conforms(self, sample: dict,  sample_format: str = 'object') -> bool:
         # conformance by construction in combinatoric for simple factors, but
         # we have to check exlcusions based on complex factors
         if self.factor.has_complex_window:
-            levels = sample[self.factor]
-            level = self.level
+            if sample_format == 'object':
+                levels = sample[self.factor]
+                level = self.level
+            if sample_format == 'name':
+                levels = sample[self.factor.name]
+                level = self.level.name
             for l in levels:
                 if l == level:
                     return False
@@ -766,8 +775,11 @@ class Pin(Constraint):
     def is_complex_for_combinatoric(self) -> bool:
         return True
 
-    def potential_sample_conforms(self, sample: dict) -> bool:
-        levels = sample[self.factor]
+    def potential_sample_conforms(self, sample: dict, sample_format: str = 'object') -> bool:
+        if sample_format == 'object':
+            levels = sample[self.factor]
+        if sample_format == 'name':
+            levels = sample[self.factor.name]
         num_trials = len(levels)
         if self.index < 0:
             trial_no = num_trials + self.index
@@ -775,7 +787,10 @@ class Pin(Constraint):
             trial_no = self.index
 
         if (trial_no >= 0) and (trial_no < num_trials):
-            return levels[trial_no] == self.level
+            if sample_format == 'object':
+                return levels[trial_no] == self.level
+            if sample_format == 'name':
+                return levels[trial_no] == self.level.name
         else:
             return False
 
@@ -797,7 +812,7 @@ class Reify(Constraint):
     def is_complex_for_combinatoric(self) -> bool:
         return False
 
-    def potential_sample_conforms(self, sample: dict) -> bool:
+    def potential_sample_conforms(self, sample: dict, sample_format: str = 'object') -> bool:
         return True
 
     def desugar(self, replacements: dict) -> List:
@@ -834,5 +849,5 @@ class MinimumTrials(Constraint):
     def __str__(self):
         return str(self.__dict__)
 
-    def potential_sample_conforms(self, sample: dict) -> bool:
+    def potential_sample_conforms(self, sample: dict, sample_format: str = 'object') -> bool:
         return True
