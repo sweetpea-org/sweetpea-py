@@ -418,7 +418,8 @@ class _KInARow(Constraint):
         for l in level_list:
             if sample_format == 'object':
                 compare = level
-            if sample_format == 'name':
+            else:
+                assert(sample_format == 'name')
                 compare = level.name
             if count > 0 and l != compare:
                 counts.append(count)
@@ -715,7 +716,8 @@ class Exclude(Constraint):
             if sample_format == 'object':
                 levels = sample[self.factor]
                 level = self.level
-            if sample_format == 'name':
+            else:
+                assert(sample_format == 'name')
                 levels = sample[self.factor.name]
                 level = self.level.name
             for l in levels:
@@ -778,7 +780,8 @@ class Pin(Constraint):
     def potential_sample_conforms(self, sample: dict, sample_format: str = 'object') -> bool:
         if sample_format == 'object':
             levels = sample[self.factor]
-        if sample_format == 'name':
+        else:
+            assert(sample_format == 'name')
             levels = sample[self.factor.name]
         num_trials = len(levels)
         if self.index < 0:
@@ -789,7 +792,8 @@ class Pin(Constraint):
         if (trial_no >= 0) and (trial_no < num_trials):
             if sample_format == 'object':
                 return levels[trial_no] == self.level
-            if sample_format == 'name':
+            else:
+                assert(sample_format == 'name')
                 return levels[trial_no] == self.level.name
         else:
             return False

@@ -455,18 +455,15 @@ class Block:
             if not constraint.potential_sample_conforms(trial_sequence, 'name'):
                 pretty_name = constraint.__class__.__name__
                 if hasattr(constraint, 'k'):
-                    pretty_name += f', {constraint.k}'
+                    pretty_name += f', {constraint.k}' # type: ignore
                 if hasattr(constraint, 'level'):
-                    pretty_name += f', {constraint.level}'
+                    pretty_name += f', {constraint.level}' # type: ignore
                 res.append(pretty_name)
         return res
 
     def implementation_errors_crossing(self, trial_sequence) -> list:
         """Test if a given sequence meet the criteria defined for the crossings"""
-        res = []
+        res = cast(list, [])
         # for crossing in self.crossings:
         #     print(crossing)
         return res
-
-
-
