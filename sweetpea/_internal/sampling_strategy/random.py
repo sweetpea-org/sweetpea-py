@@ -22,6 +22,8 @@ from sweetpea._internal.sampling_strategy.base import Gen, SamplingResult
 from sweetpea._internal.constraint import Exclude, _KInARow, ExactlyKInARow, AtMostKInARow
 from sweetpea._internal.iter import chunk
 from sweetpea._internal.weight import combination_weight
+from sweetpea._internal.check_mismatch import combinations_mismatched_weights
+
 
 class RandomGen(Gen):
     """This strategy represents the ideal. Valid sequences are uniformly
@@ -91,9 +93,9 @@ class RandomGen(Gen):
 
             # Combine randomly selected crossing-sized runs plus a leftover-sized run
             # into one complete run with the requested number of trials.
-            run = solution_variabless[0][1] # the preamble solution, possibly empty
+            run = solution_variabless[0][1]  # the preamble solution, possibly empty
             for round in range(0, rounds_per_run + (1 if leftover > 0 else 0)):
-                run = RandomGen.__combine_round(run, solution_variabless[round+1][1])
+                run = RandomGen.__combine_round(run, solution_variabless[round + 1][1])
 
             run = enumerator.fill_in_nonpreamble_uncrossed_derived(run, trials_per_run)
 
@@ -106,7 +108,8 @@ class RandomGen(Gen):
                         accepts = f", accepted {len(samples)}"
                     else:
                         accepts = ""
-                    print(f"Rejected {total_rejected+rejected} candidates so far (out of {possible_keys} choices){accepts}")
+                    print(
+                        f"Rejected {total_rejected + rejected} candidates so far (out of {possible_keys} choices){accepts}")
                 continue
 
             metrics['rejections'].append(rejected)
@@ -137,27 +140,34 @@ class RandomGen(Gen):
             run_length = enumerator._preamble_size + (rounds_per_run * enumerator.crossing_size) + leftover
             for i, c in enumerate(block.crossings):
                 if enumerator.has_crossed_complex_derived_factors or i > 0:
-                    def conds_match_weights(start: int, end: int, or_less: bool):
-                        nonlocal bad
-                        combos = cast(Dict[Tuple[Level, ...], int], {})
-                        for t in range(start, end):
-                            key = tuple([sample[f][t] for f in c])
-                            combos[key] = combos.get(key, 0) + 1
-                        for combo, count in combos.items():
-                            bad += abs(count - combination_weight(combo))
-                            if bad > acceptable_error:
-                                return False
-                        return True
+                    # def conds_match_weights(start: int, end: int, or_less: bool):
+                    #     nonlocal bad
+                    #     combos = cast(Dict[Tuple[Level, ...], int], {})
+                    #     for t in range(start, end):
+                    #         key = tuple([sample[f][t] for f in c])
+                    #         combos[key] = combos.get(key, 0) + 1
+                    #     for combo, count in combos.items():
+                    #         bad += abs(count - combination_weight(combo))
+                    #         if bad > acceptable_error:
+                    #             return False
+                    #     return True
+
                     start = enumerator.preamble_sizes[i]
                     c_crossing_size = enumerator.crossing_sizes[i]
                     c_rounds_per_run = (run_length - start) // c_crossing_size
                     c_leftover = (run_length - start) % c_crossing_size
                     for round in range(c_rounds_per_run):
-                        if not conds_match_weights(start, start + c_crossing_size, False):
+                        # if not conds_match_weights(start, start + crossing_size, True):
+                        #     return True
+                        bad += combinations_mismatched_weights(start, start + c_crossing_size, c, sample, False)
+                        if bad > acceptable_error:
                             return True
                         start += c_crossing_size
                     if c_leftover > 0:
-                        if not conds_match_weights(start, start+c_leftover, True):
+                        # if not conds_match_weights(start, start + c_leftover, True):
+                        #     return True
+                        bad += combinations_mismatched_weights(start, start + c_leftover, c, sample, True)
+                        if bad > acceptable_error:
                             return True
         return False
 
@@ -176,19 +186,23 @@ class RandomGen(Gen):
                 new_run[key] = run[key] + round[key]
             return new_run
 
+
 Components = Tuple[int, Tuple[int, ...], Tuple[int, ...]]
+
 
 class RandomComponentsShape():
     def __init__(self) -> None:
         self.crossings_shape = 0
         self.combinations_shapes = cast(List[int], [])
-        self.independent_shapes = cast(List[int], [])                
+        self.independent_shapes = cast(List[int], [])
 
 
 """
 Given a fully crossed block with no complex windows, this class stores the data structures and logic for enumerating
 valid trial sequences in the design.
 """
+
+
 class UCSolutionEnumerator():
 
     def __init__(self, block: CrossBlock) -> None:
@@ -201,12 +215,14 @@ class UCSolutionEnumerator():
         self._source_combinations = self.__generate_source_combinations()
         self.__complex_crossing_instances = self.__count_complex_crossing_instances()
         self.crossing_size = self.noncomplex_crossing_size * self.__complex_crossing_instances
-        self._ind_factor_levels = cast(List[Tuple[Factor, List[SimpleLevel]]], []) # Will be populated by solution counting
-        self._basic_factor_levels = cast(List[Tuple[Factor, List[SimpleLevel]]], []) # Will be populated by solution counting
+        self._ind_factor_levels = cast(List[Tuple[Factor, List[SimpleLevel]]],
+                                       [])  # Will be populated by solution counting
+        self._basic_factor_levels = cast(List[Tuple[Factor, List[SimpleLevel]]],
+                                         [])  # Will be populated by solution counting
         m = self.__complex_crossing_instances
         self._m_or_counters = cast(Union[int, List[int]],
                                    m if self._crossing_is_unweighted else [w * m for w in self._crossing_weights])
-        
+
         self._sorted_derived_factors = self._partitions.get_derived_factors()
         self._sorted_derived_factors.sort(key=lambda f: f._get_depth())
 
@@ -218,12 +234,13 @@ class UCSolutionEnumerator():
         # Maintains a lookup for valid source combinations for a permutation.
         # Example [[2, 3], ...] means that for permutation 0, indices 2 and 3 in the source combinations
         # list are allowed.
-        self._valid_source_combinations_indices = cast(List[List[int]], []) # Will be populated by solution counting
+        self._valid_source_combinations_indices = cast(List[List[int]], [])  # Will be populated by solution counting
 
         # For multiple crossings, we'll need the size of each crossing and how much to consider the
         # preamble of each:
         self.crossing_sizes = [block.crossing_size(c) for c in block.crossings]
-        self.preamble_sizes = [block._trials_per_sample_for_one_crossing(c) - block.crossing_size(c) for c in block.crossings]
+        self.preamble_sizes = [block._trials_per_sample_for_one_crossing(c) - block.crossing_size(c) for c in
+                               block.crossings]
         # Check that calculations from two sources agree:
         assert self.crossing_sizes[0] == self.crossing_size
 
@@ -267,7 +284,8 @@ class UCSolutionEnumerator():
     def crossing_instances_count(self):
         return len(self._crossing_instances)
 
-    def generate_random_samples(self, n: int, leftover: int, sampled: Dict[Tuple[int, ...], bool]) -> List[Tuple[int, dict]]:
+    def generate_random_samples(self, n: int, leftover: int, sampled: Dict[Tuple[int, ...], bool]) -> List[
+        Tuple[int, dict]]:
         # Select a collection of random numbers, each from the range of solutions.
         # If `leftover` is not zero, then tack on one more sequence that is shorter
         # than the crossing size.
@@ -278,21 +296,25 @@ class UCSolutionEnumerator():
         choice = cast(List[Any],
                       (random.randrange(0, self._preamble_solution_count),
                        tuple([self.random_components(self._components_shape, self.crossing_size, 0) for i in range(n)]),
-                       self.random_components(self._leftover_components_shape, leftover, leftover) if leftover > 0 else 0))
+                       self.random_components(self._leftover_components_shape, leftover,
+                                              leftover) if leftover > 0 else 0))
         while tuple([choice[0]] + list(choice[1]) + ([choice[2]] if leftover > 0 else [])) in sampled:
             choice = cast(List[Any],
                           (random.randrange(0, self._preamble_solution_count),
-                           tuple([self.random_components(self._components_shape, self.crossing_size, 0) for i in range(n)]),
-                           self.random_components(self._leftover_components_shape, leftover, leftover) if leftover > 0 else 0))
+                           tuple([self.random_components(self._components_shape, self.crossing_size, 0) for i in
+                                  range(n)]),
+                           self.random_components(self._leftover_components_shape, leftover,
+                                                  leftover) if leftover > 0 else 0))
         return ([(choice[0], self.generate_preamble_sample(choice[0]))]
                 + [(components, self.generate_sample_from_components(components)) for components in choice[1]]
                 + ([(choice[2],
                      self.generate_leftover_sample(choice[2], leftover))] if leftover > 0 else []))
 
     def random_components(self, components_shape: RandomComponentsShape, trial_count: int, leftover: int) -> Components:
-        crossing_permutation_index = random.randrange(0, components_shape.crossings_shape)        
+        crossing_permutation_index = random.randrange(0, components_shape.crossings_shape)
         if trial_count == len(self._crossing_instances) and self._crossing_is_unweighted:
-            source_combination_indices = tuple([random.randrange(0, len) for len in components_shape.combinations_shapes])
+            source_combination_indices = tuple(
+                [random.randrange(0, len) for len in components_shape.combinations_shapes])
         else:
             # The indicies for source combination depend on the chosen permutation
             permutation_indices = self.jth_permutation_indices(len(self._crossing_instances),
@@ -303,7 +325,8 @@ class UCSolutionEnumerator():
             for p in permutation_indices:
                 indices.append(random.randrange(0, components_shape.combinations_shapes[p]))
             source_combination_indices = tuple(indices)
-        independent_factor_combination_indices = tuple([random.randrange(0, len) for len in components_shape.independent_shapes])
+        independent_factor_combination_indices = tuple(
+            [random.randrange(0, len) for len in components_shape.independent_shapes])
         return (crossing_permutation_index,
                 source_combination_indices,
                 independent_factor_combination_indices)
@@ -323,8 +346,8 @@ class UCSolutionEnumerator():
                   + self._components_shape.independent_shapes)
         flat_components = extract_components(shapes, sequence_number)
         components = (flat_components[0],
-                      tuple(flat_components[1:1+self.crossing_size]),
-                      tuple(flat_components[1+self.crossing_size:]))
+                      tuple(flat_components[1:1 + self.crossing_size]),
+                      tuple(flat_components[1 + self.crossing_size:]))
         return self.generate_sample_from_components(components)
 
     def generate_leftover_sample(self, components: Components, leftover: int) -> dict:
@@ -350,7 +373,8 @@ class UCSolutionEnumerator():
     # Used for an acceptance test:
     def generate_solution_variables(self) -> List[int]:
         components = self.random_components(self._components_shape, self.crossing_size, 0)
-        trial_values = self.generate_trial_values(components, len(self._crossing_instances), len(self._crossing_instances),
+        trial_values = self.generate_trial_values(components, len(self._crossing_instances),
+                                                  len(self._crossing_instances),
                                                   PermutationMemo())
 
         solution = cast(List[int], [])
@@ -391,14 +415,14 @@ class UCSolutionEnumerator():
             source_combinations.append(self._source_combinations[source_combination_index_for_component])
 
         # Generate the combinations for independent basic factors
-        independent_factor_combinations = cast(List[dict], [{}] *trial_count)
+        independent_factor_combinations = cast(List[dict], [{}] * trial_count)
         if self._ind_factor_levels:
             for j, (fi, levels) in enumerate(self._ind_factor_levels):
                 independent_combination_idx = components[2][j]
                 combo = compute_jth_combination(trial_count, len(levels), independent_combination_idx)
                 for i in range(trial_count):
                     if not independent_factor_combinations[i]:
-                        independent_factor_combinations[i] = {fi : levels[combo[i]]}
+                        independent_factor_combinations[i] = {fi: levels[combo[i]]}
                         continue
                     independent_factor_combinations[i][fi] = levels[combo[i]]
 
@@ -425,14 +449,15 @@ class UCSolutionEnumerator():
             trials = []
             for _ in range(self._preamble_size):
                 n = sequence_number % len(levels)
-                sequence_number =  sequence_number // len(levels)
+                sequence_number = sequence_number // len(levels)
                 trials.append(levels[n])
             run[f] = trials
         return self._fill_in_derived(run, self._sorted_derived_factors, 0, self._preamble_size)
 
     def fill_in_nonpreamble_uncrossed_derived(self, run: dict, trials_per_run: int) -> dict:
         # Note: "uncrossed" includes crossed derived that have complex windows
-        return self._fill_in_derived(run, self._sorted_uncrossed_derived_and_complex_derived, self._preamble_size, trials_per_run)
+        return self._fill_in_derived(run, self._sorted_uncrossed_derived_and_complex_derived, self._preamble_size,
+                                     trials_per_run)
 
     def _fill_in_derived(self, run: dict, sorted_factors: List[DerivedFactor], start: int, end: int) -> dict:
         for df in sorted_factors:
@@ -441,7 +466,7 @@ class UCSolutionEnumerator():
             else:
                 trials = []
             for i in range(start, end):
-                if df.applies_to_trial(i+1):
+                if df.applies_to_trial(i + 1):
                     trials.append(df.select_level_for_sample(i, run))
                 else:
                     trials.append(None)
@@ -455,10 +480,11 @@ class UCSolutionEnumerator():
         ...
     ]
     """
+
     def __generate_crossing_instances(self) -> List[dict]:
         crossing = self._partitions.get_crossed_noncomplex_factors()
         level_lists = [list(f.levels) for f in crossing]
-        crossings = [{crossing[i]: level for i,level in enumerate(levels)} for levels in product(*level_lists)]
+        crossings = [{crossing[i]: level for i, level in enumerate(levels)} for levels in product(*level_lists)]
         return list(filter(lambda c: not self._block.is_excluded_or_inconsistent_combination(c), crossings))
 
     def __count_complex_crossing_instances(self) -> int:
@@ -467,14 +493,14 @@ class UCSolutionEnumerator():
             return 1
         else:
             level_lists = [list(f.levels) for f in crossing]
-            crossings = [{crossing[i]: level for i,level in enumerate(levels)} for levels in product(*level_lists)]
+            crossings = [{crossing[i]: level for i, level in enumerate(levels)} for levels in product(*level_lists)]
             return sum([(0 if self._block.is_excluded_combination(c) else combination_weight(tuple(c.values())))
                         for c in crossings])
 
     def __generate_source_combinations(self) -> List[dict]:
         ubs = self._partitions.get_uncrossed_basic_source_factors()
         level_lists = [list(f.levels) for f in ubs]
-        return [{ubs[i]: level for i,level in enumerate(levels)} for levels in product(*level_lists)]
+        return [{ubs[i]: level for i, level in enumerate(levels)} for levels in product(*level_lists)]
 
     def __count_solutions(self,
                           first_n: int,
@@ -589,7 +615,8 @@ class UCSolutionEnumerator():
             combos *= len(levels)
         return pow(combos, self._preamble_size)
 
-    def sum_combination_products(self, solution_count: int, first_n: int, shapes: List[int], m_or_counters: Union[int, List[int]],
+    def sum_combination_products(self, solution_count: int, first_n: int, shapes: List[int],
+                                 m_or_counters: Union[int, List[int]],
                                  pmemo: PermutationMemo):
         if all([s == shapes[0] for s in shapes]) and isinstance(m_or_counters, int):
             # Every choice of `first_n` combinations produces the same number of possibilities
@@ -603,9 +630,11 @@ class UCSolutionEnumerator():
             s = 0
             crossing_size = len(self._crossing_instances)
             for i in range(0, solution_count):
-                permutation = compute_jth_prefix_of_permutations_with_copies(crossing_size, m_or_counters, first_n, i, pmemo)
+                permutation = compute_jth_prefix_of_permutations_with_copies(crossing_size, m_or_counters, first_n, i,
+                                                                             pmemo)
                 prod = 1
                 for p in permutation:
                     prod *= shapes[p]
                 s += prod
             return s
+

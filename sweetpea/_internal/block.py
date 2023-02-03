@@ -433,111 +433,14 @@ class Block:
     def calculate_samples_required(self, samples):
         pass
 
-    def __convert_from_name_to_factor(self, name: str) -> Factor:
-        # get factor names from design
-        for f in self.design:
-            if name == f.name:
-                return f
+    @abstractmethod
+    def sample_mismatch_factors(self, sample: dict) -> list:
+        pass
 
-    def __convert_form_name_to_level(self, name:str, factor:Factor) -> Level:
-        for l in factor.levels:
-            if name == l.name:
-                return l
+    @abstractmethod
+    def sample_mismatch_constraints(self, sample: dict) -> list:
+        pass
 
-    def _convert_sample_from_name_to_factor(self, sample: dict) -> dict:
-        new_dict = {}
-        for key in sample.keys():
-            new_key = self.__convert_from_name_to_factor(key)
-            value = [self.__convert_form_name_to_level(name, new_key) for name in sample[key]]
-            new_dict[new_key] = value
-        return new_dict
-
-
-
-
-    def sample_mismatch_factors(self, sample) -> list:
-        """Test if the factors in a given sequence meet the criteria defined for this factor
-
-        For example in a stroop experiment, if the derived factor congruency is defined as
-        equality between the factor word and color, then in the sequence the trials with
-        equal word and colors should be labeled congruent.
-        """
-        res = []
-        sample_objects = self._convert_sample_from_name_to_factor(sample)
-        for factor in self.design:
-            factor_test = True
-            for i in range(len(sample_objects[factor])):
-                factor_test &= factor.test_trial(i, sample_objects)
-            if not factor_test:
-                res.append(factor.name)
-        return res
-
-    def sample_mismatch_constraints(self, sample) -> list:
-        """Test if the factors in a given sequence meet the criteria defined for this constraints"""
-        res = []
-        sample_objects = self._convert_sample_from_name_to_factor(sample)
-        for constraint in self.constraints:
-            if not constraint.potential_sample_conforms(sample_objects):
-                pretty_name = constraint.__class__.__name__
-                if hasattr(constraint, 'k'):
-                    pretty_name += f', {constraint.k}'  # type: ignore
-                if hasattr(constraint, 'level'):
-                    pretty_name += f', {constraint.level}'  # type: ignore
-                res.append(pretty_name)
-        return res
-
-    def sample_missmatch_crossing(self, sample) -> list:
-        """Test if a given sequence meet the criteria defined for the crossings"""
-        res = cast(list, [])
-        for crossing in self.crossings:
-            # ***
-            # get expected frequencies
-            # ***
-
-            levels = [factor.levels for factor in crossing]
-            # get the combination of levels:
-            level_combinations = (list(product(*levels)))
-            # get the names and weights of the combinations
-            combination_names = []
-            combination_frequencies_expected = []
-            for combination in level_combinations:
-                weight = 1
-                names = []
-                for level in combination:
-                    weight *= level.weight
-                    names.append(level.name)
-                combination_names.append(tuple(names))
-                combination_frequencies_expected.append(weight)
-
-            # ***
-            # get empirical frequencies
-            # ***
-
-            combination_frequencies_empirical = [0 for _ in range(len(combination_frequencies_expected))]
-            # get the name tuples from the trial_sequence
-            lsts = []
-            for f in crossing:
-                lsts.append(sample[f.name])
-            tuple_list = list(zip(*lsts))
-            for t in tuple_list:
-                if t in combination_names:
-                    index = combination_names.index(t)
-                    combination_frequencies_empirical[index] += 1
-
-            # normalize frequencies
-            normalized_frequencies_empirical = [x / sum(combination_frequencies_empirical) for x in
-                                                combination_frequencies_empirical]
-            normalized_frequencies_expected = [x / sum(combination_frequencies_expected) for x in
-                                               combination_frequencies_expected]
-
-            # check if frequencies match, if not append to errors
-            errors = []
-
-            for i in range(len(normalized_frequencies_expected)):
-                if normalized_frequencies_expected[i] != normalized_frequencies_empirical[i]:
-                    errors.append({'combination': combination_names[i],
-                                   'expected frequency': normalized_frequencies_expected[i],
-                                   'frequency in sequence': normalized_frequencies_empirical[i]})
-            if errors:
-                res.append(errors)
-        return res
+    @abstractmethod
+    def sample_missmatch_crossing(self, sample: dict, acceptable_error_per_crossing: int = 0) -> list:
+        pass

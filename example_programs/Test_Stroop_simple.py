@@ -6,9 +6,9 @@ sys.path.append("..")
 from sweetpea import (
     Factor, DerivedLevel, WithinTrial, Transition, AtMostKInARow, AtLeastKInARow, Exclude, ExactlyK,
     CrossBlock, synthesize_trials, print_experiments, tabulate_experiments, sample_mismatch_experiment,
-    CMSGen, IterateGen, RandomGen, IterateILPGen
+    CMSGen, IterateGen, RandomGen, IterateILPGen,
 )
-
+from sweetpea._internal.sampling_strategy.random import UCSolutionEnumerator
 """
 Stroop Task
 ******************************
@@ -28,8 +28,8 @@ design:
 
 # DEFINE COLOR AND WORD FACTORS
 
-color = Factor("color", ["red", "blue", "green", "brown"])
-word = Factor("word", ["red", "blue", "green", "brown"])
+color = Factor("color", ["red", "green"])
+word = Factor("word", ["red", "green"])
 
 
 # DEFINE CONGRUENCY FACTOR
@@ -100,7 +100,7 @@ constraints = [AtLeastKInARow(k, resp_transition)]
 # DEFINE EXPERIMENT
 
 design = [color, word, congruency, resp_transition, response]
-crossing = [color, word, resp_transition]
+crossing = [color, word]
 block = CrossBlock(design, crossing, constraints)
 
 # SOLVE
@@ -110,31 +110,31 @@ experiment_correct = synthesize_trials(block, 1)[0]
 
 # constraint and crossing error
 experiment_error_constraint = {'color': ['red', 'green', 'red', 'red'],
-                      'word': ['red', 'red', 'green', 'blue'],
+                      'word': ['red', 'red', 'green', 'green'],
                       'response': ['up', 'left', 'up', 'up'],
                       'congruency': ['con', 'inc', 'inc', 'inc'],
-                      'response_transition': [None, 'switch', 'switch', 'repeat']}
+                      'response_transition': ['', 'switch', 'switch', 'repeat']}
 
 # This sequences test fails, since the last trial response is labeled incorrect (should be up)
-experiment_error_response = {'color': ['red', 'green', 'red', 'red'],
-                             'word': ['red', 'red', 'green', 'blue'],
+experiment_error_response = {'color': ['red', 'green', 'red', 'green'],
+                             'word': ['red', 'red', 'green', 'green'],
                              'response': ['up', 'left', 'up', 'left'],
                              'congruency': ['con', 'inc', 'inc', 'inc'],
-                             'response_transition': [None, 'switch', 'switch', 'switch']}
+                             'response_transition': ['', 'switch', 'switch', 'switch']}
 
 # This sequences test fails, since the third trial congruency is labeled con (should be inc)
-experiment_error_congruency = {'color': ['red', 'green', 'red', 'red'],
-                               'word': ['red', 'red', 'green', 'blue'],
+experiment_error_congruency = {'color': ['red', 'green', 'red', 'green'],
+                               'word': ['red', 'red', 'green', 'green'],
                                'response': ['up', 'left', 'up', 'up'],
                                'congruency': ['con', 'inc', 'con', 'inc'],
-                               'response_transition': [None, 'switch', 'switch', 'repeat']}
+                               'response_transition': ['', 'switch', 'switch', 'repeat']}
 
 # This sequences test fails, since the second trial response transition is labeled repeat (should be switch)
 experiment_error_response_transition = {'color': ['red', 'green', 'red', 'red'],
-                                        'word': ['red', 'red', 'green', 'blue'],
+                                        'word': ['red', 'red', 'green', 'green'],
                                         'response': ['up', 'left', 'up', 'up'],
                                         'congruency': ['con', 'inc', 'inc', 'inc'],
-                                        'response_transition': [None, 'repeat', 'switch', 'repeat']}
+                                        'response_transition': ['', 'repeat', 'switch', 'repeat']}
 
 test_correct = sample_mismatch_experiment(block, experiment_correct)
 test_error_constraint = sample_mismatch_experiment(block, experiment_error_constraint)
@@ -147,3 +147,4 @@ print(test_error_constraint)
 print(test_error_response)
 print(test_error_congruency)
 print(test_error_response_transition)
+
