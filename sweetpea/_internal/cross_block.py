@@ -140,7 +140,7 @@ class MultiCrossBlock(Block):
 
     def _trials_per_sample_for_one_crossing(self, c: List[Factor]):
         crossing_size = self.crossing_size(c)
-        return max(map(lambda f: self.__trials_required_for_crossing(f, crossing_size), c))
+        return max([0] + list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size), c)))
 
     def trials_per_sample(self):
         if self._trials_per_sample:
