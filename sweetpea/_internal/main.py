@@ -315,7 +315,7 @@ def synthesize_trials(block: Block,
     return list(map(lambda e: __filter_hidden_keys(block.add_implied_levels(e)), sampling_result.samples))
 
 
-def sample_mismatch_experiment(block: Block, sample: List[dict]) -> dict:
+def sample_mismatch_experiment(block: Block, sample: dict) -> dict:
     """Given an experiment described with a :class:`.Block`, tests if :class:`list`
     of trials meets the factors, constraints and crossings of the described experiment.
 
