@@ -103,8 +103,8 @@ def print_experiments(block: Block, experiments: List[dict]):
         A list of experiments as :class:`dicts <dict>`. These are produced by
         calls to synthesis function :func:`.synthesize_trials`.
     """
-    nested_assignment_strs = [list(map(lambda l: cast(str, f.name) + " " + str(l.name), f.levels)) for f in
-                              __filter_hidden(block.design)]
+    nested_assignment_strs = [list(map(lambda l: cast(str, f.name) + " " + str(l.name), f.levels))
+                              for f in __filter_hidden(block.design)]
     column_widths = list(map(lambda l: max(list(map(len, l))), nested_assignment_strs))
 
     format_str = reduce(lambda a, b: a + '{{:<{}}} | '.format(b), column_widths, '')[:-3] + '\n'

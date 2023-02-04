@@ -78,12 +78,11 @@ class MultiCrossBlock(Block):
         from sweetpea._internal.derivation_processor import DerivationProcessor
         design, crossings, replacements = _desugar_factors_with_weights(design, crossings)
         all_constraints = cast(List[Constraint], [Cross(), Consistency()]) + constraints
-        all_constraints = _desugar_constraints(all_constraints,
-                                               replacements)  # expand the constraints into a form we can process
+        all_constraints = _desugar_constraints(all_constraints, replacements)
         super().__init__(design, crossings, all_constraints, require_complete_crossing, who)
         self.crossing_sizes = [self.crossing_size(c) for c in self.crossings]
-        self.preamble_sizes = [self._trials_per_sample_for_one_crossing(c) - self.crossing_size(c) for c in
-                               self.crossings]
+        self.preamble_sizes = [self._trials_per_sample_for_one_crossing(c) - self.crossing_size(c)
+                               for c in self.crossings]
         self.constraints += DerivationProcessor.generate_derivations(self)
         if (not list(filter(lambda c: c.is_complex_for_combinatoric(), self.constraints))
                 and not list(filter(lambda f: f.has_complex_window, design))):
@@ -135,7 +134,8 @@ class MultiCrossBlock(Block):
         required_trials = list(
             map(max, list(map(lambda c: list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size),
                                                  c)),
-                              self.crossings))))
+                              self.crossings)))
+        )
         return max(required_trials)
 
     def _trials_per_sample_for_one_crossing(self, c: List[Factor]):
@@ -393,8 +393,10 @@ class CrossBlock(MultiCrossBlock):
 # ~~~~~~~~~~~~~                         Helper functions                            ~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def _desugar_factors_with_weights(design: List[Factor], crossings: List[List[Factor]]) -> Tuple[
-    List[Factor], List[List[Factor]], dict]:
+def _desugar_factors_with_weights(design: List[Factor],
+                                  crossings: List[List[Factor]]) -> Tuple[List[Factor],
+                                                                          List[List[Factor]],
+                                                                          dict]:
     # When a derived factor has weighted levels and is in the
     # crossing, then the weight have to be handed by sampling, because
     # it doesn't work to have multiple levels in a derived factor that

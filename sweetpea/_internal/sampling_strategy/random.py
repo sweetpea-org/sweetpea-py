@@ -108,8 +108,8 @@ class RandomGen(Gen):
                         accepts = f", accepted {len(samples)}"
                     else:
                         accepts = ""
-                    print(
-                        f"Rejected {total_rejected + rejected} candidates so far (out of {possible_keys} choices){accepts}")
+                    n = total_rejected + rejected
+                    print(f"Rejected {n} candidates so far (out of {possible_keys} choices){accepts}")
                 continue
 
             metrics['rejections'].append(rejected)
@@ -226,7 +226,8 @@ class UCSolutionEnumerator():
         self._sorted_derived_factors = self._partitions.get_derived_factors()
         self._sorted_derived_factors.sort(key=lambda f: f._get_depth())
 
-        self._sorted_uncrossed_derived_and_complex_derived = self._partitions.get_uncrossed_derived_and_complex_derived_factors()
+        uc_deriv_and_complex = self._partitions.get_uncrossed_derived_and_complex_derived_factors()
+        self._sorted_uncrossed_derived_and_complex_derived = uc_deriv_and_complex
         self._sorted_uncrossed_derived_and_complex_derived.sort(key=lambda f: f._get_depth())
 
         self.has_crossed_complex_derived_factors = (self.__complex_crossing_instances > 1)
@@ -239,8 +240,8 @@ class UCSolutionEnumerator():
         # For multiple crossings, we'll need the size of each crossing and how much to consider the
         # preamble of each:
         self.crossing_sizes = [block.crossing_size(c) for c in block.crossings]
-        self.preamble_sizes = [block._trials_per_sample_for_one_crossing(c) - block.crossing_size(c) for c in
-                               block.crossings]
+        self.preamble_sizes = [block._trials_per_sample_for_one_crossing(c) - block.crossing_size(c)
+                               for c in block.crossings]
         # Check that calculations from two sources agree:
         assert self.crossing_sizes[0] == self.crossing_size
 
@@ -313,8 +314,8 @@ class UCSolutionEnumerator():
     def random_components(self, components_shape: RandomComponentsShape, trial_count: int, leftover: int) -> Components:
         crossing_permutation_index = random.randrange(0, components_shape.crossings_shape)
         if trial_count == len(self._crossing_instances) and self._crossing_is_unweighted:
-            source_combination_indices = tuple(
-                [random.randrange(0, len) for len in components_shape.combinations_shapes])
+            source_combination_indices = tuple([random.randrange(0, len)
+                                                for len in components_shape.combinations_shapes])
         else:
             # The indicies for source combination depend on the chosen permutation
             permutation_indices = self.jth_permutation_indices(len(self._crossing_instances),
@@ -325,8 +326,8 @@ class UCSolutionEnumerator():
             for p in permutation_indices:
                 indices.append(random.randrange(0, components_shape.combinations_shapes[p]))
             source_combination_indices = tuple(indices)
-        independent_factor_combination_indices = tuple(
-            [random.randrange(0, len) for len in components_shape.independent_shapes])
+        independent_factor_combination_indices = tuple([random.randrange(0, len)
+                                                        for len in components_shape.independent_shapes])
         return (crossing_permutation_index,
                 source_combination_indices,
                 independent_factor_combination_indices)
