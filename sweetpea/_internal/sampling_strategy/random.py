@@ -140,22 +140,13 @@ class RandomGen(Gen):
             run_length = enumerator._preamble_size + (rounds_per_run * enumerator.crossing_size) + leftover
             for i, c in enumerate(block.crossings):
                 if enumerator.has_crossed_complex_derived_factors or i > 0:
-                    # def conds_match_weights(start: int, end: int, or_less: bool):
-                    #     nonlocal bad
-                    #     combos = cast(Dict[Tuple[Level, ...], int], {})
-                    #     for t in range(start, end):
-                    #         key = tuple([sample[f][t] for f in c])
-                    #         combos[key] = combos.get(key, 0) + 1
-                    #     for combo, count in combos.items():
-                    #         bad += abs(count - combination_weight(combo))
-                    #         if bad > acceptable_error:
-                    #             return False
-                    #     return True
-
                     start = enumerator.preamble_sizes[i]
                     c_crossing_size = enumerator.crossing_sizes[i]
                     c_rounds_per_run = (run_length - start) // c_crossing_size
                     c_leftover = (run_length - start) % c_crossing_size
+                    # There might be a little room for improvement here by bailing
+                    # out within combinations_mismatched_weights() as soon as the
+                    # acceptable error is exceeded, but probably it doesn't matter.
                     for round in range(c_rounds_per_run):
                         # if not conds_match_weights(start, start + crossing_size, True):
                         #     return True
