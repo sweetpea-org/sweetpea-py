@@ -21,6 +21,9 @@ from sweetpea._internal.design_graph import DesignGraph
 from sweetpea._internal.iter import chunk_list
 from sweetpea._internal.weight import combination_weight
 from sweetpea._internal.argcheck import argcheck, make_islistof
+from sweetpea._internal.sample_conversion import convert_sample_from_names_to_objects
+from sweetpea._internal.check_mismatch import combinations_mismatched_weights
+
 
 class MultiCrossBlock(Block):
     """A :class:`.Block` with multiple crossings, meant to be used in
@@ -53,6 +56,7 @@ class MultiCrossBlock(Block):
         combinations are excluded through an :class:`.Exclude`
         :class:`.Constraint`.
     """
+
     def __init__(self,
                  design: List[Factor],
                  crossings: List[List[Factor]],
@@ -72,13 +76,16 @@ class MultiCrossBlock(Block):
                 require_complete_crossing: bool):
         from sweetpea._internal.constraint import Cross, Consistency
         from sweetpea._internal.derivation_processor import DerivationProcessor
-        design,crossings,replacements = _desugar_factors_with_weights(design, crossings)
+        design, crossings, replacements = _desugar_factors_with_weights(design, crossings)
         all_constraints = cast(List[Constraint], [Cross(), Consistency()]) + constraints
-        all_constraints = _desugar_constraints(all_constraints, replacements) # expand the constraints into a form we can process
+        all_constraints = _desugar_constraints(all_constraints, replacements)
         super().__init__(design, crossings, all_constraints, require_complete_crossing, who)
+        self.crossing_sizes = [self.crossing_size(c) for c in self.crossings]
+        self.preamble_sizes = [self._trials_per_sample_for_one_crossing(c) - self.crossing_size(c)
+                               for c in self.crossings]
         self.constraints += DerivationProcessor.generate_derivations(self)
         if (not list(filter(lambda c: c.is_complex_for_combinatoric(), self.constraints))
-            and not list(filter(lambda f: f.has_complex_window, design))):
+                and not list(filter(lambda f: f.has_complex_window, design))):
             self.complex_factors_or_constraints = False
         self.__validate(who)
 
@@ -124,14 +131,16 @@ class MultiCrossBlock(Block):
 
     def _trials_per_sample_for_crossing(self):
         crossing_size = max(map(lambda c: self.crossing_size(c), self.crossings))
-        required_trials = list(map(max, list(map(lambda c: list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size),
-                                                                    c)),
-                                                 self.crossings))))
+        required_trials = list(
+            map(max, list(map(lambda c: list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size),
+                                                 c)),
+                              self.crossings)))
+        )
         return max(required_trials)
 
     def _trials_per_sample_for_one_crossing(self, c: List[Factor]):
         crossing_size = self.crossing_size(c)
-        return max(map(lambda f: self.__trials_required_for_crossing(f, crossing_size), c))
+        return max([0] + list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size), c)))
 
     def trials_per_sample(self):
         if self._trials_per_sample:
@@ -211,7 +220,7 @@ class MultiCrossBlock(Block):
                 # For each crossing, ensure that at least one combination is possible with the design-only
                 # factor, keeping in mind the exclude contraints.
                 for c in all_crossings:
-                    if all(map(lambda d: self.__excluded_derived(excluded_level, c+d),
+                    if all(map(lambda d: self.__excluded_derived(excluded_level, c + d),
                                list(product(*[list(f.levels) for f in filter(lambda f: f not in crossing,
                                                                              self.act_design)])))):
                         excluded_crossings.add(tuple(c))
@@ -271,6 +280,56 @@ class MultiCrossBlock(Block):
         return any(list(map(lambda c: any(list(map(lambda f: f.uses_factor(factor), c))),
                             self.crossings)))
 
+    def sample_mismatch_factors(self, sample: dict) -> list:
+        """Test if the factors in a given sequence meet the criteria defined for this factor
+
+        For example in a stroop experiment, if the derived factor congruency is defined as
+        equality between the factor word and color, then in the sequence the trials with
+        equal word and colors should be labeled congruent.
+        """
+        res = []
+        sample_objects = convert_sample_from_names_to_objects(sample, self.design)
+        for factor in self.design:
+            factor_test = True
+            for i in range(len(sample_objects[factor])):
+                factor_test &= factor.test_trial(i, sample_objects)
+            if not factor_test:
+                res.append(factor.name)
+        return res
+
+    def sample_mismatch_constraints(self, sample: dict) -> list:
+        """Test if the factors in a given sequence meet the criteria defined for this constraints"""
+        res = []
+        sample_objects = convert_sample_from_names_to_objects(sample, self.design)
+        for constraint in self.constraints:
+            if not constraint.potential_sample_conforms(sample_objects):
+                pretty_name = constraint.__class__.__name__
+                if hasattr(constraint, 'k'):
+                    pretty_name += f', {constraint.k}'  # type: ignore
+                if hasattr(constraint, 'level'):
+                    pretty_name += f', {constraint.level}'  # type: ignore
+                res.append(pretty_name)
+        return res
+
+    def sample_missmatch_crossing(self, sample: dict, acceptable_error_per_crossing: int = 0) -> list:
+        """Test if a given sequence meet the criteria defined for the crossings"""
+        sample_objects = convert_sample_from_names_to_objects(sample, self.design)
+        res = cast(list, [])
+
+        for i, crossing in enumerate(self.crossings):
+            bad = 0
+            start = self.preamble_sizes[i]
+            c_crossing_size = self.crossing_sizes[i]
+            levels_lists = [sample[f.name] for f in crossing]
+            # check if length of sample is enough to satisfy the crossings
+            for levels in levels_lists:
+                if len(levels) < c_crossing_size:
+                    res.append(str(crossing))
+            bad += combinations_mismatched_weights(start, c_crossing_size, crossing, sample_objects, True)
+            if bad > acceptable_error_per_crossing:
+                res.append(str(crossing))
+        return res
+
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
@@ -279,6 +338,7 @@ class MultiCrossBlock(Block):
 
     def __str__(self):
         return str(self.__dict__)
+
 
 class CrossBlock(MultiCrossBlock):
     """A fully crossed :class:`.Block` meant to be used in experiment
@@ -316,22 +376,27 @@ class CrossBlock(MultiCrossBlock):
         combinations are excluded through an :class:`.Exclude`
         :class:`.Constraint`.
     """
+
     def __init__(self,
                  design: List[Factor],
                  crossing: List[Factor],
                  constraints: List[Constraint],
-                 require_complete_crossing: bool = True):    
+                 require_complete_crossing: bool = True):
         who = "CrossBlock"
         argcheck(who, design, make_islistof(Factor), "list of Factors for design")
         argcheck(who, crossing, make_islistof(Factor), "list of Factors for crossing")
         argcheck(who, constraints, make_islistof(Constraint), "list of Constraints for constraints")
         self._create(who, design, [crossing], constraints, require_complete_crossing)
 
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~                         Helper functions                            ~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-def _desugar_factors_with_weights(design: List[Factor], crossings: List[List[Factor]]) -> Tuple[List[Factor], List[List[Factor]], dict]:
+def _desugar_factors_with_weights(design: List[Factor],
+                                  crossings: List[List[Factor]]) -> Tuple[List[Factor],
+                                                                          List[List[Factor]],
+                                                                          dict]:
     # When a derived factor has weighted levels and is in the
     # crossing, then the weight have to be handed by sampling, because
     # it doesn't work to have multiple levels in a derived factor that
@@ -385,6 +450,7 @@ def _desugar_factors_with_weights(design: List[Factor], crossings: List[List[Fac
         return (list(chain.from_iterable([replacements.get(f, [f]) for f in design])),
                 [[replacements.get(f, [f, f])[1] for f in c] for c in crossings],
                 replacements)
+
 
 def _desugar_constraints(constraints: List[Constraint], replacements: dict) -> List[Constraint]:
     desugared_constraints = []

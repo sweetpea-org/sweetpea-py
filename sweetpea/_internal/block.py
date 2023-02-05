@@ -21,6 +21,7 @@ from sweetpea._internal.iter import chunk_dict
 from sweetpea._internal.weight import combination_weight
 from sweetpea._internal.argcheck import argcheck, make_islistof
 
+
 class Block:
     """Abstract class for Blocks. Contains the required data, and defines
     abstract methods that other blocks _must_ implement in order to work
@@ -108,7 +109,7 @@ class Block:
                 c.apply(self, None)
         for c in self.constraints:
             if isinstance(c, AtLeastKInARow):
-                c.max_trials_required = self.trials_per_sample()*c.k
+                c.max_trials_required = self.trials_per_sample() * c.k
 
     @abstractmethod
     def trials_per_sample(self):
@@ -154,7 +155,7 @@ class Block:
         for t in range(self.trials_per_sample()):
             for f in self.act_design:
                 if not isinstance(f, DerivedFactor):
-                    vars += self.factor_variables_for_trial(f, t+1)
+                    vars += self.factor_variables_for_trial(f, t + 1)
         return vars
 
     def variables_for_factor(self, f: Factor) -> int:
@@ -257,7 +258,7 @@ class Block:
             variables.append(self.factor_variables_for_trial(f, t))
 
         return variables
-    
+
     def _encode_variable(self, f: Factor, l: Level, trial: int):
         offset = self.first_variable_for_level(f, l)
         previous_trials = self._get_previous_trials_variable_count(f, trial)
@@ -265,10 +266,10 @@ class Block:
             offset += len(f.levels) * previous_trials
         else:
             offset += self.variables_per_trial() * previous_trials
-        return offset+1
+        return offset + 1
 
     def encode_combination(self, combination: Dict[Factor, Level], trial: int):
-        return tuple([self._encode_variable(f, l, trial) for f,l in combination.items()])
+        return tuple([self._encode_variable(f, l, trial) for f, l in combination.items()])
 
     def decode_variable(self, variable: int) -> Tuple[Factor, Union[SimpleLevel, DerivedLevel]]:
         """Given a variable number from the SAT formula, this method will
@@ -282,7 +283,7 @@ class Block:
             if not self._simple_tuples:
                 simple_factors = list(filter(lambda f: not f.has_complex_window, self.act_design))
                 self._simple_tuples = get_all_levels(simple_factors)
-            assert self._simple_tuples # for the type checker
+            assert self._simple_tuples  # for the type checker
             return self._simple_tuples[variable]
         else:
             complex_factors = list(filter(lambda f: f.has_complex_window, self.act_design))
@@ -321,7 +322,7 @@ class Block:
                     if not l.window.predicate(*args):
                         return True
         return False
-    
+
     def build_backend_request(self) -> BackendRequest:
         """Apply all constraints to build a :class:`.BackendRequest`. Formerly
         known as ``__desugar``.
@@ -386,7 +387,7 @@ class Block:
             if f not in self.act_design:
                 vals = []
                 for i in range(0, n):
-                    if f.applies_to_trial(i+1):
+                    if f.applies_to_trial(i + 1):
                         for l in f.levels:
                             if isinstance(l, ElseLevel):
                                 vals.append(l.name)
@@ -396,8 +397,8 @@ class Block:
                                 for idx, df in enumerate(w.factors):
                                     for j in range(w.width):
                                         shift = w.width - j - 1
-                                        if i-shift >= 0:
-                                            args.append(results[df.name][i-shift])
+                                        if i - shift >= 0:
+                                            args.append(results[df.name][i - shift])
                                         else:
                                             args.append(None)
                                 if w.width > 1:
@@ -430,4 +431,16 @@ class Block:
         pass
 
     def calculate_samples_required(self, samples):
+        pass
+
+    @abstractmethod
+    def sample_mismatch_factors(self, sample: dict) -> list:
+        pass
+
+    @abstractmethod
+    def sample_mismatch_constraints(self, sample: dict) -> list:
+        pass
+
+    @abstractmethod
+    def sample_missmatch_crossing(self, sample: dict, acceptable_error_per_crossing: int = 0) -> list:
         pass

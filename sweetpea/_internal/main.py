@@ -1,13 +1,13 @@
 # Everything in `__all_` is exported from the `sweetpea` module.
 
 __all__ = [
-    'synthesize_trials',
+    'synthesize_trials', 'sample_mismatch_experiment',
 
-    'print_experiments', 'tabulate_experiments', 
+    'print_experiments', 'tabulate_experiments',
     'save_experiments_csv', 'experiments_to_tuples',
 
     'Block', 'CrossBlock', 'MultiCrossBlock',
-    
+
     'Factor', 'Level', 'DerivedLevel', 'ElseLevel',
 
     'Derivation', 'WithinTrial', 'Transition', 'Window',
@@ -17,7 +17,7 @@ __all__ = [
     'AtMostKInARow', 'AtLeastKInARow',
     'ExactlyKInARow',
 
-    'Gen', 'RandomGen', 'IterateSATGen', 
+    'Gen', 'RandomGen', 'IterateSATGen',
     'CMSGen', 'UniGen', 'IterateILPGen',
     'UniformGen', 'IterateGen'
 ]
@@ -75,18 +75,23 @@ def _experiments_to_tuples(experiments: List[dict],
         tuple_lists.append(list(zip(*[experiment[key] for key in keys])))
     return tuple_lists
 
+
 def simplify_experiments(experiments: List[Dict]) -> List[List[Tuple[str, ...]]]:
     return _experiments_to_tuples(experiments, list(experiments[0].keys()))
+
 
 def experiments_to_tuples(block: Block,
                           experiments: List[dict]):
     return _experiments_to_tuples(experiments, [cast(str, f.name) for f in __filter_hidden(block.design)])
 
+
 def __filter_hidden(design: List[Factor]) -> List[Factor]:
     return list(filter(lambda f: not isinstance(f.name, HiddenName), design))
 
+
 def __filter_hidden_keys(d: dict) -> dict:
     return {name: d[name] for name in filter(lambda name: not isinstance(name, HiddenName), d.keys())}
+
 
 def print_experiments(block: Block, experiments: List[dict]):
     """Displays the generated experiments in a human-friendly form.
@@ -98,7 +103,8 @@ def print_experiments(block: Block, experiments: List[dict]):
         A list of experiments as :class:`dicts <dict>`. These are produced by
         calls to synthesis function :func:`.synthesize_trials`.
     """
-    nested_assignment_strs = [list(map(lambda l: cast(str, f.name) + " " + str(l.name), f.levels)) for f in __filter_hidden(block.design)]
+    nested_assignment_strs = [list(map(lambda l: cast(str, f.name) + " " + str(l.name), f.levels))
+                              for f in __filter_hidden(block.design)]
     column_widths = list(map(lambda l: max(list(map(len, l))), nested_assignment_strs))
 
     format_str = reduce(lambda a, b: a + '{{:<{}}} | '.format(b), column_widths, '')[:-3] + '\n'
@@ -106,9 +112,10 @@ def print_experiments(block: Block, experiments: List[dict]):
     print('\n{} trial sequences found.\n'.format(len(experiments)))
     for idx, e in enumerate(experiments):
         print('Experiment {}:'.format(idx))
-        strs = [list(map(lambda v: name + " " + str(v), values)) for (name,values) in e.items()]
+        strs = [list(map(lambda v: name + " " + str(v), values)) for (name, values) in e.items()]
         transposed = list(map(list, zip(*strs)))
         print(reduce(lambda a, b: a + format_str.format(*b), transposed, ''))
+
 
 def tabulate_experiments(block: Block = None,
                          experiments: List[Dict] = None,
@@ -189,7 +196,7 @@ def tabulate_experiments(block: Block = None,
             proportion = frequency / num_trials
 
             frequency_list.append(str(frequency))
-            proportion_list.append(str(proportion*100) + '%')
+            proportion_list.append(str(proportion * 100) + '%')
 
         tabulation["frequency"] = frequency_list
         tabulation["proportion"] = proportion_list
@@ -247,14 +254,16 @@ def _experiments_to_csv(experiments: List[dict],
         except IOError:
             print("I/O error")
 
+
 def save_experiments_csv(block: Block,
                          experiments: List[dict],
                          file_prefix: str = "experiment"):
     return _experiments_to_csv(experiments, [cast(str, f.name) for f in __filter_hidden(block.design)], file_prefix)
 
+
 def synthesize_trials(block: Block,
                       samples: int = 10,
-                      sampling_strategy = IterateGen
+                      sampling_strategy=IterateGen
                       ) -> List[dict]:
     """Given an experiment described with a :class:`.Block`, randomly generates
     multiple sets of trials for that experiment.
@@ -290,9 +299,11 @@ def synthesize_trials(block: Block,
         :class:`dictionary <dict>` mapping each factor name to a list of
         levels, where each such list contains to one level per trial.
     """
+
     def starting(who: Any) -> None:
         nonlocal samples
         print(f"Sampling {samples} trial sequences using {who}.")
+
     if isinstance(sampling_strategy, type):
         assert issubclass(sampling_strategy, Gen)
         starting(sampling_strategy.class_name())
@@ -302,6 +313,38 @@ def synthesize_trials(block: Block,
         sampling_result = sampling_strategy.sample_object(block, samples)
 
     return list(map(lambda e: __filter_hidden_keys(block.add_implied_levels(e)), sampling_result.samples))
+
+
+def sample_mismatch_experiment(block: Block, sample: dict) -> dict:
+    """Given an experiment described with a :class:`.Block`, tests if :class:`list`
+    of trials meets the factors, constraints and crossings of the described experiment.
+
+
+    This function should be used on the :class:`.Block` produced by either
+    :func:`.fully_cross_block` or :func:`.multiple_cross_block`. Using that
+    :class:`.Block`, :func:`.synthesize_trials`.
+
+    :param block:
+        An experimental description as a :class:`.Block`.
+
+    :param sample:
+        A sample in the form of a :class:`list`.
+
+    :returns:
+        A :class:`dict` describing the mismatches. The entries of the dictionary lists the
+        mismatches in the categories factors, constraints and crossings
+    """
+    res = {}
+    factor_errors = block.sample_mismatch_factors(sample)
+    if factor_errors:
+        res['factors'] = factor_errors
+    constraint_errors = block.sample_mismatch_constraints(sample)
+    if constraint_errors:
+        res['constraints'] = constraint_errors
+    crossing_errors = block.sample_missmatch_crossing(sample)
+    if crossing_errors:
+        res['crossings'] = crossing_errors
+    return res
 
 
 # TODO: This function isn't called anywhere, so it should be removed.
@@ -335,4 +378,4 @@ def __generate_cnf(block: Block) -> str:
         DIMACS-formatted string.
     """
     cnf = build_cnf(block)
-    return cnf.as_unigen_string(sampled_variables = [Var(n) for n in block.support_variables()])
+    return cnf.as_unigen_string(sampled_variables=[Var(n) for n in block.support_variables()])

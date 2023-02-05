@@ -409,8 +409,8 @@ class _KInARow(Constraint):
     def potential_sample_conforms(self, sample: dict) -> bool:
         level = self.level
         factor = level.factor
-
         level_list = sample[factor]
+
         counts = []
         count = 0
         for l in level_list:
@@ -419,7 +419,6 @@ class _KInARow(Constraint):
                 count = 0
             elif l == level:
                 count += 1
-
         if count > 0:
             counts.append(count)
 
@@ -767,13 +766,13 @@ class Pin(Constraint):
         return True
 
     def potential_sample_conforms(self, sample: dict) -> bool:
+
         levels = sample[self.factor]
         num_trials = len(levels)
         if self.index < 0:
             trial_no = num_trials + self.index
         else:
             trial_no = self.index
-
         if (trial_no >= 0) and (trial_no < num_trials):
             return levels[trial_no] == self.level
         else:
