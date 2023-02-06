@@ -103,8 +103,8 @@ def print_experiments(block: Block, experiments: List[dict]):
         A list of experiments as :class:`dicts <dict>`. These are produced by
         calls to synthesis function :func:`.synthesize_trials`.
     """
-    nested_assignment_strs = [list(map(lambda l: cast(str, f.name) + " " + str(l.name), f.levels)) for f in
-                              __filter_hidden(block.design)]
+    nested_assignment_strs = [list(map(lambda l: cast(str, f.name) + " " + str(l.name), f.levels))
+                              for f in __filter_hidden(block.design)]
     column_widths = list(map(lambda l: max(list(map(len, l))), nested_assignment_strs))
 
     format_str = reduce(lambda a, b: a + '{{:<{}}} | '.format(b), column_widths, '')[:-3] + '\n'
@@ -315,7 +315,7 @@ def synthesize_trials(block: Block,
     return list(map(lambda e: __filter_hidden_keys(block.add_implied_levels(e)), sampling_result.samples))
 
 
-def sample_mismatch_experiment(block: Block, sample: List[dict]) -> dict:
+def sample_mismatch_experiment(block: Block, sample: dict) -> dict:
     """Given an experiment described with a :class:`.Block`, tests if :class:`list`
     of trials meets the factors, constraints and crossings of the described experiment.
 

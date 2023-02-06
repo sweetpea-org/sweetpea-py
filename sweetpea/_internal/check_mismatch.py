@@ -1,9 +1,9 @@
 from typing import List, cast, Tuple, Dict
 from sweetpea._internal.weight import combination_weight
-from sweetpea._internal.primitive import Level
+from sweetpea._internal.primitive import Level, Factor
 
 
-def combinations_mismatched_weights(start: int, end: int, crossing: List[Level], sample: dict, or_less: bool):
+def combinations_mismatched_weights(start: int, end: int, crossing: List[Factor], sample: dict, or_less: bool):
     """returns how many mismatches of frequencies are in a sample against the expected crossing"""
     mismatch = 0
     combos = cast(Dict[Tuple[Level, ...], int], {})
