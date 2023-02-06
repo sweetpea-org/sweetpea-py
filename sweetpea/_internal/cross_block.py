@@ -322,10 +322,11 @@ class MultiCrossBlock(Block):
             c_crossing_size = self.crossing_sizes[i]
             levels_lists = [sample[f.name] for f in crossing]
             # check if length of sample is enough to satisfy the crossings
+            len_levels = max(len(levels) for levels in levels_lists)
             for levels in levels_lists:
                 if len(levels) < c_crossing_size:
                     res.append(str(crossing))
-            bad += combinations_mismatched_weights(start, c_crossing_size, crossing, sample_objects, True)
+            bad += combinations_mismatched_weights(start, len_levels, crossing, sample_objects, True)
             if bad > acceptable_error_per_crossing:
                 res.append(str(crossing))
         return res
