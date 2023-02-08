@@ -442,5 +442,5 @@ class Block:
         pass
 
     @abstractmethod
-    def sample_missmatch_crossing(self, sample: dict, acceptable_error_per_crossing: int = 0) -> list:
+    def sample_mismatch_crossing(self, sample: dict, acceptable_error_per_crossing: int = 0) -> list:
         pass

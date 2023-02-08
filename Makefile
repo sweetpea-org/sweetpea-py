@@ -11,12 +11,12 @@ test: typecheck test-no-typecheck
 
 test-no-typecheck:
 	@echo "Running tests..."
-	python3 -m pytest -vv -p no:warnings sweetpea
+	env SWEETPEA_CHECK_SYNTHESIZED=y python3 -m pytest -vv -p no:warnings sweetpea
 
 acceptance:
 	@echo "Running acceptance tests..."
-	python3 -m pytest -p no:warnings acceptance
+	env SWEETPEA_CHECK_SYNTHESIZED=y python3 -m pytest -p no:warnings acceptance
 
 acceptance-slow:
 	@echo "Running acceptance tests, including tests marked as slow..."
-	python3 -m pytest -p no:warnings acceptance --run-slow
+	env SWEETPEA_CHECK_SYNTHESIZED=y python3 -m pytest -p no:warnings acceptance --run-slow

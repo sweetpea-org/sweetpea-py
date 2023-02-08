@@ -25,7 +25,7 @@ __all__ = [
 from functools import reduce
 from typing import Dict, List, Optional, Tuple, Any, Union, cast
 from itertools import product
-import csv
+import csv, os
 
 from sweetpea._internal.block import Block
 from sweetpea._internal.cross_block import MultiCrossBlock, CrossBlock
@@ -312,7 +312,15 @@ def synthesize_trials(block: Block,
         starting(sampling_strategy)
         sampling_result = sampling_strategy.sample_object(block, samples)
 
-    return list(map(lambda e: __filter_hidden_keys(block.add_implied_levels(e)), sampling_result.samples))
+    trialss = list(map(lambda e: __filter_hidden_keys(block.add_implied_levels(e)),
+                       sampling_result.samples))
+
+    if os.getenv("SWEETPEA_CHECK_SYNTHESIZED"):
+        for trials in trialss:
+            if sample_mismatch_experiment(block, trials):
+                raise RuntimeError("synthesized trials has mismatches")
+
+    return trialss
 
 
 def sample_mismatch_experiment(block: Block, sample: dict) -> dict:
@@ -341,7 +349,7 @@ def sample_mismatch_experiment(block: Block, sample: dict) -> dict:
     constraint_errors = block.sample_mismatch_constraints(sample)
     if constraint_errors:
         res['constraints'] = constraint_errors
-    crossing_errors = block.sample_missmatch_crossing(sample)
+    crossing_errors = block.sample_mismatch_crossing(sample)
     if crossing_errors:
         res['crossings'] = crossing_errors
     return res

@@ -125,25 +125,20 @@ class Cross(Constraint):
 
     @staticmethod
     def apply(block: MultiCrossBlock, backend_request: BackendRequest) -> None:
-        trial_count = 0
-        for c in block.crossings:
-            crossing_size = block.crossing_size(c)
-            if crossing_size > trial_count:
-                trial_count = crossing_size
-        trial_count = max(block.min_trials, crossing_size)
-
         # Treat each crossing seperately, but they're related by shared variables, which
         # are the per-trial, per-level variables of factors used in multiple crossings
         for c in block.crossings:
             fresh = backend_request.fresh
 
+            crossing_size = block.crossing_size(c)
+            preamble_size = block.preamble_size(c)
+            crossing_weight = 1 # block.crossing_weight(c)
+
             # Step 1a: Get a list of the trials that are involved in the crossing. That list
             # omits leading trials that will be present to initialize transitions, and the
             # number of trials may have been reduced by exclusions.
-            crossing_size = block.crossing_size(c);
             crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t), c)),
                                           range(1, block.trials_per_sample() + 1)))
-            crossing_trials = crossing_trials[:trial_count]
 
             # Step 1b: For each trial, cross all levels of all factors in the crossing.
             # We exclude any combination that is dsiallowed by implicit or explicit exlcusions.
@@ -167,12 +162,15 @@ class Cross(Constraint):
             # Step 2c: Get weight associated with each combination.
             combination_weights = [combination_weight(tuple(c.values())) for c in trial_combinations]
 
-            # Step 3: Constrain each crossing to occur exactly according to its weight in each `crossing_size`
-            # set of trials, or at most that much in a last set of trials that is less than
-            # `crossing_size` in length.
+            # Step 3: Constrain each crossing to occur exactly according to its weight time the
+            # crossing weight in each `crossing_size * crossing_weight` set of trials, or at most
+            # that much in a last set of trials that is less than `crossing_size * crossing_weight`
+            # in length.
             states = list(chunk(state_vars, len(trial_combinations)))
             transposed = cast(List[List[int]], list(map(list, zip(*states))))
-            reqss = map(lambda l, w: Cross.__add_weight_constraint(l, w, crossing_size), transposed, combination_weights)
+            reqss = map(lambda l, w: Cross.__add_weight_constraint(l, w, crossing_size, crossing_weight),
+                        transposed,
+                        combination_weights)
             backend_request.ll_requests += list(chain.from_iterable(reqss))
 
             (cnf, new_fresh) = block.cnf_fn(And(iffs), fresh)
@@ -181,7 +179,10 @@ class Cross(Constraint):
             backend_request.fresh = new_fresh
 
     @staticmethod
-    def __add_weight_constraint(variables: List[int], weight: int, crossing_size: int) -> List[LowLevelRequest]:
+    def __add_weight_constraint(variables: List[int],
+                                weight: int,
+                                crossing_size: int,
+                                crossing_weight: int) -> List[LowLevelRequest]:
         """Constrain to a weight of each `crossing_size` sequence of variables, and at
         at most one for an ending sequence that is less than `crossing_size` in length.
         """
@@ -189,11 +190,11 @@ class Cross(Constraint):
         reqs = cast(List[LowLevelRequest], [])
         while to_add > 0:
             if (to_add >= crossing_size):
-                reqs.append(LowLevelRequest("EQ", weight, variables[:crossing_size]))
+                reqs.append(LowLevelRequest("EQ", weight*crossing_weight, variables[:(crossing_size*crossing_weight)]))
             else:
-                reqs.append(LowLevelRequest("LT", weight+1, variables))
-            variables = variables[crossing_size:]
-            to_add -= crossing_size
+                reqs.append(LowLevelRequest("LT", weight*crossing_weight+1, variables))
+            variables = variables[(crossing_size*crossing_weight):]
+            to_add -= crossing_size * crossing_weight
         return reqs
 
     def potential_sample_conforms(self, sample: dict) -> bool:

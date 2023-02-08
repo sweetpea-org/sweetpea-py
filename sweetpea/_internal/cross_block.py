@@ -13,7 +13,8 @@ from sweetpea._internal.block import Block
 from sweetpea._internal.backend import BackendRequest
 from sweetpea._internal.level import get_all_levels
 from sweetpea._internal.primitive import (
-    DerivedFactor, DerivedLevel, ElseLevel, Factor, SimpleFactor, SimpleLevel, Level
+    DerivedFactor, DerivedLevel, ElseLevel, Factor, SimpleFactor, SimpleLevel, Level,
+    HiddenName
 )
 from sweetpea._internal.logic import to_cnf_tseitin
 from sweetpea._internal.base_constraint import Constraint
@@ -130,6 +131,7 @@ class MultiCrossBlock(Block):
         return trial
 
     def _trials_per_sample_for_crossing(self):
+        """Result includes preamble trials."""
         crossing_size = max(map(lambda c: self.crossing_size(c), self.crossings))
         required_trials = list(
             map(max, list(map(lambda c: list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size),
@@ -139,6 +141,7 @@ class MultiCrossBlock(Block):
         return max(required_trials)
 
     def _trials_per_sample_for_one_crossing(self, c: List[Factor]):
+        """Result includes preamble trials."""
         crossing_size = self.crossing_size(c)
         return max([0] + list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size), c)))
 
@@ -255,12 +258,16 @@ class MultiCrossBlock(Block):
         # With complex windows, it wouldn't work due to the list aspect for each argument.
         return excluded_level.window.predicate(*[cx[f] for f in excluded_level.window.factors])
 
-    def crossing_size(self, crossing: Optional[List[Factor]] = None):
-        """The crossing argument must be one of the block's crossings."""
+    def __select_crossing(self, crossing: Optional[List[Factor]]) -> List[Factor]:
         if not crossing:
             if len(self.crossings) != 1:
                 raise ValueError("Not a single-crossing block, so crossing must be provided to crossing_size")
             crossing = self.crossings[0]
+        return crossing
+
+    def crossing_size(self, crossing: Optional[List[Factor]] = None):
+        """The crossing argument must be one of the block's crossings."""
+        crossing = self.__select_crossing(crossing)
         crossing_size = self.crossing_size_without_exclusions(crossing)
         crossing_size -= self.__count_exclusions(crossing)
         return crossing_size
@@ -268,6 +275,17 @@ class MultiCrossBlock(Block):
     def crossing_size_without_exclusions(self, crossing: List[Factor]):
         """The crossing argument must be one of the block's crossings."""
         return reduce(lambda sum, factor: sum * factor.level_weight_sum(), crossing, 1)
+
+    def preamble_size(self, crossing: Optional[List[Factor]] = None):
+        crossing = self.__select_crossing(crossing)
+        return self._trials_per_sample_for_one_crossing(crossing) - self.crossing_size(crossing)
+
+    def crossing_weight(self, crossing: Optional[List[Factor]] = None):
+        crossing = self.__select_crossing(crossing)
+        crossing_size = self.crossing_size(crossing)
+        preamble_size = self.preamble_size(crossing)
+        trial_count = max(self.min_trials, crossing_size)
+        return ((trial_count - preamble_size) + (crossing_size - 1)) // crossing_size
 
     def draw_design_graph(self):
         dg = DesignGraph(self.design)
@@ -290,11 +308,12 @@ class MultiCrossBlock(Block):
         res = []
         sample_objects = convert_sample_from_names_to_objects(sample, self.design)
         for factor in self.design:
-            factor_test = True
-            for i in range(len(sample_objects[factor])):
-                factor_test &= factor.test_trial(i, sample_objects)
-            if not factor_test:
-                res.append(factor.name)
+            if not isinstance(factor.name, HiddenName):
+                factor_test = True
+                for i in range(len(sample_objects[factor])):
+                    factor_test &= factor.test_trial(i, sample_objects)
+                if not factor_test:
+                    res.append(factor.name)
         return res
 
     def sample_mismatch_constraints(self, sample: dict) -> list:
@@ -311,7 +330,7 @@ class MultiCrossBlock(Block):
                 res.append(pretty_name)
         return res
 
-    def sample_missmatch_crossing(self, sample: dict, acceptable_error_per_crossing: int = 0) -> list:
+    def sample_mismatch_crossing(self, sample: dict, acceptable_error_per_crossing: int = 0) -> list:
         """Test if a given sequence meet the criteria defined for the crossings"""
         sample_objects = convert_sample_from_names_to_objects(sample, self.design)
         res = cast(list, [])
@@ -325,7 +344,7 @@ class MultiCrossBlock(Block):
             for levels in levels_lists:
                 if len(levels) < c_crossing_size:
                     res.append(str(crossing))
-            bad += combinations_mismatched_weights(start, c_crossing_size, crossing, sample_objects, True)
+            bad += combinations_mismatched_weights(start, start+c_crossing_size, crossing, sample_objects, True)
             if bad > acceptable_error_per_crossing:
                 res.append(str(crossing))
         return res
@@ -408,7 +427,7 @@ def _desugar_factors_with_weights(design: List[Factor],
     # having multiple levels with the same name. Still, as long as a
     # factor with weights is used in the crossing (all of them, in the
     # case of multiple crossings), then we leave the weights in place
-    # and handling them in sampling.
+    # and handle them in sampling.
     #
     # But when a non-derived factor with weights is not in (all of
     # the) crossing(s), we desugar to a factor with multiple levels
