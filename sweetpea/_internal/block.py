@@ -5,7 +5,7 @@ a factorial experimental design.
 from abc import abstractmethod
 from functools import reduce
 from itertools import accumulate, combinations, product, repeat
-from typing import List, Union, Tuple, Optional, cast, Any, Dict, Set
+from typing import List, Union, Tuple, Optional, cast, Any, Dict, Set, Callable, TypeVar
 from math import ceil
 from networkx import has_path
 
@@ -21,7 +21,8 @@ from sweetpea._internal.iter import chunk_dict
 from sweetpea._internal.weight import combination_weight
 from sweetpea._internal.argcheck import argcheck, make_islistof
 
-
+T = TypeVar('T')
+            
 class Block:
     """Abstract class for Blocks. Contains the required data, and defines
     abstract methods that other blocks _must_ implement in order to work
@@ -46,6 +47,8 @@ class Block:
         self.errors = cast(Set[str], set())
         self.act_design = list(filter(lambda f: not self.factor_is_implied(f), self.design))
         self._trials_per_sample = None
+        self.within_block_count = cast(Optional[int], None)
+        self.within_block_preamble = cast(Optional[int], None)
         self._simple_tuples = cast(Optional[List[Tuple[Factor, Union[SimpleLevel, DerivedLevel]]]], None)
         self._variables_per_trial = None
         self.__validate(who)
@@ -104,9 +107,10 @@ class Block:
                                f"factors: {', '.join(str(name) for name in undefined_factor_names)}.")
         from sweetpea._internal.constraint import AtLeastKInARow, MinimumTrials
         for c in self.constraints:
-            c.validate(self)
             if isinstance(c, MinimumTrials):
                 c.apply(self, None)
+        for c in self.constraints:
+            c.validate(self)
         for c in self.constraints:
             if isinstance(c, AtLeastKInARow):
                 c.max_trials_required = self.trials_per_sample() * c.k
@@ -158,9 +162,11 @@ class Block:
                     vars += self.factor_variables_for_trial(f, t + 1)
         return vars
 
-    def variables_for_factor(self, f: Factor) -> int:
+    def variables_for_factor(self, f: Factor,
+                             start: int = 0,
+                             end: Optional[int] = None) -> int:
         """Indicates the number of variables needed to encode this factor."""
-        trial_list = range(1, self.trials_per_sample() + 1)
+        trial_list = range(1 + start, (end if end else self.trials_per_sample()) + 1)
         return reduce(lambda sum, t: sum + len(f.levels) if f.applies_to_trial(t) else sum, trial_list, 0)
 
     def has_factor(self, factor: Factor) -> Factor:
@@ -345,7 +351,9 @@ class Block:
         """
         return self._encode_variable(level[0], level[1], trial_number)
 
-    def build_variable_list(self, level_pair: Tuple[Factor, Union[SimpleLevel, DerivedLevel]]) -> List[int]:
+    def build_variable_lists(self,
+                             level_pair: Tuple[Factor, Union[SimpleLevel, DerivedLevel]],
+                             within_block: bool = False) -> List[List[int]]:
         """Given a specific level (factor + level pair), this method will
         return the list of variables that correspond to that level in each
         trial in the encoding.
@@ -358,9 +366,9 @@ class Block:
             raise ValueError("Second element in level argument to variable list builder must be a SimpleLevel "
                              "or a DERIVED LEVEL.")
         if factor.has_complex_window:
-            return self.__build_complex_variable_list(level_pair)
+            return self.__build_complex_variable_lists(level_pair, within_block)
         else:
-            return self.__build_simple_variable_list(level_pair)
+            return self.__build_simple_variable_lists(level_pair, within_block)
 
     def factor_in_crossing(self, factor):
         pass
@@ -412,20 +420,67 @@ class Block:
                 results[f.name] = vals
         return results
 
-    def __build_simple_variable_list(self, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]]) -> List[int]:
-        first_variable = self.first_variable_for_level(level[0], level[1]) + 1
-        design_var_count = self.variables_per_trial()
+    def __map_block_trial_ranges(self, within_block: bool, proc: Callable[[int, int], T]) -> List[T]:
         num_trials = self.trials_per_sample()
-        # TODO: This should be reworked. It's an accumulating fold where the
-        #       folding function's second argument is just thrown away.
-        return list(accumulate(repeat(first_variable, num_trials), lambda acc, _: acc + design_var_count))
+        if within_block:
+            start = 0
+            if self.within_block_count and (self.within_block_preamble != None):
+                end = self.within_block_count
+                step = self.within_block_count - cast(int, self.within_block_preamble)
+            else:
+                raise RuntimeError("within-block but not in a repeat?!")
+        else:
+            start = 0
+            end = num_trials
+            step = num_trials
+        lists = cast(List[T], [])
+        while start < num_trials:
+            lists.append(proc(start, end))
+            start += step
+            end += step
+        return lists
 
-    def __build_complex_variable_list(self, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]]) -> List[int]:
+    def __build_simple_variable_lists(self,
+                                      level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]],
+                                      within_block: bool = False) -> List[List[int]]:
+        def get_variables(start: int, end: int) -> List[int]:
+            nonlocal level
+            first_variable = self.first_variable_for_level(level[0], level[1]) + 1 + start
+            design_var_count = self.variables_per_trial()
+            # TODO: This should be reworked. It's an accumulating fold where the
+            #       folding function's second argument is just thrown away.
+            return list(accumulate(repeat(first_variable, end - start),
+                                   lambda acc, _: acc + design_var_count))
+        return self.__map_block_trial_ranges(within_block, get_variables)
+
+    def __build_complex_variable_lists(self,
+                                       level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]],
+                                       within_block: bool = False) -> List[List[int]]:
         factor = level[0]
         level_count = len(factor.levels)
-        n = self.variables_for_factor(factor) // level_count
-        start = self.first_variable_for_level(level[0], level[1]) + 1
-        return reduce(lambda l, v: l + [start + (v * level_count)], range(n), [])
+        start_idx = self.first_variable_for_level(level[0], level[1]) + 1
+        def get_variables(start: int, end: int) -> List[int]:
+            nonlocal factor, level_count, start_idx
+            n = self.variables_for_factor(factor, start, end) // level_count
+            return reduce(lambda l, v: l + [start_idx + ((v + start) * level_count)], range(n), [])
+        return self.__map_block_trial_ranges(within_block, get_variables)
+
+    def get_trial_numbers(self, b_trial_no: int, within_block: bool = False) -> List[int]:
+        def get_variables(start: int, end: int) -> int:
+            nonlocal b_trial_no
+            if b_trial_no < 0:
+                trial_no = end + b_trial_no
+            else:
+                trial_no = start + b_trial_no
+            if (trial_no >= start) and (trial_no < end):
+                return trial_no
+            else:
+                return -1
+        nums = self.__map_block_trial_ranges(within_block, get_variables)
+        if all([n >= 0 for n in nums]):
+            return nums
+        else:
+            return []
 
     def rearrage_samples(self, samples, results):
         pass

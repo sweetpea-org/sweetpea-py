@@ -65,16 +65,14 @@ using :func:`.synthesize_trials`. Print generated trials using
      `require_complete_crossing` is set to false.
 
    * A :class:`.MinimumTrials` in `constraint` can increase the number
-     of trials in a sequence. Additional trials are added afterward by
-     replicating the crossing as many times as needed to reach the
-     required number of trials. Levels are selected for each
-     replication of the crossing independently, except that transition
-     derived factors can create dependencies from one replication to
-     the next. Preamble trials are not replicated, since each
-     replication of the crossing serves as a preamble for the next.
-     The last replication can be shorter than the full crossing, in
-     which case is reflects a prefix of a full-crossing sequence than
-     would otherwise appear.
+     of trials in a sequence. Additional trials are added by
+     scaling the weight of each crossing combination as many times as
+     needed to meet or exceed the required number of trials. (To scale
+     by repeating the crossing, instead, use :class:`.Repeat`.)
+     Preamble trials are not scaled. If the minimum trial
+     count minus preamble length is not a multiple of the crossing size,
+     then it's as if the minimum trial count were rounded up, and
+     then trials are discarded at the end.
 
    :param design: the factors that make up the design
    :type design: List[Factor]
@@ -127,6 +125,45 @@ using :func:`.synthesize_trials`. Print generated trials using
                        satify; see :ref:`constraints`
    :type constraints: List[Constraint]
    :param require_complete_crossing: same as for :class:`.MultiCrossBlock`
+   :return: a block description
+   :rtype: Block
+
+.. class:: sweetpea.Repeat(block, constraints)
+
+   Repeats the crossings of a given :class:`.MultiCrossBlock` (or
+   :class:`.CrossBlock`) enough times to satisfy a minimum trial count
+   specified in `constraints`. Unlike increasing the minimum trial
+   count within `block`, levels are selected for each replication of
+   the crossing independently, except that transition derived factors
+   can create dependencies from one replication to the next.
+
+   Preamble trials are not replicated, since each replication of the
+   crossing serves as a preamble for the next. If `block` contains
+   multiple crossings, then all crossings must have the same preamble
+   length.
+
+   Other constraints apply within each single repetetion or across the
+   sequence of repetitions, depending on whether the constraint is
+   specified as part `block` or provided in `constraints` for the
+   repetition. For example, a :class:`.Pin` constraint within `block`
+   applies to one trial of each repetition (where the index is
+   relative to each repetition), while a :class:`.Pin` constraint in
+   `constraints` applies to one trial for the entire trial sequence.
+   When a crossing has preamble trials, constraints in `block` apply
+   to a preamble for each repetition, which overlaps with the trials
+   of the previous repetition. An :class:`.Exclude` constraint is not
+   allowed in `constraints`, since that would imply changing the size
+   of each repetition.
+
+   If `constraints` is empty, then the repetition has no effect, and
+   generating trials from the repetition will be the same as
+   generating them from `block` directly.
+
+   :param block: the block to repeat
+   :type block: MultiCrossBlock
+   :param constraints: a list that cannot include
+                       :class:`.Exclude` constraints
+   :type constraints: List[Constraint]
    :return: a block description
    :rtype: Block
 

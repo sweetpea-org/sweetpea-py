@@ -3,7 +3,7 @@ import pytest
 from sweetpea import (
     Factor, Level, DerivedLevel, ElseLevel,
     MinimumTrials, WithinTrial, Transition,
-    CrossBlock,
+    CrossBlock, Repeat,
     synthesize_trials, print_experiments,
     CMSGen, IterateSATGen, RandomGen
 )
@@ -40,7 +40,8 @@ def test_correct_solutions_with_plain_level_weight_and_min_trials():
 
     design       = [color, size]
     crossing     = [color, size]
-    block        = CrossBlock(design, crossing, constraints)
+    block        = Repeat(CrossBlock(design, crossing, []),
+                          constraints)
 
     check_consistent_solutions(block, 720)
 
@@ -62,7 +63,7 @@ def test_correct_solutions_with_derived_level_weight():
     crossing     = [look]
 
     check_consistent_solutions(CrossBlock(design, crossing, []), 9)
-    check_consistent_solutions(CrossBlock(design, crossing, constraints), 36)
+    check_consistent_solutions(Repeat(CrossBlock(design, crossing, [], constraints)), 36)
 
 def test_correct_solutions_with_transition_level_weight():
     color = Factor("color",  ["red", "blue"])
@@ -81,7 +82,7 @@ def test_correct_solutions_with_transition_level_weight():
     crossing     = [look]
     
     check_consistent_solutions(CrossBlock(design, crossing, []), 36)
-    check_consistent_solutions(CrossBlock(design, crossing, constraints), 324)
+    check_consistent_solutions(Repeat(CrossBlock(design, crossing, []), constraints), 324)
 
 def test_uncrossed_level_weight():
     color = Factor("color",  ["red", "blue"])
@@ -92,7 +93,7 @@ def test_uncrossed_level_weight():
     block        = CrossBlock(design, crossing, [])
 
     check_consistent_solutions(CrossBlock(design, crossing, []), 18)
-    check_consistent_solutions(CrossBlock(design, crossing, [MinimumTrials(3)]), 108)
+    check_consistent_solutions(Repeat(CrossBlock(design, crossing, []), [MinimumTrials(3)]), 108)
     
     experiments  = synthesize_trials(CrossBlock(design, crossing, []), 1000, RandomGen)
     totals = {}

@@ -41,33 +41,34 @@ def test_correct_solutions_with_different_crossing_sizes(strategy, add_transitio
 
     start = 1 if add_transition else 0
 
+    assert len(experiments[0]['color']) == (9 if add_transition else 6)
+
     for e in experiments:
         seen = {}
-        for i in range(1, 9) if add_transition else range(4):
-            if add_transition:
-                key = (e['color'][i], e['text'][i], e['repeated color?'][i])
-            else:
-                key = (e['color'][i], e['text'][i])
-            assert key not in seen
-            seen[key] = True
-        for i in range(6):
-            key = (e['text'][i], e['mix'][i])
-            assert key not in seen
-            seen[key] = True
         if add_transition:
-            # extra mix trials should be distinct
-            seen = {}
-            for i in range(6, 9):
+            for i in range(1, 9):
+                key = (e['color'][i], e['text'][i], e['repeated color?'][i])
+                assert key not in seen
+                seen[key] = True
+            for i in range(1, 9):
+                key = (e['text'][i], e['mix'][i])
+                if key in seen:
+                    assert seen[key] == 1
+                    seen[key] = 2
+                else:
+                    seen[key] = 1
+        else:
+            for i in range(6):
                 key = (e['text'][i], e['mix'][i])
                 assert key not in seen
                 seen[key] = True
-        else:
-            # extra color trials should be distinct
-            seen = {}
-            for i in range(4, 6):
-                key = (e['color'][i], e['text'][i])
-                assert key not in seen
-                seen[key] = True
+            for i in range(6):
+                key = ('one', e['color'][i], e['text'][i])
+                if key in seen:
+                    assert seen[key] == 1
+                    seen[key] = 2
+                else:
+                    seen[key] = 1
 
 @pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 @pytest.mark.parametrize('design', shuffled_design_sample([color, text, mix], 6))
@@ -240,15 +241,13 @@ def test_works_with_much_smaller_first_crossing(strategy, design=[color, text, m
     
     for e in experiments:
         seen = {}
-        for i in range(0, 2):
+        for i in range(0, 4):
             key = e['c'][i]
-            assert key not in seen
-            seen[key] = True
-        seen = {}
-        for i in range(2, 4):
-            key = e['c'][i]
-            assert key not in seen
-            seen[key] = True
+            if key in seen:
+                assert seen[key] == 1
+                seen[key] = 2
+            else:
+                seen[key] = 1
         seen = {}
         for i in range(0, 4):
             key = (e['a'][i], e['b'][i])

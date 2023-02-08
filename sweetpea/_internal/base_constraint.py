@@ -44,11 +44,12 @@ class Constraint(ABC):
         return False
 
     @abstractmethod
-    def potential_sample_conforms(self, sample: dict) -> bool:
+    def potential_sample_conforms(self, sample: dict, block) -> bool:
         """For rejection sampling, checks whether a given potential sample
         matches a constraint, as long as crossing, exclusion for non-complex factors, and
         minimum-trial contraints are already satisfied.
         """
         pass
 
-
+    def set_within_block(self) -> None:
+        pass

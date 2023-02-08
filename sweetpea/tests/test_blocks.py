@@ -409,15 +409,15 @@ def test_fully_cross_block_should_copy_input_lists():
 def test_build_variable_list_for_simple_factors():
     block = CrossBlock([color, text, con_factor], [color, text], [Exclude(inc_level)])
 
-    assert block.build_variable_list((color, red_color)) == [1, 7]
-    assert block.build_variable_list((con_factor, con_factor["con"])) == [5, 11]
+    assert block.build_variable_lists((color, red_color)) == [[1, 7]]
+    assert block.build_variable_lists((con_factor, con_factor["con"])) == [[5, 11]]
 
 
 def test_build_variable_list_for_complex_factors():
     block = CrossBlock([color, text, color_repeats_factor], [color, text], [Exclude(no_color_repeats)])
 
-    assert block.build_variable_list((color_repeats_factor, yes_color_repeats)) == [17, 19, 21]
-    assert block.build_variable_list((color_repeats_factor, no_color_repeats))  == [18, 20, 22]
+    assert block.build_variable_lists((color_repeats_factor, yes_color_repeats)) == [[17, 19, 21]]
+    assert block.build_variable_lists((color_repeats_factor, no_color_repeats))  == [[18, 20, 22]]
 
 
 def test_build_variable_list_for_three_derived_levels():
@@ -438,9 +438,9 @@ def test_build_variable_list_for_three_derived_levels():
 
     block = CrossBlock([color, text, changed], [color, text], [Exclude(changed["1"])])
 
-    assert block.build_variable_list((changed, changed["0"])) == [17, 20, 23]
-    # assert block.build_variable_list((changed, changed["1"])) == [18, 21, 24]
-    assert block.build_variable_list((changed, changed["2"])) == [19, 22, 25]
+    assert block.build_variable_lists((changed, changed["0"])) == [[17, 20, 23]]
+    # assert block.build_variable_lists((changed, changed["1"])) == [[18, 21, 24]]
+    assert block.build_variable_lists((changed, changed["2"])) == [[19, 22, 25]]
 
 def test_crossing_size_with_complex_excludes():
     deviantColor             = Factor("deviant color",  ["pink", "purple"])

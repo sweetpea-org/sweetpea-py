@@ -56,3 +56,35 @@ def test_pin(index_and_solutions, strategy):
     for e in experiments:
         trial_no = index if index >= 0 else len(e['number']) + index - 1
         e['number'][trial_no+1] > e['number'][trial_no]
+
+@pytest.mark.parametrize('index_and_solutions',
+                         [[0, 4, 12],
+                          [-1, 4, 12],
+                          [-2, 4, 12],
+                          [100, 0, 0],
+                          [-100, 0, 0]])
+@pytest.mark.parametrize('strategy', [IterateSATGen, RandomGen])
+def test_pin_repeats(index_and_solutions, strategy):
+    index = index_and_solutions[0]
+    solutions = index_and_solutions[1]
+    repet_solutions = index_and_solutions[2]
+ 
+    block = CrossBlock([number], [number], [Pin(index, number[1.0])])
+    repet = Repeat(block, [MinimumTrials(6)])
+    experiments = synthesize_trials(repet, 20, strategy)
+    assert len(experiments) == solutions
+    for e in experiments:
+        trial_no = index if index >= 0 else len(e['number']) + index
+        assert e['number'][trial_no] == 1.0
+        trial_no = index + 3 if index >= 0 else len(e['number']) - 3 + index
+        assert e['number'][trial_no] == 1.0
+
+    block = CrossBlock([number], [number], [])
+    repet = Repeat(block, [MinimumTrials(6), Pin(index, number[1.0])])
+    experiments = synthesize_trials(repet, 20, strategy)
+    assert len(experiments) == repet_solutions
+    for e in experiments:
+        trial_no = index if index >= 0 else len(e['number']) + index
+        assert e['number'][trial_no] == 1.0
+
+        

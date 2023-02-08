@@ -68,7 +68,7 @@ class RandomGen(Gen):
         if (enumerator.solution_count() == 0):
             return SamplingResult([], metrics)
 
-        crossing_size = enumerator.crossing_size
+        crossing_size = enumerator.crossing_size # includes crossing weight
 
         # 3. Generate samples.
         print("Generating samples...")
@@ -132,7 +132,7 @@ class RandomGen(Gen):
                                    rounds_per_run: int, leftover: int,
                                    acceptable_error: int) -> bool:
         for ct in block.constraints:
-            if not ct.potential_sample_conforms(sample):
+            if not ct.potential_sample_conforms(sample, block):
                 return True
         if enumerator.has_crossed_complex_derived_factors or len(block.crossings) > 1:
             # Check whether the sample achieves each crossing in the run
@@ -141,7 +141,8 @@ class RandomGen(Gen):
             for i, c in enumerate(block.crossings):
                 if enumerator.has_crossed_complex_derived_factors or i > 0:
                     start = enumerator.preamble_sizes[i]
-                    c_crossing_size = enumerator.crossing_sizes[i]
+                    c_weight = enumerator.crossing_weights[i]
+                    c_crossing_size = enumerator.crossing_sizes[i] * c_weight
                     c_rounds_per_run = (run_length - start) // c_crossing_size
                     c_leftover = (run_length - start) % c_crossing_size
                     # There might be a little room for improvement here by bailing
@@ -150,14 +151,14 @@ class RandomGen(Gen):
                     for round in range(c_rounds_per_run):
                         # if not conds_match_weights(start, start + crossing_size, True):
                         #     return True
-                        bad += combinations_mismatched_weights(start, start + c_crossing_size, c, sample, False)
+                        bad += combinations_mismatched_weights(start, start + c_crossing_size, c_weight, c, sample, False)
                         if bad > acceptable_error:
                             return True
                         start += c_crossing_size
                     if c_leftover > 0:
                         # if not conds_match_weights(start, start + c_leftover, True):
                         #     return True
-                        bad += combinations_mismatched_weights(start, start + c_leftover, c, sample, True)
+                        bad += combinations_mismatched_weights(start, start + c_leftover, c_weight, c, sample, True)
                         if bad > acceptable_error:
                             return True
         return False
@@ -200,11 +201,14 @@ class UCSolutionEnumerator():
         self._block = block
         self._partitions = DesignPartitions(block)
         self._crossing_instances = self.__generate_crossing_instances()
-        self._crossing_weights = [combination_weight(tuple(c.values())) for c in self._crossing_instances]
+        c_weight = block.crossing_weight(block.crossings[0])
+        self._crossing_weights = [combination_weight(tuple(c.values())) * c_weight
+                                  for c in self._crossing_instances]
         self._crossing_is_unweighted = all([w == 1 for w in self._crossing_weights])
         self.noncomplex_crossing_size = sum(self._crossing_weights)
         self._source_combinations = self.__generate_source_combinations()
         self.__complex_crossing_instances = self.__count_complex_crossing_instances()
+        # This crossing size includes the crossing weight (in addition to level weights)
         self.crossing_size = self.noncomplex_crossing_size * self.__complex_crossing_instances
         self._ind_factor_levels = cast(List[Tuple[Factor, List[SimpleLevel]]],
                                        [])  # Will be populated by solution counting
@@ -229,12 +233,12 @@ class UCSolutionEnumerator():
         self._valid_source_combinations_indices = cast(List[List[int]], [])  # Will be populated by solution counting
 
         # For multiple crossings, we'll need the size of each crossing and how much to consider the
-        # preamble of each:
+        # preamble of each; note that `self.crossing_sizes` does *not* include the crossing weight:
         self.crossing_sizes = [block.crossing_size(c) for c in block.crossings]
-        self.preamble_sizes = [block._trials_per_sample_for_one_crossing(c) - block.crossing_size(c)
-                               for c in block.crossings]
+        self.preamble_sizes = [block.preamble_size(c) for c in block.crossings]
+        self.crossing_weights = [block.crossing_weight(c) for c in block.crossings]
         # Check that calculations from two sources agree:
-        assert self.crossing_sizes[0] == self.crossing_size
+        assert self.crossing_sizes[0] * self.crossing_weights[0] == self.crossing_size
 
         noncomplex_crossing_size = self.noncomplex_crossing_size
         preamble_size = self.preamble_sizes[0]

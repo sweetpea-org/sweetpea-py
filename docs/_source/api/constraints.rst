@@ -43,8 +43,8 @@ Constraints
 .. class:: sweetpea.MinimumTrials(k)
 
               Constrains an experiment to set the specified number of
-              minimum trials. See :class:`.CrossBlock` for more
-              information.
+              minimum trials. See :class:`.CrossBlock` and
+              :class:`.Repeat` for more information.
 
               :param k: minimum number of trials
               :type k: int

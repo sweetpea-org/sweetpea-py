@@ -15,7 +15,8 @@ def test_stays_balanced(strategy, trial_count):
     crossing_size = 1
     for f in crossing:
         crossing_size *= len(f.levels)
-    block  = CrossBlock(design=design, crossing=crossing, constraints=[MinimumTrials(trials=trial_count)])
+    block  = Repeat(CrossBlock(design=design, crossing=crossing, constraints=[]),
+                    constraints=[MinimumTrials(trials=trial_count)])
     experiments = synthesize_trials(block=block, samples=3, sampling_strategy = strategy)
 
     for exp in experiments:
@@ -34,8 +35,9 @@ def test_stays_balanced(strategy, trial_count):
 
 @pytest.mark.parametrize('strategy', [IterateSATGen, RandomGen])
 @pytest.mark.parametrize('trial_count', [4, 5, 6])
-def test_leftovers_balanced_across_all_possible_colutions(strategy, trial_count):
-    block  = CrossBlock(design=design, crossing=crossing, constraints=[MinimumTrials(trials=trial_count)])
+def test_leftovers_balanced_across_all_possible_solutions(strategy, trial_count):
+    block  = Repeat(CrossBlock(design=design, crossing=crossing, constraints=[]),
+                    constraints = [MinimumTrials(trials=trial_count)])
     experiments = synthesize_trials(block=block, samples=500, sampling_strategy = strategy)
 
     leftover = trial_count % 4

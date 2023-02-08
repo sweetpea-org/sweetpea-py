@@ -8,6 +8,7 @@ from itertools import accumulate, combinations, product, repeat, chain
 from typing import List, Union, Tuple, Optional, cast, Any, Dict, Set
 from math import ceil
 from networkx import has_path
+import copy
 
 from sweetpea._internal.block import Block
 from sweetpea._internal.backend import BackendRequest
@@ -25,37 +26,8 @@ from sweetpea._internal.argcheck import argcheck, make_islistof
 from sweetpea._internal.sample_conversion import convert_sample_from_names_to_objects
 from sweetpea._internal.check_mismatch import combinations_mismatched_weights
 
-
-class MultiCrossBlock(Block):
-    """A :class:`.Block` with multiple crossings, meant to be used in
-    experiment synthesis. Similar to :func:`fully_cross_block`, except it can
-    be configured with multiple crossings.
-
-    :param design:
-        A :class:`list` of all the :class:`Factors <.Factor>` in the design.
-        When a sequence of trials is generated, each trial will have one level
-        from each factor in ``design``.
-
-    :param crossings:
-        A :class:`list` of :class:`lists <list>` of :class:`Factors <.Factor>`
-        representing crossings. The number of trials in each run of the
-        experiment is determined by the *maximum* product among the number of
-        levels in the crossings.
-
-        Every combination of levels in each individual crossing in
-        ``crossings`` appears at least once. Different crossings can refer to
-        the same factors, which constrains how factor levels are chosen across
-        crossings.
-
-    :param constraints:
-        A :class:`list` of :class:`Constraints <.Constraint>` that restrict the
-        generated trials.
-
-    :param require_complete_crossing:
-        Whether every combination in ``crossing`` must appear in a block of
-        trials. ``True`` by default. A ``False`` value is appropriate if
-        combinations are excluded through an :class:`.Exclude`
-        :class:`.Constraint`.
+class MultiCrossBlockRepeat(Block):
+    """An internal :class:`.Block` to handle blocks and repeats.
     """
 
     def __init__(self,
@@ -63,20 +35,24 @@ class MultiCrossBlock(Block):
                  crossings: List[List[Factor]],
                  constraints: List[Constraint],
                  require_complete_crossing: bool = True):
-        who = "MultiCrossBlock"
+        who = "MultiCrossBlockRepeat"
         argcheck(who, design, make_islistof(Factor), "list of Factors for design")
         argcheck(who, crossings, make_islistof(make_islistof(Factor)), "list of list of Factors for crossings")
         argcheck(who, constraints, make_islistof(Constraint), "list of Constraints for constraints")
-        self._create(who, design, crossings, constraints, require_complete_crossing)
+        self._create(who, design, crossings, constraints, require_complete_crossing, None)
 
     def _create(self,
                 who: str,
                 design: List[Factor],
                 crossings: List[List[Factor]],
                 constraints: List[Constraint],
-                require_complete_crossing: bool):
+                require_complete_crossing: bool,
+                within_block_count: Optional[int]):
         from sweetpea._internal.constraint import Cross, Consistency
         from sweetpea._internal.derivation_processor import DerivationProcessor
+        self.orig_design = design
+        self.orig_crossings = crossings
+        self.orig_constraints = constraints
         design, crossings, replacements = _desugar_factors_with_weights(design, crossings)
         all_constraints = cast(List[Constraint], [Cross(), Consistency()]) + constraints
         all_constraints = _desugar_constraints(all_constraints, replacements)
@@ -88,6 +64,13 @@ class MultiCrossBlock(Block):
         if (not list(filter(lambda c: c.is_complex_for_combinatoric(), self.constraints))
                 and not list(filter(lambda f: f.has_complex_window, design))):
             self.complex_factors_or_constraints = False
+        if within_block_count:
+            if not all([s == self.preamble_sizes[0] for s in self.preamble_sizes]):
+                raise RuntimeError("cannot repeat a block with corssings that have different preamble lengths")
+            self.within_block_count = within_block_count
+            self.within_block_preamble = self.preamble_sizes[0]
+        else:
+            self.within_block_count = self.trials_per_sample()
         self.__validate(who)
 
     def __validate(self, who: str):
@@ -133,11 +116,10 @@ class MultiCrossBlock(Block):
     def _trials_per_sample_for_crossing(self):
         """Result includes preamble trials."""
         crossing_size = max(map(lambda c: self.crossing_size(c), self.crossings))
-        required_trials = list(
-            map(max, list(map(lambda c: list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size),
-                                                 c)),
-                              self.crossings)))
-        )
+        crossing_trials = list(map(lambda c: list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size),
+                                                      c)),
+                                   self.crossings))
+        required_trials = list(map(lambda l: max([0] + l), crossing_trials))
         return max(required_trials)
 
     def _trials_per_sample_for_one_crossing(self, c: List[Factor]):
@@ -284,8 +266,7 @@ class MultiCrossBlock(Block):
         crossing = self.__select_crossing(crossing)
         crossing_size = self.crossing_size(crossing)
         preamble_size = self.preamble_size(crossing)
-        trial_count = max(self.min_trials, crossing_size)
-        return ((trial_count - preamble_size) + (crossing_size - 1)) // crossing_size
+        return ((self.within_block_count - preamble_size) + (crossing_size - 1)) // crossing_size
 
     def draw_design_graph(self):
         dg = DesignGraph(self.design)
@@ -321,7 +302,7 @@ class MultiCrossBlock(Block):
         res = []
         sample_objects = convert_sample_from_names_to_objects(sample, self.design)
         for constraint in self.constraints:
-            if not constraint.potential_sample_conforms(sample_objects):
+            if not constraint.potential_sample_conforms(sample_objects, self):
                 pretty_name = constraint.__class__.__name__
                 if hasattr(constraint, 'k'):
                     pretty_name += f', {constraint.k}'  # type: ignore
@@ -334,17 +315,26 @@ class MultiCrossBlock(Block):
         """Test if a given sequence meet the criteria defined for the crossings"""
         sample_objects = convert_sample_from_names_to_objects(sample, self.design)
         res = cast(list, [])
+        trial_count = self.trials_per_sample()
 
         for i, crossing in enumerate(self.crossings):
             bad = 0
             start = self.preamble_sizes[i]
-            c_crossing_size = self.crossing_sizes[i]
+            c_weight = self.crossing_weight(crossing)
+            c_crossing_size = self.crossing_sizes[i] * c_weight
             levels_lists = [sample[f.name] for f in crossing]
             # check if length of sample is enough to satisfy the crossings
             for levels in levels_lists:
-                if len(levels) < c_crossing_size:
+                if len(levels) != trial_count:
                     res.append(str(crossing))
-            bad += combinations_mismatched_weights(start, start+c_crossing_size, crossing, sample_objects, True)
+            while start < trial_count:
+                end = start+c_crossing_size
+                or_less = False
+                if (end > trial_count):
+                    end = trial_count
+                    or_less = True
+                bad += combinations_mismatched_weights(start, end, c_weight, crossing, sample_objects, or_less)
+                start += c_crossing_size
             if bad > acceptable_error_per_crossing:
                 res.append(str(crossing))
         return res
@@ -358,6 +348,49 @@ class MultiCrossBlock(Block):
     def __str__(self):
         return str(self.__dict__)
 
+
+class MultiCrossBlock(MultiCrossBlockRepeat):
+    """A :class:`.Block` with multiple crossings, meant to be used in
+    experiment synthesis. Similar to :func:`fully_cross_block`, except it can
+    be configured with multiple crossings.
+
+    :param design:
+        A :class:`list` of all the :class:`Factors <.Factor>` in the design.
+        When a sequence of trials is generated, each trial will have one level
+        from each factor in ``design``.
+
+    :param crossings:
+        A :class:`list` of :class:`lists <list>` of :class:`Factors <.Factor>`
+        representing crossings. The number of trials in each run of the
+        experiment is determined by the *maximum* product among the number of
+        levels in the crossings.
+
+        Every combination of levels in each individual crossing in
+        ``crossings`` appears at least once. Different crossings can refer to
+        the same factors, which constrains how factor levels are chosen across
+        crossings.
+
+    :param constraints:
+        A :class:`list` of :class:`Constraints <.Constraint>` that restrict the
+        generated trials.
+
+    :param require_complete_crossing:
+        Whether every combination in ``crossing`` must appear in a block of
+        trials. ``True`` by default. A ``False`` value is appropriate if
+        combinations are excluded through an :class:`.Exclude`
+        :class:`.Constraint`.
+    """
+
+    def __init__(self,
+                 design: List[Factor],
+                 crossings: List[List[Factor]],
+                 constraints: List[Constraint],
+                 require_complete_crossing: bool = True):
+        who = "MultiCrossBlock"
+        argcheck(who, design, make_islistof(Factor), "list of Factors for design")
+        argcheck(who, crossings, make_islistof(make_islistof(Factor)), "list of list of Factors for crossings")
+        argcheck(who, constraints, make_islistof(Constraint), "list of Constraints for constraints")
+        self._create(who, design, crossings, constraints, require_complete_crossing, None)
 
 class CrossBlock(MultiCrossBlock):
     """A fully crossed :class:`.Block` meant to be used in experiment
@@ -405,8 +438,32 @@ class CrossBlock(MultiCrossBlock):
         argcheck(who, design, make_islistof(Factor), "list of Factors for design")
         argcheck(who, crossing, make_islistof(Factor), "list of Factors for crossing")
         argcheck(who, constraints, make_islistof(Constraint), "list of Constraints for constraints")
-        self._create(who, design, [crossing], constraints, require_complete_crossing)
+        self._create(who, design, [crossing], constraints, require_complete_crossing, None)
 
+class Repeat(MultiCrossBlockRepeat):
+    def __init__(self,
+                 block: MultiCrossBlock,
+                 constraints: List[Constraint]):
+        from sweetpea._internal.constraint import Exclude
+        who = "Repeat"
+        
+        argcheck(who, block, MultiCrossBlock, "MultiCrossBlock object")
+        argcheck(who, constraints, make_islistof(Constraint), "list of Constraints for constraints")
+
+        # We might need another subtype layer in the future, but currently `Exclude`
+        # is the only disallowed `Constraint` type:
+        for c in constraints:
+            if isinstance(c, Exclude):
+                raise ValueError("Exclude constraints no allowed in list of constraints")
+
+        block_constraints = [copy.copy(c) for c in block.orig_constraints]
+        for c in block_constraints:
+            c.set_within_block()
+
+        self._create(who,
+                     block.orig_design, block.orig_crossings, block_constraints + constraints,
+                     block.require_complete_crossing,
+                     block.within_block_count)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~                         Helper functions                            ~~~~~~~~~~~~~~~~~~~~~

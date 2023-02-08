@@ -19,12 +19,13 @@ match1 = Factor(name="match1", initial_levels=[
     DerivedLevel("down2", Window(lambda a: a[-1] != 'red', [color], 2, 1))
 ])
 
-def check_crossed_derived_factor(strategy, design, solutions, constraints=[]):
+def check_crossed_derived_factor(strategy, design, solutions, constraints=[], repeat_constraints=[]):
     block = CrossBlock(design=design,
                        crossing=design,
                        constraints=constraints)
+    repeat = Repeat(block, repeat_constraints)
 
-    experiments = synthesize_trials(block=block, samples=100, sampling_strategy=strategy)
+    experiments = synthesize_trials(block=repeat, samples=1000, sampling_strategy=strategy)
     
     assert len(experiments) == solutions
 
@@ -38,4 +39,5 @@ def test_check_big_crossed_derived_factor(strategy):
 
 @pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 def test_check_crossed_derived_factor_with_minimum_trials(strategy):
-    check_crossed_derived_factor(strategy, [color, match2], 16, [MinimumTrials(8)])
+    check_crossed_derived_factor(strategy, [color, match2], 108, [MinimumTrials(8)])
+    check_crossed_derived_factor(strategy, [color, match2], 16, [], [MinimumTrials(8)])

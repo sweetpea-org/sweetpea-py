@@ -4,7 +4,7 @@ import os
 import pytest
 import re
 
-from sweetpea import CrossBlock, MinimumTrials, synthesize_trials, UniformGen
+from sweetpea import CrossBlock, Repeat, MinimumTrials, synthesize_trials, UniformGen
 from sweetpea._internal.primitive import Factor, DerivedLevel, WithinTrial, Transition, Window
 from sweetpea._internal.constraint import Exclude, ExactlyKInARow, AtMostKInARow, Reify
 from sweetpea._internal.sampling_strategy.random import RandomGen, UCSolutionEnumerator
@@ -113,10 +113,19 @@ def test_constraint_violation():
     assert are_constraints_violated(block, {color: [color[l] for l in ['red', 'red', 'red', 'blue']]}, enumer, 4, 0, 0) == True
     assert are_constraints_violated(block, {color: [color[l] for l in ['blue', 'red', 'red', 'red']]}, enumer, 4, 0, 0) == True
 
-def test_minimum_trials():
+def test_minimum_trials_repeat():
     for min_trials in [1, 2, 3, 4, 5, 6, 7, 17, 55]:
+        block = Repeat(CrossBlock([color, text],
+                                  [color, text],
+                                  []),
+                       [MinimumTrials(min_trials)])
+        runs = synthesize_trials(block=block, samples=1, sampling_strategy=RandomGen)
+        assert len(runs[0]["color"]) == max(4, min_trials)
+
+def test_minimum_trials():
+    for min_trials in [1, 2, 3, 4, 5, 6, 7]:
         block = CrossBlock([color, text],
                            [color, text],
                            [MinimumTrials(min_trials)])
-        runs = synthesize_trials(block=block, samples=1,sampling_strategy=RandomGen)
+        runs = synthesize_trials(block=block, samples=1, sampling_strategy=RandomGen)
         assert len(runs[0]["color"]) == max(4, min_trials)

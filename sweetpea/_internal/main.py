@@ -6,7 +6,7 @@ __all__ = [
     'print_experiments', 'tabulate_experiments',
     'save_experiments_csv', 'experiments_to_tuples',
 
-    'Block', 'CrossBlock', 'MultiCrossBlock',
+    'Block', 'CrossBlock', 'MultiCrossBlock', 'Repeat',
 
     'Factor', 'Level', 'DerivedLevel', 'ElseLevel',
 
@@ -28,7 +28,7 @@ from itertools import product
 import csv, os
 
 from sweetpea._internal.block import Block
-from sweetpea._internal.cross_block import MultiCrossBlock, CrossBlock
+from sweetpea._internal.cross_block import MultiCrossBlockRepeat, MultiCrossBlock, CrossBlock, Repeat
 from sweetpea._internal.primitive import (
     Factor, SimpleFactor, DerivedFactor, Level, SimpleLevel, DerivedLevel, ElseLevel,
     Window, WithinTrial, Transition,
@@ -146,7 +146,7 @@ def tabulate_experiments(block: Block = None,
         raise RuntimeError("tabulate_experiments: expected a `block` or `factors` argument")
 
     if factors is None:
-        if (not isinstance(block, MultiCrossBlock)) or len(block.crossings) != 1:
+        if (not isinstance(block, MultiCrossBlockRepeat)) or len(block.crossings) != 1:
             raise RuntimeError("tabulate_experiments: expected block with one crossing")
         factors = block.crossings[0]
 

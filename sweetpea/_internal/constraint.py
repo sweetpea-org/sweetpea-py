@@ -10,7 +10,7 @@ from math import ceil
 from sweetpea._internal.base_constraint import Constraint
 from sweetpea._internal.iter import chunk, chunk_list
 from sweetpea._internal.block import Block
-from sweetpea._internal.cross_block import MultiCrossBlock
+from sweetpea._internal.cross_block import MultiCrossBlockRepeat
 from sweetpea._internal.backend import LowLevelRequest, BackendRequest
 from sweetpea._internal.logic import If, Iff, And, Or, Not
 from sweetpea._internal.primitive import DerivedFactor, DerivedLevel, Factor, Level, SimpleLevel
@@ -80,7 +80,7 @@ class Consistency(Constraint):
             backend_request.ll_requests += list(map(lambda v: LowLevelRequest("EQ", 1, v), chunks))
             next_var += variables_for_factor
 
-    def potential_sample_conforms(self, sample: dict) -> bool:
+    def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
         # conformance by construction in combinatoric
         return True
 
@@ -124,7 +124,7 @@ class Cross(Constraint):
         pass
 
     @staticmethod
-    def apply(block: MultiCrossBlock, backend_request: BackendRequest) -> None:
+    def apply(block: MultiCrossBlockRepeat, backend_request: BackendRequest) -> None:
         # Treat each crossing seperately, but they're related by shared variables, which
         # are the per-trial, per-level variables of factors used in multiple crossings
         for c in block.crossings:
@@ -132,7 +132,7 @@ class Cross(Constraint):
 
             crossing_size = block.crossing_size(c)
             preamble_size = block.preamble_size(c)
-            crossing_weight = 1 # block.crossing_weight(c)
+            crossing_weight = block.crossing_weight(c)
 
             # Step 1a: Get a list of the trials that are involved in the crossing. That list
             # omits leading trials that will be present to initialize transitions, and the
@@ -189,7 +189,7 @@ class Cross(Constraint):
         to_add = len(variables)
         reqs = cast(List[LowLevelRequest], [])
         while to_add > 0:
-            if (to_add >= crossing_size):
+            if (to_add >= (crossing_size * crossing_weight)):
                 reqs.append(LowLevelRequest("EQ", weight*crossing_weight, variables[:(crossing_size*crossing_weight)]))
             else:
                 reqs.append(LowLevelRequest("LT", weight*crossing_weight+1, variables))
@@ -197,7 +197,7 @@ class Cross(Constraint):
             to_add -= crossing_size * crossing_weight
         return reqs
 
-    def potential_sample_conforms(self, sample: dict) -> bool:
+    def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
         # conformance by construction or direct checking in combinatoric
         return True
 
@@ -340,7 +340,7 @@ class Derivation(Constraint):
     def uses_factor(self, f: Factor) -> bool:
         return any(list(map(lambda l: l.uses_factor(f), self.factor.levels)))
 
-    def potential_sample_conforms(self, sample: dict) -> bool:
+    def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
         return True
 
 
@@ -348,6 +348,7 @@ class _KInARow(Constraint):
     def __init__(self, k, level):
         self.k = k
         self.level = level
+        self.within_block = False
         self.__validate()
 
     def __validate(self) -> None:
@@ -364,6 +365,9 @@ class _KInARow(Constraint):
 
     def validate(self, block: Block) -> None:
         validate_factor_and_level(block, self.level.get_factor(), self.level)
+
+    def set_within_block(self) -> None:
+        self.within_block = True
 
     def uses_factor(self, f: Factor) -> bool:
         if isinstance(self.level, Factor):
@@ -399,15 +403,18 @@ class _KInARow(Constraint):
         self.apply_to_backend_request(block, (self.level.factor, self.level), backend_request)
 
     def _build_variable_sublists(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], sublist_length: int) -> List[List[int]]:
-        var_list = block.build_variable_list(level)
-        raw_sublists = [var_list[i:i+sublist_length] for i in range(0, len(var_list))]
-        return list(filter(lambda l: len(l) == sublist_length, raw_sublists))
+        var_lists = block.build_variable_lists(level, self.within_block)
+        sublists = cast(List[List[int]], [])
+        for var_list in var_lists:
+            raw_sublists = [var_list[i:i+sublist_length] for i in range(0, len(var_list))]
+            sublists = sublists + list(filter(lambda l: len(l) == sublist_length, raw_sublists))
+        return sublists
 
     @abstractmethod
     def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], backend_request: BackendRequest) -> None:
         pass
 
-    def potential_sample_conforms(self, sample: dict) -> bool:
+    def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
         level = self.level
         factor = level.factor
         level_list = sample[factor]
@@ -543,8 +550,9 @@ class ExactlyK(_KInARow):
                                  level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]],
                                  backend_request: BackendRequest
                                  ) -> None:
-        sublists = block.build_variable_list(level)
-        backend_request.ll_requests.append(LowLevelRequest("EQ", self.k, sublists))
+        sublistss = block.build_variable_lists(level, self.within_block)
+        for sublists in sublistss:
+            backend_request.ll_requests.append(LowLevelRequest("EQ", self.k, sublists))
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
@@ -688,8 +696,9 @@ class Exclude(Constraint):
         return excluded_levels
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
-        var_list = block.build_variable_list((self.factor, self.level))
-        backend_request.cnfs.append(And(list(map(lambda n: n * -1, var_list))))
+        var_lists = block.build_variable_lists((self.factor, self.level))
+        for var_list in var_lists:
+            backend_request.cnfs.append(And(list(map(lambda n: n * -1, var_list))))
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
@@ -703,7 +712,7 @@ class Exclude(Constraint):
     def is_complex_for_combinatoric(self) -> bool:
         return False
 
-    def potential_sample_conforms(self, sample: dict) -> bool:
+    def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
         # conformance by construction in combinatoric for simple factors, but
         # we have to check exlcusions based on complex factors
         if self.factor.has_complex_window:
@@ -720,21 +729,14 @@ class Pin(Constraint):
         self.index = index
         self.factor = level.factor
         self.level = level
+        self.within_block = False
 
-    def _get_trial_number(self, block) -> int:
-        num_trials = block.trials_per_sample()
-        if self.index < 0:
-            trial_no = num_trials + self.index
-        else:
-            trial_no = self.index
-        if (trial_no >= 0) and (trial_no < num_trials):
-            return trial_no
-        else:
-            return -1
+    def set_within_block(self) -> None:
+        self.within_block = True
 
     def validate(self, block: Block) -> None:
         validate_factor_and_level(block, self.factor, self.level)
-        if self._get_trial_number(block) < 0:
+        if not block.get_trial_numbers(self.index):
             num_trials = block.trials_per_sample()
             block.errors.add("WARNING: Pin constraint unsatisfiable, because "
                              + str(self.index) + " is out of range for " + str(num_trials) + " trials")
@@ -744,13 +746,16 @@ class Pin(Constraint):
 
     def desugar(self, replacements: dict) -> List:
         level = replacements.get(self.level, self.level)
-        return [Pin(self.index, level)]
+        p = Pin(self.index, level)
+        p.within_block = self.within_block
+        return [p]
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
-        trial_no = self._get_trial_number(block)
-        if trial_no >= 0:
-            var = block.get_variable(trial_no+1, (self.factor, self.level))
-            backend_request.cnfs.append(And([var]))
+        trial_nos = block.get_trial_numbers(self.index, self.within_block)
+        if trial_nos:
+            for trial_no in trial_nos:
+                var = block.get_variable(trial_no+1, (self.factor, self.level))
+                backend_request.cnfs.append(And([var]))
         else:
             backend_request.cnfs.append(And([1, -1]))
 
@@ -766,16 +771,14 @@ class Pin(Constraint):
     def is_complex_for_combinatoric(self) -> bool:
         return True
 
-    def potential_sample_conforms(self, sample: dict) -> bool:
-
+    def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
         levels = sample[self.factor]
-        num_trials = len(levels)
-        if self.index < 0:
-            trial_no = num_trials + self.index
-        else:
-            trial_no = self.index
-        if (trial_no >= 0) and (trial_no < num_trials):
-            return levels[trial_no] == self.level
+        trial_nos = block.get_trial_numbers(self.index, self.within_block)
+        if trial_nos:
+            for trial_no in trial_nos:
+                if levels[trial_no] != self.level:
+                    return False
+            return True
         else:
             return False
 
@@ -797,7 +800,7 @@ class Reify(Constraint):
     def is_complex_for_combinatoric(self) -> bool:
         return False
 
-    def potential_sample_conforms(self, sample: dict) -> bool:
+    def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
         return True
 
     def desugar(self, replacements: dict) -> List:
@@ -834,5 +837,5 @@ class MinimumTrials(Constraint):
     def __str__(self):
         return str(self.__dict__)
 
-    def potential_sample_conforms(self, sample: dict) -> bool:
+    def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
         return True

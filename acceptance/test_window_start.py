@@ -50,9 +50,10 @@ def test_window_early_start_regression():
 
     target = Factor('target', [one_t, two_t])
 
-    block = CrossBlock(design=[letter, target],
-                       constraints=[MinimumTrials(48)],
-                       crossing=[letter, target])
+    block = Repeat(CrossBlock(design=[letter, target],
+                              constraints=[],
+                              crossing=[letter, target]),
+                   constraints=[MinimumTrials(48)])
 
     experiments = synthesize_trials(block, 1)
 
