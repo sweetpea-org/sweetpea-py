@@ -402,13 +402,15 @@ class _KInARow(Constraint):
         # that the constraint is applied to each level of the factor.
         self.apply_to_backend_request(block, (self.level.factor, self.level), backend_request)
 
-    def _build_variable_sublists(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], sublist_length: int) -> List[List[int]]:
+    def _build_variable_sublistss(self, block: Block,
+                                  level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]],
+                                  sublist_length: int) -> List[List[List[int]]]:
         var_lists = block.build_variable_lists(level, self.within_block)
-        sublists = cast(List[List[int]], [])
+        sublistss = cast(List[List[List[int]]], [])
         for var_list in var_lists:
             raw_sublists = [var_list[i:i+sublist_length] for i in range(0, len(var_list))]
-            sublists = sublists + list(filter(lambda l: len(l) == sublist_length, raw_sublists))
-        return sublists
+            sublistss.append(list(filter(lambda l: len(l) == sublist_length, raw_sublists)))
+        return sublistss
 
     @abstractmethod
     def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], backend_request: BackendRequest) -> None:
@@ -419,18 +421,21 @@ class _KInARow(Constraint):
         factor = level.factor
         level_list = sample[factor]
 
-        counts = []
-        count = 0
-        for l in level_list:
-            if count > 0 and l != level:
+        def check_sequence(start: int, end: int) -> bool:
+            counts = []
+            count = 0
+            for i in range(start, end):
+                l = level_list[i]
+                if count > 0 and l != level:
+                    counts.append(count)
+                    count = 0
+                elif l == level:
+                    count += 1
+            if count > 0:
                 counts.append(count)
-                count = 0
-            elif l == level:
-                count += 1
-        if count > 0:
-            counts.append(count)
+            return self._potential_counts_conform(counts)
 
-        return self._potential_counts_conform(counts)
+        return all(block.map_block_trial_ranges(self.within_block, check_sequence))
 
     @abstractmethod
     def _potential_counts_conform(self, counts: List[int]) -> bool:
@@ -464,10 +469,10 @@ class AtMostKInARow(_KInARow):
         sum(7, 13, 19) LT 3
     """
     def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], backend_request: BackendRequest) -> None:
-        sublists = self._build_variable_sublists(block, level, self.k + 1)
-
+        sublistss = self._build_variable_sublistss(block, level, self.k + 1)
         # Build the requests
-        backend_request.ll_requests += list(map(lambda l: LowLevelRequest("LT", self.k + 1, l), sublists))
+        for sublists in sublistss:
+            backend_request.ll_requests += list(map(lambda l: LowLevelRequest("LT", self.k + 1, l), sublists))
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
@@ -513,10 +518,9 @@ class AtLeastKInARow(_KInARow):
                                     backend_request: BackendRequest) -> None:
 
         # Request sublists for k+1 to allow us to determine the transition
-        sublists = self._build_variable_sublists(block, level, self.k + 1)
+        sublistss = self._build_variable_sublistss(block, level, self.k + 1)
         implications = []
-        print(sublists)
-        if sublists:
+        for sublists in sublistss:
             # Starting corner case
             implications.append(If(sublists[0][0], And(sublists[0][1:-1])))
             for sublist in sublists:
@@ -577,35 +581,36 @@ class ExactlyKInARow(_KInARow):
                                  level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]],
                                  backend_request: BackendRequest
                                  ) -> None:
-        sublists = self._build_variable_sublists(block, level, self.k)
+        sublistss = self._build_variable_sublistss(block, level, self.k)
         implications = []
 
-        # Handle the regular cases (1 => 2 ^ ... ^ n ^ ~n+1)
-        trim = len(sublists) if self.k > 1 else len(sublists) - 1
-        for idx, l in enumerate(sublists[:trim]):
-            if idx > 0:
-                p_list = [Not(sublists[idx-1][0]), l[0]]
-                p = And(p_list) if len(p_list) > 1 else p_list[0]
-            else:
-                p = l[0]
+        for sublists in sublistss:
+            # Handle the regular cases (1 => 2 ^ ... ^ n ^ ~n+1)
+            trim = len(sublists) if self.k > 1 else len(sublists) - 1
+            for idx, l in enumerate(sublists[:trim]):
+                if idx > 0:
+                    p_list = [Not(sublists[idx-1][0]), l[0]]
+                    p = And(p_list) if len(p_list) > 1 else p_list[0]
+                else:
+                    p = l[0]
 
-            if idx < len(sublists) - 1:
-                q_list = cast(List[Any], l[1:]) + [Not(sublists[idx+1][-1])]
-                q = And(q_list) if len(q_list) > 1 else q_list[0]
-            else:
-                q = And(l[1:]) if len(l[1:]) > 1 else l[self.k - 1]
-            implications.append(If(p, q))
+                if idx < len(sublists) - 1:
+                    q_list = cast(List[Any], l[1:]) + [Not(sublists[idx+1][-1])]
+                    q = And(q_list) if len(q_list) > 1 else q_list[0]
+                else:
+                    q = And(l[1:]) if len(l[1:]) > 1 else l[self.k - 1]
+                implications.append(If(p, q))
 
-        # Handle the tail
-        if len(sublists[-1]) > 1:
-            tail = sublists[-1]
-            tail.reverse()
-            for idx in range(len(tail) - 1):
-                implications.append(If(l[idx], l[idx + 1]))
+            # Handle the tail
+            if len(sublists[-1]) > 1:
+                tail = sublists[-1]
+                tail.reverse()
+                for idx in range(len(tail) - 1):
+                    implications.append(If(l[idx], l[idx + 1]))
 
-        (cnf, new_fresh) = block.cnf_fn(And(implications), backend_request.fresh)
-        backend_request.cnfs.append(cnf)
-        backend_request.fresh = new_fresh
+            (cnf, new_fresh) = block.cnf_fn(And(implications), backend_request.fresh)
+            backend_request.cnfs.append(cnf)
+            backend_request.fresh = new_fresh
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__

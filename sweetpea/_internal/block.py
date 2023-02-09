@@ -420,7 +420,7 @@ class Block:
                 results[f.name] = vals
         return results
 
-    def __map_block_trial_ranges(self, within_block: bool, proc: Callable[[int, int], T]) -> List[T]:
+    def map_block_trial_ranges(self, within_block: bool, proc: Callable[[int, int], T]) -> List[T]:
         num_trials = self.trials_per_sample()
         if within_block:
             start = 0
@@ -445,13 +445,13 @@ class Block:
                                       within_block: bool = False) -> List[List[int]]:
         def get_variables(start: int, end: int) -> List[int]:
             nonlocal level
-            first_variable = self.first_variable_for_level(level[0], level[1]) + 1 + start
             design_var_count = self.variables_per_trial()
+            first_variable = self.first_variable_for_level(level[0], level[1]) + 1 + (start * design_var_count)
             # TODO: This should be reworked. It's an accumulating fold where the
             #       folding function's second argument is just thrown away.
             return list(accumulate(repeat(first_variable, end - start),
                                    lambda acc, _: acc + design_var_count))
-        return self.__map_block_trial_ranges(within_block, get_variables)
+        return self.map_block_trial_ranges(within_block, get_variables)
 
     def __build_complex_variable_lists(self,
                                        level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]],
@@ -463,7 +463,7 @@ class Block:
             nonlocal factor, level_count, start_idx
             n = self.variables_for_factor(factor, start, end) // level_count
             return reduce(lambda l, v: l + [start_idx + ((v + start) * level_count)], range(n), [])
-        return self.__map_block_trial_ranges(within_block, get_variables)
+        return self.map_block_trial_ranges(within_block, get_variables)
 
     def get_trial_numbers(self, b_trial_no: int, within_block: bool = False) -> List[int]:
         def get_variables(start: int, end: int) -> int:
@@ -476,7 +476,7 @@ class Block:
                 return trial_no
             else:
                 return -1
-        nums = self.__map_block_trial_ranges(within_block, get_variables)
+        nums = self.map_block_trial_ranges(within_block, get_variables)
         if all([n >= 0 for n in nums]):
             return nums
         else:

@@ -15,6 +15,17 @@ right = direction.get_level('right')
 left = direction.get_level('left')
 
 @pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
+def test_check_constraints_on_design_factor(strategy):
+    block = CrossBlock([color], [color], [MinimumTrials(4), AtMostKInARow(1, color)])
+    repet = Repeat(block, [MinimumTrials(8)])
+    trials = synthesize_trials(repet, 100, strategy)
+    assert len(trials) == 4
+
+    repet = Repeat(block, [MinimumTrials(8), AtMostKInARow(1, color)])
+    trials = synthesize_trials(repet, 100, strategy)
+    assert len(trials) == 2
+
+@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 @pytest.mark.parametrize('constraints_and_solutions',
                          # only way this works is red, blue, blue, red; solutions: 4
                          [[[AtMostKInARow(1, (color, red)), AtLeastKInARow(2, (color, blue))], 4],
@@ -33,6 +44,12 @@ def test_check_constraints_on_crossing_factor(strategy, constraints_and_solution
     experiments  = synthesize_trials(block, 100, sampling_strategy=strategy)
 
     assert len(experiments) == solutions
+
+    # Two instances of the block should be independent
+    experiments  = synthesize_trials(Repeat(block, [MinimumTrials(2*len(experiments[0]['color']))]),
+                                     1000, sampling_strategy=strategy)
+    assert len(experiments) == solutions * solutions
+    
 
 @pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 @pytest.mark.parametrize('constraints_and_solutions',
