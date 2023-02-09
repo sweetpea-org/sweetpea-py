@@ -210,16 +210,14 @@ combinations by the definition of its levels, then the number of
 trials in a crossing can be reduced, but only if
 <cite>require_complete_crossing</cite> is set to false.</p></li>
 <li><p>A <a class="reference internal" href="constraints.html#sweetpea.MinimumTrials" title="sweetpea.MinimumTrials"><code class="xref py py-class docutils literal notranslate"><span class="pre">MinimumTrials</span></code></a> in <cite>constraint</cite> can increase the number
-of trials in a sequence. Additional trials are added afterward by
-replicating the crossing as many times as needed to reach the
-required number of trials. Levels are selected for each
-replication of the crossing independently, except that transition
-derived factors can create dependencies from one replication to
-the next. Preamble trials are not replicated, since each
-replication of the crossing serves as a preamble for the next.
-The last replication can be shorter than the full crossing, in
-which case is reflects a prefix of a full-crossing sequence than
-would otherwise appear.</p></li>
+of trials in a sequence. Additional trials are added by
+scaling the weight of each crossing combination as many times as
+needed to meet or exceed the required number of trials. (To scale
+by repeating the crossing, instead, use <a class="reference internal" href="#sweetpea.Repeat" title="sweetpea.Repeat"><code class="xref py py-class docutils literal notranslate"><span class="pre">Repeat</span></code></a>.)
+Preamble trials are not scaled. If the minimum trial
+count minus preamble length is not a multiple of the crossing size,
+then it’s as if the minimum trial count were rounded up, and
+then trials are discarded at the end.</p></li>
 </ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -277,6 +275,51 @@ be a subset of the <cite>design</cite> list</p></li>
 <li><p><strong>constraints</strong> (<em>List</em><em>[</em><a class="reference internal" href="constraints.html#sweetpea.Constraint" title="sweetpea.Constraint"><em>Constraint</em></a><em>]</em>) – constraints that every sequence of trials must
 satify; see <a class="reference internal" href="constraints.html#constraints"><span class="std std-ref">Constraints</span></a></p></li>
 <li><p><strong>require_complete_crossing</strong> – same as for <a class="reference internal" href="#sweetpea.MultiCrossBlock" title="sweetpea.MultiCrossBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiCrossBlock</span></code></a></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a block description</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#sweetpea.Block" title="sweetpea.Block">Block</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sweetpea.Repeat">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sweetpea.</span></span><span class="sig-name descname"><span class="pre">Repeat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constraints</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sweetpea.Repeat" title="Permalink to this definition"></a></dt>
+<dd><p>Repeats the crossings of a given <a class="reference internal" href="#sweetpea.MultiCrossBlock" title="sweetpea.MultiCrossBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiCrossBlock</span></code></a> (or
+<a class="reference internal" href="#sweetpea.CrossBlock" title="sweetpea.CrossBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">CrossBlock</span></code></a>) enough times to satisfy a minimum trial count
+specified in <cite>constraints</cite>. Unlike increasing the minimum trial
+count within <cite>block</cite>, levels are selected for each replication of
+the crossing independently, except that transition derived factors
+can create dependencies from one replication to the next.</p>
+<p>Preamble trials are not replicated, since each replication of the
+crossing serves as a preamble for the next. If <cite>block</cite> contains
+multiple crossings, then all crossings must have the same preamble
+length.</p>
+<p>Other constraints apply within each single repetetion or across the
+sequence of repetitions, depending on whether the constraint is
+specified as part <cite>block</cite> or provided in <cite>constraints</cite> for the
+repetition. For example, a <a class="reference internal" href="constraints.html#sweetpea.Pin" title="sweetpea.Pin"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pin</span></code></a> constraint within <cite>block</cite>
+applies to one trial of each repetition (where the index is
+relative to each repetition), while a <a class="reference internal" href="constraints.html#sweetpea.Pin" title="sweetpea.Pin"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pin</span></code></a> constraint in
+<cite>constraints</cite> applies to one trial for the entire trial sequence.
+When a crossing has preamble trials, constraints in <cite>block</cite> apply
+to a preamble for each repetition, which overlaps with the trials
+of the previous repetition. An <a class="reference internal" href="constraints.html#sweetpea.Exclude" title="sweetpea.Exclude"><code class="xref py py-class docutils literal notranslate"><span class="pre">Exclude</span></code></a> constraint is not
+allowed in <cite>constraints</cite>, since that would imply changing the size
+of each repetition.</p>
+<p>If <cite>constraints</cite> is empty, then the repetition has no effect, and
+generating trials from the repetition will be the same as
+generating them from <cite>block</cite> directly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>block</strong> (<a class="reference internal" href="#sweetpea.MultiCrossBlock" title="sweetpea.MultiCrossBlock"><em>MultiCrossBlock</em></a>) – the block to repeat</p></li>
+<li><p><strong>constraints</strong> (<em>List</em><em>[</em><a class="reference internal" href="constraints.html#sweetpea.Constraint" title="sweetpea.Constraint"><em>Constraint</em></a><em>]</em>) – a list that cannot include
+<a class="reference internal" href="constraints.html#sweetpea.Exclude" title="sweetpea.Exclude"><code class="xref py py-class docutils literal notranslate"><span class="pre">Exclude</span></code></a> constraints</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
