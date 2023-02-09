@@ -578,7 +578,7 @@ class UCSolutionEnumerator():
         # once somewhere in the sequence, so we get to pick from all possible completions
         # of all combinations; in that case, we can just multiply the new segment
         # lengths into `solution_count`. Otherwise, we need to consider every choice of
-        # `first_n` crossing combinations, and then multiply the 
+        # `first_n` crossing combinations, and then multiply the
         if first_n == len(self._crossing_instances) and self._crossing_is_unweighted:
             solution_count *= reduce(op.mul, components_shape.combinations_shapes, 1)
         else:
@@ -614,7 +614,13 @@ class UCSolutionEnumerator():
     def sum_combination_products(self, solution_count: int, first_n: int, shapes: List[int],
                                  m_or_counters: Union[int, List[int]],
                                  pmemo: PermutationMemo):
-        if all([s == shapes[0] for s in shapes]) and isinstance(m_or_counters, int):
+        if isinstance(m_or_counters, int):
+            uniform_m = True
+        elif all([m == m_or_counters[0] for m in m_or_counters]):
+            uniform_m = True
+        else:
+            uniform_m = False
+        if all([s == shapes[0] for s in shapes]) and uniform_m:
             # Every choice of `first_n` combinations produces the same number of possibilities
             # for source combinations in each trial
             return solution_count * pow(shapes[0], first_n)

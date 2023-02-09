@@ -317,7 +317,10 @@ def synthesize_trials(block: Block,
 
     if os.getenv("SWEETPEA_CHECK_SYNTHESIZED"):
         for trials in trialss:
-            if sample_mismatch_experiment(block, trials):
+            mismatches = sample_mismatch_experiment(block, trials)
+            if mismatches:
+                print_experiments(block, [trials])
+                print(mismatches)
                 raise RuntimeError("synthesized trials has mismatches")
 
     return trialss
@@ -343,15 +346,19 @@ def sample_mismatch_experiment(block: Block, sample: dict) -> dict:
         mismatches in the categories factors, constraints and crossings
     """
     res = {}
-    factor_errors = block.sample_mismatch_factors(sample)
-    if factor_errors:
-        res['factors'] = factor_errors
-    constraint_errors = block.sample_mismatch_constraints(sample)
-    if constraint_errors:
-        res['constraints'] = constraint_errors
-    crossing_errors = block.sample_mismatch_crossing(sample)
-    if crossing_errors:
-        res['crossings'] = crossing_errors
+    for key in sample:
+        if len(sample[key]) != block.trials_per_sample():
+            res['trial_count'] = [key, len(sample[key]), block.trials_per_sample()]
+    if not res:
+        factor_errors = block.sample_mismatch_factors(sample)
+        if factor_errors:
+            res['factors'] = factor_errors
+        constraint_errors = block.sample_mismatch_constraints(sample)
+        if constraint_errors:
+            res['constraints'] = constraint_errors
+        crossing_errors = block.sample_mismatch_crossing(sample)
+        if crossing_errors:
+            res['crossings'] = crossing_errors
     return res
 
 

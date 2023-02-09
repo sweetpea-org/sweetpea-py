@@ -515,13 +515,14 @@ class AtLeastKInARow(_KInARow):
         # Request sublists for k+1 to allow us to determine the transition
         sublists = self._build_variable_sublists(block, level, self.k + 1)
         implications = []
+        print(sublists)
         if sublists:
             # Starting corner case
             implications.append(If(sublists[0][0], And(sublists[0][1:-1])))
             for sublist in sublists:
                 implications.append(If(And([Not(sublist[0]), sublist[1]]), And(sublist[2:])))
             # Ending corner case
-            implications.append(If(sublists[-1][-1], And(sublists[-1][1:-1])))
+            implications.append(If(Not(sublists[-1][1]), Not(Or(sublists[-1][2:]))))
 
         (cnf, new_fresh) = block.cnf_fn(And(implications), backend_request.fresh)
 

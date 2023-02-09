@@ -504,7 +504,7 @@ def test_atleastkinarow():
         If(1, And([7])),
         If(And([Not(1), 7]), And([13])),
         If(And([Not(7), 13]), And([19])),
-        If(19, And([13])),
+        If(Not(13), Not(Or([19]))),
     ]), 25)
 
     assert backend_request.fresh == expected_fresh
@@ -515,7 +515,7 @@ def test_atleastkinarow():
     (expected_cnf, expected_fresh) = to_cnf_tseitin(And([
         If(1, And([7, 13])),
         If(And([Not(1), 7]), And([13, 19])),
-        If(19, And([7, 13])),
+        If(Not(7), Not(Or([13, 19]))),
     ]), 25)
 
     assert backend_request.fresh == expected_fresh
