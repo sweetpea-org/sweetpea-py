@@ -40,7 +40,7 @@ jobs:
         with:
           repository: sweetpea-org/unigen-exe
           path: executables
-          ref: v0.1
+          ref: v0.2
       - name: Set asset path name
         shell: bash
         run: echo "UNIGEN_ASSET_PATH=$(python sweetpea/sweetpea/core/generate/tools/executables.py --asset-string)" >> $GITHUB_ENV
