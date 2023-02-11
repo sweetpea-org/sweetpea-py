@@ -721,12 +721,12 @@ class Exclude(Constraint):
     def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
         # conformance by construction in combinatoric for simple factors, but
         # we have to check exlcusions based on complex factors
-        if self.factor.has_complex_window:
-            levels = sample[self.factor]
-            level = self.level
-            for l in levels:
-                if l == level:
-                    return False
+        #if self.factor.has_complex_window:
+        levels = sample[self.factor]
+        level = self.level
+        for l in levels:
+            if l == level:
+                return False
         return True
 
 class Pin(Constraint):
