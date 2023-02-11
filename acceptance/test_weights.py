@@ -63,7 +63,7 @@ def test_correct_solutions_with_derived_level_weight():
     crossing     = [look]
 
     check_consistent_solutions(CrossBlock(design, crossing, []), 9)
-    check_consistent_solutions(Repeat(CrossBlock(design, crossing, [], constraints)), 36)
+    check_consistent_solutions(Repeat(CrossBlock(design, crossing, []), constraints), 36)
 
 def test_correct_solutions_with_transition_level_weight():
     color = Factor("color",  ["red", "blue"])
