@@ -1,7 +1,7 @@
 import random
 
 
-def convert_samples(samples: list):
+def convert_samples(samples: list) -> list:
     """Convert string levels in a sample to numbers"""
     factors = set()
     ### get factors
@@ -10,16 +10,14 @@ def convert_samples(samples: list):
             factors.add(f)
     factor_dict = {}
     ### get the level dict for every factor:
-    for f in factors:
-        factor_dict[f] = set()
+
     for s in samples:
         for f in factors:
+            item = set()
             for l in s[f]:
-                factor_dict[f].add(l)
-    for f in factor_dict.keys():
-        factor_dict[f] = list(factor_dict[f])
-    for f in factor_dict.keys():
-        factor_dict[f] = {factor_dict[f][i]: float(i) for i in range(len(factor_dict[f]))}
+                item.add(l)
+            item_ = list(item)
+            factor_dict[f] = {item_[i]: float(i) for i in range(len(item_))}
     res = []
     for s in samples:
         s_ = {}
@@ -39,19 +37,18 @@ def train_test_split_samples(samples: list, percentage: float = .8) -> tuple:
     return samples_[:split], samples_[split:]
 
 
-def create_x_y_sample(sample: dict, y_factor: str, k: int = None) -> tuple:
+def create_x_y_sample(sample: dict, y_factor: str, k: int = 10) -> tuple:
     """create the independent and dependent values in a sample"""
     x_lists = []
     y_list = sample[y_factor]
     for key in sample.keys():
         x_lists.append(sample[key])
-    if k is None:
-        k = min(len(y_list) // 2, 10)
+    k_ = min(len(y_list) // 2, k)
     start = 0
-    end = k
+    end = k_
     x_res = []
     y_res = []
-    if len(y_list) < k:
+    if len(y_list) < k_:
         raise Exception('predict distance to high in auto correlation test')
     while end < len(y_list):
         x_temp = []
@@ -64,7 +61,7 @@ def create_x_y_sample(sample: dict, y_factor: str, k: int = None) -> tuple:
     return x_res, y_res
 
 
-def create_x_y_train_test_samples(samples: list, factor: str, percentage: float = .8, k: int = None) -> tuple:
+def create_x_y_train_test_samples(samples: list, factor: str, percentage: float = .8, k: int = 10) -> tuple:
     """create a list of train independent, train dependent, test independent and test dpendent variables"""
     train_set, test_set = train_test_split_samples(samples, percentage)
     x_train = []
@@ -82,7 +79,7 @@ def create_x_y_train_test_samples(samples: list, factor: str, percentage: float 
     return x_train, y_train, x_test, y_test
 
 
-def auto_correlation_score_factor(samples: list, factor: str, percentage: float = .8, k: int = None) -> float:
+def auto_correlation_score_factor(samples: list, factor: str, percentage: float = .8, k: int = 10) -> float:
     """get the auto correlation score for a single factor"""
     try:
         from sklearn.neural_network import MLPClassifier
