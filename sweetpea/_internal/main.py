@@ -2,6 +2,7 @@
 
 __all__ = [
     'synthesize_trials', 'sample_mismatch_experiment',
+    'auto_correlation_scores_samples',
 
     'print_experiments', 'tabulate_experiments',
     'save_experiments_csv', 'experiments_to_tuples',
@@ -50,6 +51,8 @@ from sweetpea._internal.sampling_strategy.iterate_ilp import IterateILPGen
 from sweetpea._internal.server import build_cnf
 from sweetpea._internal.core.cnf import Var
 from sweetpea._internal.argcheck import argcheck, make_islistof
+
+from sweetpea._internal.auto_correlation_score import auto_correlation_score_factor
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -359,6 +362,36 @@ def sample_mismatch_experiment(block: Block, sample: dict) -> dict:
         crossing_errors = block.sample_mismatch_crossing(sample)
         if crossing_errors:
             res['crossings'] = crossing_errors
+    return res
+
+
+def auto_correlation_scores_samples(samples: dict, factor_names: list[str] = None) -> dict:
+    """Given a number of samples given as :class:`list` of trial sets, calculates
+    a auto correlation score representing if a level can be predicted from the k
+    proceeding levels. This is done by creating a neural network that is trained on
+    predicting a factor based on the levels in all factors of the preceding trials.
+    The number of preceding trials taken into account is the minimum between 10 and
+    half the sequence length.
+
+
+    :param samples:
+        A :class:`list` of trial sets. Each set is represented as a :class:`dictionary <dict>`
+        mapping each factor name to a list of levels, where each such list contains
+        to one level per trial.
+    :param factor_names:
+        A :class`list` of string. The factors to be tested (if None, all factors in samples are tested)
+    :returns:
+        A :class:`dict` describing the mismatches. The entries of the dictionary lists the
+        mismatches in the categories factors, constraints and crossings
+    """
+    """get the auto correlation scores for each factor"""
+    res = {}
+    if factor_names is None:
+        for f in samples[0].keys():
+            res[f] = auto_correlation_score_factor(samples, f)
+    else:
+        for f in factor_names:
+            res[f] = auto_correlation_score_factor(samples, f)
     return res
 
 
