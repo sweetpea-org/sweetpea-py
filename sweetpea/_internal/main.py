@@ -365,7 +365,7 @@ def sample_mismatch_experiment(block: Block, sample: dict) -> dict:
     return res
 
 
-def auto_correlation_scores_samples(samples: list, factor_names: list[str] = []) -> dict:
+def auto_correlation_scores_samples(samples: list, factor_names: List[str] = []) -> dict:
     """Given a number of samples given as :class:`list` of trial sets, calculates
     a auto correlation score representing if a level can be predicted from the k
     proceeding levels. This is done by creating a neural network that is trained on
