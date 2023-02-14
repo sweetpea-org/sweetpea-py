@@ -25,7 +25,7 @@ def test_score_auto_correlation_all():
     except ImportError as e:
         assert True
         return
-    res = auto_correlation_scores_samples(samples)
+    res = auto_correlation_scores_samples_between(samples)
     assert 'color' in res.keys() and 'word' in res.keys() and 'congruency' in res.keys()
 
 
@@ -36,7 +36,7 @@ def test_score_auto_correlation():
     except ImportError as e:
         assert True
         return
-    res = auto_correlation_scores_samples(samples, ['color'])
+    res = auto_correlation_scores_samples_between(samples, ['color'])
     assert 'color' in res.keys() and 'word' not in res.keys() and 'congruency' not in res.keys()
 
 
