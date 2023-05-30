@@ -7,6 +7,7 @@ __all__ = [
 
     'print_experiments', 'tabulate_experiments',
     'save_experiments_csv', 'experiments_to_tuples',
+    'simplify_experiments_to_dicts',
 
     'Block', 'CrossBlock', 'MultiCrossBlock', 'Repeat',
 
@@ -80,9 +81,30 @@ def _experiments_to_tuples(experiments: List[dict],
         tuple_lists.append(list(zip(*[experiment[key] for key in keys])))
     return tuple_lists
 
+def _experiments_to_dicts(experiments: List[dict],
+                           keys: List[str]):
+    """Converts a list of experiments into a list of lists of dictionaries, where
+    each dictionary represents a crossing in a given experiment.
+
+    :param experiments:
+        A list of experiments as :class:`dicts <dict>`. These are produced by
+        calls to the synthesis function :func:`.synthesize_trials`.
+
+    :returns:
+        A list of lists of dictionaries, where each sub-list corresponds
+        to one of the ``experiments``, each dictionary corresponds to a particular
+        crossing, and each string is the simple surface name of a level.
+    """
+    tuple_lists: List[List[Tuple[str, ...]]] = []
+    for experiment in experiments:
+        tuple_lists.append([dict(zip(keys, values)) for values in zip(*[experiment[key] for key in keys])])
+    return tuple_lists
 
 def simplify_experiments(experiments: List[Dict]) -> List[List[Tuple[str, ...]]]:
     return _experiments_to_tuples(experiments, list(experiments[0].keys()))
+
+def simplify_experiments_to_dicts(experiments: List[dict]) -> List[List[dict]]:
+    return _experiments_to_dicts(experiments, list(experiments[0].keys()))
 
 
 def experiments_to_tuples(block: Block,
