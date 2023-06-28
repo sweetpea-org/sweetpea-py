@@ -7,6 +7,7 @@ from sweetpea import Factor, DerivedLevel, WithinTrial, Transition
 from sweetpea import AtMostKInARow, ExactlyKInARow, Exclude
 from sweetpea import IterateGen
 from sweetpea import CrossBlock, synthesize_trials, synthesize_trials
+from sweetpea import experiments_to_dicts, experiments_to_tuples
 
 # Basic setup
 color_list = ["red", "blue"]
@@ -41,6 +42,31 @@ def test_correct_solution_count(design):
 
     assert len(experiments) == 24
 
+@pytest.mark.parametrize('design', permutations([color, text]))
+def test_conversion_to_tuples_and_dicts(design):
+    crossing = [color, text]
+    constraints = []
+
+    block  = CrossBlock(design, crossing, constraints)
+    experiments  = synthesize_trials(block, 100, IterateGen)
+
+    dicts = experiments_to_dicts(block, experiments)
+    tuples = experiments_to_tuples(block, experiments)
+
+    assert len(dicts) == 24
+    assert len(tuples) == 24
+
+    assert isinstance(dicts[0], list)
+    assert isinstance(tuples[0], list)
+
+    assert len(dicts[0]) == 4
+    assert len(tuples[0]) == 4
+
+    assert isinstance(dicts[0][0], dict)
+    assert isinstance(tuples[0][0], tuple)
+
+    assert dicts[0][0]["color"] == "red" or dicts[0][0]["color"] == "blue"
+    assert tuples[0][0][0] == "red" or tuples[0][0][0] == "blue"
 
 @pytest.mark.parametrize('design', permutations([color, text, con_factor]))
 def test_correct_solution_count_with_congruence_factor_but_unconstrained(design):

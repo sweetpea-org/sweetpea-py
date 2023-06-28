@@ -6,8 +6,7 @@ __all__ = [
     'auto_correlation_scores_sample_within', 'auto_correlation_scores_samples_between',
 
     'print_experiments', 'tabulate_experiments',
-    'save_experiments_csv', 'experiments_to_tuples',
-    'simplify_experiments_to_dicts',
+    'save_experiments_csv', 'experiments_to_tuples', 'experiments_to_dicts',
 
     'Block', 'CrossBlock', 'MultiCrossBlock', 'Repeat',
 
@@ -64,27 +63,37 @@ from sweetpea._internal.auto_correlation_score import (auto_correlation_score_fa
 
 def _experiments_to_tuples(experiments: List[dict],
                            keys: List[str]):
-    """Converts a list of experiments into a list of lists of tuples, where
-    each tuple represents a crossing in a given experiment.
-
-    :param experiments:
-        A list of experiments as :class:`dicts <dict>`. These are produced by
-        calls to the synthesis function :func:`.synthesize_trials`.
-
-    :returns:
-        A list of lists of tuples of strings, where each sub-list corresponds
-        to one of the ``experiments``, each tuple corresponds to a particular
-        crossing, and each string is the simple surface name of a level.
-    """
-    tuple_lists: List[List[Tuple[str, ...]]] = []
+    tuple_lists: List[List[Tuple[Any, ...]]] = []
     for experiment in experiments:
         tuple_lists.append(list(zip(*[experiment[key] for key in keys])))
     return tuple_lists
 
 def _experiments_to_dicts(experiments: List[dict],
                            keys: List[str]):
+    tuple_lists: List[List[Dict[str, Any]]] = []
+    for experiment in experiments:
+        tuple_lists.append([dict(zip(keys, values)) for values in zip(*[experiment[key] for key in keys])])
+    return tuple_lists
+
+def simplify_experiments(experiments: List[dict]) -> List[List[tuple]]:
+    """Like experiments_to_tuples, but without a block argument
+    (for backward compatibility), so the factor names are inferred from the
+    experiments.
+    """
+    return _experiments_to_tuples(experiments, list(experiments[0].keys()))
+
+def simplify_experiments_to_dicts(experiments: List[dict]) -> List[List[dict]]:
+    """Like experiments_to_tuples, but without a block argument,
+    so the factor names are inferred from the experiments.
+    """
+    return _experiments_to_dicts(experiments, list(experiments[0].keys()))
+
+def experiments_to_dicts(block: Block, experiments: List[dict]) -> List[List[dict]]:
     """Converts a list of experiments into a list of lists of dictionaries, where
     each dictionary represents a crossing in a given experiment.
+
+    :param block:
+        An experimental description as a :class:`.Block`.
 
     :param experiments:
         A list of experiments as :class:`dicts <dict>`. These are produced by
@@ -95,22 +104,25 @@ def _experiments_to_dicts(experiments: List[dict],
         to one of the ``experiments``, each dictionary corresponds to a particular
         crossing, and each string is the simple surface name of a level.
     """
-    tuple_lists: List[List[Tuple[str, ...]]] = []
-    for experiment in experiments:
-        tuple_lists.append([dict(zip(keys, values)) for values in zip(*[experiment[key] for key in keys])])
-    return tuple_lists
+    return _experiments_to_dicts(experiments, [cast(str, f.name) for f in __filter_hidden(block.design)])
 
-def simplify_experiments(experiments: List[Dict]) -> List[List[Tuple[str, ...]]]:
-    return _experiments_to_tuples(experiments, list(experiments[0].keys()))
+def experiments_to_tuples(block: Block, experiments: List[dict]) -> List[List[tuple]]:
+    """Converts a list of experiments into a list of lists of tuples, where
+    each tuple represents a crossing in a given experiment.
 
-def simplify_experiments_to_dicts(experiments: List[dict]) -> List[List[dict]]:
-    return _experiments_to_dicts(experiments, list(experiments[0].keys()))
+    :param block:
+        An experimental description as a :class:`.Block`.
 
+    :param experiments:
+        A list of experiments as :class:`dicts <dict>`. These are produced by
+        calls to the synthesis function :func:`.synthesize_trials`.
 
-def experiments_to_tuples(block: Block,
-                          experiments: List[dict]):
+    :returns:
+        A list of lists of tuples of strings, where each sub-list corresponds
+        to one of the ``experiments``, each tuple corresponds to a particular
+        crossing, and each string is the simple surface name of a level.
+    """
     return _experiments_to_tuples(experiments, [cast(str, f.name) for f in __filter_hidden(block.design)])
-
 
 def __filter_hidden(design: List[Factor]) -> List[Factor]:
     return list(filter(lambda f: not isinstance(f.name, HiddenName), design))
