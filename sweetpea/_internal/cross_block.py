@@ -66,7 +66,7 @@ class MultiCrossBlockRepeat(Block):
             self.complex_factors_or_constraints = False
         if within_block_count:
             if not all([s == self.preamble_sizes[0] for s in self.preamble_sizes]):
-                raise RuntimeError("cannot repeat a block with corssings that have different preamble lengths")
+                raise RuntimeError("cannot repeat a block with crossings that have different preamble lengths")
             self.within_block_count = within_block_count
             self.within_block_preamble = self.preamble_sizes[0]
         else:
@@ -263,6 +263,15 @@ class MultiCrossBlockRepeat(Block):
         return self._trials_per_sample_for_one_crossing(crossing) - self.crossing_size(crossing)
 
     def crossing_weight(self, crossing: Optional[List[Factor]] = None):
+        """Gets the implicit weight applied to every combination in
+        the given crossing. This weight becomes greater than 1 when a
+        MinimumTrials constraint forces a number of trials that is
+        larger than the number of different combinations of levels in
+        the crossing, for example. To get the result, we work backward
+        from a previously computed `within_block_count`, which is the
+        total number of trials in the block.
+
+        """
         crossing = self.__select_crossing(crossing)
         crossing_size = self.crossing_size(crossing)
         preamble_size = self.preamble_size(crossing)

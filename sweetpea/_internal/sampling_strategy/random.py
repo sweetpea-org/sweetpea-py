@@ -200,14 +200,44 @@ class UCSolutionEnumerator():
     def __init__(self, block: CrossBlock) -> None:
         self._block = block
         self._partitions = DesignPartitions(block)
+
+        # Start with all combinations in a subset of crossed factors.
+        # Ideally, this subset would include all factors, but we can't
+        # deal directly with transition factors here, so it may be
+        # only a subset of the factors. Also, it's only factors in the
+        # first crossing in the case of a multiple-crossing block (and
+        # we leave the other crossings to be treated as arbitrary
+        # contraints).
         self._crossing_instances = self.__generate_crossing_instances()
+
+        # Get the weight applied across all combinations in the
+        # crossing --- which may be a result of a MinimumTrials
+        # constraint that is greater than the number of different
+        # combinations in the crossing, for example.
         c_weight = block.crossing_weight(block.crossings[0])
+
+        # Increase weights for each specific combination based on
+        # weights attached to the levels in the combination (as
+        # supplied when constructing a `Level`, for example).
         self._crossing_weights = [combination_weight(tuple(c.values())) * c_weight
                                   for c in self._crossing_instances]
+
+        # We can take some shortcuts later if it turns out that all weights are 1.
         self._crossing_is_unweighted = all([w == 1 for w in self._crossing_weights])
+
+        # Add up all the weights, and that's the base number of things to permute.
         self.noncomplex_crossing_size = sum(self._crossing_weights)
+
+        # A projection of the `_crossing_instances` combinations that determine
+        # derived-factor levels, but only for noncomplex factors.
         self._source_combinations = self.__generate_source_combinations()
+
+        # Count how many combinations exists among the complex
+        # factors. Each of these is potentially combinaed with every
+        # combination in `self._crossing_instances`, so it's like another weight
+        # applied to each combination.
         self.__complex_crossing_instances = self.__count_complex_crossing_instances()
+
         # This crossing size includes the crossing weight (in addition to level weights)
         self.crossing_size = self.noncomplex_crossing_size * self.__complex_crossing_instances
         self._ind_factor_levels = cast(List[Tuple[Factor, List[SimpleLevel]]],
@@ -478,6 +508,13 @@ class UCSolutionEnumerator():
     """
 
     def __generate_crossing_instances(self) -> List[dict]:
+        """Gets all level combinations that represent crossed factors
+        that are noncomplex factors (i.e., factors that that are not
+        derived factors that are about transitions or even wider
+        windows). We'll need to "weight" each of these by the number
+        of times that they appear in a full crossing.
+
+        """
         crossing = self._partitions.get_crossed_noncomplex_factors()
         level_lists = [list(f.levels) for f in crossing]
         crossings = [{crossing[i]: level for i, level in enumerate(levels)} for levels in product(*level_lists)]
