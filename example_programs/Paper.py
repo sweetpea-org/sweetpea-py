@@ -32,7 +32,7 @@ def one_diff(colors, words):
         return words[0] == words[-1]
 
 def both_diff(colors, words):
-    return not one_diff(colors, words)
+    return (colors[0] != colors[-1]) and (words[0] != words[-1])
 
 one = DerivedLevel("one", Transition(one_diff, [color, word]))
 both = DerivedLevel("both", Transition(both_diff, [color, word]))
