@@ -33,4 +33,4 @@ __pycache__
 \#*
 .#*
 sweetpea-py-env/
-doc/_build
+docs/_build
