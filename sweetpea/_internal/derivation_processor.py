@@ -57,8 +57,9 @@ class DerivationProcessor:
         accum = []
         for factor in derived_factors:
             according_level: Dict[Tuple[Any, ...], DerivedLevel] = {}
+            # every level must have the same cross product, so we can get it once:
+            cross_product: List[Tuple[Level, ...]] = factor.levels[0].get_dependent_cross_product()
             for level in factor.levels:
-                cross_product: List[Tuple[Level, ...]] = level.get_dependent_cross_product()
                 valid_tuples: List[Tuple[Level, ...]] = []
                 for level_tuple in cross_product:
                     args = [(level.name if not isinstance(level, BeforeStart) else None) for level in level_tuple]
@@ -98,6 +99,16 @@ class DerivationProcessor:
                                                                        block.variables_per_trial())
                     level_index = block.first_variable_for_level(factor, level)
                     accum.append(Derivation(level_index, shifted_indices, factor))
+            # check that everything in the cross product is covered by some level
+            for level_tuple in cross_product:
+                if level_tuple not in according_level:
+                    in_crossing = block.factor_in_crossing(factor)
+                    maybe_crossing = "crossed " if in_crossing else ""
+                    args = [(level.name if not isinstance(level, BeforeStart) else None) for level in level_tuple]
+                    if level.window.width != 1:
+                        args = list(chunk_dict(args, level.window.width))  # type: ignore
+                    block.errors.add(f"No level in {maybe_crossing}factor"
+                                     f" '{factor.name}' has a precicate that matches '{args}'.")
         return accum
 
     @staticmethod

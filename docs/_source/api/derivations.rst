@@ -10,6 +10,10 @@ means that they must depend on the same factors in the same order, have
 the same window width, same window stride, and the same starting
 trial. However, :class:`.ElseLevel` is compatible with any derivation,
 as long as other levels in the same factor have compatible derivations.
+For every combination of levels in the factors that a derived factor
+depends on, there must be exactly one matching derived level, taking
+into account that a level created with :class:`.ElseLevel` matches a
+combination that is not matched by other levels.
 
 .. class:: sweetpea.Derivation()
 

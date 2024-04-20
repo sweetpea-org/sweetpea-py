@@ -86,6 +86,28 @@ def test_generate_derivations_should_produce_warning_if_some_level_is_unreachabl
     block.show_errors()
     assert capsys.readouterr().out == "WARNING: No matches to the factor 'congruent?' predicate for level\n 'dum'.\n"
 
+def test_generate_derivations_should_produce_error_if_some_combination_is_uncovered(capsys):
+    local_con_factor = Factor("congruent?", [
+        DerivedLevel("con", WithinTrial(op.eq, [color, text])),
+        DerivedLevel("dum", WithinTrial(lambda c, t: c=='red' and t=='blue', [color, text]))
+    ])
+    block = CrossBlock([color, text, local_con_factor],
+                       [color, text],
+                       [Reify(local_con_factor)])
+    block.show_errors()
+    assert capsys.readouterr().out == "No level in factor 'congruent?' has a precicate that matches '['blue', 'red']'.\n"
+
+def test_generate_derivations_should_produce_error_if_some_transition_is_uncovered(capsys):
+    local_repeats_factor = Factor("repeats?", [
+        DerivedLevel("yes", Transition(lambda colors, texts: colors[0] == colors[-1] and texts[-1] == texts[0], [color, text])),
+        DerivedLevel("no",  Transition(lambda colors, texts: colors[0] != colors[-1] and texts[-1] != texts[0], [color, text]))
+    ])
+    block = CrossBlock([color, text, local_repeats_factor],
+                       [color, text],
+                       [Reify(local_repeats_factor)])
+    block.show_errors()
+    assert "No level in factor 'repeats?' has a precicate that matches '[{-1: 'red', 0: 'blue'}, {-1: 'red', 0: 'red'}]'.\n" in capsys.readouterr().out
+
 def test_generate_derivations_within_trial():
     assert DerivationProcessor.generate_derivations(blk) == [
         Derivation(4, [[0, 2], [1, 3]], con_factor),
