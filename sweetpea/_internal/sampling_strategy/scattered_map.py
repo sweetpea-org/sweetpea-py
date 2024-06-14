@@ -26,6 +26,9 @@ class SMGen(Gen):
 	def sample(block: Block, sample_count: int) -> SamplingResult:
 		print("In SMGen wrapper")
 
+		if len(block.orig_crossings)>1:
+			_cexit("CrossBlock() not called.")
+
 		for c in block.constraints:
 			if type(c)==AtMostKInARow or type(c)==AtLeastKInARow :
 				_cexit("This test version of the module doesn't support AtMost/AtLeast constraints. "
@@ -124,7 +127,7 @@ class SMGen(Gen):
 				sm_cross.append(p_dc[f.name])
 				
 		encode_experiment(sm_design)
-		print_factors()
+		#print_factors()
 		
 		cross=define_cross(sm_cross)
 		execute(answers_count=sample_count)
