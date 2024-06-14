@@ -480,8 +480,9 @@ def check_result(pre,permut):
 		transitions
 	
 	If a within trial is dependent on a previous within trial,
-	it must come after that in the within_trials array. This is taken
-	care of in the encoding stage.
+	it must come after that	in the within_trials array.
+	The user is expected not to pass a dependent factor before
+	its arguments.
 
 '''
 
