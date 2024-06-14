@@ -21,7 +21,7 @@ __all__ = [
 
     'Gen', 'RandomGen', 'IterateSATGen',
     'CMSGen', 'UniGen', 'IterateILPGen',
-    'UniformGen', 'IterateGen'
+    'UniformGen', 'IterateGen','SMGen'
 ]
 
 from functools import reduce
@@ -48,6 +48,7 @@ from sweetpea._internal.sampling_strategy.iterate_sat import IterateSATGen
 from sweetpea._internal.sampling_strategy.unigen import UniGen
 from sweetpea._internal.sampling_strategy.cmsgen import CMSGen
 from sweetpea._internal.sampling_strategy.random import RandomGen
+from sweetpea._internal.sampling_strategy.scattered_map import SMGen
 from sweetpea._internal.sampling_strategy.iterate_ilp import IterateILPGen
 from sweetpea._internal.server import build_cnf
 from sweetpea._internal.core.cnf import Var
