@@ -55,15 +55,16 @@ class SMGen(Gen):
 				for l in levels:
 					ll=l.window
 					f=ll.predicate
+					
 					if d_type==None:
 						if isinstance(ll,Transition):
 							d_type="tr"
 						elif isinstance(ll,WithinTrial):
 							d_type="wt"
 						else:
-							print("Unsupported",ll)
+							_cexit("Unsupported level",l.name)
 					
-					args=ll.factors
+					args=ll.factors[:]
 					
 					for i in range(len(args)):
 						args[i]=args[i].name
@@ -130,7 +131,9 @@ class SMGen(Gen):
 		#print_factors()
 		
 		cross=define_cross(sm_cross)
-		execute(answers_count=sample_count)
-			
-		exit(0)
+		r=execute(answers_count=sample_count)
+		
+		samples=SamplingResult(r,{})
+		
+		return samples
 		

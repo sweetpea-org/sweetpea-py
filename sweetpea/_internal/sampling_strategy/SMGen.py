@@ -1035,6 +1035,61 @@ def execute(answers_count=1):
 	signal(SIGALRM,sigalrm_hand)
 	setitimer(ITIMER_REAL,EXEC_TH,0)
 	
+	
+	def add_answer(pre,r,answers):
+		a={}
+		
+		for i in range(c_objs_count):
+			key=primary_objects[i][0]
+			vals=[]
+			
+			if trans_count>0:
+				v=pre[i]
+				v=primary_objects[i][1][v]
+				vals.append(v)
+			
+			for p in r:
+				v=p[i]				
+				v=primary_objects[i][1][v]
+				vals.append(v)
+			a[key]=vals
+				
+				
+		for i in range(wt_count):
+			key=within_trials[i][0]
+			vals=[]
+			
+			c_ind=i+c_objs_count
+			if trans_count>0:
+				v=pre[c_ind]
+				v=within_trials[i][1][v][0]
+				
+				vals.append(v)
+			
+			for p in r:
+				v=p[c_ind]
+				v=within_trials[i][1][v][0]
+				vals.append(v)
+			a[key]=vals
+	
+		for i in range(trans_count):
+			key=transitions[i][0]
+			vals=[]
+
+			c_ind=i+c_objs_count+wt_count
+			if trans_count>0:
+				vals.append('')
+
+			for p in r:
+				v=p[c_ind]
+				v=transitions[i][1][v][0]
+				vals.append(v)	
+			a[key]=vals
+
+		answers.append(a)
+		
+	exp_answers=[]
+	
 	for i in range(iterations):
 		time_s=(time())
 		
@@ -1042,8 +1097,10 @@ def execute(answers_count=1):
 		
 		time_s=(time()) - time_s
 		
-		print("Experiment {}:".format(i+1))
-		print_permut(pre,r)
+		print("Experiment {} completed...".format(i))
+		#print_permut(pre,r)
+
+		add_answer(pre,r,exp_answers)
 		
 		if time_s<1:
 			fmt="{:.4f}"
@@ -1051,8 +1108,10 @@ def execute(answers_count=1):
 			fmt="{:d}"
 			time_s=int(time_s)
 
+		
+		'''
 		print("[>] Operation completed in "+(fmt+" secs.").format(time_s))
-
+		
 		v=check_result(pre,r)
 		
 		if v:
@@ -1060,6 +1119,8 @@ def execute(answers_count=1):
 		else:
 			v="\033[31mINVALID\033[0m"
 		print("Post generation validity check: {}\n".format(v))
+		'''
 		
 		setitimer(ITIMER_REAL,0,0) #disable timer 
 	
+	return exp_answers
