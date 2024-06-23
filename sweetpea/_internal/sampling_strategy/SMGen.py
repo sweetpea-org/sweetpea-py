@@ -82,7 +82,10 @@ def shuffle_list(l):
 		l[ind]=l[i]
 		l[i]=tmp
 
-
+'''
+	Calculate the direct index of the combination within the space of 
+	the possible combinaitons in the cross. 
+'''
 def comb_index(combs):
 	right_cross=1
 	r=0
@@ -93,6 +96,13 @@ def comb_index(combs):
 	
 	return r
 
+'''
+	Return the number of necessary copies of a given combination based on
+	the weights config.
+	We use the structures that we populate in the execute function to find the correct
+	number. The generation of a given combination is halted when we hit the cap that
+	is returned by this function.
+'''
 def get_cap(comb):
 	if unweighted_experiment:
 		return 1
@@ -110,6 +120,11 @@ def get_cap(comb):
 		
 	return r
 
+'''
+	Return the number of cells that we need to fill to create a cross
+	based on the user constraints. This is an init function and the use
+	of sum() is fine here.
+'''
 def perms_count(raw):
 	r=1
 	
@@ -122,7 +137,9 @@ def perms_count(raw):
 	
 	return r
 
-
+'''
+	Return a fresh row strcuture to the back-tracking function.
+'''
 def new_rows(w):
 	rows=[]
 	for i in range(w):
@@ -136,6 +153,9 @@ def clear_single_row(ar):
 		ar[i]=0
 	ar[-1]=-1
 
+'''
+	Clear object tracker to init the next round of permutation generation.
+'''
 def clear_nums(nums):
 	for i in range(M_raw):
 		nums[i][0]=0
@@ -145,13 +165,33 @@ def clear_nums(nums):
 			for j in range(len(nums[i][1])):
 				clear_single_row(nums[i][1][j])
 
+'''
+	Return the current active object for combination "ind" that
+	we are enumerating possible transitions to the neighboring cell.
+'''
 def get_states_ar_ind(nums,ind):
 	if nums[ind][0]<1:
 		_cexit("Invalid get state request")
 
 	return nums[ind][0]-1
-	
-def valid_backtrack_random2():
+
+'''
+	This is the core algorithm of this module. This algorithm randomly branches to a valid 
+	combination for the cell to its right. It stops progression of the path by early detection
+	of the first cell that creates an invalid derived factor. A big number of paths that end up
+	in invalid permutations from the sample space are avoided. For a partial path of length l
+	that is discarded, (M-l)! permutations are eliminated from the sample space.
+	When we get to fill the last cell, a valid cross is guaranteed. 
+	The algorithm does not depend on the sepcific characteristics of the default model that I have
+	assumed for the objects. As long as you can clearly define what you want the code
+	to look back and forward to form the basis of a "valid" next combination, it will
+	work to create a correct permutation for sweetpea experiments. For example, the current
+	code assumes that the window size for a Transition derived level is 2, meaning that we pass
+	the previous and the next values of the respective factor to know that which predicate
+	function is chosen. The window size can be larger, but it does need updating the code
+	to adapt to the new expectation.
+'''	
+def sm_backtrack_random():
 	permut=[]
 	nums=[]
 
@@ -189,6 +229,16 @@ def valid_backtrack_random2():
 	loc=0
 	pre=[]
 
+	'''
+		Main loops. 
+		Outer loop: Start with forming the initial states and take it from there.
+		Each group of factors are handled separately. We enumerate through the primary
+		objects and then fill the dependent cells which are WithinTrials and Transitions.
+		The primary target cells constitute the main elements of the back-tracking logic.
+		Note that the value for a dependent cell is looked up in O(1) using the init maps
+		instead on actually calling the predicate functions.
+		We reference the nums structure to track the objects in combination selection process.
+	'''
 	while True:	
 		
 		for i in range(c_objs_count):
@@ -265,7 +315,13 @@ def valid_backtrack_random2():
 				line.append(obj)
 						
 			rand_asg.append(line)
-			
+		
+		'''
+			Inner loop: Choose a random valid path to right. In each step
+			a whole combination is formed and stored at the next cell. If the
+			current cell fails, revert to previous cell and choose another available
+			path.
+		'''	
 		while 1:
 			if loc==L-1:
 				return pre,permut
@@ -364,6 +420,10 @@ def valid_backtrack_random2():
 				#we increment nums at the beginning of the loop
 				pass
 
+'''
+	Local function to print the result. Not used when the module
+	is called by sweetpea core.
+'''
 def print_permut(pre,perm):
 	m=[]
 	
@@ -394,6 +454,11 @@ def print_permut(pre,perm):
 
 	print(s)
 
+'''
+	An extra layer of validity check after each answer is formed. 
+	Not used when called by sweetpea core.
+	This function checks validity of the cross, predicate values and weights.
+'''
 def check_result(pre,permut):
 	if trans_count>0:
 		for i in range(trans_count):
@@ -513,6 +578,15 @@ def sigalrm_hand(sig,frame):
 	_cexit("Experiment not solvable. Change your crossing or constraints.")
 
 
+'''
+	Itermediate classes for the objects that we need to parse in this module.
+	These itermediary objects store only what we need to create our own encoding not
+	the entire information in the original objects. 
+	SMGen does not recognize sweetpea classes. Any new class, object or structure
+	from sweetpea core that is going to be used in SMGen must be first defined for 
+	the module.
+
+'''
 class _Factor:
 	def __init__(self,name,initial_levels):
 		self.name=name
@@ -569,7 +643,7 @@ class _Transition:
 		#	print("[!] Unsupported transition")
 		
 '''
-	 We add the factor just as a reference. For example, to set the cell factor cell index. 
+	 We add the factor just as a reference. For example, to set a factor cell index. 
 	 All object gourps will have the original Factor appended to the list.
 	 
 	 Primary object structure:
@@ -1093,7 +1167,7 @@ def execute(answers_count=1):
 	for i in range(iterations):
 		time_s=(time())
 		
-		pre,r=valid_backtrack_random2()
+		pre,r=sm_backtrack_random()
 		
 		time_s=(time()) - time_s
 		
