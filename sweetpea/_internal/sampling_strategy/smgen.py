@@ -1,6 +1,6 @@
 from sweetpea._internal.sampling_strategy.base import Gen, SamplingResult
 from sweetpea._internal.block import Block
-from sweetpea._internal.cross_block import Repeat
+from sweetpea._internal.cross_block import CrossBlock
 from sweetpea._internal.primitive import *
 from sweetpea._internal.constraint import *
 from sweetpea._internal.sampling_strategy.scattered_map_core import (
@@ -28,6 +28,7 @@ class SMGen(Gen):
     @staticmethod
     def sample(block: Block, sample_count: int) -> SamplingResult:
         # print("In SMGen")
+        assert(isinstance(block, MultiCrossBlockRepeat))
 
         if block.within_block_count != block.trials_per_sample():
             _cexit(f"Repeated blocks are not supported by SMGen.")
@@ -59,14 +60,15 @@ class SMGen(Gen):
             name=f.name
             levels=f.levels
 
-            _levels=[]
+            _levels=cast(List[object], [])
 
             d_type=None
 
             if isinstance(levels[0],DerivedLevel):
                 for l in levels:
+                    assert(isinstance(l, DerivedLevel))
                     ll=l.window
-                    f=ll.predicate
+                    pred=ll.predicate
 
                     if d_type==None:
                         if isinstance(ll,Transition):
@@ -78,10 +80,11 @@ class SMGen(Gen):
 
                     args=ll.factors[:]
 
+                    arg_names=[]
                     for i in range(len(args)):
-                        args[i]=args[i].name
+                        arg_names.append(args[i].name)
 
-                    _levels.append([l.name,f,args,l._weight])
+                    _levels.append([l.name,pred,arg_names,l._weight])
             else:
                 # For now, implement weighting for a non-derived factor by duplicating levels
                 for l in levels:
@@ -95,40 +98,40 @@ class SMGen(Gen):
                 derived.append([name,_levels,d_type])
 
 
-        for f in primary:
-            p_dc[f[0]]=_Factor(f[0],f[1])
+        for fp in primary:
+            p_dc[fp[0]]=_Factor(fp[0],fp[1])
 
 
-        for f in derived:
+        for fd in derived:
             sm_levels=[]
-            if f[2]=="tr":
+            if fd[2]=="tr":
                 continue
-            for l in f[1]:
-                args=l[2]
+            for ld in cast(List, fd[1]):
+                args=ld[2]
                 for i in range(len(args)):
                     if args[i] in p_dc:
-                        args[i]=p_dc[args[i]]
+                        args[i]=p_dc[args[i]] # type: ignore
 
-                sm_levels.append(_DerivedLevel(l[0],_WithinTrial(l[1],l[2]),l[3]))
+                sm_levels.append(_DerivedLevel(ld[0],_WithinTrial(ld[1],ld[2]),ld[3]))
 
-            dr_dc[f[0]]=_Factor(f[0],sm_levels)
+            dr_dc[fd[0]]=_Factor(fd[0],sm_levels)
 
-        for f in derived:
+        for fd in derived:
             sm_levels=[]
-            if f[2]=="wt":
+            if fd[2]=="wt":
                 continue
-            for l in f[1]:
-                args=l[2]
+            for ld in cast(List, fd[1]):
+                args=ld[2]
                 for i in range(len(args)):
                     if args[i] in p_dc:
-                        args[i]=p_dc[args[i]]
+                        args[i]=p_dc[args[i]] # type: ignore
                     else:
-                        args[i]=dr_dc[args[i]]
+                        args[i]=dr_dc[args[i]] # type: ignore
 
-                sm_levels.append(_DerivedLevel(l[0],_Transition(l[1],l[2]),l[3]))
+                sm_levels.append(_DerivedLevel(ld[0],_Transition(ld[1],ld[2]),ld[3]))
 
 
-            dr_dc[f[0]]=_Factor(f[0],sm_levels)
+            dr_dc[fd[0]]=_Factor(fd[0],sm_levels)
 
         for f in design:
             if isinstance(f.levels[0],DerivedLevel):

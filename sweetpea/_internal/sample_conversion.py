@@ -17,7 +17,7 @@ def _convert_form_name_to_level(name: str, factor: Factor) -> Level:
     """
     given a factor, convert a string that indicates the name of a level to the matching level of the Factor
     """
-    if not name:
+    if name is "":
         return Level('')
     for l in factor.levels:
         if name == l.name:
