@@ -15,7 +15,7 @@ right = direction.get_level('right')
 left = direction.get_level('left')
 
 @pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
-def test_check_constraints_on_design_factor(strategy):
+def test_check_base_constraints_on_design_factor(strategy):
     block = CrossBlock([color], [color], [MinimumTrials(4), AtMostKInARow(1, color)])
     repet = Repeat(block, [MinimumTrials(8)])
     trials = synthesize_trials(repet, 100, strategy)

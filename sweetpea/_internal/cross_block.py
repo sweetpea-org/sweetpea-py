@@ -463,7 +463,7 @@ class Repeat(MultiCrossBlockRepeat):
         # is the only disallowed `Constraint` type:
         for c in constraints:
             if isinstance(c, Exclude):
-                raise ValueError("Exclude constraints no allowed in list of constraints")
+                raise ValueError("Exclude constraints not allowed in list of constraints")
 
         block_constraints = [copy.copy(c) for c in block.orig_constraints]
         for c in block_constraints:

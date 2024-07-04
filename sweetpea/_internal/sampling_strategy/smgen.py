@@ -1,10 +1,12 @@
 from sweetpea._internal.sampling_strategy.base import Gen, SamplingResult
 from sweetpea._internal.block import Block
+from sweetpea._internal.cross_block import Repeat
 from sweetpea._internal.primitive import *
 from sweetpea._internal.constraint import *
 from sweetpea._internal.sampling_strategy.scattered_map_core import (
     _Factor, _DerivedLevel, _WithinTrial, _Transition,
-    encode_experiment, define_cross, execute, print_factors
+    encode_experiment, define_cross, execute, print_factors,
+    reset_state
 )
 
 '''
@@ -25,16 +27,26 @@ class SMGen(Gen):
 
     @staticmethod
     def sample(block: Block, sample_count: int) -> SamplingResult:
-        print("In SMGen")
+        # print("In SMGen")
 
-        if len(block.orig_crossings)>1:
-            _cexit("CrossBlock() not called.")
+        if block.within_block_count != block.trials_per_sample():
+            _cexit(f"Repeated blocks are not supported by SMGen.")
+        if len(block.crossings) != 1:
+            _cexit(f"Multiple-crossing blocks are not supported by SMGen.")
 
         for c in block.constraints:
-            if type(c)==AtMostKInARow or type(c)==AtLeastKInARow :
-                _cexit("AtMost/AtLeast constraints not supported for this generator.")
+            if (isinstance(c, AtMostKInARow) or isinstance(c, AtLeastKInARow) or isinstance(c, ExactlyK)
+                or isinstance(c, Exclude) or isinstance(c, Pin)):
+                _cexit(f"{type(c).__name__} constraints are not supported by SMGen.")
 
+        # For now, implement a minimum-trials contraint by weighting the levels of
+        # one non-derived factor
+        maximum_trials = False
+        scale_one = block.crossing_weight()
+        if scale_one > 1:
+            maximum_trials = block.trials_per_sample()
 
+        reset_state()
         design=block.orig_design
         crossing=block.orig_crossings[0]
         primary=[]
@@ -62,7 +74,7 @@ class SMGen(Gen):
                         elif isinstance(ll,WithinTrial):
                             d_type="wt"
                         else:
-                            _cexit("Unsupported level",l.name)
+                            _cexit("Unsupported level", l.name)
 
                     args=ll.factors[:]
 
@@ -71,8 +83,11 @@ class SMGen(Gen):
 
                     _levels.append([l.name,f,args,l._weight])
             else:
+                # For now, implement weighting for a non-derived factor by duplicating levels
                 for l in levels:
-                    _levels.append(l.name)
+                    for i in range(scale_one * l._weight):
+                        _levels.append(l.name)
+                scale_one = 1
 
             if d_type==None:
                 primary.append([name,_levels])
@@ -131,7 +146,7 @@ class SMGen(Gen):
         #print_factors()
 
         cross=define_cross(sm_cross)
-        r=execute(answers_count=sample_count)
+        r=execute(answers_count=sample_count, maximum_trials=maximum_trials)
 
         samples=SamplingResult(r,{})
 

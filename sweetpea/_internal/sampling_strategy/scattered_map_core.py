@@ -32,7 +32,6 @@ primary_objects=[]
 transitions=[]
 within_trials=[]
 
-
 cross=[]
 
 weighted_objects=[]
@@ -61,7 +60,44 @@ asg_wt_vf={}
 EXEC_TH=60
 ##########################################################
 
-
+def reset_state():
+    global objects, primary_objects, transitions, within_trials, cross, weighted_objects, weights
+    global weighted_objects_init, weights_init, wt_count, trans_count, c_counts, c_objs_count
+    global trans_cells, trans_cell_start, wt_cells, obs_counts, comb_len, all_weights, cross_weights
+    global cross_counts, unweighted_experiment, M, M_raw, L, asg_vf, asg_wt_vf, EXEC_TH
+    
+    objects=[]
+    primary_objects=[]
+    transitions=[]
+    within_trials=[]
+    
+    
+    cross=[]
+    
+    weighted_objects=[]
+    weights=[]
+    weighted_objects_init=[]
+    weights_init=[]
+    wt_count=0
+    trans_count=0
+    c_counts = []
+    c_objs_count=0
+    trans_cells=[]
+    trans_cell_start=-1
+    wt_cells=[]
+    obs_counts=[]
+    comb_len =0
+    all_weights=[]
+    cross_weights=[]
+    cross_counts=[]
+    unweighted_experiment=True
+    M=0
+    M_raw=0
+    L=0
+    asg_vf={}
+    asg_wt_vf={}
+    
+    EXEC_TH=60    
 
 def _cexit(m,*var):
     if len(var)>0:
@@ -640,6 +676,12 @@ class _Transition:
         #if len(args)!=1:
         #    print("[!] Unsupported transition")
 
+class PrimaryObject:
+    def __init__(self, name, levels, factor):
+        self.name = name
+        self.levels = levels
+        self.factor = factor
+        
 '''
      We add the factor just as a reference. For example, to set a factor cell index.
      All object gourps will have the original Factor appended to the list.
@@ -649,7 +691,7 @@ class _Transition:
 '''
 def add_primary(factor):
     levels=factor.levels
-    primary_objects.append([factor.name , factor.levels , factor])
+    primary_objects.append(PrimaryObject(factor.name, factor.levels, factor))
 
 def add_wt(factor):
     levels=factor.levels
@@ -705,7 +747,7 @@ def print_factors():
     print("\n**************************************")
     print("Primary:")
     for o in primary_objects:
-        print(o[0],o[1],o[2].cell_index,"Reference:",o[2])
+        print(o.name,o.levels,o.factor.cell_index,"Reference:",o[2])
     print("\n")
 
     print("WhithinTrials:")
@@ -758,8 +800,6 @@ def encode_weights():
             weighted_objects_init.append(inds)
             weights_init.append(w)
 
-
-
 def encode_experiment(args):
     ind=0
     for factor in args:
@@ -773,7 +813,7 @@ def encode_experiment(args):
 
     ind=0
     for o in primary_objects:
-        o[2].cell_index=ind
+        o.factor.cell_index=ind
         ind+=1
     for o in within_trials:
         o[3].cell_index=ind
@@ -790,20 +830,18 @@ def encode_experiment(args):
     for o in transitions:
         o[2] = o[2].cell_index
 
-
     encode_weights()
 
 if __name__=="__main__":
     pass
 
 
-def execute(answers_count=1):
-    global cross,wt_count,trans_count,c_objs_count,trans_cell_start,unweighted_experiment,asg_vf,asg_wt_vf,combs_weights,M,M_raw,L,comb_len
+def execute(answers_count=1, maximum_trials=False):
+    global cross,wt_count,trans_count,c_objs_count,trans_cell_start,unweighted_experiment,asg_vf
+    global asg_wt_vf,combs_weights,M,M_raw,L,comb_len,trans_in_crossing
 
-
-    if len(cross)<2:
+    if len(cross)<1:
         _cexit("Invalid input.")
-
 
     '''
         Get cross members weights.
@@ -819,6 +857,7 @@ def execute(answers_count=1):
     tmp_dc={}
     for e in cross:
         tmp_dc[e]=1
+
     if len(tmp_dc) != len(cross):
         _cexit("Invalid cross. Check your input.")
 
@@ -832,18 +871,23 @@ def execute(answers_count=1):
     trans_count=len(transitions)
 
     for o in primary_objects:
-        c_counts.append(len(o[1]))
+        c_counts.append(len(o.levels))
     c_objs_count = len(c_counts)    # number of main object groups
 
     trans_cell_start=c_objs_count+wt_count
+
+    trans_in_crossing=False
+    for e in cross:
+        if e >= trans_cell_start:
+            trans_in_crossing=True
 
     transition_dependency_check()
     wt_dependency_check()
 
     for i in range(c_objs_count):
         line=[]
-        for j in range(len(primary_objects[i][1])):
-            obj=str(primary_objects[i][0]) + " " + str(primary_objects[i][1][j])
+        for j in range(len(primary_objects[i].levels)):
+            obj=str(primary_objects[i].name) + " " + str(primary_objects[i].levels[j])
             line.append(obj)
         objects.append(line)
 
@@ -867,7 +911,7 @@ def execute(answers_count=1):
 
     comb_len = len(obs_counts)
 
-    if len(weighted_objects)==0:
+    if len(weighted_objects)==0 :
         unweighted_experiment = True
     else:
         unweighted_experiment= False
@@ -891,9 +935,6 @@ def execute(answers_count=1):
                     line[ind]=(w_dc[i][1])[j]
                 all_weights.append(line)
 
-
-
-
         for i in range(len(cross)):
             cross_weights.append(all_weights[cross[i]])
 
@@ -901,7 +942,7 @@ def execute(answers_count=1):
         cross_counts.append(len(objects[ind]))
 
     M = perms_count(0)
-    M_raw= perms_count(1)
+    M_raw = perms_count(1)
     L=M
 
     asg_tmp=[]
@@ -910,7 +951,7 @@ def execute(answers_count=1):
         trans_cells.append([trans_cell_start+i,target_c])
 
         if target_c < c_objs_count:
-            c_levels=primary_objects[target_c][1]
+            c_levels=primary_objects[target_c].levels
             c_count=c_counts[target_c]
         else:
             c_levels=[]
@@ -1012,8 +1053,8 @@ def execute(answers_count=1):
             cell=target_cells[j]
             if cell < c_objs_count:
                 #primary object
-                counts[j]=len(primary_objects[cell][1])
-                levels.append(primary_objects[cell][1])
+                counts[j]=len(primary_objects[cell].levels)
+                levels.append(primary_objects[cell].levels)
             else:
                 #within trial (unlikely to happen)
                 counts[j]=len(within_trials[cell-c_objs_count][1])
@@ -1029,8 +1070,6 @@ def execute(answers_count=1):
         for j in range(len(target_cells)-1):
             cur.append([])
             cur=cur[0]
-
-
 
 
         last=len(target_cells)-1
@@ -1101,29 +1140,30 @@ def execute(answers_count=1):
         else:
             perm[last]+=1
 
-
     iterations=answers_count # number of requested answers
 
     signal(SIGALRM,sigalrm_hand)
     setitimer(ITIMER_REAL,EXEC_TH,0)
 
 
-    def add_answer(pre,r,answers):
+    def add_answer(pre,r,answers,maximum_trials):
         a={}
 
         for i in range(c_objs_count):
-            key=primary_objects[i][0]
+            key=primary_objects[i].name
             vals=[]
 
-            if trans_count>0:
+            if trans_in_crossing:
                 v=pre[i]
-                v=primary_objects[i][1][v]
+                v=primary_objects[i].levels[v]
                 vals.append(v)
 
             for p in r:
                 v=p[i]
-                v=primary_objects[i][1][v]
+                v=primary_objects[i].levels[v]
                 vals.append(v)
+            if maximum_trials:
+                vals = vals[0:maximum_trials]
             a[key]=vals
 
 
@@ -1132,7 +1172,7 @@ def execute(answers_count=1):
             vals=[]
 
             c_ind=i+c_objs_count
-            if trans_count>0:
+            if trans_in_crossing:
                 v=pre[c_ind]
                 v=within_trials[i][1][v][0]
 
@@ -1142,6 +1182,8 @@ def execute(answers_count=1):
                 v=p[c_ind]
                 v=within_trials[i][1][v][0]
                 vals.append(v)
+            if maximum_trials:
+                vals = vals[0:maximum_trials]
             a[key]=vals
 
         for i in range(trans_count):
@@ -1149,13 +1191,15 @@ def execute(answers_count=1):
             vals=[]
 
             c_ind=i+c_objs_count+wt_count
-            if trans_count>0:
+            if trans_in_crossing:
                 vals.append('')
 
             for p in r:
                 v=p[c_ind]
                 v=transitions[i][1][v][0]
                 vals.append(v)
+            if maximum_trials:
+                vals = vals[0:maximum_trials]
             a[key]=vals
 
         answers.append(a)
@@ -1169,10 +1213,10 @@ def execute(answers_count=1):
 
         time_s=(time()) - time_s
 
-        print("Experiment {} completed...".format(i))
+        # print("Experiment {} completed...".format(i))
         #print_permut(pre,r)
 
-        add_answer(pre,r,exp_answers)
+        add_answer(pre,r,exp_answers,maximum_trials)
 
         if time_s<1:
             fmt="{:.4f}"

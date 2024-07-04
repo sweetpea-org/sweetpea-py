@@ -7,7 +7,7 @@ from sweetpea import *
 from sweetpea._internal.constraint import Reify
 from sweetpea._internal.server import build_cnf
 from acceptance import path_to_cnf_files, reset_expected_solutions
-
+from .maybe_unique import *
 
 congruency            = Factor("congruency", ["congruent", "incongruent", "neutral"])
 congruency_transition = Factor("congruency_transition", [
@@ -23,13 +23,15 @@ congruency_transition = Factor("congruency_transition", [
 ])
 
 @pytest.mark.parametrize('design', permutations([congruency, congruency_transition]))
-def test_correct_solution_count_with_congruence_factor_but_unconstrained(design):
+@pytest.mark.parametrize('strategy', [IterateGen, SMGen])
+def test_correct_solution_count_with_congruence_factor_but_unconstrained(design, strategy):
     crossing = [congruency]
     constraints = []
 
     block  = CrossBlock(design, crossing, constraints)
-    experiments  = synthesize_trials(block, 100)
-
+    experiments  = synthesize_trials(block, 100, sampling_strategy=strategy)
+    
+    experiments  = maybe_unique(experiments, strategy)
     assert len(experiments) == 6
 
 

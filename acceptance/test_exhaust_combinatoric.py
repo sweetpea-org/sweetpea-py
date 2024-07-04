@@ -1,6 +1,7 @@
 import pytest
 
 from sweetpea import *
+from .maybe_unique import *
 
 @pytest.mark.parametrize('num_trials', [1, 2, 3, 4, 5, 6, 7, 8, 100, 1000])
 def test_ok_to_ask_for_more_trials_than_solutions(num_trials):
@@ -14,44 +15,54 @@ def test_ok_to_ask_for_more_trials_than_solutions(num_trials):
                           constraints)
     experiments  = synthesize_trials(block, 1, sampling_strategy=RandomGen)
 
-@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
+@pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen, SMGen])
 def test_check_max_solutions(strategy):
+    attempt = (10000 if strategy == SMGen else 100)
+
     color      = Factor("color",  ["red", "green", "blue"])
     design       = [color]
     crossing     = [color]
 
     block        = CrossBlock(design, crossing, [MinimumTrials(3)],
                               require_complete_crossing=False)
-    experiments  = synthesize_trials(block, 100, sampling_strategy=strategy)
+    experiments  = synthesize_trials(block, attempt, sampling_strategy=strategy)
+    experiments  = maybe_unique(experiments, strategy)
     assert len(experiments) == 6
 
     block        = Repeat(CrossBlock(design, crossing, [],
                                      require_complete_crossing=False),
                           [MinimumTrials(3)])
-    experiments  = synthesize_trials(block, 100, sampling_strategy=strategy)
+    experiments  = synthesize_trials(block, attempt, sampling_strategy=strategy)
+    experiments  = maybe_unique(experiments, strategy)
     assert len(experiments) == 6
 
     block        = CrossBlock(design, crossing, [MinimumTrials(4)],
                               require_complete_crossing=False)
-    experiments  = synthesize_trials(block, 100, sampling_strategy=strategy)
+    experiments  = synthesize_trials(block, attempt, sampling_strategy=strategy)
+    experiments  = maybe_unique(experiments, strategy)
     assert len(experiments) == 54
 
-    block        = Repeat(CrossBlock(design, crossing, [],
-                                     require_complete_crossing=False),
-                          [MinimumTrials(4)])
-    experiments  = synthesize_trials(block, 100, sampling_strategy=strategy)
-    assert len(experiments) == 18
+    if strategy != SMGen:
+        block        = Repeat(CrossBlock(design, crossing, [],
+                                         require_complete_crossing=False),
+                              [MinimumTrials(4)])
+        experiments  = synthesize_trials(block, attempt, sampling_strategy=strategy)
+        experiments  = maybe_unique(experiments, strategy)
+        assert len(experiments) == 18
 
     block        = CrossBlock(design, crossing, [MinimumTrials(5)],
                               require_complete_crossing=False)
-    experiments  = synthesize_trials(block, 100, sampling_strategy=strategy)
+    experiments  = synthesize_trials(block, attempt, sampling_strategy=strategy)
+    experiments  = maybe_unique(experiments, strategy)
     assert len(experiments) == 90
 
-    block        = Repeat(CrossBlock(design, crossing, [],
-                                     require_complete_crossing=False),
-                          [MinimumTrials(5)])
-    experiments  = synthesize_trials(block, 100, sampling_strategy=strategy)
-    assert len(experiments) == 36
+    if strategy != SMGen:
+        block        = Repeat(CrossBlock(design, crossing, [],
+                                         require_complete_crossing=False),
+                              [MinimumTrials(5)])
+        experiments  = synthesize_trials(block, attempt, sampling_strategy=strategy)
+        experiments  = maybe_unique(experiments, strategy)
+        assert len(experiments) == 36
 
 @pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 def test_check_max_solutions_derived_factor(strategy):

@@ -1,16 +1,19 @@
+import pytest
+
 from sweetpea import *
 
 color = Factor("color", ['red', 'green'])
 size = Factor("size", ['real small', 'great big'])
 
-def test_implied_within_trial():
+@pytest.mark.parametrize('strategy', [IterateGen, SMGen])
+def test_implied_within_trial(strategy):
     match = Factor(name="match", initial_levels=[
         DerivedLevel(name="same", window=WithinTrial(predicate=lambda a, b: a[0] == b[0], factors=[color, size])),
         DerivedLevel(name="diff", window=WithinTrial(predicate=lambda a, b: a[0] != b[0], factors=[color, size]))
     ])
 
     block      = CrossBlock([color, size, match], crossing=[color, size], constraints=[])
-    experiments = synthesize_trials(block=block, samples=4)
+    experiments = synthesize_trials(block=block, samples=4, sampling_strategy=strategy)
 
     assert len(experiments) == 4
     assert len(experiments[0]["color"]) == 4
@@ -22,14 +25,15 @@ def test_implied_within_trial():
             else:
                 assert e["match"][i] == "diff"
 
-def test_implied_window():
+@pytest.mark.parametrize('strategy', [IterateGen])
+def test_implied_window(strategy):
     match = Factor(name="match", initial_levels=[
         DerivedLevel(name="same", window=Window(lambda a: a[0] == a[-1], [color], 2, 1)),
         DerivedLevel(name="diff", window=Window(lambda a: a[0] != a[-1], [color], 2, 1))
     ])
 
     block      = CrossBlock([color, size, match], crossing=[color, size], constraints=[])
-    experiments = synthesize_trials(block=block, samples=4)
+    experiments = synthesize_trials(block=block, samples=4, sampling_strategy=strategy)
 
     assert len(experiments) == 4
     assert len(experiments[0]["color"]) == 4
