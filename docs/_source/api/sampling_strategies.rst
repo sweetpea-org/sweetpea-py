@@ -141,3 +141,19 @@ Sampling Strategies
            results is constrained to be distinct. The number of
            returned experiments will be less than the requested number
            if the pool of possible trial sequences is exhausted.
+
+.. class:: sweetpea.SMGen
+
+           An experimental sampler that is especially effective for
+           designs that include derived factors with transition level.
+           Currently, windows sizes greater than 1 are not supported,
+           many constraints are unsupported, and multiple crossings
+           are unsupported.
+
+           *Non-Uniformity*: Generates trials through a search that
+           may not produce uniform coverage.
+
+           *Replacement*: Generating multiple trials in one call to
+           :func:`.synthesize_trials` produces independent results. That
+           is, the single call is the same as separate calls that each
+           generate one sequence of trials.
