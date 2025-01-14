@@ -23,7 +23,10 @@
 
 from random import random
 from time import time
-from signal import signal,setitimer,ITIMER_REAL,SIGALRM
+# from signal import signal,setitimer,ITIMER_REAL,SIGALRM
+
+# from signal import signal,setitimer,ITIMER_REAL,SIGALRM
+import threading
 
 # Module global variables
 ##########################################################
@@ -1142,8 +1145,12 @@ def execute(answers_count=1, maximum_trials=False):
 
     iterations=answers_count # number of requested answers
 
-    signal(SIGALRM,sigalrm_hand)
-    setitimer(ITIMER_REAL,EXEC_TH,0)
+    # signal(SIGALRM,sigalrm_hand)
+
+    timer = threading.timer(EXEC_TH, sigalrm_hand)
+    timer.start()
+
+    # setitimer(ITIMER_REAL,EXEC_TH,0)
 
 
     def add_answer(pre,r,answers,maximum_trials):
@@ -1236,7 +1243,8 @@ def execute(answers_count=1, maximum_trials=False):
             v="\033[31mINVALID\033[0m"
         print("Post generation validity check: {}\n".format(v))
         '''
-
-        setitimer(ITIMER_REAL,0,0) #disable timer
+        timer = threading.Timer(0)#, on_timer)
+        timer.start()
+        # setitimer(ITIMER_REAL,0,0) #disable timer
 
     return exp_answers
