@@ -91,7 +91,7 @@ block        = CrossBlock(design, crossing, constraints)
 
 # SOLVE
 
-experiments  = synthesize_trials(block, 5, SMGen)
+experiments  = synthesize_trials(block, 5, CMSGen)
 # Or:
 # experiments  = synthesize_trials(block, 5, IterateGen)
 # experiments  = synthesize_trials(block, 5, IterateILPGen)
