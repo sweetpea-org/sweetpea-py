@@ -51,7 +51,7 @@ SweetPea.
 
 ## Dependencies
 
-SweetPea requires Python 3.7.9 or later.
+SweetPea requires Python 3.9 or later.
 
 
 ## Installation
