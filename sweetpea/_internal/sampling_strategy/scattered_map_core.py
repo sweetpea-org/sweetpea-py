@@ -1147,7 +1147,7 @@ def execute(answers_count=1, maximum_trials=False):
 
     # signal(SIGALRM,sigalrm_hand)
 
-    timer = threading.timer(EXEC_TH, sigalrm_hand)
+    timer = threading.Timer(EXEC_TH, sigalrm_hand)
     timer.start()
 
     # setitimer(ITIMER_REAL,EXEC_TH,0)
