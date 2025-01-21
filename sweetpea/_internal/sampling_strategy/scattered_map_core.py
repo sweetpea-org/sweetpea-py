@@ -1243,8 +1243,9 @@ def execute(answers_count=1, maximum_trials=False):
             v="\033[31mINVALID\033[0m"
         print("Post generation validity check: {}\n".format(v))
         '''
-        timer = threading.Timer(0)#, on_timer)
-        timer.start()
+        timer.cancel()
+        # timer = threading.Timer(0)#, on_timer)
+        # timer.start()
         # setitimer(ITIMER_REAL,0,0) #disable timer
 
     return exp_answers
