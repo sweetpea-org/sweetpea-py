@@ -178,9 +178,9 @@ def size_repeat(tasks):
 # color-switch and motion-switch occur twice as frequently as size-switch
 
 task_transition_type = Factor("task_transition_type", [
-    DerivedLevel("color_switch", Transition(color_switch, [task]), 2),
+    DerivedLevel("color_switch", Transition(color_switch, [task]), 1),
     DerivedLevel("color_repeat", Transition(color_repeat, [task]), 1),
-    DerivedLevel("motion_switch", Transition(motion_switch, [task]), 2),
+    DerivedLevel("motion_switch", Transition(motion_switch, [task]), 1),
     DerivedLevel("motion_repeat", Transition(motion_repeat, [task]), 1),
     DerivedLevel("size_switch", Transition(size_switch, [task]), 1),
     DerivedLevel("size_repeat", Transition(size_repeat, [task]), 1),
@@ -206,21 +206,27 @@ resp_transition = Factor("resp_transition", [
     DerivedLevel("switch", Transition(response_switch, [response]))
 ])
 
-k = 7
+# k = 7
 
-constraints = [AtMostKInARow(k, task_transition),
-               AtMostKInARow(k, resp_transition)]#,
+# constraints = [AtMostKInARow(k, task_transition),
+#                AtMostKInARow(k, resp_transition)]#,
+#               MinimumTrials(25)]
                 
 design       = [color, motion, size, task, congruency, response, task_transition, task_transition_type, resp_transition]
 
-crossing     = [response, task_transition_type]
+constraints=[]
+
+# Single Crossing
+# crossing     = [response, task_transition_type]#color, motion, size, task]
 # crossing     = [color, motion, size, task]
+# block        = CrossBlock(design, crossing, constraints)
 
-block        = CrossBlock(design, crossing, constraints)
-
-# Multiple Crossing Block
-# crossing = [[color, motion, size, task], [task_transition_type]]
-# block        = MultiCrossBlock(design, crossing, constraints)
+# When multiple corssing, number of trials is determined by the maximum of number 
+# that would be determined by an individual crossing in crossings, which is [color, motion, size, task]
+# However, since [task_transition_type] has a warm-up trial due to its transition level,
+# the warm-up trial is also added to the minimum number of trials needed, making it 24+1 = 25 trials
+crossing = [[color, motion, size, task], [task_transition_type]]
+block        = MultiCrossBlock(design, crossing, constraints)
 
 experiments  = synthesize_trials(block, 1, CMSGen)
 # Could also use IterateGen or RandomGen
