@@ -3,8 +3,8 @@ import sys
 sys.path.append("..")
 
 from sweetpea import (
-    Factor, DerivedLevel, WithinTrial, Transition, AtMostKInARow,
-    CrossBlock, synthesize_trials, print_experiments,
+    Factor, DerivedLevel, WithinTrial, Transition, AtMostKInARow, MinimumTrials,
+    CrossBlock, MultiCrossBlock, synthesize_trials, print_experiments, tabulate_experiments,
     CMSGen, IterateGen, RandomGen
 )
 
@@ -16,15 +16,25 @@ factors (levels):
 - current motion (up, down)
 - current size (large, small)
 - current task (color, motion, size)
+
 - correct response (left, right): dependent factor.
 - congruency (congruent, incongruent): dependent factor.
 - task transition (repetition, switch). dependent factor of task: <-- difference between task transition & tt-type
-- task transition type, dependent on factor task transition of current trial and factor task on previous trial:
+- task transition type (color switch, color repetition, motion switch, motion repetition, size switch, size repetition).
+dependent on factor task transition of current trial and factor task on previous trial:
+color switch: The previous trial was a color task and the current trial is not
+color repetition: The previous and current trial are a color task
+motion switch: The previous trial was a motion task and the current trial is not
+motion repetition: The previous and current trial are a motion task
+size switch: The previous trial was a size task and the current trial is not
+size repetition: The previous and current trial are a size task
+
 - response transition (repetition, switch). dependent factor of correct response:
 if left-left then task transition = repetition
 if right-right then task transition = repetition
 if left-right then task transition = switch
 if right-left then task transition = switch
+
 constraints:
 - counterbalancing congruency x response x task x response-transition x color x motion x size x transition type
 - no more than 7 task repetitions in a row
@@ -38,6 +48,9 @@ size-switch: should occur at 25% of the time
 If the probabilistic constraint is too hard to implement then it can be made deterministic:
 color-switch and motion-switch should occur twice as frequently as size-switch"""
 
+# Is it possible to counterbalance 
+# congruency x response x task x response-transition x color x motion x size x transition type ???
+# Does it not have task transition? 
 
 color  = Factor("color",  ["red", "blue"])
 motion = Factor("motion", ["up", "down"])
@@ -83,6 +96,8 @@ congruency = Factor("congruency",
     DerivedLevel("inc", WithinTrial(incongruent, [color, motion]))])
 
 
+
+
 """
        task transition (repetition, switch). dependent factor of task:
 if color-color   then task transition = repetition
@@ -90,16 +105,31 @@ if motion-motion then task transition = repetition
 if size-size     then task transition = repetition
 otherwise switch
 """
+# This seems to be defined incorrectly.
+# First need to change this to depend on task. 
+# Then Will Disucss whether both task transition and task transition type are needed.
 
-def task_repeat(color, motion, size):
-    return (color[0] == color[-1]) or (motion[0] == motion[-1]) or (size[0] == size[-1])
+# Old Codes
+# def task_repeat(color, motion, size):
+#     return (color[0] == color[-1]) or (motion[0] == motion[-1]) or (size[0] == size[-1])
 
-def task_switch(color, motion, size):
-    return not task_repeat(color, motion, size)
+# def task_switch(color, motion, size):
+#     return not task_repeat(color, motion, size)
+
+# task_transition = Factor("task_transition", [
+#     DerivedLevel("repeat", Transition(task_repeat, [color, motion, size])),
+#     DerivedLevel("switch", Transition(task_switch, [color, motion, size]))
+# ])
+
+def task_repeat(tasks):
+    return tasks[0] == tasks[-1]
+
+def task_switch(tasks):
+    return not task_repeat(tasks)
 
 task_transition = Factor("task_transition", [
-    DerivedLevel("repeat", Transition(task_repeat, [color, motion, size])),
-    DerivedLevel("switch", Transition(task_switch, [color, motion, size]))
+    DerivedLevel("repeat", Transition(task_repeat, [task])),
+    DerivedLevel("switch", Transition(task_switch, [task]))
 ])
 
 """
@@ -112,6 +142,49 @@ if task on previous trial = motion & task transition on current trial =  repetit
 if task on previous trial = size & task transition on current trial =  repetition then task transition type = size repetition
 """
 #def task_ currently not used?
+
+# Need to change the definition?
+
+def color_switch(tasks):
+    return tasks[0] != tasks[-1] and tasks[-1] == "color"
+
+def color_repeat(tasks):
+    return tasks[0] == tasks[-1] and tasks[-1] == "color"
+
+def motion_switch(tasks):
+    return tasks[0] != tasks[-1] and tasks[-1] == "motion"
+
+def motion_repeat(tasks):
+    return tasks[0] == tasks[-1] and tasks[-1] == "motion"
+
+def size_switch(tasks):
+    return tasks[0] != tasks[-1] and tasks[-1] == "size"
+
+def size_repeat(tasks):
+    return tasks[0] == tasks[-1] and tasks[-1] == "size"
+
+# Non weighted
+# task_transition = Factor("task_transition_type", [
+#     DerivedLevel("color_switch", Transition(color_switch, [task])),
+#     DerivedLevel("color_repeat", Transition(color_repeat, [task])),
+#     DerivedLevel("motion_switch", Transition(motion_switch, [task])),
+#     DerivedLevel("motion_repeat", Transition(motion_repeat, [task])),
+#     DerivedLevel("size_switch", Transition(size_switch, [task])),
+#     DerivedLevel("size_repeat", Transition(size_repeat, [task])),
+# ])
+
+
+# Deterministic constraints:
+# color-switch and motion-switch occur twice as frequently as size-switch
+
+task_transition_type = Factor("task_transition_type", [
+    DerivedLevel("color_switch", Transition(color_switch, [task]), 2),
+    DerivedLevel("color_repeat", Transition(color_repeat, [task]), 1),
+    DerivedLevel("motion_switch", Transition(motion_switch, [task]), 2),
+    DerivedLevel("motion_repeat", Transition(motion_repeat, [task]), 1),
+    DerivedLevel("size_switch", Transition(size_switch, [task]), 1),
+    DerivedLevel("size_repeat", Transition(size_repeat, [task]), 1),
+])
 
 """
          response transition (repetition, switch). dependent factor of correct response:
@@ -134,18 +207,25 @@ resp_transition = Factor("resp_transition", [
 ])
 
 k = 7
+
 constraints = [AtMostKInARow(k, task_transition),
-               AtMostKInARow(k, resp_transition)]
+               AtMostKInARow(k, resp_transition)]#,
                 
+design       = [color, motion, size, task, congruency, response, task_transition, task_transition_type, resp_transition]
 
-print(type(constraints))
+crossing     = [response, task_transition_type]
+# crossing     = [color, motion, size, task]
 
-design       = [color, motion, size, task, congruency, response, task_transition, resp_transition]
-
-crossing     = [color, motion, size, task]
 block        = CrossBlock(design, crossing, constraints)
 
-experiments  = synthesize_trials(block, 5, CMSGen)
+# Multiple Crossing Block
+# crossing = [[color, motion, size, task], [task_transition_type]]
+# block        = MultiCrossBlock(design, crossing, constraints)
+
+experiments  = synthesize_trials(block, 1, CMSGen)
 # Could also use IterateGen or RandomGen
 
 print_experiments(block, experiments)
+# tabulate_experiments(block, experiments, [color, motion, size, task])
+# tabulate_experiments(block, experiments, [response, task_transition_type])
+tabulate_experiments(block, experiments, [task_transition_type])
