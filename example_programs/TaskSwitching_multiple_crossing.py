@@ -85,15 +85,15 @@ if current color == blue & current motion == down & size = small then response =
 otherwise incongruent
 """
 
-def congruent(color, motion):
+def congruent(color, motion, size):
     return ((color == "red") and (motion == "up") and (size == "large")) or ((color == "blue") and (motion == "down")  and (size == "small"))
 
-def incongruent(color, motion):
-    return not congruent(color, motion)
+def incongruent(color, motion, size):
+    return not congruent(color, motion, size)
 
 congruency = Factor("congruency", 
-    [DerivedLevel("con", WithinTrial(congruent,   [color, motion])),
-    DerivedLevel("inc", WithinTrial(incongruent, [color, motion]))])
+    [DerivedLevel("con", WithinTrial(congruent,   [color, motion, size])),
+    DerivedLevel("inc", WithinTrial(incongruent, [color, motion, size]))])
 
 
 
