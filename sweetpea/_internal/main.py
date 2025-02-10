@@ -10,7 +10,7 @@ __all__ = [
 
     'Block', 'CrossBlock', 'MultiCrossBlock', 'Repeat',
 
-    'Factor', 'Level', 'DerivedLevel', 'ElseLevel',
+    'Factor', 'Level', 'DerivedLevel', 'ElseLevel', 'ContinuousFactor',
 
     'Derivation', 'WithinTrial', 'Transition', 'Window',
 
@@ -33,7 +33,7 @@ import csv, os
 from sweetpea._internal.block import Block
 from sweetpea._internal.cross_block import MultiCrossBlockRepeat, MultiCrossBlock, CrossBlock, Repeat
 from sweetpea._internal.primitive import (
-    Factor, SimpleFactor, DerivedFactor, Level, SimpleLevel, DerivedLevel, ElseLevel,
+    Factor, SimpleFactor, DerivedFactor, ContinuousFactor, Level, SimpleLevel, DerivedLevel, ElseLevel,
     Window, WithinTrial, Transition,
     HiddenName
 )
@@ -344,7 +344,7 @@ def synthesize_trials(block: Block,
     def starting(who: Any) -> None:
         nonlocal samples
         print(f"Sampling {samples} trial sequences using {who}.")
-
+    
     if isinstance(sampling_strategy, type):
         assert issubclass(sampling_strategy, Gen)
         starting(sampling_strategy.class_name())
@@ -364,6 +364,13 @@ def synthesize_trials(block: Block,
                 print(mismatches)
                 raise RuntimeError("synthesized trials has mismatches")
 
+    # DW: Sampling for ContinuousFactor
+    for num_trial, trials in enumerate(trialss):
+        ContinuousSamples = block.sample_continuous(num_trial)
+        for k in ContinuousSamples:
+            trials[k] = ContinuousSamples[k]
+    # DW: Restore ContinuousFactor to the design 
+    block.restore_continuous()
     return trialss
 
 

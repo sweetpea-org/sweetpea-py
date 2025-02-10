@@ -4,10 +4,9 @@ from __future__ import annotations
 
 __all__ = [
     'Level', 'SimpleLevel', 'DerivedLevel', 'ElseLevel',
-    'Factor', 'SimpleFactor', 'DerivedFactor',
+    'Factor', 'SimpleFactor', 'DerivedFactor', 'ContinuousFactor',
     'WithinTrial', 'Transition', 'Window'
 ]
-
 
 from copy import deepcopy
 from dataclasses import InitVar, dataclass, field
@@ -372,6 +371,8 @@ class Factor:
         use them.
     """
 
+    ## TO DO DW: Modify Notes above
+
     #: The name of this factor. A synthesized factor may be mutated to hide its name
     name: Union[str, HiddenName]
 
@@ -694,8 +695,71 @@ class DerivedFactor(Factor):
         return res
 
 
+class CLevel:
+    def __init__(self, name):
+        self.name = name 
 
+@dataclass
+class ContinuousFactor(Factor):
+    name: str
+    initial_levels: list = None  # Add initial_levels as an argument with a default value
+    sampling_function: callable = None
 
+    def __post_init__(self):
+
+        # If initial_levels is not provided, use an empty list
+        if self.initial_levels is None:
+            self.initial_levels = []
+
+        # If sampling_function is not provided, use a default one
+        if self.sampling_function is None:
+            self.sampling_function = lambda: random.uniform(0, 1)
+
+        # historial value for the sampler
+        self.cache = []
+        self.counter = 0
+    def generate(self, trial_num, trial_size):
+        """
+        Generate samples using the provided sampling function.
+        
+        :param num_samples: Number of samples to generate
+        :return: Generated samples as a list
+        """
+        
+        if len(self.initial_levels) == 0:
+            # Non-Derived Cases
+            v = self.sampling_function()
+            self.cache.append(v)
+            return v
+        else:
+            # Derived Cases
+            input_values = []
+            for level in self.initial_levels:
+                if isinstance(level, ContinuousFactor):
+                    input_values.append(level.pop(self.name, trial_num, trial_size))
+                else:
+                    input_values.append(level)
+            v = self.sampling_function(*input_values)
+            self.cache.append(v)    
+            return v
+    
+    def pop(self, cname, trial_num, trial_size):
+        if len(self.cache)>trial_num*trial_size:
+            if trial_num*trial_size>0:
+                res = self.cache[trial_num*trial_size+(self.counter%trial_size)]
+            else:
+                res = self.cache[self.counter%len(self.cache)]
+            self.counter+=1
+            return res
+        else:
+            raise RuntimeError("Derived factor {} has dependent factor {} not included before it".format(cname, self.name))
+            # return self.generate()
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    @property
+    def levels(self):
+        return [CLevel(self.name)]  # Call the function when levels is accessed
 
 ###############################################################################
 ##

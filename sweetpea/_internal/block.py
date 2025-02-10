@@ -12,7 +12,7 @@ from networkx import has_path
 from sweetpea._internal.backend import BackendRequest
 from sweetpea._internal.level import get_all_levels
 from sweetpea._internal.primitive import (
-    DerivedFactor, DerivedLevel, ElseLevel, Factor, SimpleLevel, Level
+    DerivedFactor, DerivedLevel, ElseLevel, Factor, SimpleLevel, Level, ContinuousFactor
 )
 from sweetpea._internal.logic import to_cnf_tseitin
 from sweetpea._internal.base_constraint import Constraint
@@ -35,6 +35,10 @@ class Block:
                  constraints: List[Constraint],
                  require_complete_crossing,
                  who: str) -> None:
+    
+        # Temporarily remove ContinuousFactor from the design
+        self.ContinuousFactor = None
+        design = self.sep_ContinuousFactor(design)
         self.design = list(design).copy()
         self.crossings = list(map(lambda c: list(c).copy(), crossings))
         self.constraints = list(constraints).copy()
@@ -53,6 +57,36 @@ class Block:
         self._variables_per_trial = None
         self.__validate(who)
         self._cached_previous_count = cast(Dict[Tuple[Factor, int], int], {})
+
+
+    def sep_ContinuousFactor(self, 
+                             design: List[Factor])->List[Factor]:
+        
+        discret_design = []
+        cFactor = []
+        for f in design:
+            if isinstance(f, ContinuousFactor):
+                cFactor.append(f)
+            else:
+                discret_design.append(f)
+        self.ContinuousFactor = cFactor
+        return discret_design
+
+    def restore_continuous(self):
+        self.design = self.design + self.ContinuousFactor
+        return 
+
+    # Helper frunction to sample with continuous factor. 
+    def sample_continuous(self, trial_num):
+        ContinuousOutput = {}
+        for cFactor in self.ContinuousFactor:
+            ContinuousSamples = []
+            for i in range(self._trials_per_sample):
+                ContinuousSamples.append(cFactor.generate(trial_num, self._trials_per_sample))
+            ContinuousOutput[cFactor.name] = ContinuousSamples
+        return ContinuousOutput
+
+
 
     def show_errors(self) -> bool:
         failed = False
@@ -81,6 +115,8 @@ class Block:
         for cr in self.crossings:
             names = set()
             for f in cr:
+                if isinstance(f, ContinuousFactor):
+                    raise RuntimeError(f"{who}: factor should not be in crossing{f}")
                 if not f in self.design:
                     raise RuntimeError(f"{who}: factor in crossing is not in design: {f}")
                 if f.name in names:
