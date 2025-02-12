@@ -304,7 +304,8 @@ def save_experiments_csv(block: Block,
 
 def synthesize_trials(block: Block,
                       samples: int = 10,
-                      sampling_strategy=IterateGen
+                      sampling_strategy=IterateGen,
+                      continue_constraints = {}
                       ) -> List[dict]:
     """Given an experiment described with a :class:`.Block`, randomly generates
     multiple sets of trials for that experiment.
@@ -365,10 +366,23 @@ def synthesize_trials(block: Block,
                 raise RuntimeError("synthesized trials has mismatches")
 
     # DW: Sampling for ContinuousFactor
+    
     for num_trial, trials in enumerate(trialss):
-        ContinuousSamples = block.sample_continuous(num_trial)
-        for k in ContinuousSamples:
-            trials[k] = ContinuousSamples[k]
+        meet_constraints = False
+        continue_counter = 0
+        while not meet_constraints:
+            print('trial: {}, sampling count: {}'.format(num_trial, continue_counter), end="\r", flush=True)
+            continuous_samples = block.sample_continuous(num_trial)
+            # Not sure whether this should be inside block or here. 
+            # print(continuous_samples)
+            meet_constraints = block.check_constraints(continuous_samples, continue_constraints)
+            continue_counter+=1
+            #, sample_constraints=continue_constraints)
+        # Should add Constraints here such that Not only Specific trial is resampled OR during the above function
+        print()
+        for k in continuous_samples:
+            trials[k] = continuous_samples[k]
+    # print(block.continuous_factor_samples)
     # DW: Restore ContinuousFactor to the design 
     block.restore_continuous()
     return trialss

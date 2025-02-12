@@ -37,8 +37,9 @@ class Block:
                  who: str) -> None:
     
         # Temporarily remove ContinuousFactor from the design
-        self.ContinuousFactor = None
-        design = self.sep_ContinuousFactor(design)
+        self.continuous_factors = []
+        design = self.sep_continuous_factors(design)
+        self.__check_dependency()
         self.design = list(design).copy()
         self.crossings = list(map(lambda c: list(c).copy(), crossings))
         self.constraints = list(constraints).copy()
@@ -58,8 +59,7 @@ class Block:
         self.__validate(who)
         self._cached_previous_count = cast(Dict[Tuple[Factor, int], int], {})
 
-
-    def sep_ContinuousFactor(self, 
+    def sep_continuous_factors(self, 
                              design: List[Factor])->List[Factor]:
         
         discret_design = []
@@ -69,25 +69,60 @@ class Block:
                 cFactor.append(f)
             else:
                 discret_design.append(f)
-        self.ContinuousFactor = cFactor
+        self.continuous_factors = cFactor
+        # This is initiated if there are continuous factors
+        if len (self.continuous_factors)>0:
+            self.continuous_factor_samples = {}
         return discret_design
 
     def restore_continuous(self):
-        self.design = self.design + self.ContinuousFactor
+        self.design = self.design + self.continuous_factors
         return 
 
     # Helper frunction to sample with continuous factor. 
+    # This stores values for continuousfactor
+    # Trial Number, Factor Name, List of values
+    # self.continuous_factor_samples = {}
+
     def sample_continuous(self, trial_num):
-        ContinuousOutput = {}
-        for cFactor in self.ContinuousFactor:
-            ContinuousSamples = []
+        # samples per trial
+        continuous_output = {}
+        self.continuous_factor_samples[trial_num] = continuous_output
+        for cFactor in self.continuous_factors:
+            # sample for current cfactor
+            continuous_samples = []
+            continuous_output[cFactor.name] = continuous_samples
             for i in range(self._trials_per_sample):
-                ContinuousSamples.append(cFactor.generate(trial_num, self._trials_per_sample))
-            ContinuousOutput[cFactor.name] = ContinuousSamples
-        return ContinuousOutput
+                sample_input = []
+                # Get dependent factors for current factor
+                dependents = cFactor.get_levels()
+                for dependent in dependents:
+                    if isinstance(dependent, ContinuousFactor):
+                        sample_input.append(continuous_output[dependent.name][i])
+                    elif isinstance(dependent, (int, float)):
+                        sample_input.append(dependent)
+                    else:
+                        raise RuntimeError("Dependency {} is not continuous factor or number".format(dependent))
+                c_value = cFactor.generate(sample_input)
+                continuous_samples.append(c_value)
+            continuous_output[cFactor.name] = continuous_samples
+        return continuous_output
 
-
-
+    def check_constraints(self, continuous_samples, continue_constraints):
+        if not continue_constraints:
+            return True
+        else:
+            _factors = continue_constraints['factors']
+            _function = continue_constraints['function']
+        
+        num_trials = len(continuous_samples[_factors[0]])
+        
+        for i in range(num_trials):
+            inputs = [continuous_samples[f][i] for f in _factors]
+            if not _function(*inputs):
+                return False
+        return True
+        
     def show_errors(self) -> bool:
         failed = False
         if self.errors:
@@ -111,6 +146,21 @@ class Block:
                 included_factor_names.add(factor.name)
         return included_factor_names
 
+    # DW: Validation for continuous factor
+    def __check_dependency(self):
+        allfactors = set()
+        for cFactor in self.continuous_factors:
+            dependents = cFactor.get_levels()
+            if len(dependents)==0:
+                allfactors.add(cFactor.name)
+            else:
+                for dependent in dependents:
+                    if isinstance(dependent, ContinuousFactor) and dependent.name not in allfactors:
+                        raise RuntimeError("WARNING: Derived Conitunuous factor {} has dependency {} not included in the deisgn".format(cFactor.name, dependent.name))
+                    elif isinstance(dependent, ContinuousFactor):
+                        allfactors.add(cFactor.name)
+        return
+                
     def __validate(self, who: str):
         for cr in self.crossings:
             names = set()

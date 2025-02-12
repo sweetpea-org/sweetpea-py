@@ -708,6 +708,7 @@ class ContinuousFactor(Factor):
     def __post_init__(self):
 
         # If initial_levels is not provided, use an empty list
+        # Otherwise it defines the dependents of the current factor
         if self.initial_levels is None:
             self.initial_levels = []
 
@@ -715,45 +716,20 @@ class ContinuousFactor(Factor):
         if self.sampling_function is None:
             self.sampling_function = lambda: random.uniform(0, 1)
 
-        # historial value for the sampler
-        self.cache = []
-        self.counter = 0
-    def generate(self, trial_num, trial_size):
+    def generate(self, sample_input):#, trial_num, trial_size):
         """
         Generate samples using the provided sampling function.
         
-        :param num_samples: Number of samples to generate
+        :param sample_input: empty for a non-derived factor
         :return: Generated samples as a list
         """
+        v = self.sampling_function(*sample_input)
+
+        return v
         
-        if len(self.initial_levels) == 0:
-            # Non-Derived Cases
-            v = self.sampling_function()
-            self.cache.append(v)
-            return v
-        else:
-            # Derived Cases
-            input_values = []
-            for level in self.initial_levels:
-                if isinstance(level, ContinuousFactor):
-                    input_values.append(level.pop(self.name, trial_num, trial_size))
-                else:
-                    input_values.append(level)
-            v = self.sampling_function(*input_values)
-            self.cache.append(v)    
-            return v
-    
-    def pop(self, cname, trial_num, trial_size):
-        if len(self.cache)>trial_num*trial_size:
-            if trial_num*trial_size>0:
-                res = self.cache[trial_num*trial_size+(self.counter%trial_size)]
-            else:
-                res = self.cache[self.counter%len(self.cache)]
-            self.counter+=1
-            return res
-        else:
-            raise RuntimeError("Derived factor {} has dependent factor {} not included before it".format(cname, self.name))
-            # return self.generate()
+    def get_levels(self):
+        return self.initial_levels
+
     def __repr__(self) -> str:
         return self.__str__()
 
