@@ -39,9 +39,25 @@ crossing = [color]
 constraints = [MinimumTrials(5)]
 
 
+# Put this in main first then move to block
+def test_function(a):
+    return (a<-0.3)
+
+constraints_continue = {}
+constraints_continue['factors'] = ["difference_time3"]
+constraints_continue['function'] = test_function
+
+
+def test_function(a, b):
+    return (a+b>0.3)
+
+constraints_continue = {}
+constraints_continue['factors'] = ["difference_time3", "difference_time"]
+constraints_continue['function'] = test_function
+
 block        = CrossBlock(design, crossing, constraints)
 
-experiments  = synthesize_trials(block, 2, CMSGen)
+experiments  = synthesize_trials(block, 2, CMSGen, continue_constraints=constraints_continue)
 
 print_experiments(block, experiments)
 tabulate_experiments(block, experiments, [color])#, completion_time])

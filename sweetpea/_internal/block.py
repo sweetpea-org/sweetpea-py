@@ -8,6 +8,7 @@ from itertools import accumulate, combinations, product, repeat
 from typing import List, Union, Tuple, Optional, cast, Any, Dict, Set, Callable, TypeVar
 from math import ceil
 from networkx import has_path
+import inspect
 
 from sweetpea._internal.backend import BackendRequest
 from sweetpea._internal.level import get_all_levels
@@ -61,7 +62,6 @@ class Block:
 
     def sep_continuous_factors(self, 
                              design: List[Factor])->List[Factor]:
-        
         discret_design = []
         cFactor = []
         for f in design:
@@ -75,6 +75,7 @@ class Block:
             self.continuous_factor_samples = {}
         return discret_design
 
+    # Add continuous factors back to design after sampling continuous
     def restore_continuous(self):
         self.design = self.design + self.continuous_factors
         return 
@@ -111,13 +112,22 @@ class Block:
     def check_constraints(self, continuous_samples, continue_constraints):
         if not continue_constraints:
             return True
+        elif 'factors' not in continue_constraints:
+            raise RuntimeError("Continuous factors not defined in continuous constraint")
+        elif 'function' not in continue_constraints: 
+            raise RuntimeError("Constraint function not defined in continuous constraint")
         else:
             _factors = continue_constraints['factors']
             _function = continue_constraints['function']
         
+        sig = inspect.signature(_function)
+        num_params = len(sig.parameters)
+        if len(_factors) != num_params:
+            raise RuntimeError("The number of factors in the constraint does not match the function for the constraint")
+
         num_trials = len(continuous_samples[_factors[0]])
-        
         for i in range(num_trials):
+            # DW: Fix Key Error Here
             inputs = [continuous_samples[f][i] for f in _factors]
             if not _function(*inputs):
                 return False
