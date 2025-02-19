@@ -367,14 +367,14 @@ def synthesize_trials(block: Block,
                 raise RuntimeError("synthesized trials has mismatches")
 
     # DW: Sampling for ContinuousFactor
-    
-    for num_trial, trials in enumerate(trialss):
-        continuous_samples = block.sample_continuous(num_trial)
-        for k in continuous_samples:
-            trials[k] = continuous_samples[k]
-    # DW: Restore ContinuousFactor to the design 
-    block.restore_continuous()
-    
+    if block.continuous_factors:
+        for num_trial, trials in enumerate(trialss):
+            continuous_samples = block.sample_continuous(num_trial)
+            for k in continuous_samples:
+                trials[k] = continuous_samples[k]
+        # DW: Restore ContinuousFactor to the design 
+        block.restore_continuous()
+
     return trialss
 
 
