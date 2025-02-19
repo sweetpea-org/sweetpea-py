@@ -9,6 +9,7 @@ from typing import List, Union, Tuple, Optional, cast, Any, Dict, Set, Callable,
 from math import ceil
 from networkx import has_path
 import inspect
+import time
 
 from sweetpea._internal.backend import BackendRequest
 from sweetpea._internal.level import get_all_levels
@@ -85,7 +86,29 @@ class Block:
     # Trial Number, Factor Name, List of values
     # self.continuous_factor_samples = {}
 
+
     def sample_continuous(self, trial_num):
+
+        meet_constraints = False
+        continue_counter = 0
+        max_attempts = 1000000
+        start_time = time.time()
+        time_limit = 60
+        while not meet_constraints:
+            if time.time() - start_time >= time_limit:
+                raise TimeoutError("Sampling process exceeded the time limit of {} seconds to meet continuous constraints.".format(time_limit)) 
+            if continue_counter >= max_attempts:
+                raise RuntimeError("Exceeded the maximum number of resampling attempts ({}) to meet continuous constraints.".format(max_attempts))
+            print('Trial: {}, Sampling count to meet continuous constraints: {}'.format(trial_num, continue_counter), end="\r", flush=True)  
+            continuous_samples = self._sample_continuous(trial_num)
+            # Check if constraints are met.
+            meet_constraints = self._check_constraints(continuous_samples)
+            continue_counter+=1
+        # Should add Constraints here such that Not only Specific trial is resampled OR during the above function
+        print()
+        return continuous_samples
+
+    def _sample_continuous(self, trial_num):
         # samples per trial
         continuous_output = {}
         self.continuous_factor_samples[trial_num] = continuous_output
@@ -109,28 +132,23 @@ class Block:
             continuous_output[cFactor.name] = continuous_samples
         return continuous_output
 
-    def check_constraints(self, continuous_samples, continue_constraints):
-        if not continue_constraints:
+    def _check_constraints(self, continuous_samples):
+        from sweetpea._internal.constraint import ConstinuousConstraint
+        continue_constraints = []
+        for c in self.constraints:
+            if isinstance(c, ConstinuousConstraint):
+                continue_constraints.append(c)
+        if len(continue_constraints)==0:
             return True
-        elif 'factors' not in continue_constraints:
-            raise RuntimeError("Continuous factors not defined in continuous constraint")
-        elif 'function' not in continue_constraints: 
-            raise RuntimeError("Constraint function not defined in continuous constraint")
-        else:
-            _factors = continue_constraints['factors']
-            _function = continue_constraints['function']
-        
-        sig = inspect.signature(_function)
-        num_params = len(sig.parameters)
-        if len(_factors) != num_params:
-            raise RuntimeError("The number of factors in the constraint does not match the function for the constraint")
-
-        num_trials = len(continuous_samples[_factors[0]])
-        for i in range(num_trials):
-            # DW: Fix Key Error Here
-            inputs = [continuous_samples[f][i] for f in _factors]
-            if not _function(*inputs):
-                return False
+            
+        for c in continue_constraints:
+            _factors = c.factors
+            _function = c.constraint_function 
+            num_trials = len(continuous_samples[_factors[0].name])
+            for i in range(num_trials):
+                inputs = [continuous_samples[f.name][i] for f in _factors]
+                if not _function(*inputs):
+                    return False
         return True
         
     def show_errors(self) -> bool:

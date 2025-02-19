@@ -17,7 +17,7 @@ __all__ = [
     'Constraint',
     'Exclude', 'Pin', 'MinimumTrials', 'ExactlyK',
     'AtMostKInARow', 'AtLeastKInARow',
-    'ExactlyKInARow',
+    'ExactlyKInARow', 'ConstinuousConstraint',
 
     'Gen', 'RandomGen', 'IterateSATGen',
     'CMSGen', 'UniGen', 'IterateILPGen',
@@ -29,6 +29,7 @@ from functools import reduce
 from typing import Dict, List, Optional, Tuple, Any, Union, cast
 from itertools import product
 import csv, os
+import time
 
 from sweetpea._internal.block import Block
 from sweetpea._internal.cross_block import MultiCrossBlockRepeat, MultiCrossBlock, CrossBlock, Repeat
@@ -40,7 +41,8 @@ from sweetpea._internal.primitive import (
 from sweetpea._internal.constraint import (
     Consistency, Constraint, Derivation,
     Exclude, Pin, MinimumTrials,
-    ExactlyK, AtMostKInARow, AtLeastKInARow, ExactlyKInARow
+    ExactlyK, AtMostKInARow, AtLeastKInARow, ExactlyKInARow,
+    ConstinuousConstraint
 )
 from sweetpea._internal.sampling_strategy.base import Gen
 from sweetpea._internal.sampling_strategy.uniform import UniformGen
@@ -304,8 +306,7 @@ def save_experiments_csv(block: Block,
 
 def synthesize_trials(block: Block,
                       samples: int = 10,
-                      sampling_strategy=IterateGen,
-                      continue_constraints = {}
+                      sampling_strategy=IterateGen
                       ) -> List[dict]:
     """Given an experiment described with a :class:`.Block`, randomly generates
     multiple sets of trials for that experiment.
@@ -368,23 +369,12 @@ def synthesize_trials(block: Block,
     # DW: Sampling for ContinuousFactor
     
     for num_trial, trials in enumerate(trialss):
-        meet_constraints = False
-        continue_counter = 0
-        while not meet_constraints:
-            print('trial: {}, sampling count: {}'.format(num_trial, continue_counter), end="\r", flush=True)
-            continuous_samples = block.sample_continuous(num_trial)
-            # Not sure whether this should be inside block or here. 
-            # print(continuous_samples)
-            meet_constraints = block.check_constraints(continuous_samples, continue_constraints)
-            continue_counter+=1
-            #, sample_constraints=continue_constraints)
-        # Should add Constraints here such that Not only Specific trial is resampled OR during the above function
-        print()
+        continuous_samples = block.sample_continuous(num_trial)
         for k in continuous_samples:
             trials[k] = continuous_samples[k]
-    # print(block.continuous_factor_samples)
     # DW: Restore ContinuousFactor to the design 
     block.restore_continuous()
+    
     return trialss
 
 

@@ -13,6 +13,8 @@ from dataclasses import InitVar, dataclass, field
 from itertools import product, chain
 from random import randint
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union, cast
+import random
+import math
 
 from sweetpea._internal.iter import chunk_dict
 from sweetpea._internal.beforestart import BeforeStart
@@ -704,6 +706,8 @@ class ContinuousFactor(Factor):
     name: str
     initial_levels: list = None  # Add initial_levels as an argument with a default value
     sampling_function: callable = None
+    sampling_method: str = ''
+    sampling_range: list = None
 
     def __post_init__(self):
 
@@ -713,7 +717,26 @@ class ContinuousFactor(Factor):
             self.initial_levels = []
 
         # If sampling_function is not provided, use a default one
-        if self.sampling_function is None:
+        sampling_method = self.sampling_method
+        sampling_range = self.sampling_range
+        if sampling_method:
+            if sampling_method == 'uniform':
+                if not sampling_range: 
+                    sampling_range = [0,1]
+                self.sampling_function = lambda: random.uniform(sampling_range[0], sampling_range[1])
+            elif sampling_method == 'gaussian':
+                if not sampling_range: 
+                    sampling_range = [0,1]
+                self.sampling_function = lambda: random.gauss(sampling_range[0], sampling_range[1])
+            elif sampling_method == 'exponential':
+                if not sampling_range: 
+                    sampling_range = [1]
+                self.sampling_function = lambda: sampling_range[0] * math.log(random.uniform(0, 1))
+            elif sampling_method == 'lognormal':
+                if not sampling_range: 
+                    sampling_range = [0,1]
+                self.sampling_function = lambda: math.exp(random.gauss(sampling_range[0], sampling_range[1]))
+        elif self.sampling_function is None:
             self.sampling_function = lambda: random.uniform(0, 1)
 
     def generate(self, sample_input):#, trial_num, trial_size):

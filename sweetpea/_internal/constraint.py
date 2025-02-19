@@ -6,6 +6,7 @@ from copy import deepcopy
 from typing import List, Tuple, Any, Union, cast, Dict, Callable
 from itertools import chain, product
 from math import ceil
+import inspect
 
 from sweetpea._internal.base_constraint import Constraint
 from sweetpea._internal.iter import chunk, chunk_list
@@ -13,7 +14,7 @@ from sweetpea._internal.block import Block
 from sweetpea._internal.cross_block import MultiCrossBlockRepeat
 from sweetpea._internal.backend import LowLevelRequest, BackendRequest
 from sweetpea._internal.logic import If, Iff, And, Or, Not
-from sweetpea._internal.primitive import DerivedFactor, DerivedLevel, Factor, Level, SimpleLevel
+from sweetpea._internal.primitive import DerivedFactor, DerivedLevel, Factor, Level, SimpleLevel, ContinuousFactor
 from sweetpea._internal.argcheck import argcheck, make_istuple
 from sweetpea._internal.weight import combination_weight
 from sweetpea._internal.beforestart import BeforeStart
@@ -845,3 +846,52 @@ class MinimumTrials(Constraint):
 
     def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
         return True
+
+
+
+class ConstinuousConstraint(Constraint):
+    """This is the class for continuous constraint. 
+    Users need to define the continuous factor and the required constraint function for those factors when initializing
+    continuous constraints. This is only used to check continuous sampling. 
+    """
+    def __init__(self, factors, constraint_function):
+        self.factors = factors
+        self.constraint_function = constraint_function
+        who = "ConstinuousConstraint"
+        # argcheck(who, factors, List[ContinuousFactor], "continuous factors")
+        for f in self.factors: 
+            if not isinstance(f, ContinuousFactor):
+                raise ValueError(f"{who}: expected continuous factor, given {f}")
+        #argcheck(who, constraint_function, Callable, "constraint function")
+        if not isinstance(constraint_function, Callable):
+            raise ValueError(f"{who}: expected constraint function, given {constraint_function}")
+        # TODO: validation
+
+    def validate(self, block: Block) -> None:
+        sig = inspect.signature(self.constraint_function)
+        num_params = len(sig.parameters)
+        print('validate: ', num_params)
+        if len(self.factors ) != num_params:
+            raise RuntimeError("The number of factors in the continuous constraint does not match the function for the constraint")
+        for f in self.factors:
+            if f not in block.continuous_factors:
+                raise RuntimeError("Continuous factor {} not defined in the design".format(f))
+
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
+    def __repr__(self):
+        return str(self.__dict__)
+
+    def __str__(self):
+        return str(self.__dict__)
+    # def validate(self, block: Block) -> None:
+    #     if self.trials <= 0 and not isinstance(self.trials, int):
+    #         raise ValueError("Minimum trials must be a positive integer.")
+
+    def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
+        return True
+
+    def apply(self, block: Block, backend_request: BackendRequest) -> None:
+        """Do nothing."""
