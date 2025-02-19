@@ -15,7 +15,7 @@ from sweetpea._internal.backend import BackendRequest
 from sweetpea._internal.level import get_all_levels
 from sweetpea._internal.primitive import (
     DerivedFactor, DerivedLevel, ElseLevel, Factor, SimpleFactor, SimpleLevel, Level,
-    HiddenName
+    HiddenName, ContinuousFactor
 )
 from sweetpea._internal.logic import to_cnf_tseitin
 from sweetpea._internal.base_constraint import Constraint
@@ -515,7 +515,7 @@ def _desugar_factors_with_weights(design: List[Factor],
     #
     weighted = []
     for f in design:
-        if (not isinstance(f, DerivedFactor)) and any([l.weight > 1 for l in f.levels]):
+        if (not isinstance(f, DerivedFactor)) and (not isinstance(f, ContinuousFactor)) and any([l.weight > 1 for l in f.levels]):
             if all([not f in c for c in crossings]):
                 weighted.append(f)
     if not weighted:
