@@ -39,7 +39,7 @@ class Block:
                  who: str) -> None:
     
         # Temporarily remove ContinuousFactor from the design
-        self.continuous_factors = []
+        self.continuous_factors: List[ContinuousFactor] = []
         design = self.sep_continuous_factors(design)
         self.__check_dependency()
         self.design = list(design).copy()
@@ -71,9 +71,7 @@ class Block:
             else:
                 discret_design.append(f)
         self.continuous_factors = cFactor
-        # This is initiated if there are continuous factors
-        if len (self.continuous_factors)>0:
-            self.continuous_factor_samples = {}
+        self.continuous_factor_samples: Dict[int, Dict[str, List[int]]] = {}
         return discret_design
 
     # Add continuous factors back to design after sampling continuous
@@ -85,8 +83,6 @@ class Block:
     # This stores values for continuousfactor
     # Trial Number, Factor Name, List of values
     # self.continuous_factor_samples = {}
-
-
     def sample_continuous(self, trial_num):
 
         meet_constraints = False
