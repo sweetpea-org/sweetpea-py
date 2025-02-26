@@ -3,7 +3,6 @@ from sweetpea import (
     CrossBlock, MultiCrossBlock, synthesize_trials, print_experiments, tabulate_experiments,
     CMSGen, IterateGen, RandomGen, ConstinuousConstraint
 )
-
 import random
 
 ###  Create a ContinuousFactor
@@ -27,8 +26,7 @@ difference_time2 = ContinuousFactor("difference_time2", [
 difference_time3 = ContinuousFactor("difference_time3", [
     difference_time, difference_time2], sampling_function=difference)
 
-# # Define a discrete factor (color)
-color = Factor("color", ["red", "blue", "green"])
+color      = Factor("color",  ["red", "blue", "green"])
 
 # # Create the experimental design using the factors
 design = [color, completion_time, response_time, \
@@ -47,3 +45,6 @@ block        = CrossBlock(design, crossing, constraints)
 experiments  = synthesize_trials(block, 2, CMSGen)
 
 print_experiments(block, experiments)
+
+
+

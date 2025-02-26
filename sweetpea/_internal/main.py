@@ -369,7 +369,7 @@ def synthesize_trials(block: Block,
     # DW: Sampling for ContinuousFactor
     if block.continuous_factors:
         for num_trial, trials in enumerate(trialss):
-            continuous_samples = block.sample_continuous(num_trial)
+            continuous_samples = block.sample_continuous(num_trial, trialss[num_trial])
             for k in continuous_samples:
                 trials[k] = continuous_samples[k]
         # DW: Restore ContinuousFactor to the design 

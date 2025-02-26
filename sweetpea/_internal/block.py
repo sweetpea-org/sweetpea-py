@@ -83,8 +83,7 @@ class Block:
     # This stores values for continuousfactor
     # Trial Number, Factor Name, List of values
     # self.continuous_factor_samples = {}
-    def sample_continuous(self, trial_num):
-
+    def sample_continuous(self, trial_num, trial):
         meet_constraints = False
         continue_counter = 0
         max_attempts = 1000000
@@ -96,7 +95,7 @@ class Block:
             if continue_counter >= max_attempts:
                 raise RuntimeError("Exceeded the maximum number of resampling attempts ({}) to meet continuous constraints.".format(max_attempts))
             print('Trial: {}, Sampling count to meet continuous constraints: {}'.format(trial_num, continue_counter), end="\r", flush=True)  
-            continuous_samples = self._sample_continuous(trial_num)
+            continuous_samples = self._sample_continuous(trial_num, trial)
             # Check if constraints are met.
             meet_constraints = self._check_constraints(continuous_samples)
             continue_counter+=1
@@ -104,7 +103,7 @@ class Block:
         print()
         return continuous_samples
 
-    def _sample_continuous(self, trial_num):
+    def _sample_continuous(self, trial_num, trial):
         # samples per trial
         continuous_output = {}
         self.continuous_factor_samples[trial_num] = continuous_output
@@ -121,8 +120,10 @@ class Block:
                         sample_input.append(continuous_output[dependent.name][i])
                     elif isinstance(dependent, (int, float)):
                         sample_input.append(dependent)
-                    else:
-                        raise RuntimeError("Dependency {} is not continuous factor or number".format(dependent))
+                    elif isinstance(dependent, Factor) and dependent.name in trial:
+                        sample_input.append(trial[dependent.name][i])
+                    else:  
+                        raise RuntimeError("Dependency {} is not continuous factor or number or factor in the design".format(dependent))
                 c_value = cFactor.generate(sample_input)
                 continuous_samples.append(c_value)
             continuous_output[cFactor.name] = continuous_samples

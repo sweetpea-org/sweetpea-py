@@ -704,17 +704,13 @@ class CLevel:
 @dataclass
 class ContinuousFactor(Factor):
     name: str
-    initial_levels: Optional[List[Any]] = field(default_factory=list)  # Proper default handling
+    # List of factors/number for sampling inputs 
+    initial_levels: Optional[List[Any]] = field(default_factory=list) 
     sampling_function: Optional[Callable[[], Any]] = None  # Ensuring correct function signature
     sampling_method: str = ''
     sampling_range: Optional[List[Any]] = field(default_factory=list)
-    
-    def __post_init__(self):
 
-        # If initial_levels is not provided, use an empty list
-        # Otherwise it defines the dependents of the current factor
-        if self.initial_levels is None:
-            self.initial_levels = []
+    def __post_init__(self):
 
         # If sampling_function is not provided, use a default one
         sampling_method = self.sampling_method
