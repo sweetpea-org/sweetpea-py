@@ -10,14 +10,14 @@ __all__ = [
 
     'Block', 'CrossBlock', 'MultiCrossBlock', 'Repeat',
 
-    'Factor', 'Level', 'DerivedLevel', 'ElseLevel',
+    'Factor', 'Level', 'DerivedLevel', 'ElseLevel', 'ContinuousFactor',
 
     'Derivation', 'WithinTrial', 'Transition', 'Window',
 
     'Constraint',
     'Exclude', 'Pin', 'MinimumTrials', 'ExactlyK',
     'AtMostKInARow', 'AtLeastKInARow',
-    'ExactlyKInARow',
+    'ExactlyKInARow', 'ConstinuousConstraint',
 
     'Gen', 'RandomGen', 'IterateSATGen',
     'CMSGen', 'UniGen', 'IterateILPGen',
@@ -29,18 +29,20 @@ from functools import reduce
 from typing import Dict, List, Optional, Tuple, Any, Union, cast
 from itertools import product
 import csv, os
+import time
 
 from sweetpea._internal.block import Block
 from sweetpea._internal.cross_block import MultiCrossBlockRepeat, MultiCrossBlock, CrossBlock, Repeat
 from sweetpea._internal.primitive import (
-    Factor, SimpleFactor, DerivedFactor, Level, SimpleLevel, DerivedLevel, ElseLevel,
+    Factor, SimpleFactor, DerivedFactor, ContinuousFactor, Level, SimpleLevel, DerivedLevel, ElseLevel,
     Window, WithinTrial, Transition,
     HiddenName
 )
 from sweetpea._internal.constraint import (
     Consistency, Constraint, Derivation,
     Exclude, Pin, MinimumTrials,
-    ExactlyK, AtMostKInARow, AtLeastKInARow, ExactlyKInARow
+    ExactlyK, AtMostKInARow, AtLeastKInARow, ExactlyKInARow,
+    ConstinuousConstraint
 )
 from sweetpea._internal.sampling_strategy.base import Gen
 from sweetpea._internal.sampling_strategy.uniform import UniformGen
@@ -158,8 +160,8 @@ def print_experiments(block: Block, experiments: List[dict]):
         print(reduce(lambda a, b: a + format_str.format(*b), transposed, ''))
 
 
-def tabulate_experiments(block: Block = None,
-                         experiments: List[Dict] = None,
+def tabulate_experiments(block: Optional[Block] = None,
+                         experiments: Optional[List[Dict]] = None,
                          factors: Optional[List[Factor]] = None,
                          trials: Optional[List[int]] = None):
     """Tabulates and prints the given experiments in a human-friendly form.
@@ -344,7 +346,7 @@ def synthesize_trials(block: Block,
     def starting(who: Any) -> None:
         nonlocal samples
         print(f"Sampling {samples} trial sequences using {who}.")
-
+    
     if isinstance(sampling_strategy, type):
         assert issubclass(sampling_strategy, Gen)
         starting(sampling_strategy.class_name())
@@ -363,6 +365,15 @@ def synthesize_trials(block: Block,
                 print_experiments(block, [trials])
                 print(mismatches)
                 raise RuntimeError("synthesized trials has mismatches")
+
+    # DW: Sampling for ContinuousFactor
+    if block.continuous_factors:
+        for num_trial, trials in enumerate(trialss):
+            continuous_samples = block.sample_continuous(num_trial, trialss[num_trial])
+            for k in continuous_samples:
+                trials[k] = continuous_samples[k]
+        # DW: Restore ContinuousFactor to the design 
+        block.restore_continuous()
 
     return trialss
 

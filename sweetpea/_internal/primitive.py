@@ -4,16 +4,17 @@ from __future__ import annotations
 
 __all__ = [
     'Level', 'SimpleLevel', 'DerivedLevel', 'ElseLevel',
-    'Factor', 'SimpleFactor', 'DerivedFactor',
+    'Factor', 'SimpleFactor', 'DerivedFactor', 'ContinuousFactor',
     'WithinTrial', 'Transition', 'Window'
 ]
-
 
 from copy import deepcopy
 from dataclasses import InitVar, dataclass, field
 from itertools import product, chain
 from random import randint
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union, cast
+import random
+import math
 
 from sweetpea._internal.iter import chunk_dict
 from sweetpea._internal.beforestart import BeforeStart
@@ -372,6 +373,8 @@ class Factor:
         use them.
     """
 
+    ## TO DO DW: Modify Notes above
+
     #: The name of this factor. A synthesized factor may be mutated to hide its name
     name: Union[str, HiddenName]
 
@@ -400,9 +403,9 @@ class Factor:
             raise ValueError(f"Expected at least one level for factor {name}.")
         first_level = initial_levels[0]
         if isinstance(first_level, (DerivedLevel, ElseLevel)):
-            instance = super().__new__(DerivedFactor)
+            instance = cast(Factor, super().__new__(DerivedFactor))
         else:
-            instance = super().__new__(SimpleFactor)
+            instance = cast(Factor, super().__new__(SimpleFactor))
         return instance
 
     def __post_init__(self, initial_levels: Sequence[Any]):
@@ -694,8 +697,60 @@ class DerivedFactor(Factor):
         return res
 
 
+class CLevel:
+    def __init__(self, name):
+        self.name = name 
 
+@dataclass
+class ContinuousFactor(Factor):
+    name: str
+    # List of factors/number for sampling inputs 
+    initial_levels: Optional[List[Any]] = field(default_factory=list) 
+    sampling_function: Optional[Callable[[], Any]] = None  # Ensuring correct function signature
+    sampling_method: str = ''
+    sampling_range: Optional[List[Any]] = field(default_factory=list)
 
+    def __post_init__(self):
+        self.levels = [CLevel(self.name)]
+        # If sampling_function is not provided, use a default one
+        sampling_method = self.sampling_method
+        sampling_range = self.sampling_range
+        if sampling_method:
+            if sampling_method == 'uniform':
+                if not sampling_range: 
+                    sampling_range = [0,1]
+                self.sampling_function = lambda: random.uniform(sampling_range[0], sampling_range[1])
+            elif sampling_method == 'gaussian':
+                if not sampling_range: 
+                    sampling_range = [0,1]
+                self.sampling_function = lambda: random.gauss(sampling_range[0], sampling_range[1])
+            elif sampling_method == 'exponential':
+                if not sampling_range: 
+                    sampling_range = [1]
+                self.sampling_function = lambda: sampling_range[0] * math.log(random.uniform(0, 1))
+            elif sampling_method == 'lognormal':
+                if not sampling_range: 
+                    sampling_range = [0,1]
+                self.sampling_function = lambda: math.exp(random.gauss(sampling_range[0], sampling_range[1]))
+        elif self.sampling_function is None:
+            self.sampling_function = lambda: random.uniform(0, 1)
+
+    def generate(self, sample_input):#, trial_num, trial_size):
+        """
+        Generate samples using the provided sampling function.
+        
+        :param sample_input: empty for a non-derived factor
+        :return: Generated samples as a list
+        """
+        v = self.sampling_function(*sample_input)
+
+        return v
+        
+    def get_levels(self):
+        return self.initial_levels
+
+    def __repr__(self) -> str:
+        return self.__str__()
 
 ###############################################################################
 ##
