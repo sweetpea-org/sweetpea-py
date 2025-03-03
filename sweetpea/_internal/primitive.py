@@ -403,9 +403,9 @@ class Factor:
             raise ValueError(f"Expected at least one level for factor {name}.")
         first_level = initial_levels[0]
         if isinstance(first_level, (DerivedLevel, ElseLevel)):
-            instance = super().__new__(DerivedFactor)
+            instance = cast(Factor, super().__new__(DerivedFactor))
         else:
-            instance = super().__new__(SimpleFactor)
+            instance = cast(Factor, super().__new__(SimpleFactor))
         return instance
 
     def __post_init__(self, initial_levels: Sequence[Any]):
@@ -711,7 +711,7 @@ class ContinuousFactor(Factor):
     sampling_range: Optional[List[Any]] = field(default_factory=list)
 
     def __post_init__(self):
-
+        self.levels = [CLevel(self.name)]
         # If sampling_function is not provided, use a default one
         sampling_method = self.sampling_method
         sampling_range = self.sampling_range
@@ -751,10 +751,6 @@ class ContinuousFactor(Factor):
 
     def __repr__(self) -> str:
         return self.__str__()
-
-    @property
-    def levels(self):
-        return [CLevel(self.name)]  # Call the function when levels is accessed
 
 ###############################################################################
 ##

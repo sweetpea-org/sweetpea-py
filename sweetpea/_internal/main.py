@@ -160,8 +160,8 @@ def print_experiments(block: Block, experiments: List[dict]):
         print(reduce(lambda a, b: a + format_str.format(*b), transposed, ''))
 
 
-def tabulate_experiments(block: Block = None,
-                         experiments: List[Dict] = None,
+def tabulate_experiments(block: Optional[Block] = None,
+                         experiments: Optional[List[Dict]] = None,
                          factors: Optional[List[Factor]] = None,
                          trials: Optional[List[int]] = None):
     """Tabulates and prints the given experiments in a human-friendly form.
