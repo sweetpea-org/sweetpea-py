@@ -1,5 +1,5 @@
 from sweetpea import (
-    Factor, ContinuousFactor, DerivedLevel, WithinTrial, Transition, AtMostKInARow, MinimumTrials,
+    Factor, DerivedLevel, WithinTrial, Transition, AtMostKInARow, MinimumTrials,
     CrossBlock, MultiCrossBlock, synthesize_trials, print_experiments, tabulate_experiments,
     CMSGen, IterateGen, RandomGen, ConstinuousConstraint
 )
@@ -12,18 +12,18 @@ import random
 def sample_continuous():
     return random.uniform(0.5, 1.5)  # Response times between 0.5 and 1.5 seconds
 
-completion_time = ContinuousFactor("completion_time", [], sampling_method='lognormal')
-response_time = ContinuousFactor("response_time", [], sampling_function=sample_continuous)
+completion_time = Factor("completion_time", [], sampling_method='lognormal')
+response_time = Factor("response_time", [], sampling_function=sample_continuous)
 
 def difference(t1, t2):
     return t1-t2
-difference_time = ContinuousFactor("difference_time", [
+difference_time = Factor("difference_time", [
     completion_time, response_time], sampling_function=difference)
 
-difference_time2 = ContinuousFactor("difference_time2", [
+difference_time2 = Factor("difference_time2", [
     1.5, response_time], sampling_function=difference)
 
-difference_time3 = ContinuousFactor("difference_time3", [
+difference_time3 = Factor("difference_time3", [
     difference_time, difference_time2], sampling_function=difference)
 
 color      = Factor("color",  ["red", "blue", "green"])

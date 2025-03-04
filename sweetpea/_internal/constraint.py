@@ -870,7 +870,6 @@ class ConstinuousConstraint(Constraint):
     def validate(self, block: Block) -> None:
         sig = inspect.signature(self.constraint_function)
         num_params = len(sig.parameters)
-        print('validate: ', num_params)
         if len(self.factors ) != num_params:
             raise RuntimeError("The number of factors in the continuous constraint does not match the function for the constraint")
         for f in self.factors:

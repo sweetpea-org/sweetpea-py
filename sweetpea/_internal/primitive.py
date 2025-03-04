@@ -390,6 +390,8 @@ class Factor:
     def __new__(cls, name: Union[str, HiddenName], initial_levels: Sequence[Any], *_, **__) -> Factor:
         # Ensure we got a string for a name. This requirement is imposed for
         # backwards compatibility, but it should be handled by type-checking.
+        if 'sampling_method' in __ or 'sampling_function' in __:
+            return super().__new__(ContinuousFactor)
         if not isinstance(name, (str, HiddenName)):
             raise ValueError(f"Factor name not a string: {name}.")
         # Check if we're initializing this from `Factor` directly or one of its
