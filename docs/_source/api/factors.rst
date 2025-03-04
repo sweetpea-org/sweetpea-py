@@ -17,9 +17,22 @@ Factors and Levels
               distinct; create a level with a weight to get the
               effect of multiple levels with he same name.
 
+              Since a factor can use be initialized using a keyword argument 
+              `sampling_function` or `sampling_method`, the level of such a 
+              factor would not be the finite levels as in other cases. If the 
+              factor is not a *derived factor* of other factors or values, the 
+              levels would be empty. Otherwise, the factor would be a 
+              *derived factor* of other factors or values defined in the levels.
+
               :param name: the factor's name
               :param levels: the factor's levels
               :type levels: List[Level]
+              :param sampling_function: A function to sample a factor (optional)
+              :type sampling_function: Callable[..., float]
+              :param sampling_method: A pre-defined method to sample a factor (optional)
+              :type sampling_method: Literal["uniform", "gaussian", "exponential", "lognormal"]
+              :param sampling_range: Parameters for a sampling_method such as mean/standard deviation (optional)
+              :type sampling_range: Tuple[float, float]
 
               .. property:: name
 
@@ -31,7 +44,9 @@ Factors and Levels
 
                 Finds a returns a level of the factor with a given
                 name. If the factor has multiple levels with the same
-                name, any one of them might be returned.
+                name, any one of them might be returned. The factor 
+                initialized with a sampling function does not support 
+                such function since it does not have levels.
 
                 Indexing a factor with `[]` is the same as calling the
                 `get_level` method.
@@ -42,7 +57,8 @@ Factors and Levels
 
               .. property:: levels
 
-                Returns the factor's levels.
+                Returns the factor's levels. The factor initialized with 
+                a sampling function would not this property.
 
                 :returns: a list of levels
                 :rtype: List[Level]
