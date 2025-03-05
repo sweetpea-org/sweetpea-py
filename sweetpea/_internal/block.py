@@ -94,13 +94,15 @@ class Block:
                 raise TimeoutError("Sampling process exceeded the time limit of {} seconds to meet continuous constraints.".format(time_limit)) 
             if continue_counter >= max_attempts:
                 raise RuntimeError("Exceeded the maximum number of resampling attempts ({}) to meet continuous constraints.".format(max_attempts))
-            print('Trial: {}, Sampling count to meet continuous constraints: {}'.format(trial_num, continue_counter), end="\r", flush=True)  
+            if continue_counter>0:
+                print('Trial: {}, Sampling count to meet continuous constraints: {}'.format(trial_num, continue_counter), end="\r", flush=True)  
             continuous_samples = self._sample_continuous(trial_num, trial)
             # Check if constraints are met.
             meet_constraints = self._check_constraints(continuous_samples)
             continue_counter+=1
         # Should add Constraints here such that Not only Specific trial is resampled OR during the above function
-        print()
+        if continue_counter>1:
+            print()
         return continuous_samples
 
     def _sample_continuous(self, trial_num, trial):
@@ -285,6 +287,8 @@ class Block:
         if not isinstance(factor, Factor):
             raise ValueError('Non-factor argument to has_factor.')
         if factor in self.design:
+            return factor
+        if factor in self.continuous_factors:
             return factor
         return cast(Factor, None)
 

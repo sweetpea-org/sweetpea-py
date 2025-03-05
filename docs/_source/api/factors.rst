@@ -31,8 +31,8 @@ Factors and Levels
               :type sampling_function: Callable[..., float]
               :param sampling_method: A pre-defined method to sample a factor (optional)
               :type sampling_method: Literal["uniform", "gaussian", "exponential", "lognormal"]
-              :param sampling_range: Parameters for a sampling_method such as mean/standard deviation (optional)
-              :type sampling_range: Tuple[float, float]
+              :param sampling_range: Parameters for a sampling_method such as range or mean/std (optional)
+              :type sampling_range: List[float]
 
               .. property:: name
 

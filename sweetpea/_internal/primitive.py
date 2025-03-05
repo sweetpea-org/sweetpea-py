@@ -12,7 +12,7 @@ from copy import deepcopy
 from dataclasses import InitVar, dataclass, field
 from itertools import product, chain
 from random import randint
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union, cast, Literal
 import random
 import math
 
@@ -387,7 +387,12 @@ class Factor:
     #: A mapping from level names to levels for constant-time lookup.
     _level_map: Dict[str, Level] = field(init=False, default_factory=dict)
 
-    def __new__(cls, name: Union[str, HiddenName], initial_levels: Sequence[Any], *_, **__) -> Factor:
+    sampling_function: Optional[Callable[..., Any]] = None
+    sampling_method: Optional[Literal['uniform', 'gaussian', 'exponential', 'lognormal']] = None
+    sampling_range: Optional[List[Any]] = field(default_factory=list)
+
+
+    def __new__(cls, name: Union[str, HiddenName], initial_levels: Sequence[Any], *_, **__)->  Factor:
         # Ensure we got a string for a name. This requirement is imposed for
         # backwards compatibility, but it should be handled by type-checking.
         if 'sampling_method' in __ or 'sampling_function' in __:
@@ -709,7 +714,7 @@ class ContinuousFactor(Factor):
     # List of factors/number for sampling inputs 
     initial_levels: Optional[List[Any]] = field(default_factory=list) 
     sampling_function: Optional[Callable[[], Any]] = None  # Ensuring correct function signature
-    sampling_method: str = ''
+    sampling_method: Optional[Literal['uniform', 'gaussian', 'exponential', 'lognormal']] = None
     sampling_range: Optional[List[Any]] = field(default_factory=list)
 
     def __post_init__(self):
@@ -729,15 +734,19 @@ class ContinuousFactor(Factor):
             elif sampling_method == 'exponential':
                 if not sampling_range: 
                     sampling_range = [1]
-                self.sampling_function = lambda: sampling_range[0] * math.log(random.uniform(0, 1))
+                self.sampling_function = lambda: random.expovariate(sampling_range[0]) #sampling_range[0] * math.log(random.uniform(0, 1))
             elif sampling_method == 'lognormal':
                 if not sampling_range: 
                     sampling_range = [0,1]
                 self.sampling_function = lambda: math.exp(random.gauss(sampling_range[0], sampling_range[1]))
+            else:
+                raise ValueError(f"Sampling method {sampling_method} not recognized.")
+        
         elif self.sampling_function is None:
             self.sampling_function = lambda: random.uniform(0, 1)
-
-    def generate(self, sample_input):#, trial_num, trial_size):
+        elif not callable(self.sampling_function):
+            raise ValueError(f"Sampling function {self.sampling_function} not callable function.")
+    def generate(self, sample_input=[]):
         """
         Generate samples using the provided sampling function.
         

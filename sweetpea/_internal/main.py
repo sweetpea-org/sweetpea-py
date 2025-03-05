@@ -137,6 +137,9 @@ def __filter_hidden_keys(d: dict) -> dict:
 
 
 def print_experiments(block: Block, experiments: List[dict]):
+    
+    # Restore continuous factors for printing trials
+    block.restore_continuous()
     """Displays the generated experiments in a human-friendly form.
 
     :param block:
@@ -373,7 +376,7 @@ def synthesize_trials(block: Block,
             for k in continuous_samples:
                 trials[k] = continuous_samples[k]
         # DW: Restore ContinuousFactor to the design 
-        block.restore_continuous()
+        # block.restore_continuous()
 
     return trialss
 
