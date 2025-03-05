@@ -17,22 +17,9 @@ Factors and Levels
               distinct; create a level with a weight to get the
               effect of multiple levels with he same name.
 
-              Since a factor can use be initialized using a keyword argument 
-              `sampling_function` or `sampling_method`, the level of such a 
-              factor would not be the finite levels as in other cases. If the 
-              factor is not a *derived factor* of other factors or values, the 
-              levels would be empty. Otherwise, the factor would be a 
-              *derived factor* of other factors or values defined in the levels.
-
               :param name: the factor's name
               :param levels: the factor's levels
               :type levels: List[Level]
-              :param sampling_function: A function to sample a factor (optional)
-              :type sampling_function: Callable[..., float]
-              :param sampling_method: A pre-defined method to sample a factor (optional)
-              :type sampling_method: Literal["uniform", "gaussian", "exponential", "lognormal"]
-              :param sampling_range: Parameters for a sampling_method such as range or mean/std (optional)
-              :type sampling_range: List[float]
 
               .. property:: name
 
@@ -44,9 +31,7 @@ Factors and Levels
 
                 Finds a returns a level of the factor with a given
                 name. If the factor has multiple levels with the same
-                name, any one of them might be returned. The factor 
-                initialized with a sampling function does not support 
-                such function since it does not have levels.
+                name, any one of them might be returned.
 
                 Indexing a factor with `[]` is the same as calling the
                 `get_level` method.
@@ -57,8 +42,7 @@ Factors and Levels
 
               .. property:: levels
 
-                Returns the factor's levels. The factor initialized with 
-                a sampling function would not this property.
+                Returns the factor's levels.
 
                 :returns: a list of levels
                 :rtype: List[Level]
@@ -142,3 +126,30 @@ Factors and Levels
               :type weight: int
               :returns: a derived level
               :rtype: Level
+
+.. class:: sweetpea.ContinuousFactor(name, sampling_input, sampling_function=None, sampling_method=None, sampling_range=[])
+              
+              Sweetpea also supports a :class:`.ContinuousFactor` that can
+              be initialized using a `sampling_function` or `sampling_method`. 
+              If the `sampling_function` requires additional inputs, the 
+              `sampling_input` needs to be provided, otherwise the `sampling_input`
+              would be empty. If the `sampling_input` consists of other 
+              factors in the design, the ContinuousFactor would be a *derived factor*.
+              In addition to a user-defined `sampling_function`, a `sampling_method` 
+              can also be provided as the input to use pre-defined sampling techniques, 
+              which can be "uniform", "gaussian", "exponential" or "lognormal". 
+              In that case, the `sampling_range` can also be provided as parameters for 
+              the sampling_method such as range, mean, or standard deviation. 
+              When no `sampling_function` and `sampling_method` are provided, Sweetpea will
+              use a default function that returns a random floating-point number sampled 
+              from a uniform distribution between 0 and 1.
+
+              :param name: the factor's name
+              :param sampling_input: inputs for the sampling_function
+              :type levels: List[Any]
+              :param sampling_function: A function to sample a factor (optional)
+              :type sampling_function: Callable[..., float]
+              :param sampling_method: A pre-defined method to sample a factor (optional)
+              :type sampling_method: Literal["uniform", "gaussian", "exponential", "lognormal"]
+              :param sampling_range: Parameters for a sampling_method such as range or mean/std (optional)
+              :type sampling_range: List[float]

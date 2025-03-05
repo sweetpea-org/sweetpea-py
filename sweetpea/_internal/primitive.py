@@ -387,16 +387,9 @@ class Factor:
     #: A mapping from level names to levels for constant-time lookup.
     _level_map: Dict[str, Level] = field(init=False, default_factory=dict)
 
-    sampling_function: Optional[Callable[..., Any]] = None
-    sampling_method: Optional[Literal['uniform', 'gaussian', 'exponential', 'lognormal']] = None
-    sampling_range: Optional[List[Any]] = field(default_factory=list)
-
-
     def __new__(cls, name: Union[str, HiddenName], initial_levels: Sequence[Any], *_, **__)->  Factor:
         # Ensure we got a string for a name. This requirement is imposed for
         # backwards compatibility, but it should be handled by type-checking.
-        if 'sampling_method' in __ or 'sampling_function' in __:
-            return super().__new__(ContinuousFactor)
         if not isinstance(name, (str, HiddenName)):
             raise ValueError(f"Factor name not a string: {name}.")
         # Check if we're initializing this from `Factor` directly or one of its
@@ -713,7 +706,7 @@ class ContinuousFactor(Factor):
     name: str
     # List of factors/number for sampling inputs 
     initial_levels: Optional[List[Any]] = field(default_factory=list) 
-    sampling_function: Optional[Callable[[], Any]] = None  # Ensuring correct function signature
+    sampling_function: Optional[Callable[..., Any]] = None  # Ensuring correct function signature
     sampling_method: Optional[Literal['uniform', 'gaussian', 'exponential', 'lognormal']] = None
     sampling_range: Optional[List[Any]] = field(default_factory=list)
 
@@ -734,7 +727,7 @@ class ContinuousFactor(Factor):
             elif sampling_method == 'exponential':
                 if not sampling_range: 
                     sampling_range = [1]
-                self.sampling_function = lambda: random.expovariate(sampling_range[0]) #sampling_range[0] * math.log(random.uniform(0, 1))
+                self.sampling_function = lambda: random.expovariate(sampling_range[0]) 
             elif sampling_method == 'lognormal':
                 if not sampling_range: 
                     sampling_range = [0,1]

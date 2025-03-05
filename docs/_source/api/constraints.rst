@@ -108,16 +108,16 @@ Constraints
 
 .. class:: sweetpea.ConstinuousConstraint(factors, predicate)
 
-              Constrains factors initialized with sampling functions in 
-              an experiment so that the samples generated for these factors
-              meet the proposed constraint function. Since such constraints
-              only apply to factors with continuous sampling functions that 
+              Constrains :class:`.ContinuousFactor` in an experiment so that 
+              the samples generated for these factors meet the proposed 
+              constraint function. Since such constraints only apply to 
+              factors with continuous sampling functions that 
               should not be included in the crossing, the experiment will 
-              randomly sample these factors until the constraints are met 
-              after the trial sequences have been satified for other factors.
+              sample these factors until the constraints are met after 
+              the trial sequences have been satified for discrete factors.
 
               :param factors: the factors to add constraints on
-              :type factors: List[Factor]
+              :type factors: List[ContinuousFactor]
               :param predicate: a constraint function takes `factors` 
                                 initialized with sampling function. 
                                 The function should return true if the

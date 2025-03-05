@@ -1,7 +1,7 @@
 from sweetpea import (
     Factor, DerivedLevel, WithinTrial, Transition, AtMostKInARow, MinimumTrials,
     CrossBlock, MultiCrossBlock, synthesize_trials, print_experiments, tabulate_experiments,
-    CMSGen, IterateGen, RandomGen, ConstinuousConstraint
+    CMSGen, IterateGen, RandomGen, ConstinuousConstraint, ContinuousFactor
 )
 
 import math
@@ -31,10 +31,10 @@ def color_word(color, word):
         return random.uniform(0, 1)
 
 
-color_time = Factor("color_time", [
+color_time = ContinuousFactor("color_time", [
     color], sampling_function=color2time)
 
-color_word_time = Factor("color_word_time", [
+color_word_time = ContinuousFactor("color_word_time", [
     color, word], sampling_function=color_word)
 
 design = [color, word, color_time, color_word_time]

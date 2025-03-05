@@ -452,34 +452,39 @@ constraint only looks *within* a given experiment, not across experiments.
 A Factor without Finite Number of Levels
 ----------------------------------------
 
-In addition to factors with finite levels, a :class:`.Factor` can also be initialized 
-using a `sampling_function` or `sampling_method`. 
+In addition to factors with finite levels, SweetPea also supports a 
+:class:`.ContinuousFactor`, which can be initialized using a `sampling_function`
+or `sampling_method`. Unlike discrete factors, :class:`ContinuousFactor` allows 
+sampling values dynamically during runtime using the sampling function.
 
-Defining Factors with Continuous Sampling Function
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Defining ContinuousFactor
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A :class:`.Factor` can use a sampling function as the input. Since it uses the sampling 
+A :class:`.ContinuousFactor` uses a sampling function as the input. Since it uses the sampling 
 function to sample values during runtime, it does not have the finite number of levels as 
 other factors. As a result, such factors can only be added to the design of the block
 instead of the crossing. The crossing needs to consist of factor(s) with finite levels. 
+
+To use :class:`.ContinuousFactor`, we import and use the following SweetPea language forms:
+
+* :class:`.ContinuousFactor` --- constructs continuous factors with sampling function
 
 To put it together, we do:
 
 .. doctest::
 
     >>> from sweetpea import Factor, CrossBlock, synthesize_trials,\
-    >>> print_experiments
+    >>> print_experiments, ContinuousFactor
     >>> import random
     >>> def sample_continuous():
     >>>   return random.uniform(0.5, 1.5)
-    >>> response_time = Factor("response_time", [], sampling_function=sample_continuous)
+    >>> response_time = ContinuousFactor("response_time", [], sampling_function=sample_continuous)
     >>> factor_for_crossing = Factor("color", ["red", "blue", "green"])
     >>> block = CrossBlock([factor_for_crossing, response_time], [factor_for_crossing], [])
     >>> experiments = synthesize_trials(block, 1)
     Sampling 1 trial sequences using NonUniformGen.
     Encoding experiment constraints...
     Running CryptoMiniSat...
-    Trial: 0, Sampling count to meet continuous constraints: 0
     >>> print_experiments(block, experiments) 
     1 trial sequences found.
     <BLANKLINE>
@@ -488,11 +493,11 @@ To put it together, we do:
     color red   | response_time 1.2529270082663353
     color green | response_time 1.4106548040758589
 
-Constraints for Design with Factors with Sampling Function
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Constraints for Design with ContinuousFactors 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-When designing an experiment using :class:`.Factor` with a sampling function, 
-you can also impose some constraints on the factor. 
+When designing an experiment using :class:`.ContinuousFactor`, you can 
+also impose some constraints on the factor. 
 
 Let's say we look at the above list of trials and decide "we should ensure 
 that the ``response_time`` should be less than 1." 
@@ -502,11 +507,11 @@ In that case, we can add :class:`.ConstinuousConstraint` to achieve that.
 .. doctest::
 
     >>> from sweetpea import Factor, CrossBlock, synthesize_trials,\
-    >>> print_experiments, ConstinuousConstraint
+    >>> print_experiments, ConstinuousConstraint, ContinuousFactor
     >>> import random
     >>> def sample_continuous():
     >>>   return random.uniform(0.5, 1.5)
-    >>> response_time = Factor("response_time", [], sampling_function=sample_continuous)
+    >>> response_time = ContinuousFactor("response_time", [], sampling_function=sample_continuous)
     >>> factor_for_crossing = Factor("color", ["red", "blue", "green"])
     >>> def less_than_one(a):
     >>>   return (a<1)
