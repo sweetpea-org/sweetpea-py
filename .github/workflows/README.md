@@ -24,8 +24,7 @@ they do, we'll need to test this architecture manually.
 
 ## Note on Target Python Versions
 
-The code is written using Python 3.7.9. Therefore, we test with 3.7.9, as well
-as the latest version of each stable major release (3.7.x, 3.8.x, 3.9.x, etc).
+The code was originally written using Python 3.7.9. However, due to the change of libaray requirements for later python versions, therefore, we test with 3.9, as well as the latest version of each stable major release (3.9.x, 3.10.x, 3.11.x, etc).
 
 ### To-dos
 
