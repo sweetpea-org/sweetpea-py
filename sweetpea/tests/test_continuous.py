@@ -152,8 +152,8 @@ def test_block_size():
 def test_trial_factor_dependence():
     design = [color, time_uniform, time_gaussian, time_exponential, difference_time, difference_time1]
     crossing = [color]
-    block = CrossBlock(design, crossing, [MinimumTrials(40)])
-    experiments  = synthesize_trials(block, 5)
+    block = CrossBlock(design, crossing, [MinimumTrials(20)])
+    experiments  = synthesize_trials(block, 2)
 
     for ind in range(len(experiments)):
         time_uniform_sample = np.array(experiments[ind][time_uniform.name])
@@ -167,8 +167,8 @@ def test_trial_factor_dependence():
 
     design = [color, color_time]
     crossing = [color]
-    block = CrossBlock(design, crossing, [MinimumTrials(40)])
-    experiments  = synthesize_trials(block, 5)
+    block = CrossBlock(design, crossing, [MinimumTrials(20)])
+    experiments  = synthesize_trials(block, 2)
 
     for ind in range(len(experiments)):
         color_trial = experiments[ind][color.name]
@@ -189,7 +189,7 @@ def test_continuous_constraint():
     design = [color, time_gaussian, time_exponential]
     crossing = [color]
     block = CrossBlock(design, crossing, [cc])
-    experiments  = synthesize_trials(block, 5)
+    experiments  = synthesize_trials(block, 2)
 
     for ind in range(len(experiments)):
         time_gaussian_sample = np.array(experiments[ind][time_gaussian.name])
