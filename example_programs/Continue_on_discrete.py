@@ -4,6 +4,11 @@ from sweetpea import (
     CMSGen, IterateGen, RandomGen, ConstinuousConstraint, ContinuousFactor
 )
 
+from sweetpea._internal.sampling_strategy.sampling_continue import (
+    UniformSampling, GaussianSampling, 
+    ExponentialSampling, LogNormalSampling, CustomSampling
+)
+
 import math
 import random
 
@@ -32,10 +37,10 @@ def color_word(color, word):
 
 
 color_time = ContinuousFactor("color_time", [
-    color], sampling_function=color2time)
+    color], sampling_function=CustomSampling(color2time))
 
 color_word_time = ContinuousFactor("color_word_time", [
-    color, word], sampling_function=color_word)
+    color, word], sampling_function=CustomSampling(color_word))
 
 design = [color, word, color_time, color_word_time]
 

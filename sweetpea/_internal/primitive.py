@@ -18,8 +18,7 @@ import math
 
 from sweetpea._internal.iter import chunk_dict
 from sweetpea._internal.beforestart import BeforeStart
-
-
+from sweetpea._internal.sampling_strategy.sampling_continue import SamplingMethod  
 ###############################################################################
 ##
 ## Levels
@@ -703,52 +702,38 @@ class CLevel:
 
 @dataclass
 class ContinuousFactor(Factor):
+    """
+    Represents a continuous factor in an experimental design, where values are 
+    generated using a specified sampling method.
+
+    Attributes:
+        name (str): The name of the continuous factor.
+        initial_levels (Optional[List[Any]]): A list of initial levels for the factor (can be numeric or other factors).
+        sampling_function (Optional[SamplingMethod]): The sampling method used 
+            to generate values for this factor.
+    """
     name: str
     # List of factors/number for sampling inputs 
     initial_levels: Optional[List[Any]] = field(default_factory=list) 
-    sampling_function: Optional[Callable[..., Any]] = None  # Ensuring correct function signature
-    sampling_method: Optional[Literal['uniform', 'gaussian', 'exponential', 'lognormal']] = None
-    sampling_range: Optional[List[Any]] = field(default_factory=list)
+    sampling_function: Optional[SamplingMethod] = None  # Must be an instance of SamplingMethod
 
     def __post_init__(self):
         self.levels = [CLevel(self.name)]
         # If sampling_function is not provided, use a default one
-        sampling_method = self.sampling_method
-        sampling_range = self.sampling_range
-        if sampling_method:
-            if sampling_method == 'uniform':
-                if not sampling_range: 
-                    sampling_range = [0,1]
-                self.sampling_function = lambda: random.uniform(sampling_range[0], sampling_range[1])
-            elif sampling_method == 'gaussian':
-                if not sampling_range: 
-                    sampling_range = [0,1]
-                self.sampling_function = lambda: random.gauss(sampling_range[0], sampling_range[1])
-            elif sampling_method == 'exponential':
-                if not sampling_range: 
-                    sampling_range = [1]
-                self.sampling_function = lambda: random.expovariate(sampling_range[0]) 
-            elif sampling_method == 'lognormal':
-                if not sampling_range: 
-                    sampling_range = [0,1]
-                self.sampling_function = lambda: math.exp(random.gauss(sampling_range[0], sampling_range[1]))
-            else:
-                raise ValueError(f"Sampling method {sampling_method} not recognized.")
-        
-        elif self.sampling_function is None:
-            self.sampling_function = lambda: random.uniform(0, 1)
-        elif not callable(self.sampling_function):
-            raise ValueError(f"Sampling function {self.sampling_function} not callable function.")
-    def generate(self, sample_input=[]):
+        if not isinstance(self.sampling_function, SamplingMethod):
+            raise ValueError("sampling_function must be an instance of SamplingMethod, got {}".format(type(self.sampling_function)))
+
+    def generate(self, sample_input: List[Any] = []):
         """
         Generate samples using the provided sampling function.
         
         :param sample_input: empty for a non-derived factor
         :return: Generated samples as a list
         """
-        v = self.sampling_function(*sample_input)
+        if self.sampling_function is None:
+            raise ValueError("Sampling function is not set for this ContinuousFactor.")
 
-        return v
+        return self.sampling_function.sample(sample_input)
         
     def get_levels(self):
         return self.initial_levels

@@ -129,27 +129,48 @@ Factors and Levels
 
 .. class:: sweetpea.ContinuousFactor(name, sampling_input, sampling_function=None, sampling_method=None, sampling_range=[])
               
-              Sweetpea also supports a :class:`.ContinuousFactor` that can
-              be initialized using a `sampling_function` or `sampling_method`. 
-              If the `sampling_function` requires additional inputs, the 
-              `sampling_input` needs to be provided, otherwise the `sampling_input`
-              would be empty. If the `sampling_input` consists of other 
-              factors in the design, the ContinuousFactor would be a *derived factor*.
-              In addition to a user-defined `sampling_function`, a `sampling_method` 
-              can also be provided as the input to use pre-defined sampling techniques, 
-              which can be "uniform", "gaussian", "exponential" or "lognormal". 
-              In that case, the `sampling_range` can also be provided as parameters for 
-              the sampling_method such as range, mean, or standard deviation. 
-              When no `sampling_function` and `sampling_method` are provided, Sweetpea will
-              use a default function that returns a random floating-point number sampled 
-              from a uniform distribution between 0 and 1.
+              Sweetpea also supports a :class:`.ContinuousFactor` to support factors
+              that allow for continuous-valued factors instead of discrete levels. 
+              A :class:`.ContinuousFactor` can dynamically generate values
+              at runtime using a sampling function.
+              
+              To initialize a :class:`.ContinuousFactor`, a list of `initial_levels` 
+              needs to be provided. 
+              If `initial_levels` is an empty list, the factor will rely entirely on 
+              the sampling function for value generation.
+              When `initial_levels` is not empty, it serves as reference values for sampling. 
+              For example, if `initial_levels` contains a discrete :class:`.Factor` or 
+              a :class:`.ContinuousFactor` in the design, the ContinuousFactor initialized 
+              is considered a *derived factor*. It will use values from the factors in the 
+              `initial_levels` as the inputs for the sampling function. The `initial_levels`
+              can also contain additional inputs for the sampling function.
+              
+              A :class:`.ContinuousFactor` also requires a `sampling_function` to generate values at runtime.
+              This function must be an instance of a :class:`.SamplingMethod`. 
+              
+              Several built-in sampling methods are available, including:
+              
+              ``UniformSampling(low, high)``: Samples values from a uniform distribution within 
+              a given range.
+              
+              ``GaussianSampling(mean, sigma)``: Samples values from a normal distribution with 
+              a specified mean and standard deviation.
+              
+              ``ExponentialSampling(rate)``: Samples values from an exponential distribution with 
+              a given rate parameter.
+              
+              ``LogNormalSampling(mean, sigma)``: Samples values from a log-normal distribution 
+              with a specified mean and standard deviation.
+              
+              ``CustomSampling(func, *args, **kwargs)``: Allows a user-defined function to generate 
+              samples dynamically.
 
-              :param name: the factor's name
-              :param sampling_input: inputs for the sampling_function
-              :type levels: List[Any]
-              :param sampling_function: A function to sample a factor (optional)
-              :type sampling_function: Callable[..., float]
-              :param sampling_method: A pre-defined method to sample a factor (optional)
-              :type sampling_method: Literal["uniform", "gaussian", "exponential", "lognormal"]
-              :param sampling_range: Parameters for a sampling_method such as range or mean/std (optional)
-              :type sampling_range: List[float]
+              If `sampling_function` is not set, an error will be raised when attempting to generate 
+              samples.
+
+              :param name: The name of the continuous factor.
+              :type name: str
+              :param initial_levels: An optional list of reference values for the factor.
+              :type initial_levels: Optional[List[Any]]
+              :param sampling_function: A sampling method used to generate values dynamically.
+              :type sampling_function: Optional[SamplingMethod]
