@@ -449,13 +449,13 @@ behavior is expected. The :class:`~sweetpea.AtMostKInARow`
 constraint only looks *within* a given experiment, not across experiments.
 
 
-A Factor without Finite Number of Levels
-----------------------------------------
+ContinuousFactor in SweetPea
+----------------------------
 
-In addition to factors with finite levels, SweetPea also supports a 
-:class:`.ContinuousFactor`, which can be initialized using a `sampling_function`
-or `sampling_method`. Unlike discrete factors, :class:`ContinuousFactor` allows 
-sampling values dynamically during runtime using the sampling function.
+In addition to factors with discrete levels, SweetPea also supports a 
+:class:`.ContinuousFactor`, which can be initialized using a `sampling_function`. 
+Unlike discrete factors, :class:`ContinuousFactor` allows 
+sampling values dynamically at runtime using the sampling function.
 
 Defining ContinuousFactor
 ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -474,11 +474,12 @@ To put it together, we do:
 .. doctest::
 
     >>> from sweetpea import Factor, CrossBlock, synthesize_trials,\
-    >>> print_experiments, ContinuousFactor
+    >>> print_experiments, ContinuousFactor, CustomSampling
     >>> import random
     >>> def sample_continuous():
     >>>   return random.uniform(0.5, 1.5)
-    >>> response_time = ContinuousFactor("response_time", [], sampling_function=sample_continuous)
+    >>> response_time = ContinuousFactor("response_time", [],\
+    >>> sampling_function=CustomSampling(sample_continuous))
     >>> factor_for_crossing = Factor("color", ["red", "blue", "green"])
     >>> block = CrossBlock([factor_for_crossing, response_time], [factor_for_crossing], [])
     >>> experiments = synthesize_trials(block, 1)
@@ -511,7 +512,8 @@ In that case, we can add :class:`.ConstinuousConstraint` to achieve that.
     >>> import random
     >>> def sample_continuous():
     >>>   return random.uniform(0.5, 1.5)
-    >>> response_time = ContinuousFactor("response_time", [], sampling_function=sample_continuous)
+    >>> response_time = ContinuousFactor("response_time", [],\
+    >>> sampling_function=CustomSampling(sample_continuous))
     >>> factor_for_crossing = Factor("color", ["red", "blue", "green"])
     >>> def less_than_one(a):
     >>>   return (a<1)

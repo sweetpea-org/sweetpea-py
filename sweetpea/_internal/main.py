@@ -22,7 +22,10 @@ __all__ = [
     'Gen', 'RandomGen', 'IterateSATGen',
     'CMSGen', 'UniGen', 'IterateILPGen',
     'UniformGen', 'IterateGen',
-    'SMGen'
+    'SMGen',
+
+    'UniformSampling', 'GaussianSampling', 
+    'ExponentialSampling', 'LogNormalSampling', 'CustomSampling'
 ]
 
 from functools import reduce
@@ -56,6 +59,12 @@ from sweetpea._internal.sampling_strategy.iterate_ilp import IterateILPGen
 from sweetpea._internal.server import build_cnf
 from sweetpea._internal.core.cnf import Var
 from sweetpea._internal.argcheck import argcheck, make_islistof
+
+from sweetpea._internal.sampling_strategy.sampling_continue import (
+    UniformSampling, GaussianSampling, 
+    ExponentialSampling, LogNormalSampling, CustomSampling
+)
+
 
 from sweetpea._internal.auto_correlation_score import (auto_correlation_score_factor_within,
                                                        auto_correlation_score_factor_between)

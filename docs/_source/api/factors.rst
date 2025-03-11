@@ -5,6 +5,9 @@ Factors and Levels
 
               A factor for use in an experiment design.
 
+              By default :class:`.Factor` in SweetPea always creates 
+              a discrete factor which contains a finite number of  levels 
+              (Refer to :class:`.ContinuousFactor` for non-discrete factors). 
               The levels of a factor can be plain :class:`.Level`
               values, any kind of non-:class:`.Level` value (which is
               implicitly coerced to a :class:`.Level` value), or
@@ -129,8 +132,10 @@ Factors and Levels
 
 .. class:: sweetpea.ContinuousFactor(name, sampling_input, sampling_function=None, sampling_method=None, sampling_range=[])
               
-              Sweetpea also supports a :class:`.ContinuousFactor` to support factors
-              that allow for continuous-valued factors instead of discrete levels. 
+              Sweetpea also supports a :class:`.ContinuousFactor` for factors
+              without finite levels, which sample continuously at runtime. 
+              This is different from :class:`.Factor`, which is always discrete by 
+              default, that consists of finite discrete levels. 
               A :class:`.ContinuousFactor` can dynamically generate values
               at runtime using a sampling function.
               
@@ -141,9 +146,9 @@ Factors and Levels
               When `initial_levels` is not empty, it serves as reference values for sampling. 
               For example, if `initial_levels` contains a discrete :class:`.Factor` or 
               a :class:`.ContinuousFactor` in the design, the ContinuousFactor initialized 
-              is considered a *derived factor*. It will use values from the factors in the 
+              is considered a *derived continuousfactor*. It will use values from the factors in the 
               `initial_levels` as the inputs for the sampling function. The `initial_levels`
-              can also contain additional inputs for the sampling function.
+              can also contain inputs of other datatypes for the sampling function.
               
               A :class:`.ContinuousFactor` also requires a `sampling_function` to generate values at runtime.
               This function must be an instance of a :class:`.SamplingMethod`. 
