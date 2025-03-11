@@ -28,4 +28,4 @@ The code was originally written using Python 3.7.9. However, due to the change o
 
 ### To-dos
 
-  * [ ] Add pre-release support (e.g., add 3.10.x alpha tests, if available).
+  * [ ] Add pre-release support (e.g., add 3.12.x alpha tests, if available).
