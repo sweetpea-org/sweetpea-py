@@ -176,6 +176,6 @@ Factors and Levels
               :param name: The name of the continuous factor.
               :type name: str
               :param initial_levels: An optional list of reference values for the factor.
-              :type initial_levels: Optional[List[Any]]
+              :type initial_levels: List[Any]
               :param sampling_function: A sampling method used to generate values dynamically.
-              :type sampling_function: Optional[SamplingMethod]
+              :type sampling_function: SamplingMethod
