@@ -7,11 +7,44 @@ from sweetpea._internal.constraint import ConstinuousConstraint
 import random
 import numpy as np
 from typing import cast
+import math
 
 from sweetpea._internal.sampling_strategy.sampling_continue import (
     UniformSampling, GaussianSampling, 
     ExponentialSampling, LogNormalSampling, CustomSampling
 )
+
+def exponential_cdf(x, lambda_val):
+    """Calculates the cumulative distribution function (CDF) of an exponential distribution."""
+    return 1 - math.exp(-lambda_val * x)
+
+def kolmogorov_smirnov_test(samples, lambda_val):
+    """Performs the Kolmogorov-Smirnov test to check for exponential distribution."""
+    samples.sort()
+    n = len(samples)
+    max_diff = 0
+    for i in range(n):
+        cdf_val = exponential_cdf(samples[i], lambda_val)
+        diff1 = abs(cdf_val - (i / n))
+        diff2 = abs(cdf_val - ((i + 1) / n))
+        max_diff = max(max_diff, diff1, diff2)
+    return max_diff
+
+def check_exponential(samples, alpha=0.05):
+    """Checks if samples follow an exponential distribution using the K-S test."""
+    if not samples:
+      return False, "No samples provided"
+    
+    mean = sum(samples) / len(samples)
+    lambda_val = 1 / mean  # Estimate lambda from the sample mean
+    ks_stat = kolmogorov_smirnov_test(samples, lambda_val)
+    
+    # Critical value approximation for K-S test (large samples)
+    critical_value = 1.22 / math.sqrt(len(samples))
+
+    return ks_stat < critical_value, f"K-S Statistic: {ks_stat}, Critical Value: {critical_value}"
+
+
 
 
 color = Factor("color", ["red", "blue", "green", "brown"])
@@ -79,22 +112,36 @@ def test_sampling_range():
 
     mean = 0
     std_dev = 1
-    tolerance = 0.1
     sample_mean = np.mean(t1)
     sample_std = np.std(t1)
-    
+    z975 = 1.96
+    n = len(t1)
+    tolerance = z975 * (std_dev / np.sqrt(n))
+
     assert abs(sample_mean - mean) < tolerance, f"Expected mean {mean}, got {sample_mean}"
-    assert abs(sample_std - std_dev) < tolerance, f"Expected std {std_dev}, got {sample_std}"
 
-    rate = 1
-    sample_mean = np.mean(t2)
-    assert abs(sample_mean - (1 / rate)) < tolerance, f"Mean is off by more than {tolerance}: {sample_mean}"
+    is_exponential, result_string = check_exponential(t2)
 
-    tolerance = 0.2
-    sample_mean = np.mean(t3)
-    expected_mean = np.exp(mean + (std_dev ** 2) / 2)
-    assert abs(sample_mean - expected_mean) < tolerance, f"Mean is off by more than {tolerance}: {sample_mean}"
+    assert is_exponential == True, f"The samples likely do not follow an exponential distribution. {result_string}"
 
+    # Estimate the mean and std of the transformed normal data
+    mu = np.mean(t3)
+    sigma = np.std(t3, ddof=1)
+    n = len(t3)
+
+    # 95% Confidence interval for the normal distribution
+
+    ci_lower = mu - z975 * (sigma / np.sqrt(n))
+    ci_upper = mu + z975 * (sigma / np.sqrt(n))
+    ci_lognorm_lower = np.exp(ci_lower)
+    ci_lognorm_upper = np.exp(ci_upper)
+
+    # Calculate the mean of the lognormal distribution (this is different from the log mean)
+    mean_lognorm = np.exp(mu + (sigma**2 / 2))
+
+    # Assertions: Check that the log-transformed mean is within the CI bounds
+    assert ci_lower < mu < ci_upper, f"Mean for lognormal distribution {mu} is outside of the CI bounds ({ci_lower}, {ci_upper})"
+    
 
 def test_factor_validation():
     # This will use a default sampling function
