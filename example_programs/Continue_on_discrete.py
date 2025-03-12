@@ -36,11 +36,9 @@ def color_word(color, word):
         return random.uniform(0, 1)
 
 
-color_time = ContinuousFactor("color_time", [
-    color], sampling_function=CustomSampling(color2time))
+color_time = ContinuousFactor("color_time", sampling_function=CustomSampling(color2time, [color]))
 
-color_word_time = ContinuousFactor("color_word_time", [
-    color, word], sampling_function=CustomSampling(color_word))
+color_word_time = ContinuousFactor("color_word_time", sampling_function=CustomSampling(color_word, [color, word]))
 
 design = [color, word, color_time, color_word_time]
 

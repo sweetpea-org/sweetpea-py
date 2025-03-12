@@ -17,19 +17,16 @@ import random
 def sample_continuous():
     return random.uniform(0.5, 1.5)  # Response times between 0.5 and 1.5 seconds
 
-completion_time = ContinuousFactor("completion_time", [], sampling_function=LogNormalSampling(0, 1))
-response_time = ContinuousFactor("response_time", [], sampling_function=CustomSampling(sample_continuous))
+completion_time = ContinuousFactor("completion_time", sampling_function=LogNormalSampling(0, 1))
+response_time = ContinuousFactor("response_time", sampling_function=CustomSampling(sample_continuous))
 
 def difference(t1, t2):
     return t1-t2
-difference_time = ContinuousFactor("difference_time", [
-    completion_time, response_time], sampling_function=CustomSampling(difference))
+difference_time = ContinuousFactor("difference_time", sampling_function=CustomSampling(difference, [completion_time, response_time]))
 
-difference_time2 = ContinuousFactor("difference_time2", [
-    1.5, response_time], sampling_function=CustomSampling(difference))
+difference_time2 = ContinuousFactor("difference_time2", sampling_function=CustomSampling(difference, [1.5, response_time]))
 
-difference_time3 = ContinuousFactor("difference_time3", [
-    difference_time, difference_time2], sampling_function=CustomSampling(difference))
+difference_time3 = ContinuousFactor("difference_time3", sampling_function=CustomSampling(difference, [difference_time, difference_time2]))
 
 color      = Factor("color",  ["red", "blue", "green"])
 

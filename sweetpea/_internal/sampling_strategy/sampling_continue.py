@@ -10,6 +10,9 @@ class SamplingMethod(ABC):
     def sample(self, sample_input: List[Any] = []) -> float:
         pass  # Must be implemented by subclasses
 
+    def get_init(self) ->List[Any]:
+        return []
+
 class UniformSampling(SamplingMethod):
     def __init__(self, low: float, high: float):
         self.low = low
@@ -44,7 +47,7 @@ class LogNormalSampling(SamplingMethod):
 class CustomSampling(SamplingMethod):
     """Allows users to provide a custom sampling function with any parameters."""
     
-    def __init__(self, func: Callable[..., float], *args: Any, **kwargs: Any):
+    def __init__(self, func: Callable[..., float], *args: Any):
         """
         :param func: A callable function that generates a float sample.
         :param args: Positional arguments for the function.
@@ -53,9 +56,17 @@ class CustomSampling(SamplingMethod):
         # Currently it does not receive any position or keyword argument
         if not callable(func):
             raise TypeError("Wrong custom function type for CustomSampling: required Callable, Got {}".format(type(func)))
+        
         self.func = func
-        self.args = args
-        self.kwargs = kwargs
+        self.dependents = []
+        
+        if len(args)>0:
+            for k in args[0]:
+                self.dependents.append(k)
+
 
     def sample(self, sample_inputs: List[Any] = []) -> float:
         return self.func(*sample_inputs)
+
+    def get_init(self) ->List[Any]:
+        return self.dependents

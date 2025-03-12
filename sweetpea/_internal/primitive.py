@@ -378,7 +378,7 @@ class Factor:
     name: Union[str, HiddenName]
 
     #: The levels used during factor initialization.
-    initial_levels: InitVar[Sequence[Any]]
+    initial_levels: InitVar[Optional[Sequence[Any]]] = None
 
     #: The discrete values that this factor can have.
     levels: Sequence[Level] = field(init=False)
@@ -386,18 +386,20 @@ class Factor:
     #: A mapping from level names to levels for constant-time lookup.
     _level_map: Dict[str, Level] = field(init=False, default_factory=dict)
 
-    def __new__(cls, name: Union[str, HiddenName], initial_levels: Sequence[Any], *_, **__)->  Factor:
+    # def __new__(cls, name: Union[str, HiddenName], *_, **__)->  Factor:
+    def __new__(cls, name: Union[str, HiddenName], *args, **kwargs)->  Factor:    
         # Ensure we got a string for a name. This requirement is imposed for
         # backwards compatibility, but it should be handled by type-checking.
         if not isinstance(name, (str, HiddenName)):
             raise ValueError(f"Factor name not a string: {name}.")
-        # Check if we're initializing this from `Factor` directly or one of its
-        # subclasses.
+        # Extract `initial_levels` if provided
+        initial_levels = args[0] if len(args) > 0 else []
         if cls != Factor:
             # It's a subclass, so we do nothing special.
             return super().__new__(cls)
         # Otherwise, we have to check whether to return a subclass instance.
         # This requires there to be at least 1 initial level.
+        
         if not initial_levels:
             raise ValueError(f"Expected at least one level for factor {name}.")
         first_level = initial_levels[0]
@@ -696,9 +698,9 @@ class DerivedFactor(Factor):
         return res
 
 
-class CLevel:
-    def __init__(self, name):
-        self.name = name 
+# class CLevel:
+#     def __init__(self, name:str):
+#         self.name = name 
 
 @dataclass
 class ContinuousFactor(Factor):
@@ -713,15 +715,15 @@ class ContinuousFactor(Factor):
             to generate values for this factor.
     """
     name: str
-    # List of factors/number for sampling inputs 
-    initial_levels: Optional[List[Any]] = field(default_factory=list) 
     sampling_function: Optional[SamplingMethod] = None  # Must be an instance of SamplingMethod
 
-    def __post_init__(self):
-        self.levels = [CLevel(self.name)]
-        # If sampling_function is not provided, use a default one
+    def __post_init__(self, sampling_function=None):
+        self.levels = [HiddenName(self.name)]
         if not isinstance(self.sampling_function, SamplingMethod):
             raise ValueError("sampling_function must be an instance of SamplingMethod, got {}".format(type(self.sampling_function)))
+        
+        self.initial_levels = self.sampling_function.get_init()
+        # If sampling_function is not provided, use a default one
 
     def generate(self, sample_input: List[Any] = []):
         """
