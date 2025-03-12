@@ -14,37 +14,6 @@ from sweetpea._internal.sampling_strategy.sampling_continue import (
     ExponentialSampling, LogNormalSampling, CustomSampling
 )
 
-def exponential_cdf(x, lambda_val):
-    """Calculates the cumulative distribution function (CDF) of an exponential distribution."""
-    return 1 - math.exp(-lambda_val * x)
-
-def kolmogorov_smirnov_test(samples, lambda_val):
-    """Performs the Kolmogorov-Smirnov test to check for exponential distribution."""
-    samples.sort()
-    n = len(samples)
-    max_diff = 0
-    for i in range(n):
-        cdf_val = exponential_cdf(samples[i], lambda_val)
-        diff1 = abs(cdf_val - (i / n))
-        diff2 = abs(cdf_val - ((i + 1) / n))
-        max_diff = max(max_diff, diff1, diff2)
-    return max_diff
-
-def check_exponential(samples, alpha=0.05):
-    """Checks if samples follow an exponential distribution using the K-S test."""
-    if not samples:
-      return False, "No samples provided"
-    
-    mean = sum(samples) / len(samples)
-    lambda_val = 1 / mean  # Estimate lambda from the sample mean
-    ks_stat = kolmogorov_smirnov_test(samples, lambda_val)
-    
-    # Critical value approximation for K-S test (large samples)
-    critical_value = 1.22 / math.sqrt(len(samples))
-
-    return ks_stat < critical_value, f"K-S Statistic: {ks_stat}, Critical Value: {critical_value}"
-
-
 
 
 color = Factor("color", ["red", "blue", "green", "brown"])
@@ -110,20 +79,71 @@ def test_sampling_range():
         assert 0.5<= result <= 1.5
         assert 0<= result1 <= 10
 
-    mean = 0
-    std_dev = 1
-    sample_mean = np.mean(t1)
-    sample_std = np.std(t1)
-    z975 = 1.96
-    n = len(t1)
-    tolerance = z975 * (std_dev / np.sqrt(n))
+    def normal_cdf(x, mean, std):
+        """Calculates the CDF of a normal distribution using the error function (erf)."""
+        z = (x - mean) / (std * math.sqrt(2))
+        return 0.5 * (1 + math.erf(z))
 
-    assert abs(sample_mean - mean) < tolerance, f"Expected mean {mean}, got {sample_mean}"
+    def kolmogorov_smirnov_test(samples, mean, std):
+        """Performs the Kolmogorov-Smirnov test for normal distribution."""
+        samples.sort()
+        n = len(samples)
+        max_diff = 0
+        for i in range(n):
+            cdf_val = normal_cdf(samples[i], mean, std)
+            # Use midpoint for better alignment
+            diff = abs(cdf_val - ((i + 0.5) / n))
+            max_diff = max(max_diff, diff)
+        return max_diff
 
-    is_exponential, result_string = check_exponential(t2)
+        return max_diff
 
+    def check_normal(samples, mean, std):
+        """Checks if samples follow a normal distribution using the K-S test."""
+        if not samples:
+            return False, "No samples provided"
+        ks_stat = kolmogorov_smirnov_test(samples, mean, std)
+        # Critical value approximation for K-S test
+        critical_value = 1.36 / math.sqrt(len(samples))
+        result = ks_stat < critical_value
+        message = f"K-S Statistic: {ks_stat:.5f}, Critical Value: {critical_value:.5f}, Mean: {mean:.5f}, Std Dev: {std:.5f}"
+        return result, message
+
+    result, message = check_normal(t1, 0, 1)
+    assert result, f"The samples likely do not follow a normal distribution. {message}"
+
+    def exponential_cdf(x, lambda_val):
+        """Calculates the cumulative distribution function (CDF) of an exponential distribution."""
+        return 1 - math.exp(-lambda_val * x)
+
+    def kolmogorov_smirnov_test(samples, lambda_val):
+        """Performs the Kolmogorov-Smirnov test to check for exponential distribution."""
+        samples.sort()
+        n = len(samples)
+        max_diff = 0
+        for i in range(n):
+            cdf_val = exponential_cdf(samples[i], lambda_val)
+            diff1 = abs(cdf_val - (i / n))
+            diff2 = abs(cdf_val - ((i + 1) / n))
+            max_diff = max(max_diff, diff1, diff2)
+        return max_diff
+
+    def check_exponential(samples, lambda_val):
+        """Checks if samples follow an exponential distribution using the K-S test."""
+        if not samples:
+            return False, "No samples provided"
+        mean = sum(samples) / len(samples)
+        ks_stat = kolmogorov_smirnov_test(samples, lambda_val)
+        # Critical value approximation for K-S test (large samples)
+        critical_value = 1.36 / math.sqrt(len(samples))
+        return ks_stat < critical_value, f"K-S Statistic: {ks_stat}, Critical Value: {critical_value}"
+
+    rate = 1 
+    is_exponential, result_string = check_exponential(t2, rate)
     assert is_exponential == True, f"The samples likely do not follow an exponential distribution. {result_string}"
-
+    
+    
+    z975 = 1.96
     # Estimate the mean and std of the transformed normal data
     mu = np.mean(t3)
     sigma = np.std(t3, ddof=1)
