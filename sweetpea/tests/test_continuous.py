@@ -9,7 +9,7 @@ import numpy as np
 from typing import cast
 import math
 
-from sweetpea._internal.sampling_strategy.sampling_continue import (
+from sweetpea._internal.sampling_continue import (
     UniformSampling, GaussianSampling, 
     ExponentialSampling, LogNormalSampling, CustomSampling
 )

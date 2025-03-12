@@ -60,7 +60,7 @@ from sweetpea._internal.server import build_cnf
 from sweetpea._internal.core.cnf import Var
 from sweetpea._internal.argcheck import argcheck, make_islistof
 
-from sweetpea._internal.sampling_strategy.sampling_continue import (
+from sweetpea._internal.sampling_continue import (
     UniformSampling, GaussianSampling, 
     ExponentialSampling, LogNormalSampling, CustomSampling
 )

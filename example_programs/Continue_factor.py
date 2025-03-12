@@ -1,10 +1,7 @@
 from sweetpea import (
     Factor, DerivedLevel, WithinTrial, Transition, AtMostKInARow, MinimumTrials,
     CrossBlock, MultiCrossBlock, synthesize_trials, print_experiments, tabulate_experiments,
-    CMSGen, IterateGen, RandomGen, ConstinuousConstraint, ContinuousFactor
-)
-
-from sweetpea._internal.sampling_strategy.sampling_continue import (
+    CMSGen, IterateGen, RandomGen, ConstinuousConstraint, ContinuousFactor,
     UniformSampling, GaussianSampling, 
     ExponentialSampling, LogNormalSampling, CustomSampling
 )

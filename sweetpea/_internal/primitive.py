@@ -18,7 +18,7 @@ import math
 
 from sweetpea._internal.iter import chunk_dict
 from sweetpea._internal.beforestart import BeforeStart
-from sweetpea._internal.sampling_strategy.sampling_continue import SamplingMethod  
+from sweetpea._internal.sampling_continue import SamplingMethod  
 ###############################################################################
 ##
 ## Levels
