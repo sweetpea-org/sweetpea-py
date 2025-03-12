@@ -130,7 +130,7 @@ Factors and Levels
               :returns: a derived level
               :rtype: Level
 
-.. class:: sweetpea.ContinuousFactor(name, sampling_input, sampling_function=None, sampling_method=None, sampling_range=[])
+.. class:: sweetpea.ContinuousFactor(name, initial_levels, sampling_function)
               
               Sweetpea also supports a :class:`.ContinuousFactor` for factors
               without finite levels, which sample continuously at runtime. 
