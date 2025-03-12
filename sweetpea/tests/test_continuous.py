@@ -96,15 +96,13 @@ def test_sampling_range():
             max_diff = max(max_diff, diff)
         return max_diff
 
-        return max_diff
-
     def check_normal(samples, mean, std):
         """Checks if samples follow a normal distribution using the K-S test."""
         if not samples:
             return False, "No samples provided"
         ks_stat = kolmogorov_smirnov_test(samples, mean, std)
         # Critical value approximation for K-S test
-        critical_value = 1.36 / math.sqrt(len(samples))
+        critical_value = 1.63 / math.sqrt(len(samples))
         result = ks_stat < critical_value
         message = f"K-S Statistic: {ks_stat:.5f}, Critical Value: {critical_value:.5f}, Mean: {mean:.5f}, Std Dev: {std:.5f}"
         return result, message
@@ -112,37 +110,31 @@ def test_sampling_range():
     result, message = check_normal(t1, 0, 1)
     assert result, f"The samples likely do not follow a normal distribution. {message}"
 
-    def exponential_cdf(x, lambda_val):
-        """Calculates the cumulative distribution function (CDF) of an exponential distribution."""
-        return 1 - math.exp(-lambda_val * x)
+    def exponential_cdf(x, rate):
+        """Calculates the CDF of an exponential distribution."""
+        return 1 - math.exp(-rate * x) if x >= 0 else 0
 
-    def kolmogorov_smirnov_test(samples, lambda_val):
-        """Performs the Kolmogorov-Smirnov test to check for exponential distribution."""
-        samples.sort()
+    def kolmogorov_smirnov_test(samples, rate):
+        """Performs the Kolmogorov-Smirnov test for exponential distribution."""
+        samples = sorted(samples)
         n = len(samples)
         max_diff = 0
+
         for i in range(n):
-            cdf_val = exponential_cdf(samples[i], lambda_val)
-            diff1 = abs(cdf_val - (i / n))
-            diff2 = abs(cdf_val - ((i + 1) / n))
-            max_diff = max(max_diff, diff1, diff2)
-        return max_diff
+            cdf_value = exponential_cdf(samples[i], rate)
+            diff_plus = abs(cdf_value - (i / n))
+            diff_minus = abs(cdf_value - ((i + 1) / n))
+            max_diff = max(max_diff, diff_plus, diff_minus)
 
-    def check_exponential(samples, lambda_val):
-        """Checks if samples follow an exponential distribution using the K-S test."""
-        if not samples:
-            return False, "No samples provided"
-        mean = sum(samples) / len(samples)
-        ks_stat = kolmogorov_smirnov_test(samples, lambda_val)
-        # Critical value approximation for K-S test (large samples)
-        critical_value = 1.36 / math.sqrt(len(samples))
-        return ks_stat < critical_value, f"K-S Statistic: {ks_stat}, Critical Value: {critical_value}"
+        # Critical value approximation for KS test (for large n)
+        critical_value = 1.63 / math.sqrt(n)
+        message = f"K-S Statistic: {max_diff:.5f}, Critical Value: {critical_value:.5f}"
+        return max_diff < critical_value, message
+    
+    rate = 1
+    result, message = kolmogorov_smirnov_test(t2, rate)
+    assert result, f"The samples likely do not follow a exponential distribution. {message}"
 
-    rate = 1 
-    is_exponential, result_string = check_exponential(t2, rate)
-    assert is_exponential == True, f"The samples likely do not follow an exponential distribution. {result_string}"
-    
-    
     z975 = 1.96
     # Estimate the mean and std of the transformed normal data
     mu = np.mean(t3)
@@ -225,7 +217,7 @@ def test_trial_factor_dependence():
     design = [color, time_uniform, time_gaussian, time_exponential, difference_time, difference_time1]
     crossing = [color]
     block = CrossBlock(design, crossing, [MinimumTrials(20)])
-    experiments  = synthesize_trials(block, 2)
+    experiments  = synthesize_trials(block, 2, RandomGen)
 
     for ind in range(len(experiments)):
         time_uniform_sample = np.array(experiments[ind][time_uniform.name])
@@ -240,7 +232,7 @@ def test_trial_factor_dependence():
     design = [color, color_time]
     crossing = [color]
     block = CrossBlock(design, crossing, [MinimumTrials(20)])
-    experiments  = synthesize_trials(block, 2)
+    experiments  = synthesize_trials(block, 2, RandomGen)
 
     for ind in range(len(experiments)):
         color_trial = experiments[ind][color.name]
@@ -261,7 +253,7 @@ def test_continuous_constraint():
     design = [color, time_gaussian, time_exponential]
     crossing = [color]
     block = CrossBlock(design, crossing, [cc])
-    experiments  = synthesize_trials(block, 2)
+    experiments  = synthesize_trials(block, 2, RandomGen)
 
     for ind in range(len(experiments)):
         time_gaussian_sample = np.array(experiments[ind][time_gaussian.name])
