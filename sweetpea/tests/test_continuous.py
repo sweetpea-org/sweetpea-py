@@ -9,9 +9,9 @@ import numpy as np
 from typing import cast
 import math
 
-from sweetpea._internal.sampling_continue import (
-    UniformSampling, GaussianSampling, 
-    ExponentialSampling, LogNormalSampling, CustomSampling
+from sweetpea._internal.distribution import (
+    UniformDistribution, GaussianDistribution, 
+    ExponentialDistribution, LogNormalDistribution, CustomDistribution
 )
 
 
@@ -20,21 +20,21 @@ color = Factor("color", ["red", "blue", "green", "brown"])
 
 def sample_continuous():
     return random.uniform(0.5, 1.5)
-time_sample_function = ContinuousFactor("time_sample_function", sampling_function=CustomSampling(sample_continuous))
+time_sample_function = ContinuousFactor("time_sample_function", distribution=CustomDistribution(sample_continuous))
 
-# Different sampling methods
-time_uniform = ContinuousFactor("time_uniform", sampling_function=UniformSampling(0,10))
-time_gaussian = ContinuousFactor("time_gaussian", sampling_function=GaussianSampling(0,1))
-time_exponential = ContinuousFactor("time_exponential", sampling_function=ExponentialSampling(1))
-time_lognormal = ContinuousFactor("time_lognormal", sampling_function=LogNormalSampling(0,1))
+# Different Distributions
+time_uniform = ContinuousFactor("time_uniform", distribution=UniformDistribution(0,10))
+time_gaussian = ContinuousFactor("time_gaussian", distribution=GaussianDistribution(0,1))
+time_exponential = ContinuousFactor("time_exponential", distribution=ExponentialDistribution(1))
+time_lognormal = ContinuousFactor("time_lognormal", distribution=LogNormalDistribution(0,1))
 
 # Derived Factors
 def difference(t1, t2):
     return t1-t2
 
-difference_time = ContinuousFactor("difference_time", sampling_function=CustomSampling(difference, [time_uniform, time_gaussian]))
+difference_time = ContinuousFactor("difference_time", distribution=CustomDistribution(difference, [time_uniform, time_gaussian]))
 
-difference_time1 = ContinuousFactor("difference_time1", sampling_function=CustomSampling(difference, [difference_time, time_exponential]))
+difference_time1 = ContinuousFactor("difference_time1", distribution=CustomDistribution(difference, [difference_time, time_exponential]))
 
 def color2time(color):
     if color == "red":
@@ -46,7 +46,7 @@ def color2time(color):
     else:
         return random.uniform(3, 4)
 
-color_time = ContinuousFactor("color_time", sampling_function=CustomSampling(color2time, [color]))
+color_time = ContinuousFactor("color_time", distribution=CustomDistribution(color2time, [color]))
 
 # Constraints
 def greater_than_2(a, b):
@@ -153,18 +153,17 @@ def test_sampling_range():
     
 
 def test_factor_validation():
-    # This will use a default sampling function
     
-    # Incorrect sampling method name
+    # Incorrect Distribution input
     with pytest.raises(TypeError):
-        ContinuousFactor('response_time', sampling_function=UniformSampling(1))
+        ContinuousFactor('response_time', distribution=UniformDistribution(1))
 
-    # Incorrect sampling method name
+    # Incorrect Distribution inputs
     with pytest.raises(TypeError):
-        ContinuousFactor('response_time', sampling_function=ExponentialSampling(1,1))
+        ContinuousFactor('response_time', distribution=ExponentialDistribution(1,1))
 
     with pytest.raises(ValueError):
-        ContinuousFactor('response_time', sampling_function=1)
+        ContinuousFactor('response_time', distribution=1)
 
 
 def test_factor_get_level():

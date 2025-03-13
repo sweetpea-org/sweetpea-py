@@ -157,12 +157,3 @@ Sampling Strategies
            :func:`.synthesize_trials` produces independent results. That
            is, the single call is the same as separate calls that each
            generate one sequence of trials.
-
-
-.. class:: sweetpea.SamplingMethod
-
-           Abstract class for a sampling function for :class:`.ContinuousFactor`.
-           A subclass of :class:`.ContinuousFactor` must be instantiated 
-           to represent the same sampling strategy as an instance with 
-           user-defined arguments.
-

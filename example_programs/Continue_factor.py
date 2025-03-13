@@ -2,28 +2,24 @@ from sweetpea import (
     Factor, DerivedLevel, WithinTrial, Transition, AtMostKInARow, MinimumTrials,
     CrossBlock, MultiCrossBlock, synthesize_trials, print_experiments, tabulate_experiments,
     CMSGen, IterateGen, RandomGen, ConstinuousConstraint, ContinuousFactor,
-    UniformSampling, GaussianSampling, 
-    ExponentialSampling, LogNormalSampling, CustomSampling
+    UniformDistribution, GaussianDistribution, 
+    ExponentialDistribution, LogNormalDistribution, CustomDistribution
 )
 import random
-
-###  Create a ContinuousFactor
-# ContinuousFactor can be defined with either a sampling function 
-# or a sampling method (uniform, gaussian, exponential, lognormal)
 
 def sample_continuous():
     return random.uniform(0.5, 1.5)  # Response times between 0.5 and 1.5 seconds
 
-completion_time = ContinuousFactor("completion_time", sampling_function=LogNormalSampling(0, 1))
-response_time = ContinuousFactor("response_time", sampling_function=CustomSampling(sample_continuous))
+completion_time = ContinuousFactor("completion_time", distribution=LogNormalDistribution(0, 1))
+response_time = ContinuousFactor("response_time", distribution=CustomDistribution(sample_continuous))
 
 def difference(t1, t2):
     return t1-t2
-difference_time = ContinuousFactor("difference_time", sampling_function=CustomSampling(difference, [completion_time, response_time]))
+difference_time = ContinuousFactor("difference_time", distribution=CustomDistribution(difference, [completion_time, response_time]))
 
-difference_time2 = ContinuousFactor("difference_time2", sampling_function=CustomSampling(difference, [1.5, response_time]))
+difference_time2 = ContinuousFactor("difference_time2", distribution=CustomDistribution(difference, [1.5, response_time]))
 
-difference_time3 = ContinuousFactor("difference_time3", sampling_function=CustomSampling(difference, [difference_time, difference_time2]))
+difference_time3 = ContinuousFactor("difference_time3", distribution=CustomDistribution(difference, [difference_time, difference_time2]))
 
 color      = Factor("color",  ["red", "blue", "green"])
 

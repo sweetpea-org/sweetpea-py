@@ -18,7 +18,7 @@ import math
 
 from sweetpea._internal.iter import chunk_dict
 from sweetpea._internal.beforestart import BeforeStart
-from sweetpea._internal.sampling_continue import SamplingMethod  
+from sweetpea._internal.distribution import Distribution  
 ###############################################################################
 ##
 ## Levels
@@ -706,36 +706,34 @@ class DerivedFactor(Factor):
 class ContinuousFactor(Factor):
     """
     Represents a continuous factor in an experimental design, where values are 
-    generated using a specified sampling method.
+    generated using a specified distribution.
 
     Attributes:
         name (str): The name of the continuous factor.
         initial_levels (Optional[List[Any]]): A list of initial levels for the factor (can be numeric or other factors).
-        sampling_function (Optional[SamplingMethod]): The sampling method used 
-            to generate values for this factor.
+        distribution (Optional[Distribution]): The distribution used to generate values for this factor.
     """
     name: str
-    sampling_function: Optional[SamplingMethod] = None  # Must be an instance of SamplingMethod
+    distribution: Optional[Distribution] = None  # Must be an instance of Distribution
 
-    def __post_init__(self, sampling_function=None):
+    def __post_init__(self, distribution=None):
         self.levels = [HiddenName(self.name)]
-        if not isinstance(self.sampling_function, SamplingMethod):
-            raise ValueError("sampling_function must be an instance of SamplingMethod, got {}".format(type(self.sampling_function)))
+        if not isinstance(self.distribution, Distribution):
+            raise ValueError("distribution must be an instance of Distribution, got {}".format(type(self.distribution)))
         
-        self.initial_levels = self.sampling_function.get_init()
-        # If sampling_function is not provided, use a default one
+        self.initial_levels = self.distribution.get_init()
 
     def generate(self, sample_input: List[Any] = []):
         """
-        Generate samples using the provided sampling function.
+        Generate samples using based on the distribution.
         
         :param sample_input: empty for a non-derived factor
         :return: Generated samples as a list
         """
-        if self.sampling_function is None:
-            raise ValueError("Sampling function is not set for this ContinuousFactor.")
+        if self.distribution is None:
+            raise ValueError("Distribution is not set for this ContinuousFactor.")
 
-        return self.sampling_function.sample(sample_input)
+        return self.distribution.sample(sample_input)
         
     def get_levels(self):
         return self.initial_levels

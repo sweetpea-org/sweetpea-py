@@ -2,8 +2,8 @@ from sweetpea import (
     Factor, DerivedLevel, WithinTrial, Transition, AtMostKInARow, MinimumTrials,
     CrossBlock, MultiCrossBlock, synthesize_trials, print_experiments, tabulate_experiments,
     CMSGen, IterateGen, RandomGen, ConstinuousConstraint, ContinuousFactor,
-    UniformSampling, GaussianSampling, 
-    ExponentialSampling, LogNormalSampling, CustomSampling
+    UniformDistribution, GaussianDistribution, 
+    ExponentialDistribution, LogNormalDistribution, CustomDistribution
 )
 
 
@@ -11,8 +11,7 @@ import math
 import random
 
 ###  Create a ContinuousFactor
-# ContinuousFactor can be defined with either a sampling function 
-# or a sampling method (uniform, gaussian, exponential, lognormal)
+# ContinuousFactor needs to be defined based on a distribution 
 
 color      = Factor("color",  ["red", "blue", "green", "brown"])
 word       = Factor("motion", ["red", "blue", "green", "brown"])
@@ -34,9 +33,9 @@ def color_word(color, word):
         return random.uniform(0, 1)
 
 
-color_time = ContinuousFactor("color_time", sampling_function=CustomSampling(color2time, [color]))
+color_time = ContinuousFactor("color_time", distribution=CustomDistribution(color2time, [color]))
 
-color_word_time = ContinuousFactor("color_word_time", sampling_function=CustomSampling(color_word, [color, word]))
+color_word_time = ContinuousFactor("color_word_time", distribution=CustomDistribution(color_word, [color, word]))
 
 design = [color, word, color_time, color_word_time]
 

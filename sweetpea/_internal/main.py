@@ -24,8 +24,8 @@ __all__ = [
     'UniformGen', 'IterateGen',
     'SMGen',
 
-    'UniformSampling', 'GaussianSampling', 
-    'ExponentialSampling', 'LogNormalSampling', 'CustomSampling'
+    'UniformDistribution', 'GaussianDistribution', 
+    'ExponentialDistribution', 'LogNormalDistribution', 'CustomDistribution'
 ]
 
 from functools import reduce
@@ -60,9 +60,9 @@ from sweetpea._internal.server import build_cnf
 from sweetpea._internal.core.cnf import Var
 from sweetpea._internal.argcheck import argcheck, make_islistof
 
-from sweetpea._internal.sampling_continue import (
-    UniformSampling, GaussianSampling, 
-    ExponentialSampling, LogNormalSampling, CustomSampling
+from sweetpea._internal.distribution import (
+    UniformDistribution, GaussianDistribution, 
+    ExponentialDistribution, LogNormalDistribution, CustomDistribution
 )
 
 

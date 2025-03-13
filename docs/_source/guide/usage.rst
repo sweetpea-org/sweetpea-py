@@ -453,33 +453,33 @@ ContinuousFactor in SweetPea
 ----------------------------
 
 In addition to factors with discrete levels, SweetPea also supports a 
-:class:`.ContinuousFactor`, which can be initialized using a `sampling_function`. 
+:class:`.ContinuousFactor`, which can be initialized using a `distribution`. 
 Unlike discrete factors, :class:`ContinuousFactor` allows 
-sampling values dynamically at runtime using the sampling function.
+sampling values dynamically at runtime based on the pre-defined distribution.
 
 Defining ContinuousFactor
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A :class:`.ContinuousFactor` uses a sampling function as the input. Since it uses the sampling 
-function to sample values during runtime, it does not have the finite number of levels as 
-other factors. As a result, such factors can only be added to the design of the block
+A :class:`.ContinuousFactor` uses an input distribution to sample values at runtime.
+It does not have the finite number of levels as other factors. 
+As a result, such factors can only be added to the design of the block
 instead of the crossing. The crossing needs to consist of factor(s) with finite levels. 
 
 To use :class:`.ContinuousFactor`, we import and use the following SweetPea language forms:
 
-* :class:`.ContinuousFactor` --- constructs continuous factors with sampling function
+* :class:`.ContinuousFactor` --- constructs continuous factors with a distribution
 
 To put it together, we do:
 
 .. doctest::
 
     >>> from sweetpea import Factor, CrossBlock, synthesize_trials,\
-    >>> print_experiments, ContinuousFactor, CustomSampling
+    >>> print_experiments, ContinuousFactor, CustomDistribution
     >>> import random
     >>> def sample_continuous():
     >>>   return random.uniform(0.5, 1.5)
     >>> response_time = ContinuousFactor("response_time", [],\
-    >>> sampling_function=CustomSampling(sample_continuous))
+    >>> distribution=CustomDistribution(sample_continuous))
     >>> factor_for_crossing = Factor("color", ["red", "blue", "green"])
     >>> block = CrossBlock([factor_for_crossing, response_time], [factor_for_crossing], [])
     >>> experiments = synthesize_trials(block, 1)
@@ -508,12 +508,12 @@ In that case, we can add :class:`.ConstinuousConstraint` to achieve that.
 .. doctest::
 
     >>> from sweetpea import Factor, CrossBlock, synthesize_trials,\
-    >>> print_experiments, ConstinuousConstraint, ContinuousFactor
+    >>> print_experiments, ConstinuousConstraint, ContinuousFactor, CustomDistribution
     >>> import random
     >>> def sample_continuous():
     >>>   return random.uniform(0.5, 1.5)
     >>> response_time = ContinuousFactor("response_time", [],\
-    >>> sampling_function=CustomSampling(sample_continuous))
+    >>> distribution=CustomDistribution(sample_continuous))
     >>> factor_for_crossing = Factor("color", ["red", "blue", "green"])
     >>> def less_than_one(a):
     >>>   return (a<1)
