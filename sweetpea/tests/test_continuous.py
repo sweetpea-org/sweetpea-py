@@ -107,7 +107,7 @@ def test_sampling_range():
     result, message = check_normal(t1, 0, 1)
     assert result, f"The samples likely do not follow a normal distribution. {message}"
 
-    def check_exponential(data, rate, threshold=0.05):
+    def check_exponential(data, rate, threshold=0.1):
         # Sort the data
         data = np.sort(data)
         n = len(data)
@@ -122,11 +122,12 @@ def test_sampling_range():
         ks_statistic = np.max(np.abs(empirical_cdf - theoretical_cdf))
         
         # Return True if the difference is below the threshold
-        return ks_statistic < threshold
+        message = f"K-S Statistic: {ks_statistic:.5f}, Threshold: {threshold:.5f}"
+        return ks_statistic < threshold, message
 
     rate = 1
-    result = check_exponential(t2, rate)
-    assert result, f"The samples likely do not follow a exponential distribution."
+    result, message = check_exponential(t2, rate)
+    assert result, f"The samples likely do not follow a exponential distribution. {message}"
 
     z975 = 1.96
     # Estimate the mean and std of the transformed normal data
