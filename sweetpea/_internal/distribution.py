@@ -66,7 +66,10 @@ class CustomDistribution(Distribution):
 
 
     def sample(self, sample_inputs: List[Any] = []) -> float:
-        return self.func(*sample_inputs)
+        if len(sample_inputs) == 0:
+            return self.func(*self.dependents)
+        else:
+            return self.func(*sample_inputs)
 
     def get_init(self) ->List[Any]:
         return self.dependents

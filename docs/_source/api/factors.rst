@@ -144,39 +144,51 @@ Factors and Levels
               must be an instance of a :class:`.Distribution`. 
               Several built-in types are available for :class:`.Distribution`.  
               
-              ``UniformDistribution(low, high)``: Samples values from a uniform distribution within 
+              :class:`.UniformDistribution` Samples values from a uniform distribution within 
               a given range.
               
-              ``GaussianDistribution(mean, sigma)``: Samples values from a normal distribution with 
+              :class:`.GaussianDistribution` Samples values from a normal distribution with 
               a specified mean and standard deviation.
               
-              ``ExponentialDistribution(rate)``: Samples values from an exponential distribution with 
+              :class:`.ExponentialDistribution` Samples values from an exponential distribution with 
               a given rate parameter.
               
-              ``LogNormalDistribution(mean, sigma)``: Samples values from a log-normal distribution 
+              :class:`.LogNormalDistribution` Samples values from a log-normal distribution 
               with a specified mean and standard deviation.
               
-              ``CustomDistribution(func, function_inputs=[])``: Allows sampling dynamically from a 
+              :class:`.CustomDistribution` Allows sampling dynamically from a 
               user-defined distribution.
 
-              If `UniformDistribution`, `GaussianDistribution`, `LogNormalDistribution`,
-              or `LogNormalDistribution` is used to initialize the :class:`.ContinuousFactor`,
+              If :class:`.UniformDistribution`, :class:`.GaussianDistribution`, 
+              :class:`.LogNormalDistribution`, or :class:`.LogNormalDistribution` 
+              is used to initialize the :class:`.ContinuousFactor`,
               the factor will generate values following the corresponding distribution 
-              at runtime, thus the factor is always a *non-derived continuousfactor*. 
-              If `CustomDistribution` is used to initialize the :class:`.ContinuousFactor`,
-              it will use a custom sampling function (`func`) to generate values. In addition to 
-              the user-defined `func`, `CustomDistribution` can also take an additional argument,
-              `function_inputs`, which is a list of inputs for the user-defined function.
-              When `function_inputs` is not provided or empty, `func` should not require additional
-              inputs to generate values. When `function_inputs` is provided, 
-              it serves as reference values for sampling values at runtime. 
-              For example, if `function_inputs` contains a :class:`.DiscreteFactor` or 
+              at runtime through `continuousfactor.generate()`, 
+              thus the factor is always a *non-derived continuousfactor*. 
+
+              The user can also use :class:`.CustomDistribution`, in which 
+              user needs to provide a custom `func(Callable)` 
+              to initialize the :class:`.ContinuousFactor`.
+              The factor will then use `func` to generate values. 
+              In addition to the user-defined `func`, :class:`.CustomDistribution` 
+              can also take an additional argument, `function_inputs`, 
+              which is a list of inputs for the user-defined function.
+              When `function_inputs` is not provided or empty, :class:`.ContinuousFactor`
+              should not require additional inputs to generate 
+              values, as `continuousfactor.generate()`. Similarly, 
+              when `function_inputs` is provided but only contains basic datatypes, 
+              the :class:`.ContinuousFactor` can also directly generate values at runtime
+              through `continuousfactor.generate()`. 
+
+              However, if `function_inputs` contains a :class:`.DiscreteFactor` or 
               a :class:`.ContinuousFactor` in the design, the ContinuousFactor initialized 
               is considered a *derived continuousfactor*. In such cases,
-              the :class:`.ContinuousFactor` needs to use the values/levels for 
-              these factors in the experiment in order to generate values. 
-              The `function_inputs` can also contain inputs of other datatypes 
-              for `func` to generate values.
+              the :class:`.ContinuousFactor` needs to use the values for 
+              these factors in the experiment as the inputs to generate values. 
+              For example, when `function_inputs` contains a Factor Color in the design, 
+              for each trial, the `value` for the Factor needs to be 
+              passed to the `continuousfactor` in order to generate values, such as 
+              `continuousfactor.generate([value])`
               
               If `distribution` is not set or recognized, an error will be raised.
 
@@ -185,6 +197,21 @@ Factors and Levels
               :param distribution: A distribution used to generate values dynamically.
               :type distribution: Distribution
 
+              .. property:: name
+
+                The continuousfactor's name.
+
+                :type: str
+
+              .. method:: generate(sample_input: List[Any]=[])
+
+                Generate values for the continuousfactor based on 
+                the input distribution. 
+
+                :param sample_input(Optional): inputs when sampling with :class:`.CustomDistribution`
+                :type param: List[Any]
+                :returns: a value for the factor
+                :rtype: Any
 
 .. class:: sweetpea.DiscreteFactor(name, levels)
 
@@ -192,7 +219,6 @@ Factors and Levels
               dynamically, a :class:`.DiscreteFactor` takes on a finite set of distinct,
               separate values (or levels) during its initialization. 
               Each level can be represented using the :class:`.Level` class.
-              In SweetPea, a :class:`.DiscreteFactor` is initialized 
-              using the :class:`.Factor` class. 
+              A :class:`.DiscreteFactor` is initialized using the :class:`.Factor` class. 
               
               

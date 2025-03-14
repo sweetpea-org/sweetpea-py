@@ -11,6 +11,13 @@ Distributions
            to represent the distribution that the factor follows when 
            generating values dynamically. 
 
+           .. method:: sample()
+
+               Generate values based on the input distribution
+
+               :returns: a value sampled from the input distribution
+               :rtype: float
+
 .. class:: sweetpea.UniformDistribution(low, high)
 
            Represents a uniform distribution for :class:`.ContinuousFactor`,
@@ -34,6 +41,7 @@ Distributions
            :param sigma: The standard deviation of the distribution. Must be greater than zero.
            :type sigma: float
            :rtype: Distribution
+
 
 .. class:: sweetpea.ExponentialDistribution(rate)
 
@@ -60,16 +68,36 @@ Distributions
 
            Represents a custom distribution for :class:`.ContinuousFactor`, 
            where values are sampled according to the specified custom sampling
-           function, `func`. An optional input `function_inputs` can be also provided as 
-           the input for `func`. When `function_inputs` contains a :class:`.Factor`
+           function, `func`. 
+           
+           An optional input `function_inputs` can also be provided as 
+           the input for `func`. 
+
+           When `function_inputs` is empty, or when `function_inputs` only contains 
+           basic datatypes, :class:`.CustomDistribution` will generate values 
+           directly through `distribution.sample()` at runtime. 
+
+           When `function_inputs` contains a :class:`.DiscreteFactor`
            or :class:`.ContinuousFactor`, the :class:`.ContinuousFactor` becomes 
-           a *derived factor*. The factors in the `function_inputs` must be in the `design`
-           of the experiment. The `func` will sample based on the values/levels of these
-           factors during each trial. 
+           a *derived factor*. In such cases, additional inputs need to be 
+           passed to the `distribution` to generate values dynamically since 
+           it does not know the value for the factor at runtime. 
+           For example, when `function_inputs` contains a Factor Color in the design, 
+           the `value` for the Factor in each trial needs to be 
+           passed to the `distribution` in order to generate values, such as 
+           `distribution.sample([value])`
 
            :param func: A function that generates values based on the specified inputs.
            :type func: Callable
            :param function_inputs: A list of inputs to pass to the `func` when generating values. Defaults to an empty list.
            :type function_inputs: List[Any]
            :rtype: Distribution
-           
+
+           .. method:: sample(sample_input: List[Any]=[])
+
+               Generate values based on the custom distribution
+
+               :param sample_input(Optional): inputs when sampling with :class:`.CustomDistribution`
+               :type param: List[Any]
+               :returns: a value sampled from the custom distribution
+               :rtype: Any
