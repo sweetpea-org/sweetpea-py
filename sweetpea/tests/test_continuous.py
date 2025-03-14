@@ -107,30 +107,26 @@ def test_sampling_range():
     result, message = check_normal(t1, 0, 1)
     assert result, f"The samples likely do not follow a normal distribution. {message}"
 
-    def exponential_cdf(x, rate):
-        """Calculates the CDF of an exponential distribution."""
-        return 1 - math.exp(-rate * x) if x >= 0 else 0
+    def check_exponential(data, rate, threshold=0.05):
+        # Sort the data
+        data = np.sort(data)
+        n = len(data)
 
-    def kolmogorov_smirnov_test(samples, rate):
-        """Performs the Kolmogorov-Smirnov test for exponential distribution."""
-        samples = sorted(samples)
-        n = len(samples)
-        max_diff = 0
+        # Empirical CDF
+        empirical_cdf = np.arange(1, n + 1) / n
+        
+        # Theoretical CDF based on exponential distribution
+        theoretical_cdf = 1 - np.exp(-rate * data)
+        
+        # Compute maximum absolute difference (Kolmogorov-Smirnov statistic)
+        ks_statistic = np.max(np.abs(empirical_cdf - theoretical_cdf))
+        
+        # Return True if the difference is below the threshold
+        return ks_statistic < threshold
 
-        for i in range(n):
-            cdf_value = exponential_cdf(samples[i], rate)
-            diff_plus = abs(cdf_value - (i / n))
-            diff_minus = abs(cdf_value - ((i + 1) / n))
-            max_diff = max(max_diff, diff_plus, diff_minus)
-
-        # Critical value approximation for KS test (for large n)
-        critical_value = 1.96 / math.sqrt(n)
-        message = f"K-S Statistic: {max_diff:.5f}, Critical Value: {critical_value:.5f}"
-        return max_diff < critical_value, message
-    
     rate = 1
-    result, message = kolmogorov_smirnov_test(t2, rate)
-    assert result, f"The samples likely do not follow a exponential distribution. {message}"
+    result = check_exponential(t2, rate)
+    assert result, f"The samples likely do not follow a exponential distribution."
 
     z975 = 1.96
     # Estimate the mean and std of the transformed normal data
