@@ -394,6 +394,8 @@ class Factor:
             raise ValueError(f"Factor name not a string: {name}.")
         # Extract `initial_levels` if provided
         initial_levels = args[0] if len(args) > 0 else []
+        if 'initial_levels' in kwargs:
+            initial_levels = kwargs['initial_levels']
         if cls != Factor:
             # It's a subclass, so we do nothing special.
             return super().__new__(cls)

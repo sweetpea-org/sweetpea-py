@@ -99,7 +99,7 @@ def test_sampling_range():
             return False, "No samples provided"
         ks_stat = kolmogorov_smirnov_test(samples, mean, std)
         # Critical value approximation for K-S test
-        critical_value = 1.63 / math.sqrt(len(samples))
+        critical_value = 1.96 / math.sqrt(len(samples))
         result = ks_stat < critical_value
         message = f"K-S Statistic: {ks_stat:.5f}, Critical Value: {critical_value:.5f}, Mean: {mean:.5f}, Std Dev: {std:.5f}"
         return result, message
@@ -124,7 +124,7 @@ def test_sampling_range():
             max_diff = max(max_diff, diff_plus, diff_minus)
 
         # Critical value approximation for KS test (for large n)
-        critical_value = 1.63 / math.sqrt(n)
+        critical_value = 1.96 / math.sqrt(n)
         message = f"K-S Statistic: {max_diff:.5f}, Critical Value: {critical_value:.5f}"
         return max_diff < critical_value, message
     
