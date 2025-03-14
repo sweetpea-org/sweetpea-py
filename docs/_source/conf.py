@@ -82,11 +82,11 @@ latex_engine = 'xelatex'
 
 # -- Intersphinx configuration -----------------------------------------------
 
-# NOTE: SweetPea currently is based on Python 3.7.9, so we point to the 3.7
+# NOTE: SweetPea now is based on Python 3.9 and above, so we point to the 3.9
 #       documentation for intersphinx links. (You cannot specify a particular
 #       minor version.)
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3.7', None),
+    'python': ('https://docs.python.org/3.9', None),
 }
 
 
