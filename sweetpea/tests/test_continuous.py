@@ -32,7 +32,8 @@ time_lognormal = ContinuousFactor("time_lognormal", distribution=LogNormalDistri
 def difference(t1, t2):
     return t1-t2
 
-difference_time = ContinuousFactor("difference_time", distribution=CustomDistribution(difference, [time_uniform, time_gaussian]))
+dist_diff = CustomDistribution(difference, [time_uniform, time_gaussian])
+difference_time = ContinuousFactor("difference_time", distribution=dist_diff)
 
 difference_time1 = ContinuousFactor("difference_time1", distribution=CustomDistribution(difference, [difference_time, time_exponential]))
 
@@ -205,6 +206,18 @@ def test_block_size():
     block = CrossBlock([color, time_sample_function], [color], [])
     assert block.crossing_size() == 4
 
+def test_factor_value_size():
+    assert len(difference_time.get_levels()) == 2
+    with pytest.raises(RuntimeError):
+        difference_time.generate(1)
+    with pytest.raises(RuntimeError):
+        difference_time.generate([1])
+    with pytest.raises(RuntimeError):
+        difference_time.generate([1,2,3])
+
+def test_size_dependents():
+    assert len(dist_diff.get_init()) == 2
+    
 # Trial Factor Dependency Tests
 def test_trial_factor_dependence():
     design = [color, time_uniform, time_gaussian, time_exponential, difference_time, difference_time1]

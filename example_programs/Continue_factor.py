@@ -17,7 +17,7 @@ def difference(t1, t2):
     return t1-t2
 difference_time = ContinuousFactor("difference_time", distribution=CustomDistribution(difference, [completion_time, response_time]))
 
-difference_time2 = ContinuousFactor("difference_time2", distribution=CustomDistribution(difference, [1.5, response_time]))
+difference_time2 = ContinuousFactor("difference_time2", distribution=CustomDistribution(lambda t2: difference(1.5, t2), [response_time]))
 
 difference_time3 = ContinuousFactor("difference_time3", distribution=CustomDistribution(difference, [difference_time, difference_time2]))
 

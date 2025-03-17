@@ -724,18 +724,21 @@ class ContinuousFactor(Factor):
             raise ValueError("distribution must be an instance of Distribution, got {}".format(type(self.distribution)))
         
         self.initial_levels = self.distribution.get_init()
+        for k in self.initial_levels:
+            if not isinstance(k, Factor):
+                raise ValueError("CustomDisctribution should only inputs as Factors, got {}".format(type(k)))
 
-    def generate(self, sample_input: List[Any] = []):
+    def generate(self, factor_values: List[Any] = []):
         """
         Generate samples using based on the distribution.
         
-        :param sample_input: empty for a non-derived factor
+        :param factor_values: values for dependency factors, empty for a non-derived factor 
         :return: Generated samples as a list
         """
         if self.distribution is None:
             raise ValueError("Distribution is not set for this ContinuousFactor.")
 
-        return self.distribution.sample(sample_input)
+        return self.distribution.sample(factor_values)
         
     def get_levels(self):
         return self.initial_levels

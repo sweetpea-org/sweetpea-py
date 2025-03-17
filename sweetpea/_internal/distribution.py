@@ -7,7 +7,7 @@ class Distribution(ABC):
     """Base class for different  distributions."""
     
     @abstractmethod
-    def sample(self, sample_input: List[Any] = []) -> float:
+    def sample(self, factor_values: List[Any] = []) -> float:
         pass  # Must be implemented by subclasses
 
     def get_init(self) ->List[Any]:
@@ -18,7 +18,7 @@ class UniformDistribution(Distribution):
         self.low = low
         self.high = high
 
-    def sample(self, sample_input: List[Any] = []) -> float:
+    def sample(self, factor_values: List[Any] = []) -> float:
         return random.uniform(self.low, self.high)
 
 class GaussianDistribution(Distribution):
@@ -26,14 +26,14 @@ class GaussianDistribution(Distribution):
         self.mean = mean
         self.sigma = sigma
 
-    def sample(self, sample_input: List[Any] = []) -> float:
+    def sample(self, factor_values: List[Any] = []) -> float:
         return random.gauss(self.mean, self.sigma)
 
 class ExponentialDistribution(Distribution):
     def __init__(self, rate: float):
         self.rate = rate
 
-    def sample(self, sample_input: List[Any] = []) -> float:
+    def sample(self, factor_values: List[Any] = []) -> float:
         return random.expovariate(self.rate)
 
 class LogNormalDistribution(Distribution):
@@ -41,7 +41,7 @@ class LogNormalDistribution(Distribution):
         self.mean = mean
         self.sigma = sigma
 
-    def sample(self, sample_input: List[Any] = []) -> float:
+    def sample(self, factor_values: List[Any] = []) -> float:
         return random.lognormvariate(self.mean, self.sigma)
 
 class CustomDistribution(Distribution):
@@ -65,11 +65,12 @@ class CustomDistribution(Distribution):
                 self.dependents.append(k)
 
 
-    def sample(self, sample_inputs: List[Any] = []) -> float:
-        if len(sample_inputs) == 0:
-            return self.func(*self.dependents)
-        else:
-            return self.func(*sample_inputs)
+    def sample(self, factor_values: List[Any] = []) -> float:
+        if factor_values and (not isinstance(factor_values, list)):
+            raise RuntimeError("factor_values {} does not contain a list of values ".format(factor_values))
+        if len(factor_values)!= len(self.dependents):
+            raise RuntimeError("Size of values of factors {} is different from that of dependents {}".format(len(factor_values), len(self.dependents)))
+        return self.func(*factor_values)
 
     def get_init(self) ->List[Any]:
         return self.dependents

@@ -156,39 +156,32 @@ Factors and Levels
               :class:`.LogNormalDistribution` Samples values from a log-normal distribution 
               with a specified mean and standard deviation.
               
-              :class:`.CustomDistribution` Allows sampling dynamically from a 
-              user-defined distribution.
+              :class:`.CustomDistribution` Samples values by calling a user-defined input function.
 
               If :class:`.UniformDistribution`, :class:`.GaussianDistribution`, 
               :class:`.LogNormalDistribution`, or :class:`.LogNormalDistribution` 
               is used to initialize the :class:`.ContinuousFactor`,
               the factor will generate values following the corresponding distribution 
-              at runtime through `continuousfactor.generate()`, 
-              thus the factor is always a *non-derived continuousfactor*. 
+              at runtime through :meth:`.ContinuousFactor.generate`. 
+              In this case the factor is always a *non-derived continuousfactor*. 
 
-              The user can also use :class:`.CustomDistribution`, in which 
-              user needs to provide a custom `func(Callable)` 
+              The user can also use :class:`.CustomDistribution`, in which case
+              the user needs to provide a custom `func(Callable)` 
               to initialize the :class:`.ContinuousFactor`.
-              The factor will then use `func` to generate values. 
-              In addition to the user-defined `func`, :class:`.CustomDistribution` 
-              can also take an additional argument, `function_inputs`, 
-              which is a list of inputs for the user-defined function.
-              When `function_inputs` is not provided or empty, :class:`.ContinuousFactor`
-              should not require additional inputs to generate 
-              values, as `continuousfactor.generate()`. Similarly, 
-              when `function_inputs` is provided but only contains basic datatypes, 
-              the :class:`.ContinuousFactor` can also directly generate values at runtime
-              through `continuousfactor.generate()`. 
-
-              However, if `function_inputs` contains a :class:`.DiscreteFactor` or 
-              a :class:`.ContinuousFactor` in the design, the ContinuousFactor initialized 
-              is considered a *derived continuousfactor*. In such cases,
-              the :class:`.ContinuousFactor` needs to use the values for 
-              these factors in the experiment as the inputs to generate values. 
-              For example, when `function_inputs` contains a Factor Color in the design, 
-              for each trial, the `value` for the Factor needs to be 
-              passed to the `continuousfactor` in order to generate values, such as 
-              `continuousfactor.generate([value])`
+              The factor will then call `func` to generate values at runtime
+              through :meth:`.ContinuousFactor.generate`. 
+              In addition, :class:`.CustomDistribution` can also 
+              accept an additional argument `dependents` that
+              contains a list of factors that the current :class:`.ContinuousFactor`
+              depends on. The list of factors can be either :class:`.DiscreteFactor`
+              or :class:`.ContinuousFactor` in the design. In such cases,
+              the :class:`ContinuousFactor` initialized 
+              is considered a *derived continuousfactor* and it also suggests
+              that `func` would require additional values in order to 
+              generate values at runtime. 
+              For example, when `dependents` constains  a :class:`.Factor` `Color`
+              in the design, the `factor_values` for `Color` needs to be 
+              passed to :meth:`.ContinuousFactor.generate`.  
               
               If `distribution` is not set or recognized, an error will be raised.
 
@@ -203,14 +196,18 @@ Factors and Levels
 
                 :type: str
 
-              .. method:: generate(sample_input: List[Any]=[])
+              .. method:: generate(factor_values=[])
 
                 Generate values for the continuousfactor based on 
                 the input distribution. 
 
-                :param sample_input(Optional): inputs when sampling with :class:`.CustomDistribution`
-                :type param: List[Any]
-                :returns: a value for the factor
+                :param factor_values: optional factor values when generating values 
+                                      with :class:`.CustomDistribution`. The length of 
+                                      `factor_values` needs to be the same as the 
+                                      `dependents` when intializing 
+                                      :class:`.CustomDistribution`.
+                :type factor_values: List[Any]
+                :returns: the value for the factor
                 :rtype: Any
 
 .. class:: sweetpea.DiscreteFactor(name, levels)
