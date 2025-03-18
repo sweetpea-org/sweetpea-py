@@ -4,21 +4,21 @@ from __future__ import annotations
 
 __all__ = [
     'Level', 'SimpleLevel', 'DerivedLevel', 'ElseLevel',
-    'Factor', 'SimpleFactor', 'DerivedFactor',
+    'Factor', 'SimpleFactor', 'DerivedFactor', 'ContinuousFactor',
     'WithinTrial', 'Transition', 'Window'
 ]
-
 
 from copy import deepcopy
 from dataclasses import InitVar, dataclass, field
 from itertools import product, chain
 from random import randint
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union, cast, Literal
+import random
+import math
 
 from sweetpea._internal.iter import chunk_dict
 from sweetpea._internal.beforestart import BeforeStart
-
-
+from sweetpea._internal.distribution import Distribution  
 ###############################################################################
 ##
 ## Levels
@@ -372,11 +372,13 @@ class Factor:
         use them.
     """
 
+    ## TO DO DW: Modify Notes above
+
     #: The name of this factor. A synthesized factor may be mutated to hide its name
     name: Union[str, HiddenName]
 
     #: The levels used during factor initialization.
-    initial_levels: InitVar[Sequence[Any]]
+    initial_levels: InitVar[Optional[Sequence[Any]]] = None
 
     #: The discrete values that this factor can have.
     levels: Sequence[Level] = field(init=False)
@@ -384,25 +386,29 @@ class Factor:
     #: A mapping from level names to levels for constant-time lookup.
     _level_map: Dict[str, Level] = field(init=False, default_factory=dict)
 
-    def __new__(cls, name: Union[str, HiddenName], initial_levels: Sequence[Any], *_, **__) -> Factor:
+    # def __new__(cls, name: Union[str, HiddenName], *_, **__)->  Factor:
+    def __new__(cls, name: Union[str, HiddenName], *args, **kwargs)->  Factor:    
         # Ensure we got a string for a name. This requirement is imposed for
         # backwards compatibility, but it should be handled by type-checking.
         if not isinstance(name, (str, HiddenName)):
             raise ValueError(f"Factor name not a string: {name}.")
-        # Check if we're initializing this from `Factor` directly or one of its
-        # subclasses.
+        # Extract `initial_levels` if provided
+        initial_levels = args[0] if len(args) > 0 else []
+        if 'initial_levels' in kwargs:
+            initial_levels = kwargs['initial_levels']
         if cls != Factor:
             # It's a subclass, so we do nothing special.
             return super().__new__(cls)
         # Otherwise, we have to check whether to return a subclass instance.
         # This requires there to be at least 1 initial level.
+        
         if not initial_levels:
             raise ValueError(f"Expected at least one level for factor {name}.")
         first_level = initial_levels[0]
         if isinstance(first_level, (DerivedLevel, ElseLevel)):
-            instance = super().__new__(DerivedFactor)
+            instance = cast(Factor, super().__new__(DerivedFactor))
         else:
-            instance = super().__new__(SimpleFactor)
+            instance = cast(Factor, super().__new__(SimpleFactor))
         return instance
 
     def __post_init__(self, initial_levels: Sequence[Any]):
@@ -694,8 +700,51 @@ class DerivedFactor(Factor):
         return res
 
 
+# class CLevel:
+#     def __init__(self, name:str):
+#         self.name = name 
 
+@dataclass
+class ContinuousFactor(Factor):
+    """
+    Represents a continuous factor in an experimental design, where values are 
+    generated using a specified distribution.
 
+    Attributes:
+        name (str): The name of the continuous factor.
+        initial_levels (Optional[List[Any]]): A list of initial levels for the factor (can be numeric or other factors).
+        distribution (Optional[Distribution]): The distribution used to generate values for this factor.
+    """
+    name: str
+    distribution: Optional[Distribution] = None  # Must be an instance of Distribution
+
+    def __post_init__(self, distribution=None):
+        self.levels = [HiddenName(self.name)]
+        if not isinstance(self.distribution, Distribution):
+            raise ValueError("distribution must be an instance of Distribution, got {}".format(type(self.distribution)))
+        
+        self.initial_levels = self.distribution.get_init()
+        for k in self.initial_levels:
+            if not isinstance(k, Factor):
+                raise ValueError("CustomDisctribution should only inputs as Factors, got {}".format(type(k)))
+
+    def generate(self, factor_values: List[Any] = []):
+        """
+        Generate samples using based on the distribution.
+        
+        :param factor_values: values for dependency factors, empty for a non-derived factor 
+        :return: Generated samples as a list
+        """
+        if self.distribution is None:
+            raise ValueError("Distribution is not set for this ContinuousFactor.")
+
+        return self.distribution.sample(factor_values)
+        
+    def get_levels(self):
+        return self.initial_levels
+
+    def __repr__(self) -> str:
+        return self.__str__()
 
 ###############################################################################
 ##

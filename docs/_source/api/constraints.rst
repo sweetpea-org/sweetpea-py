@@ -104,3 +104,23 @@ Constraints
               :param level: like :class:`.AtMostKInARow`
               :type level: Union[Level, Tuple[Factor, Any], Tuple[Factor, Level], Factor]
               :rtype: Constraint
+
+
+.. class:: sweetpea.ConstinuousConstraint(factors, predicate)
+
+              Constrains :class:`.ContinuousFactor` in an experiment so that 
+              the samples generated for these factors meet the proposed 
+              constraint function. Since such constraints only apply to 
+              factors with continuous sampling functions that 
+              should not be included in the crossing, the experiment will 
+              sample these factors until the constraints are met after 
+              the trial sequences have been satified for discrete factors.
+
+              :param factors: the factors to add constraints on
+              :type factors: List[ContinuousFactor]
+              :param predicate: a constraint function takes `factors` 
+                                initialized with sampling function. 
+                                The function should return true if the
+                                combination of factors meet the constraints.
+              :type predicate: Callable[[Any, ...], bool]
+              :rtype: Constraint

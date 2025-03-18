@@ -10,8 +10,8 @@ Actions](https://docs.github.com/en/actions/reference/workflow-syntax-for-github
 
 ## Note on Target OSes
 
-GitHub Actions do not currently support macOS 11.0 (Big Sur). Therefore, we
-explicitly use `macos-10.15` as our macOS integration target instead of
+GitHub Actions do not currently support macOS 12.0 (Big Sur) or earlier. Therefore, we
+use `macos-13` as our macOS integration target instead of
 `macos-latest` for clarity.
 
 GitHub Actions do not currently offer any Apple Silicon testing hardware. Until
@@ -19,14 +19,12 @@ they do, we'll need to test this architecture manually.
 
 ### To-dos
 
-  * [ ] Update macOS target for Big Sur (once it's available).
   * [ ] Add macOS target for Apple Silicon.
 
 ## Note on Target Python Versions
 
-The code is written using Python 3.7.9. Therefore, we test with 3.7.9, as well
-as the latest version of each stable major release (3.7.x, 3.8.x, 3.9.x, etc).
+The code was originally written using Python 3.7.9. However, due to the change of libaray requirements for later python versions, therefore, we test with 3.9, as well as the latest version of each stable major release (3.9.x, 3.10.x, 3.11.x).
 
 ### To-dos
 
-  * [ ] Add pre-release support (e.g., add 3.10.x alpha tests, if available).
+  * [ ] Add pre-release support (e.g., add 3.12.x alpha tests, if available).

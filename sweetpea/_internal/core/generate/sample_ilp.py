@@ -2,7 +2,7 @@ from io import TextIOWrapper
 from typing import List, Optional
 from pathlib import Path
 
-from ..cnf import CNF
+from ..cnf import CNF, Var
 from .utility import GenerationRequest, Solution, combine_and_save_opb, temporary_cnf_file
 
 
@@ -49,9 +49,9 @@ def compute_solutions(filename: Path,
             if model.Status != 2:
                 return solutions
 
-            solution = [int(v.varName.replace('v','')) \
-                        if v.x == 1 \
-                        else -int(v.varName.replace('v','')) \
+            solution = [int(v.VarName.replace('v','')) \
+                        if v.X == 1 \
+                        else -int(v.VarName.replace('v','')) \
                         for v in model.getVars()]
             solution = sorted(solution, key=abs)[:support]
             update_file(filename, solution)

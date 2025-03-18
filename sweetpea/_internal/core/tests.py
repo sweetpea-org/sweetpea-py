@@ -2,7 +2,7 @@
 
 
 from operator import invert
-from typing import Callable, List, Optional, TypeVar
+from typing import Callable, List, Optional, TypeVar, cast
 
 from .cnf import CNF, Var
 
@@ -75,7 +75,7 @@ def pop_count_dimacs(num_digits: int) -> List[str]:
 
 def permute_complements(xs: List[T],
                         to_position: Optional[int] = None,
-                        complement_func: Callable[[T], T] = invert) -> List[List[T]]:
+                        complement_func: Callable[[T], T] = cast(Callable[[T], T], invert)) -> List[List[T]]:
     """Given a list of elements, computes a list of each possible permutation
     of that list with complements. That is, given a list like:
 

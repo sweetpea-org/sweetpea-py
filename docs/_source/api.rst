@@ -15,4 +15,5 @@ which provides the implementation of the :ref:`SweetPea language <home>`.
    api/derivations
    api/constraints
    api/sampling_strategies
+   api/distributions
 

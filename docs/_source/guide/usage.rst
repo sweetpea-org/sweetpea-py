@@ -248,10 +248,9 @@ Trial Synthesis
 
 Once you have a complete experimental design in the form of a :class:`.Block`,
 you're ready to use it to synthesize trials. In the above example, we used the
-:func:`.synthesize_trials_non_uniform`, which conducts non-uniform SAT-sampling
-to synthesize the trials. Uniform sampling is tricky and still a work in
-progress, but there does exist a function that tries to accomplish it:
-:func:`.synthesize_trials_uniform`.
+:func:`.synthesize_trials` with the default parameter `sampling_strategy` as 
+:class:`.IterateGen`, which conducts non-uniform SAT-sampling to synthesize 
+the trials.
 
 
 Working With Derived Levels
@@ -448,3 +447,87 @@ experiment is ``incongruent``, and the first two trials of the third experiment
 are also ``incongruent``. This adds up to three consecutive trials! But this
 behavior is expected. The :class:`~sweetpea.AtMostKInARow`
 constraint only looks *within* a given experiment, not across experiments.
+
+
+ContinuousFactor in SweetPea
+----------------------------
+
+In addition to factors with discrete levels, SweetPea also supports a 
+:class:`.ContinuousFactor`, which can be initialized using a `distribution`. 
+Unlike discrete factors, :class:`ContinuousFactor` allows 
+sampling values dynamically at runtime based on the pre-defined distribution.
+
+Defining ContinuousFactor
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A :class:`.ContinuousFactor` uses an input distribution to sample values at runtime.
+It does not have the finite number of levels as other factors. 
+As a result, such factors can only be added to the design of the block
+instead of the crossing. The crossing needs to consist of factor(s) with finite levels. 
+
+To use :class:`.ContinuousFactor`, we import and use the following SweetPea language forms:
+
+* :class:`.ContinuousFactor` --- constructs continuous factors with a distribution
+
+To put it together, we do:
+
+.. doctest::
+
+    >>> from sweetpea import Factor, CrossBlock, synthesize_trials,\
+    >>> print_experiments, ContinuousFactor, CustomDistribution
+    >>> import random
+    >>> def sample_continuous():
+    >>>   return random.uniform(0.5, 1.5)
+    >>> response_time = ContinuousFactor("response_time", [],\
+    >>> distribution=CustomDistribution(sample_continuous))
+    >>> factor_for_crossing = Factor("color", ["red", "blue", "green"])
+    >>> block = CrossBlock([factor_for_crossing, response_time], [factor_for_crossing], [])
+    >>> experiments = synthesize_trials(block, 1)
+    Sampling 1 trial sequences using NonUniformGen.
+    Encoding experiment constraints...
+    Running CryptoMiniSat...
+    >>> print_experiments(block, experiments) 
+    1 trial sequences found.
+    <BLANKLINE>
+    Experiment 0:
+    color blue  | response_time 0.9695361854047209
+    color red   | response_time 1.2529270082663353
+    color green | response_time 1.4106548040758589
+
+Constraints for Design with ContinuousFactors 
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When designing an experiment using :class:`.ContinuousFactor`, you can 
+also impose some constraints on the factor. 
+
+Let's say we look at the above list of trials and decide "we should ensure 
+that the ``response_time`` should be less than 1." 
+
+In that case, we can add :class:`.ConstinuousConstraint` to achieve that. 
+
+.. doctest::
+
+    >>> from sweetpea import Factor, CrossBlock, synthesize_trials,\
+    >>> print_experiments, ConstinuousConstraint, ContinuousFactor, CustomDistribution
+    >>> import random
+    >>> def sample_continuous():
+    >>>   return random.uniform(0.5, 1.5)
+    >>> response_time = ContinuousFactor("response_time", [],\
+    >>> distribution=CustomDistribution(sample_continuous))
+    >>> factor_for_crossing = Factor("color", ["red", "blue", "green"])
+    >>> def less_than_one(a):
+    >>>   return (a<1)
+    >>> cc = ConstinuousConstraint([response_time], less_than_one)
+    >>> block = CrossBlock([factor_for_crossing, response_time], [factor_for_crossing], [cc])
+    >>> experiments = synthesize_trials(block, 1)
+    Sampling 1 trial sequences using NonUniformGen.
+    Encoding experiment constraints...
+    Running CryptoMiniSat...
+    Trial: 0, Sampling count to meet continuous constraints: 6
+    >>> print_experiments(block, experiments) 
+    1 trial sequences found.
+    <BLANKLINE>
+    Experiment 0:
+    color blue  | response_time 0.5357413769177958
+    color red   | response_time 0.9859899610573284
+    color green | response_time 0.5929666932777036

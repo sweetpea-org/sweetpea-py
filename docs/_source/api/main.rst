@@ -14,21 +14,26 @@ using :func:`.synthesize_trials`. Print generated trials using
 .. class:: sweetpea.CrossBlock(design, crossing, constraints, require_complete_crossing=True)
 
    Creates an experiment description based on a set of factors and a
-   subset them that are *crossed*.
+   subset of them that are *crossed*.
 
    The :class:`.CrossBlock` class is the main way of describing an
    experiment. The result is an object that be used with
    :func:`.synthesize_trials` to generate trial sequences.
 
    The `design` argument lists all of the factors in the experiment
-   design. When a sequence of trials is generated for the experiment,
-   each trial will have one level from each factor in `design`.
+   design. This factors in the design can be either :class:`.DiscreteFactor`
+   that contains discrete levels or :class:`.ContinuousFactor` 
+   that samples at runtime. When a sequence of trials is generated for 
+   the experiment, each trial will have one level from each 
+   factor in `design`.
 
    Different trial sequences generated from the experiment will have
    different combinations of levels in different orders. The factors
    in `crossing` supply an initial constraint, which is that every
    combination of levels in the crossing should appear once (within a
-   sequence of trials that is determined the crossing size). When
+   sequence of trials that is determined the crossing size). Since only 
+   discrete factors can have finite number of levels, only 
+   :class:`.DiscreteFactor` is allowed in the `crossing`. When
    derived factors are included in a crossing, they effectively impose
    additional contraints, since each derived level is compatble with
    only certain levels of other factors. Finally, the `constraints`
@@ -76,9 +81,10 @@ using :func:`.synthesize_trials`. Print generated trials using
 
    :param design: the factors that make up the design
    :type design: List[Factor]
-   :param crossing: factors that are fully crossed in the block's trials,
-                    which must be a subset of the `design` list
-   :type crossing: List[Factor]
+   :param crossing: discrete factors that are fully crossed in the block's trials,
+                    which must be a subset of the `design` list. ContinuousFactor
+                    cannot be included in `crossing`
+   :type crossing: List[DiscreteFactor]
    :param constraints: constraints that every sequence of trials must
                        satify; see :ref:`constraints`
    :type constraints: List[Constraint]
@@ -117,10 +123,10 @@ using :func:`.synthesize_trials`. Print generated trials using
    :param design: the factors that make up the design
    :type design: List[Factor]
    :param crossings: a list of crossings, where each crossing is a
-                     list of factors that are fully crossed in the
+                     list of discrete factors that are fully crossed in the
                      block's trials; the factors in each crossing must
                      be a subset of the `design` list
-   :type crossings: List[List[Factor]]
+   :type crossings: List[List[DiscreteFactor]] 
    :param constraints: constraints that every sequence of trials must
                        satify; see :ref:`constraints`
    :type constraints: List[Constraint]

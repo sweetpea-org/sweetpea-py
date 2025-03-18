@@ -5,6 +5,9 @@ Factors and Levels
 
               A factor for use in an experiment design.
 
+              By default :class:`.Factor` in SweetPea always creates 
+              a :class:`.DiscreteFactor` which contains a finite number of levels 
+              (Refer to :class:`.ContinuousFactor` for non-discrete factors). 
               The levels of a factor can be plain :class:`.Level`
               values, any kind of non-:class:`.Level` value (which is
               implicitly coerced to a :class:`.Level` value), or
@@ -126,3 +129,93 @@ Factors and Levels
               :type weight: int
               :returns: a derived level
               :rtype: Level
+
+.. class:: sweetpea.ContinuousFactor(name, distribution)
+
+              Sweetpea also supports a :class:`.ContinuousFactor` for factors
+              without finite levels, which sample continuously at runtime. 
+              This is different from :class:`.DiscreteFactor` that requires 
+              a finite discrete levels during its initialization. 
+              A :class:`.ContinuousFactor` can dynamically generate values
+              at runtime based on the input distribution. 
+              
+              To initialize a :class:`.ContinuousFactor`, a `distribution` is
+              required in order to generate values at runtime. The `distribution`
+              must be an instance of a :class:`.Distribution`. 
+              Several built-in types are available for :class:`.Distribution`.  
+              
+              :class:`.UniformDistribution` Samples values from a uniform distribution within 
+              a given range.
+              
+              :class:`.GaussianDistribution` Samples values from a normal distribution with 
+              a specified mean and standard deviation.
+              
+              :class:`.ExponentialDistribution` Samples values from an exponential distribution with 
+              a given rate parameter.
+              
+              :class:`.LogNormalDistribution` Samples values from a log-normal distribution 
+              with a specified mean and standard deviation.
+              
+              :class:`.CustomDistribution` Samples values by calling a user-defined input function.
+
+              If :class:`.UniformDistribution`, :class:`.GaussianDistribution`, 
+              :class:`.LogNormalDistribution`, or :class:`.LogNormalDistribution` 
+              is used to initialize the :class:`.ContinuousFactor`,
+              the factor will generate values following the corresponding distribution 
+              at runtime through :meth:`.ContinuousFactor.generate`. 
+              In this case the factor is always a *non-derived continuousfactor*. 
+
+              The user can also use :class:`.CustomDistribution`, in which case
+              the user needs to provide a custom `func(Callable)` 
+              to initialize the :class:`.ContinuousFactor`.
+              The factor will then call `func` to generate values at runtime
+              through :meth:`.ContinuousFactor.generate`. 
+              In addition, :class:`.CustomDistribution` can also 
+              accept an additional argument `dependents` that
+              contains a list of factors that the current :class:`.ContinuousFactor`
+              depends on. The list of factors can be either :class:`.DiscreteFactor`
+              or :class:`.ContinuousFactor` in the design. In such cases,
+              the :class:`ContinuousFactor` initialized 
+              is considered a *derived continuousfactor* and it also suggests
+              that `func` would require additional values in order to 
+              generate values at runtime. 
+              For example, when `dependents` constains  a :class:`.Factor` `Color`
+              in the design, the `factor_values` for `Color` needs to be 
+              passed to :meth:`.ContinuousFactor.generate`.  
+              
+              If `distribution` is not set or recognized, an error will be raised.
+
+              :param name: The name of the continuous factor.
+              :type name: str
+              :param distribution: A distribution used to generate values dynamically.
+              :type distribution: Distribution
+
+              .. property:: name
+
+                The continuousfactor's name.
+
+                :type: str
+
+              .. method:: generate(factor_values=[])
+
+                Generate values for the continuousfactor based on 
+                the input distribution. 
+
+                :param factor_values: optional factor values when generating values 
+                                      with :class:`.CustomDistribution`. The length of 
+                                      `factor_values` needs to be the same as the 
+                                      `dependents` when intializing 
+                                      :class:`.CustomDistribution`.
+                :type factor_values: List[Any]
+                :returns: the value for the factor
+                :rtype: Any
+
+.. class:: sweetpea.DiscreteFactor(name, levels)
+
+              In contrast to :class:`.ContinuousFactor` that generate values
+              dynamically, a :class:`.DiscreteFactor` takes on a finite set of distinct,
+              separate values (or levels) during its initialization. 
+              Each level can be represented using the :class:`.Level` class.
+              A :class:`.DiscreteFactor` is initialized using the :class:`.Factor` class. 
+              
+              
