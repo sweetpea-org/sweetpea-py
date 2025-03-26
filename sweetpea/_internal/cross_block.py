@@ -115,10 +115,10 @@ class MultiCrossBlockRepeat(Block):
 
     def _trials_per_sample_for_crossing(self):
         """Result includes preamble trials."""
-        crossing_size = max(map(lambda c: self.crossing_size(c), self.crossings))
-        crossing_trials = list(map(lambda c: list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size),
-                                                      c)),
-                                   self.crossings))
+        crossing_sizes = map(lambda c: self.crossing_size(c), self.crossings)
+        crossing_trials = list(map(lambda c: list(map(lambda f: self.__trials_required_for_crossing(f, c[1]),
+                                                      c[0])),
+                                   zip(self.crossings, crossing_sizes)))
         required_trials = list(map(lambda l: max([0] + l), crossing_trials))
         return max(required_trials)
 
