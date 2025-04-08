@@ -69,6 +69,9 @@ class MultiCrossBlockRepeat(Block):
                 raise RuntimeError("cannot repeat a block with crossings that have different preamble lengths")
             self.within_block_count = within_block_count
             self.within_block_preamble = self.preamble_sizes[0]
+        elif require_complete_crossing and len(self.crossing_sizes)>1:
+            # If multiple crossing and require complete crossing for each
+            self.within_block_count = min(self.crossing_sizes)
         else:
             self.within_block_count = self.trials_per_sample()
         self.__validate(who)
