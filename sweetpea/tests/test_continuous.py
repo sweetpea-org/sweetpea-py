@@ -3,7 +3,7 @@ import pytest
 
 from sweetpea._internal.primitive import Factor, DerivedLevel, WithinTrial, Transition, Window, SimpleLevel, ContinuousFactor
 from sweetpea import synthesize_trials, RandomGen, MinimumTrials, CrossBlock
-from sweetpea._internal.constraint import ConstinuousConstraint
+from sweetpea._internal.constraint import ContinuousConstraint
 import random
 import numpy as np
 from typing import cast
@@ -52,7 +52,7 @@ color_time = ContinuousFactor("color_time", distribution=CustomDistribution(colo
 # Constraints
 def greater_than_2(a, b):
     return (a+b>2)
-cc = ConstinuousConstraint([time_gaussian, time_exponential], greater_than_2)
+cc = ContinuousConstraint([time_gaussian, time_exponential], greater_than_2)
 
 
 # Factor Tests

@@ -1,7 +1,7 @@
 from sweetpea import (
     Factor, DerivedLevel, WithinTrial, Transition, AtMostKInARow, MinimumTrials,
     CrossBlock, MultiCrossBlock, synthesize_trials, print_experiments, tabulate_experiments,
-    CMSGen, IterateGen, RandomGen, ConstinuousConstraint, ContinuousFactor,
+    CMSGen, IterateGen, RandomGen, ContinuousConstraint, ContinuousFactor,
     UniformDistribution, GaussianDistribution, 
     ExponentialDistribution, LogNormalDistribution, CustomDistribution
 )
@@ -32,11 +32,10 @@ crossing = [color]
 def test_function(a, b):
     return (a+b>2)
 
-cc = ConstinuousConstraint([difference_time3, difference_time], test_function)
+cc = ContinuousConstraint([difference_time3, difference_time], test_function)
 constraints = [MinimumTrials(5), cc]
 
 block        = CrossBlock(design, crossing, constraints)
-
 experiments  = synthesize_trials(block, 2, CMSGen)
 
 print_experiments(block, experiments)

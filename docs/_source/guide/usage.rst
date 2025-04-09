@@ -503,12 +503,12 @@ also impose some constraints on the factor.
 Let's say we look at the above list of trials and decide "we should ensure 
 that the ``response_time`` should be less than 1." 
 
-In that case, we can add :class:`.ConstinuousConstraint` to achieve that. 
+In that case, we can add :class:`.ContinuousConstraint` to achieve that. 
 
 .. doctest::
 
     >>> from sweetpea import Factor, CrossBlock, synthesize_trials,\
-    >>> print_experiments, ConstinuousConstraint, ContinuousFactor, CustomDistribution
+    >>> print_experiments, ContinuousConstraint, ContinuousFactor, CustomDistribution
     >>> import random
     >>> def sample_continuous():
     >>>   return random.uniform(0.5, 1.5)
@@ -517,7 +517,7 @@ In that case, we can add :class:`.ConstinuousConstraint` to achieve that.
     >>> factor_for_crossing = Factor("color", ["red", "blue", "green"])
     >>> def less_than_one(a):
     >>>   return (a<1)
-    >>> cc = ConstinuousConstraint([response_time], less_than_one)
+    >>> cc = ContinuousConstraint([response_time], less_than_one)
     >>> block = CrossBlock([factor_for_crossing, response_time], [factor_for_crossing], [cc])
     >>> experiments = synthesize_trials(block, 1)
     Sampling 1 trial sequences using NonUniformGen.
