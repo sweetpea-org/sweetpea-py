@@ -106,7 +106,7 @@ Constraints
               :rtype: Constraint
 
 
-.. class:: sweetpea.ConstinuousConstraint(factors, predicate)
+.. class:: sweetpea.ContinuousConstraint(factors, predicate)
 
               Constrains :class:`.ContinuousFactor` in an experiment so that 
               the samples generated for these factors meet the proposed 
