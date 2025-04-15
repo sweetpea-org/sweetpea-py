@@ -94,7 +94,7 @@ class Block:
             #     raise TimeoutError("Sampling process exceeded the time limit of {} seconds to meet continuous constraints.".format(time_limit)) 
             if continue_counter >= max_attempts:
                 # raise RuntimeError("Exceeded the maximum number of resampling attempts ({}) to meet continuous constraints.".format(max_attempts))
-                print('Trial: {}, Sampling count: {}. Consider modify the continuous constraints.'.format(trial_num, continue_counter), end="\r", flush=True)  
+                print('Trial: {}, Sampling count {} exceeds max attempts. Consider modify continuous constraints.'.format(trial_num, continue_counter), end="\r", flush=True)  
             elif continue_counter>0:
                 print('Trial: {}, Sampling count to meet continuous constraints: {}'.format(trial_num, continue_counter), end="\r", flush=True)  
             continuous_samples = self._sample_continuous(trial_num, trial)
@@ -233,8 +233,7 @@ class Block:
             if isinstance(c, ContinuousConstraint):
                 _factors = c.factors
                 for f in _factors:
-                    self.errors.add("WARNING: ContinuousConstraint may cause the factor {}\
-                    to deviate from its designated distribution.".format(f.name))
+                    self.errors.add("WARNING: ContinuousConstraint may cause the factor {} to deviate from its designated distribution.".format(f.name))
     @abstractmethod
     def trials_per_sample(self):
         """Indicates the number of trials that are generated per sample for
