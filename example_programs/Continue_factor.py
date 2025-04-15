@@ -29,8 +29,9 @@ design = [color, completion_time, response_time, \
 
 crossing = [color]
 
+# Modify this to see the messages when continuous constraints cannot be met.
 def test_function(a, b):
-    return (a+b>2)
+    return (a+b>3)
 
 cc = ContinuousConstraint([difference_time3, difference_time], test_function)
 constraints = [MinimumTrials(5), cc]
