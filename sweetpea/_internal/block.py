@@ -9,7 +9,7 @@ from typing import List, Union, Tuple, Optional, cast, Any, Dict, Set, Callable,
 from math import ceil
 from networkx import has_path
 import inspect
-import time
+# import time
 
 from sweetpea._internal.backend import BackendRequest
 from sweetpea._internal.level import get_all_levels
@@ -86,15 +86,16 @@ class Block:
     def sample_continuous(self, trial_num, trial):
         meet_constraints = False
         continue_counter = 0
-        max_attempts = 1000000
-        start_time = time.time()
-        time_limit = 60
+        max_attempts = 10000000
+        # start_time = time.time()
+        # time_limit = 60
         while not meet_constraints:
-            if time.time() - start_time >= time_limit:
-                raise TimeoutError("Sampling process exceeded the time limit of {} seconds to meet continuous constraints.".format(time_limit)) 
+            # if time.time() - start_time >= time_limit:
+            #     raise TimeoutError("Sampling process exceeded the time limit of {} seconds to meet continuous constraints.".format(time_limit)) 
             if continue_counter >= max_attempts:
-                raise RuntimeError("Exceeded the maximum number of resampling attempts ({}) to meet continuous constraints.".format(max_attempts))
-            if continue_counter>0:
+                # raise RuntimeError("Exceeded the maximum number of resampling attempts ({}) to meet continuous constraints.".format(max_attempts))
+                print('Trial: {}, Sampling count: {}. Consider modify the continuous constraints.'.format(trial_num, continue_counter), end="\r", flush=True)  
+            elif continue_counter>0:
                 print('Trial: {}, Sampling count to meet continuous constraints: {}'.format(trial_num, continue_counter), end="\r", flush=True)  
             continuous_samples = self._sample_continuous(trial_num, trial)
             # Check if constraints are met.
