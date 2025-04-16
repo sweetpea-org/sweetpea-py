@@ -28,15 +28,15 @@ from sweetpea._internal.check_mismatch import combinations_mismatched_weights
 from enum import Enum
 
 
-class _RepeatMode(Enum):
+class RepeatMode(Enum):
     WEIGHT = "weight"
     REPEAT = "repeat"
-    STANDARD = "standard"
+    EQUAL = "equal"
 
 class MultiCrossBlockRepeat(Block):
     """An internal :class:`.Block` to handle blocks and repeats.
     """
-    _valid_modes = {m.value: m for m in _RepeatMode} 
+    _valid_modes = {m.value: m for m in RepeatMode} 
     def __init__(self,
                  design: List[Factor],
                  crossings: List[List[Factor]],
@@ -55,11 +55,14 @@ class MultiCrossBlockRepeat(Block):
                 constraints: List[Constraint],
                 require_complete_crossing: bool,
                 within_block_count: Optional[int],
-                mode: str = "standard"
+                mode: Union[str, RepeatMode] = RepeatMode.EQUAL
                 ):
-        if mode not in self._valid_modes:
+        if isinstance(mode, RepeatMode):
+            self.mode = mode
+        elif mode not in self._valid_modes:
             raise ValueError(f"Invalid mode '{mode}'. Must be one of {list(self._valid_modes.keys())}.")
-        self.mode = self._valid_modes[mode]
+        else:
+            self.mode = self._valid_modes[mode]
         from sweetpea._internal.constraint import Cross, Consistency
         from sweetpea._internal.derivation_processor import DerivationProcessor
         self.orig_design = design
@@ -81,13 +84,14 @@ class MultiCrossBlockRepeat(Block):
                 raise RuntimeError("cannot repeat a block with crossings that have different preamble lengths")
             self.within_block_count = within_block_count
             self.within_block_preamble = self.preamble_sizes[0]
-        elif (not all(x == self.crossing_sizes[0] for x in self.crossing_sizes)) and self.mode == _RepeatMode.STANDARD:
+        elif (not all(x == self.crossing_sizes[0] for x in self.crossing_sizes)) and self.mode == RepeatMode.EQUAL:
             # mode needs to be either weight OR repeat when crossing sizes are different
             raise RuntimeError(f"Invalid mode '{mode}' when crossing sizes are different for MultiCrossBlock.")
-        elif self.mode == _RepeatMode.REPEAT:
+        elif self.mode == RepeatMode.REPEAT:
             # If repeat is decalred for multicrossing case
             self.within_block_count = min(self.crossing_sizes)
         else:
+            # Use weight otherwise
             self.within_block_count = self.trials_per_sample()
         self.__validate(who)
 
@@ -414,7 +418,7 @@ class MultiCrossBlock(MultiCrossBlockRepeat):
                  crossings: List[List[Factor]],
                  constraints: List[Constraint],
                  require_complete_crossing: bool = True,
-                 mode: str = "standard"
+                 mode: Union[str, RepeatMode] = RepeatMode.EQUAL
                  ):
         who = "MultiCrossBlock"
         argcheck(who, design, make_islistof(Factor), "list of Factors for design")

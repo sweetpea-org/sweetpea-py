@@ -4,7 +4,7 @@ sys.path.append("..")
 
 from sweetpea import (
     Factor, DerivedLevel, WithinTrial, Transition, AtMostKInARow, MinimumTrials,
-    CrossBlock, MultiCrossBlock, synthesize_trials, print_experiments, tabulate_experiments,
+    CrossBlock, MultiCrossBlock, RepeatMode, synthesize_trials, print_experiments, tabulate_experiments,
     CMSGen, IterateGen, RandomGen, Level, Window, IterateSATGen
 )
 
@@ -30,7 +30,7 @@ task_transition = Factor("task_transition", [
 design       = [color, motion, task, task_transition]
 constraints=[]
 crossing = [[color, motion], [task_transition]]
-block        = MultiCrossBlock(design, crossing, constraints, mode='repeat')
+block        = MultiCrossBlock(design, crossing, constraints, mode=RepeatMode.REPEAT)
 
 experiments  = synthesize_trials(block, 1, CMSGen)
 print_experiments(block, experiments)

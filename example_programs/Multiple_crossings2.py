@@ -4,7 +4,7 @@ sys.path.append("..")
 
 from sweetpea import (
     Factor, DerivedLevel, WithinTrial, Transition, AtMostKInARow, MinimumTrials,
-    CrossBlock, MultiCrossBlock, synthesize_trials, print_experiments, tabulate_experiments,
+    CrossBlock, MultiCrossBlock, RepeatMode, synthesize_trials, print_experiments, tabulate_experiments,
     CMSGen, IterateGen, RandomGen, Level, Window, IterateSATGen
 )
 
@@ -22,12 +22,12 @@ design       = [f1, f2]
 crossing = [[f1], [f2]]
 constraints = []
 
-block        = MultiCrossBlock(design, crossing, constraints, mode='weight')
+block        = MultiCrossBlock(design, crossing, constraints, mode=RepeatMode.WEIGHT)
 experiments  = synthesize_trials(block, 1, RandomGen)#, IterateSATGen)#, CMSGen)
 print_experiments(block, experiments)
 tabulate_experiments(block, experiments, [f2])
 
-block        = MultiCrossBlock(design, crossing, constraints, mode='repeat')
+block        = MultiCrossBlock(design, crossing, constraints, mode=RepeatMode.REPEAT)
 experiments  = synthesize_trials(block, 1, RandomGen)#, IterateSATGen)#, CMSGen)
 print_experiments(block, experiments)
 tabulate_experiments(block, experiments, [f2])
