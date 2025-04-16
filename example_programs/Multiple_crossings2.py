@@ -22,12 +22,12 @@ design       = [f1, f2]
 crossing = [[f1], [f2]]
 constraints = []
 
-block        = MultiCrossBlock(design, crossing, constraints, require_complete_crossing=True)
+block        = MultiCrossBlock(design, crossing, constraints, mode='weight')
 experiments  = synthesize_trials(block, 1, RandomGen)#, IterateSATGen)#, CMSGen)
 print_experiments(block, experiments)
 tabulate_experiments(block, experiments, [f2])
 
-block        = MultiCrossBlock(design, crossing, constraints, require_complete_crossing=False)
+block        = MultiCrossBlock(design, crossing, constraints, mode='repeat')
 experiments  = synthesize_trials(block, 1, RandomGen)#, IterateSATGen)#, CMSGen)
 print_experiments(block, experiments)
 tabulate_experiments(block, experiments, [f2])

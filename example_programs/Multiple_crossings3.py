@@ -30,7 +30,7 @@ task_transition = Factor("task_transition", [
 design       = [color, motion, task, task_transition]
 constraints=[]
 crossing = [[color, motion], [task_transition]]
-block        = MultiCrossBlock(design, crossing, constraints)
+block        = MultiCrossBlock(design, crossing, constraints, mode='repeat')
 
 experiments  = synthesize_trials(block, 1, CMSGen)
 print_experiments(block, experiments)
