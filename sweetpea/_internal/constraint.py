@@ -849,7 +849,7 @@ class MinimumTrials(Constraint):
 
 
 
-class ConstinuousConstraint(Constraint):
+class ContinuousConstraint(Constraint):
     """This is the class for continuous constraint. 
     Users need to define the continuous factor and the required constraint function for those factors when initializing
     continuous constraints. This is only used to check continuous sampling. 
@@ -857,7 +857,7 @@ class ConstinuousConstraint(Constraint):
     def __init__(self, factors, constraint_function):
         self.factors = factors
         self.constraint_function = constraint_function
-        who = "ConstinuousConstraint"
+        who = "ContinuousConstraint"
         # argcheck(who, factors, List[ContinuousFactor], "continuous factors")
         for f in self.factors: 
             if not isinstance(f, ContinuousFactor):

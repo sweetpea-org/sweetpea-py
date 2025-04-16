@@ -10,9 +10,7 @@ Actions](https://docs.github.com/en/actions/reference/workflow-syntax-for-github
 
 ## Note on Target OSes
 
-GitHub Actions do not currently support macOS 12.0 (Big Sur) or earlier. Therefore, we
-use `macos-13` as our macOS integration target instead of
-`macos-latest` for clarity.
+We use `macos-latest` as our macOS integration target.
 
 GitHub Actions do not currently offer any Apple Silicon testing hardware. Until
 they do, we'll need to test this architecture manually.
