@@ -97,7 +97,7 @@ using :func:`.synthesize_trials`. Print generated trials using
    :return: a block description
    :rtype: Block
 
-.. class:: sweetpea.MultiCrossBlock(design, crossings, constraints, require_complete_crossing=True)
+.. class:: sweetpea.MultiCrossBlock(design, crossings, constraints, require_complete_crossing=True, mode=RepeatMode.EQUAL)
 
    Creates an experiment description as a block of trials based on
    multiple crossings.
@@ -114,11 +114,19 @@ using :func:`.synthesize_trials`. Print generated trials using
 
    Every combination of levels in each individual crossing in
    `crossings` appears at least once within that crossing's size.
-   Smaller crossing sizes lead to replications of that crossing to
-   meet the number of trials required for larger crossings. At the
-   same time, different crossings in `crossings` can refer to the same
+   When crossings have smaller sizes, they are replicated to align 
+   with the trial count of larger crossings. 
+   The strategy used to add these additional trials 
+   is determined by `mode`: :class:`.RepeatMode`. 
+   Additional trials are generated either by scaling the weight 
+   of crossing combinations (:attr:`.RepeatMode.WEIGHT`) or 
+   by repeating the crossing enough times (:attr:`.RepeatMode.REPEAT`).
+    
+   At the same time, different crossings in `crossings` can refer to the same
    factors, which creates constraints on how factor levels are chosen
    across crossings in a given trial.
+
+
 
    :param design: the factors that make up the design
    :type design: List[Factor]
@@ -130,7 +138,14 @@ using :func:`.synthesize_trials`. Print generated trials using
    :param constraints: constraints that every sequence of trials must
                        satify; see :ref:`constraints`
    :type constraints: List[Constraint]
-   :param require_complete_crossing: same as for :class:`.MultiCrossBlock`
+   :param require_complete_crossing: same as for :class:`.CrossBlock`
+   :param mode: determines the strategy for :class:`.RepeatMode`, 
+                whether to use :attr:`.RepeatMode.WEIGHT` OR :attr:`.RepeatMode.REPEAT`
+                to generate additional trials for smaller crossings.
+                Mode must be specified when crossing sizes are different.
+                The default value is :attr:`RepeatMode.EQUAL`, which suggests
+                all crossings have equal crossing sizes. 
+   :type mode: Union[str, RepeatMode]
    :return: a block description
    :rtype: Block
 
@@ -283,3 +298,30 @@ using :func:`.synthesize_trials`. Print generated trials using
    :return: a list of lists of tuples, where each tuple contains the string
             names of levels selected for one trial
    :rtype: List[List[tuple]]
+
+
+.. class:: sweetpea.RepeatMode
+
+   Represents the strategies for generating additional trials
+   when individual crossings in a design differ in size. 
+   The :class:`.RepeatMode` is used in :class:`.MultiCrossBlock` 
+   to determine how to align the number of
+   trials across multiple crossings. When crossings have different crossing sizes,
+   additional trials must be added to ensure consistency across the design.
+
+   There are three available modes:
+
+   - :attr:`.EQUAL`: Indicates that all crossings are expected to have equal sizes,
+     and no additional trials should be added. This is the default setting.
+
+   - :attr:`.REPEAT`: Repeats the smaller crossings enough times until they reach the
+     required trial count to align with the trial count of larger crossings.
+     Unlike scaling the weight of smaller crossing combinations,
+     levels are selected for each replication of the crossing independently.
+
+   - :attr:`.WEIGHT`: Additional trials are added by scaling the weight of the smaller crossing 
+     combination to align with the trial count of larger crossings. 
+     Preamble trials are not scaled. 
+
+   :class:`.RepeatMode` is typically not instantiated directly; instead, it is passed
+   as a configuration value to :class:`.MultiCrossBlock`

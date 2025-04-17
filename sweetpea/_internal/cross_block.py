@@ -25,11 +25,18 @@ from sweetpea._internal.weight import combination_weight
 from sweetpea._internal.argcheck import argcheck, make_islistof
 from sweetpea._internal.sample_conversion import convert_sample_from_names_to_objects
 from sweetpea._internal.check_mismatch import combinations_mismatched_weights
+from enum import Enum
+
+
+class RepeatMode(Enum):
+    WEIGHT = "weight"
+    REPEAT = "repeat"
+    EQUAL = "equal"
 
 class MultiCrossBlockRepeat(Block):
     """An internal :class:`.Block` to handle blocks and repeats.
     """
-
+    _valid_modes = {m.value: m for m in RepeatMode} 
     def __init__(self,
                  design: List[Factor],
                  crossings: List[List[Factor]],
@@ -47,7 +54,15 @@ class MultiCrossBlockRepeat(Block):
                 crossings: List[List[Factor]],
                 constraints: List[Constraint],
                 require_complete_crossing: bool,
-                within_block_count: Optional[int]):
+                within_block_count: Optional[int],
+                mode: Union[str, RepeatMode] = RepeatMode.EQUAL
+                ):
+        if isinstance(mode, RepeatMode):
+            self.mode = mode
+        elif mode not in self._valid_modes:
+            raise ValueError(f"Invalid mode '{mode}'. Must be one of {list(self._valid_modes.keys())}.")
+        else:
+            self.mode = self._valid_modes[mode]
         from sweetpea._internal.constraint import Cross, Consistency
         from sweetpea._internal.derivation_processor import DerivationProcessor
         self.orig_design = design
@@ -69,7 +84,14 @@ class MultiCrossBlockRepeat(Block):
                 raise RuntimeError("cannot repeat a block with crossings that have different preamble lengths")
             self.within_block_count = within_block_count
             self.within_block_preamble = self.preamble_sizes[0]
+        elif (not all(x == self.crossing_sizes[0] for x in self.crossing_sizes)) and self.mode == RepeatMode.EQUAL:
+            # mode needs to be either weight OR repeat when crossing sizes are different
+            raise RuntimeError(f"Invalid mode '{mode}' when crossing sizes are different for MultiCrossBlock.")
+        elif self.mode == RepeatMode.REPEAT:
+            # If repeat is decalred for multicrossing case
+            self.within_block_count = min(self.crossing_sizes)
         else:
+            # Use weight otherwise
             self.within_block_count = self.trials_per_sample()
         self.__validate(who)
 
@@ -115,10 +137,10 @@ class MultiCrossBlockRepeat(Block):
 
     def _trials_per_sample_for_crossing(self):
         """Result includes preamble trials."""
-        crossing_size = max(map(lambda c: self.crossing_size(c), self.crossings))
-        crossing_trials = list(map(lambda c: list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size),
-                                                      c)),
-                                   self.crossings))
+        crossing_sizes = map(lambda c: self.crossing_size(c), self.crossings)
+        crossing_trials = list(map(lambda c: list(map(lambda f: self.__trials_required_for_crossing(f, c[1]),
+                                                      c[0])),
+                                   zip(self.crossings, crossing_sizes)))
         required_trials = list(map(lambda l: max([0] + l), crossing_trials))
         return max(required_trials)
 
@@ -359,6 +381,7 @@ class MultiCrossBlockRepeat(Block):
 
 
 class MultiCrossBlock(MultiCrossBlockRepeat):
+     # str → Enum
     """A :class:`.Block` with multiple crossings, meant to be used in
     experiment synthesis. Similar to :func:`fully_cross_block`, except it can
     be configured with multiple crossings.
@@ -394,12 +417,14 @@ class MultiCrossBlock(MultiCrossBlockRepeat):
                  design: List[Factor],
                  crossings: List[List[Factor]],
                  constraints: List[Constraint],
-                 require_complete_crossing: bool = True):
+                 require_complete_crossing: bool = True,
+                 mode: Union[str, RepeatMode] = RepeatMode.EQUAL
+                 ):
         who = "MultiCrossBlock"
         argcheck(who, design, make_islistof(Factor), "list of Factors for design")
         argcheck(who, crossings, make_islistof(make_islistof(Factor)), "list of list of Factors for crossings")
         argcheck(who, constraints, make_islistof(Constraint), "list of Constraints for constraints")
-        self._create(who, design, crossings, constraints, require_complete_crossing, None)
+        self._create(who, design, crossings, constraints, require_complete_crossing, None, mode)
 
 class CrossBlock(MultiCrossBlock):
     """A fully crossed :class:`.Block` meant to be used in experiment
