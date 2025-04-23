@@ -449,6 +449,94 @@ behavior is expected. The :class:`~sweetpea.AtMostKInARow`
 constraint only looks *within* a given experiment, not across experiments.
 
 
+Working With Multiple Crossings
+-------------------------------
+
+SweetPea supports multiple crossings for situations where different subsets 
+of factors should be crossed independently. This is useful when building more 
+complex experimental designs that consist of multiple fully-crossed components.
+
+Defining MultiCrossBlock
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Using :class:`.MultiCrossBlock` could create an experiment description as a 
+block of trials based on multiple crossings. This allows you to combine
+different subsets of factors into a unified experiment while maintaining
+independent full crossings within each subset.
+
+This is especially useful in complex experimental designs where some
+factors are fully crossed only within specific conditions.
+By passing a list of crossings to the crossing argument 
+in :class:`.MultiCrossBlock`, each inner list defines a separate crossing.
+
+
+Crossing Sizes in MultiCrossBlock
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When using multiple crossings, SweetPea ensures that each sub-crossing 
+is internally fully crossed. The number of trials required for the block, 
+T, is decide by the crossing size of larger crossing. When a crossing's size S 
+is smaller than the number of trials T, then the crossing's combinations 
+are replicated using the smallest multiple N such that so that S * N >= T. 
+If S * N > T, then only the first T generated combinations will be used.
+There are two possible strategies for replicating a crossing, and
+`mode` selects between them. :attr:`.RepeatMode.WEIGHT` weights
+combinations, so that up to N instances of a combination can
+appear anywhere in the T trials. :attr:`.RepeatMode.REPEAT` ensures that
+each of the S combinations appears once in the first S trials,
+then once again in the next S trials, and so on, up to N times.
+
+The difference of these two strategies are shown in the following example:
+
+.. doctest::
+
+    >>> from sweetpea import (Factor, MultiCrossBlock, RepeatMode, synthesize_trials, 
+    >>> print_experiments, CMSGen, IterateGen, RandomGen, IterateSATGen)
+    >>> f1 = Factor("f1",   ["A", "B", "C", "D"])
+    >>> f2 = Factor("f2",   ["a", "b", "c"])
+    >>> f3 = Factor("f3", ['1', '2'])
+    >>> constraints=[]
+    >>> design = [f1, f2, f3]
+    >>> crossing = [[f1, f3], [f2]]
+    >>> constraints = []
+    >>> block = MultiCrossBlock(design, crossing, constraints, mode=RepeatMode.WEIGHT)
+    >>> experiments = synthesize_trials(block, 1, RandomGen)
+    >>> print_experiments(block, experiments)
+    Sampling 1 trial sequences using RandomGen.
+    Counting possible configurations...
+    Generating samples...
+    <BLANKLINE>
+    1 trial sequences found.
+    <BLANKLINE>
+    Experiment 0:
+    f1 C | f3 2 | f2 c
+    f1 D | f3 1 | f2 a
+    f1 D | f3 2 | f2 a
+    f1 B | f3 2 | f2 b
+    f1 A | f3 2 | f2 c
+    f1 A | f3 1 | f2 b
+    f1 C | f3 1 | f2 a
+    f1 B | f3 1 | f2 c
+    >>> block = MultiCrossBlock(design, crossing, constraints, mode=RepeatMode.REPEAT)
+    >>> experiments = synthesize_trials(block, 1, RandomGen)
+    >>> print_experiments(block, experiments)
+    Sampling 1 trial sequences using RandomGen.
+    Counting possible configurations...
+    Generating samples...
+    <BLANKLINE>
+    1 trial sequences found.
+    <BLANKLINE>
+    Experiment 0:
+    f1 C | f3 1 | f2 b
+    f1 C | f3 2 | f2 c
+    f1 A | f3 2 | f2 a
+    f1 D | f3 2 | f2 a
+    f1 B | f3 2 | f2 b
+    f1 D | f3 1 | f2 c
+    f1 A | f3 1 | f2 a
+    f1 B | f3 1 | f2 b
+
+
 ContinuousFactor in SweetPea
 ----------------------------
 

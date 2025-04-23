@@ -110,17 +110,21 @@ using :func:`.synthesize_trials`. Print generated trials using
 
    The number of trials in each generated sequence for the experiment
    is determined by the *maximum* of number that would be determined
-   by an individual crossing in `crossings`.
+   by an individual crossing in `crossings`, and every combination 
+   of levels in each individual crossing in `crossings` appears at 
+   least once within that crossing's size.
 
-   Every combination of levels in each individual crossing in
-   `crossings` appears at least once within that crossing's size.
-   When crossings have smaller sizes, they are replicated to align 
-   with the trial count of larger crossings. 
-   The strategy used to add these additional trials 
-   is determined by `mode`: :class:`.RepeatMode`. 
-   Additional trials are generated either by scaling the weight 
-   of crossing combinations (:attr:`.RepeatMode.WEIGHT`) or 
-   by repeating the crossing enough times (:attr:`.RepeatMode.REPEAT`).
+   When a crossing's size S is smaller than the number of trials T to
+   be generated (as determined by another crossing whose size is
+   larger than S), the crossing's combinations are replicated using
+   the smallest multiple N such that so that S * N >= T. If S * N >
+   T, then only the first T generated combinations will be used.
+   There are two possible strategies for replicating a crossing, and
+   `mode` selects between them. :attr:`.RepeatMode.WEIGHT` weights
+   combinations, so that up to N instances of a combination can
+   appear anywhere in the T trials. :attr:`.RepeatMode.REPEAT` ensures that
+   each of the S combinations appears once in the first S trials,
+   then once again in the next S trials, and so on, up to N times.
     
    At the same time, different crossings in `crossings` can refer to the same
    factors, which creates constraints on how factor levels are chosen
@@ -144,7 +148,10 @@ using :func:`.synthesize_trials`. Print generated trials using
                 to generate additional trials for smaller crossings.
                 Mode must be specified when crossing sizes are different.
                 The default value is :attr:`RepeatMode.EQUAL`, which suggests
-                all crossings have equal crossing sizes. 
+                all crossings have equal crossing sizes. If str is provided instead of 
+                a :class:`.RepeatMode`, it will behave identically by mapping the string to 
+                the corresponding enum: 'weight' maps to :attr:`.RepeatMode.WEIGHT`, 
+                'repeat' maps to :attr:`.RepeatMode.REPEAT` and 'equal' maps to :attr:`.RepeatMode.EQUAL`
    :type mode: Union[str, RepeatMode]
    :return: a block description
    :rtype: Block
