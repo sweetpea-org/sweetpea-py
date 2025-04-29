@@ -8,7 +8,7 @@ __all__ = [
     'print_experiments', 'tabulate_experiments',
     'save_experiments_csv', 'experiments_to_tuples', 'experiments_to_dicts',
 
-    'Block', 'CrossBlock', 'MultiCrossBlock', 'Repeat', 'RepeatMode',
+    'Block', 'CrossBlock', 'MultiCrossBlock', 'Repeat', 'RepeatMode', 'AlignmentMode',
 
     'Factor', 'Level', 'DerivedLevel', 'ElseLevel', 'ContinuousFactor',
 
@@ -35,7 +35,7 @@ import csv, os
 import time
 
 from sweetpea._internal.block import Block
-from sweetpea._internal.cross_block import MultiCrossBlockRepeat, MultiCrossBlock, CrossBlock, Repeat, RepeatMode
+from sweetpea._internal.cross_block import MultiCrossBlockRepeat, MultiCrossBlock, CrossBlock, Repeat, RepeatMode, AlignmentMode
 from sweetpea._internal.primitive import (
     Factor, SimpleFactor, DerivedFactor, ContinuousFactor, Level, SimpleLevel, DerivedLevel, ElseLevel,
     Window, WithinTrial, Transition,

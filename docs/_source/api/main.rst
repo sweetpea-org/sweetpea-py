@@ -124,7 +124,9 @@ using :func:`.synthesize_trials`. Print generated trials using
    combinations, so that up to N instances of a combination can
    appear anywhere in the T trials. :attr:`.RepeatMode.REPEAT` ensures that
    each of the S combinations appears once in the first S trials,
-   then once again in the next S trials, and so on, up to N times.
+   then once again in the next S trials, and so on, up to N times. 
+   An example illustrating the difference of these two strategies is shown in  
+   :ref:`Crossing Sizes in MultiCrossBlock <working-with-multiple-crossings-example>` section.
     
    At the same time, different crossings in `crossings` can refer to the same
    factors, which creates constraints on how factor levels are chosen

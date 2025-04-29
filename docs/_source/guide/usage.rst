@@ -469,6 +469,7 @@ factors are fully crossed only within specific conditions.
 By passing a list of crossings to the crossing argument 
 in :class:`.MultiCrossBlock`, each inner list defines a separate crossing.
 
+.. _working-with-multiple-crossings-example:
 
 Crossing Sizes in MultiCrossBlock
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

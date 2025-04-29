@@ -5,7 +5,7 @@ sys.path.append("..")
 from sweetpea import (
     Factor, DerivedLevel, WithinTrial, Transition, AtMostKInARow, MinimumTrials,
     CrossBlock, MultiCrossBlock, RepeatMode, synthesize_trials, print_experiments, tabulate_experiments,
-    CMSGen, IterateGen, RandomGen, Level, Window, IterateSATGen
+    CMSGen, IterateGen, RandomGen, Level, Window, IterateSATGen, AlignmentMode
 )
 
 color  = Factor("color",  ["red", "blue", "green"])
@@ -30,9 +30,16 @@ task_transition = Factor("task_transition", [
 design       = [color, motion, task, task_transition]
 constraints=[]
 crossing = [[color, motion], [task_transition]]
-block        = MultiCrossBlock(design, crossing, constraints, mode=RepeatMode.REPEAT)
 
+# Example with different crossings start 
+block        = MultiCrossBlock(design, crossing, constraints, mode=RepeatMode.REPEAT, alignment=AlignmentMode.PARALLEL_START)
 experiments  = synthesize_trials(block, 1, CMSGen)
 print_experiments(block, experiments)
-tabulate_experiments(block, experiments, [task_transition])
+
+# Exa
+block        = MultiCrossBlock(design, crossing, constraints, mode=RepeatMode.REPEAT, alignment=AlignmentMode.POST_PREAMBLE)
+experiments  = synthesize_trials(block, 1, CMSGen)
+print_experiments(block, experiments)
+
+# tabulate_experiments(block, experiments, [task_transition])
 
