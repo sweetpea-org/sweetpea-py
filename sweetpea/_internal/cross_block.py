@@ -86,7 +86,7 @@ class MultiCrossBlockRepeat(Block):
         if (not list(filter(lambda c: c.is_complex_for_combinatoric(), self.constraints))
                 and not list(filter(lambda f: f.has_complex_window, design))):
             self.complex_factors_or_constraints = False
-
+        
         if not all([s == self.preamble_sizes[0] for s in self.preamble_sizes]) and self.alignment == AlignmentMode.SINGLE_CROSSING:
             raise RuntimeError("AlignmentMode is not defined in MultiCrossBlock with different preamble sizes")
         if within_block_count:
@@ -300,6 +300,8 @@ class MultiCrossBlockRepeat(Block):
         return reduce(lambda sum, factor: sum * factor.level_weight_sum(), crossing, 1)
 
     def preamble_size(self, crossing: Optional[List[Factor]] = None):
+        if self.alignment == AlignmentMode.POST_PREAMBLE:
+            return max(self.preamble_sizes)
         crossing = self.__select_crossing(crossing)
         return self._trials_per_sample_for_one_crossing(crossing) - self.crossing_size(crossing)
 
