@@ -538,6 +538,80 @@ The difference of these two strategies are shown in the following example:
     f1 B | f3 1 | f2 b
 
 
+.. _preamble-trials-multiple-crossings-example:
+
+Preamble Trials in MultiCrossBlock
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In a :class:`.CrossBlock`, if a derived factor in the crossing has a window size N > 1, 
+then N – 1 preamble trials are added to ensure its level is defined on the first trial. 
+This can be adjusted using the factor’s starting trial. 
+When multiple derived factors are present in the crossing, 
+the one with the latest starting trial determines the number of preamble trials. 
+
+When using :class:`.MultiCrossBlock`, if crossings require different 
+numbers of preamble trials due to derived factors with varying window sizes, 
+the `alignment` parameter controls how crossings are aligned. 
+Use :attr:`.AlignmentMode.POST_PREAMBLE` to start all crossings after the unified preamble
+trials, or :attr:`.AlignmentMode.PARALLEL_START` to start individual crossing from 
+its own required preamble trials. 
+
+The difference of these two strategies are shown in the following example:
+
+.. doctest::
+
+    >>> from sweetpea import (Factor, MultiCrossBlock, RepeatMode, synthesize_trials, 
+    >>> print_experiments, CMSGen, IterateGen, RandomGen, IterateSATGen, Repeat, 
+    >>> DerivedLevel, Transition, MinimumTrials, Window, AlignmentMode, CrossBlock)
+    >>> color   = Factor("color",   ["red", "blue", "green"])
+    >>> word   = Factor("word",   ["red", "blue", "green"])
+    >>> task = Factor("task", ['color', 'word'])
+    >>> def task_repeat(task):
+            return task[0] == task[-1]
+    >>> def task_switch(task):
+            return not task_repeat(task)
+    >>> task_transition = Factor("task_transition", [
+            DerivedLevel("repeat", Transition(task_repeat, [task])),
+            DerivedLevel("switch", Transition(task_switch, [task]))
+        ])
+    >>> design = [color, word, task, task_transition]
+    >>> crossing = [[color, task_transition], [task], [word]]
+    >>> constraints = []
+    >>> block = MultiCrossBlock(design, crossing, constraints, mode=RepeatMode.REPEAT, alignment=AlignmentMode.PARALLEL_START)
+    >>> experiments = synthesize_trials(block, 1, CMSGen)
+    >>> print_experiments(block, experiments)
+    Sampling 1 trial sequences using CMSGen.
+    Encoding experiment constraints...
+    Running CMSGen...
+    <BLANKLINE>
+    1 trial sequences found.
+    <BLANKLINE>
+    Experiment 0:
+    color green | word red   | task word  | task_transition       
+    color red   | word blue  | task color | task_transition switch
+    color green | word green | task color | task_transition repeat
+    color green | word green | task word  | task_transition switch
+    color red   | word red   | task word  | task_transition repeat
+    color blue  | word blue  | task color | task_transition switch
+    color blue  | word blue  | task color | task_transition repeat
+    >>> block = MultiCrossBlock(design, crossing, constraints, mode=RepeatMode.REPEAT, alignment=AlignmentMode.POST_PREAMBLE)
+    >>> experiments = synthesize_trials(block, 1, CMSGen)
+    >>> print_experiments(block, experiments)
+    Sampling 1 trial sequences using CMSGen.
+    Encoding experiment constraints...
+    Running CMSGen...
+    <BLANKLINE>
+    1 trial sequences found.
+    <BLANKLINE>
+    Experiment 0:
+    color red   | word blue  | task color | task_transition       
+    color green | word red   | task color | task_transition repeat
+    color blue  | word blue  | task word  | task_transition switch
+    color red   | word green | task word  | task_transition repeat
+    color red   | word blue  | task color | task_transition switch
+    color blue  | word green | task color | task_transition repeat
+    color green | word red   | task word  | task_transition switch
+
 ContinuousFactor in SweetPea
 ----------------------------
 

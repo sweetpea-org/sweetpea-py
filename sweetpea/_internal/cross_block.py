@@ -36,7 +36,7 @@ class RepeatMode(Enum):
 class AlignmentMode(Enum):
     POST_PREAMBLE = auto()       # Start all crossings after preamble ends
     PARALLEL_START = auto()      # Start all crossings at the beginning
-    SINGLE_CROSSING = auto()
+    EQUAL_PREAMBLE = auto()
 
 class MultiCrossBlockRepeat(Block):
     """An internal :class:`.Block` to handle blocks and repeats.
@@ -61,7 +61,7 @@ class MultiCrossBlockRepeat(Block):
                 require_complete_crossing: bool,
                 within_block_count: Optional[int],
                 mode: Union[str, RepeatMode] = RepeatMode.EQUAL,
-                alignment: AlignmentMode = AlignmentMode.SINGLE_CROSSING
+                alignment: AlignmentMode = AlignmentMode.EQUAL_PREAMBLE
                 ):
         if isinstance(mode, RepeatMode):
             self.mode = mode
@@ -87,7 +87,7 @@ class MultiCrossBlockRepeat(Block):
                 and not list(filter(lambda f: f.has_complex_window, design))):
             self.complex_factors_or_constraints = False
         
-        if not all([s == self.preamble_sizes[0] for s in self.preamble_sizes]) and self.alignment == AlignmentMode.SINGLE_CROSSING:
+        if not all([s == self.preamble_sizes[0] for s in self.preamble_sizes]) and self.alignment == AlignmentMode.EQUAL_PREAMBLE:
             raise RuntimeError("AlignmentMode is not defined in MultiCrossBlock with different preamble sizes")
         if within_block_count:
             # Repeat Block
@@ -440,7 +440,7 @@ class MultiCrossBlock(MultiCrossBlockRepeat):
                  constraints: List[Constraint],
                  require_complete_crossing: bool = True,
                  mode: Union[str, RepeatMode] = RepeatMode.EQUAL,
-                 alignment: AlignmentMode = AlignmentMode.SINGLE_CROSSING
+                 alignment: AlignmentMode = AlignmentMode.EQUAL_PREAMBLE
                  ):
         who = "MultiCrossBlock"
         argcheck(who, design, make_islistof(Factor), "list of Factors for design")

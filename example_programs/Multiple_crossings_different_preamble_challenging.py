@@ -13,8 +13,8 @@ from sweetpea import (
 # setting require_complete_crossing as True (default)
 # should ensure complete crossings in MultiCrossBlock
 
-f1   = Factor("f1",   ["A", "B", "C", "D"])
-f2   = Factor("f2",   ["a", "b", "c"])
+f1 = Factor("f1",   ["A", "B", "C", "D"])
+f2 = Factor("f2",   ["a", "b", "c"])
 f3 = Factor("f3", ['1', '2'])
 f4 = Factor("f4", ['1', '2'])
 
@@ -37,9 +37,8 @@ congruent_bookend = Factor("congruent bookend?", [
 constraints=[]
 
 design       = [f1, f2, f3, f4, task_transition, congruent_bookend]
-crossing = [[task_transition], [f3, f2], [congruent_bookend]]
-
-constraints = []
+crossing     = [[task_transition], [f3, f2], [congruent_bookend]]
+constraints  = []
 
 block        = MultiCrossBlock(design, crossing, constraints, mode=RepeatMode.WEIGHT, alignment=AlignmentMode.PARALLEL_START)
 experiments  = synthesize_trials(block, 1, CMSGen)
