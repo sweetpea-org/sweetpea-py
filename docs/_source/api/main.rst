@@ -170,8 +170,12 @@ using :func:`.synthesize_trials`. Print generated trials using
                      Alignment must be specified when the number preamble trials is different
                      for crossings because of window sizes of derived factors.
                      The default value is :attr:`AlignmentMode.EQUAL_PREAMBLE`, which suggests
-                     the preamble trials are equal for all crossings. 
-   :type alignment: AlignmentMode
+                     the preamble trials are equal for all crossings. If `str` is provided instead of 
+                     a :class:`.AlignmentMode`, it will behave identically by mapping the string to 
+                     the corresponding enum: 'post preamble' maps to :attr:`.AlignmentMode.POST_PREAMBLE`, 
+                     'parallel start' maps to :attr:`.AlignmentMode.PARALLEL_START`, and
+                     'equal preamble' maps to :attr:`.AlignmentMode.EQUAL_PREAMBLE`. 
+   :type alignment: Union[str, AlignmentMode]
 
 
    :return: a block description

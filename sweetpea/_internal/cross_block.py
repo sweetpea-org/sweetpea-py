@@ -34,14 +34,15 @@ class RepeatMode(Enum):
     EQUAL = "equal"
 
 class AlignmentMode(Enum):
-    POST_PREAMBLE = auto()       # Start all crossings after preamble ends
-    PARALLEL_START = auto()      # Start all crossings at the beginning
-    EQUAL_PREAMBLE = auto()
+    POST_PREAMBLE  = "post preamble"       # Start all crossings after preamble ends
+    PARALLEL_START = "parallel start"      # Start all crossings at the beginning
+    EQUAL_PREAMBLE = "equal preamble"
 
 class MultiCrossBlockRepeat(Block):
     """An internal :class:`.Block` to handle blocks and repeats.
     """
     _valid_modes = {m.value: m for m in RepeatMode} 
+    _valid_alignment = {m.value: m for m in AlignmentMode} 
     def __init__(self,
                  design: List[Factor],
                  crossings: List[List[Factor]],
@@ -61,7 +62,7 @@ class MultiCrossBlockRepeat(Block):
                 require_complete_crossing: bool,
                 within_block_count: Optional[int],
                 mode: Union[str, RepeatMode] = RepeatMode.EQUAL,
-                alignment: AlignmentMode = AlignmentMode.EQUAL_PREAMBLE
+                alignment: Union[str, AlignmentMode] = AlignmentMode.EQUAL_PREAMBLE
                 ):
         if isinstance(mode, RepeatMode):
             self.mode = mode
@@ -69,7 +70,14 @@ class MultiCrossBlockRepeat(Block):
             raise ValueError(f"Invalid mode '{mode}'. Must be one of {list(self._valid_modes.keys())}.")
         else:
             self.mode = self._valid_modes[mode]
-        self.alignment = alignment
+
+        if isinstance(alignment, AlignmentMode):
+            self.alignment = alignment
+        elif alignment not in self._valid_alignment:
+            raise ValueError(f"Invalid alignment '{alignment}'. Must be one of {list(self._valid_alignment.keys())}.")
+        else:
+            self.alignment = self._valid_alignment[alignment]
+
         from sweetpea._internal.constraint import Cross, Consistency
         from sweetpea._internal.derivation_processor import DerivationProcessor
         self.orig_design = design
@@ -440,7 +448,7 @@ class MultiCrossBlock(MultiCrossBlockRepeat):
                  constraints: List[Constraint],
                  require_complete_crossing: bool = True,
                  mode: Union[str, RepeatMode] = RepeatMode.EQUAL,
-                 alignment: AlignmentMode = AlignmentMode.EQUAL_PREAMBLE
+                 alignment: Union[str, AlignmentMode] = AlignmentMode.EQUAL_PREAMBLE
                  ):
         who = "MultiCrossBlock"
         argcheck(who, design, make_islistof(Factor), "list of Factors for design")

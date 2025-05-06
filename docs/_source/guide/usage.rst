@@ -487,7 +487,7 @@ appear anywhere in the T trials. :attr:`.RepeatMode.REPEAT` ensures that
 each of the S combinations appears once in the first S trials,
 then once again in the next S trials, and so on, up to N times.
 
-The difference of these two strategies are shown in the following example:
+The difference of these two strategies for replication are shown in the following example:
 
 .. doctest::
 
@@ -556,7 +556,17 @@ Use :attr:`.AlignmentMode.POST_PREAMBLE` to start all crossings after the unifie
 trials, or :attr:`.AlignmentMode.PARALLEL_START` to start individual crossing from 
 its own required preamble trials. 
 
-The difference of these two strategies are shown in the following example:
+The difference of these two strategies are shown in the following example. If 
+:attr:`.AlignmentMode.PARALLEL_START` is used in the :class:`.MultiCrossBlock`, 
+the crossing [color, task_transition] would have one preamble trial because of 
+derived factor task_transition, whereas the crossing [task] and [word] would have 
+no preamble trials since it does not require preamble trials. Thus the first trial
+`color green | word red   | task word  | task_transition` is considered preamble 
+trial for the crossing [color, task_transition], but the first 
+trial for the crossing [task] and the crossing [word].  
+If :attr:`.AlignmentMode.POST_PREAMBLE` is used in the :class:`.MultiCrossBlock`,
+the first trial `color red | word blue | task color | task_transition` would be the 
+preamble trial for all crossings:  
 
 .. doctest::
 
