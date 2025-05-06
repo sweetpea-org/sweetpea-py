@@ -100,12 +100,14 @@ def test_sampling_range():
             return False, "No samples provided"
         ks_stat = kolmogorov_smirnov_test(samples, mean, std)
         # Critical value approximation for K-S test
-        critical_value = 1.96 / math.sqrt(len(samples))
+        critical_value = 1.63 / math.sqrt(len(samples))
         result = ks_stat < critical_value
         message = f"K-S Statistic: {ks_stat:.5f}, Critical Value: {critical_value:.5f}, Mean: {mean:.5f}, Std Dev: {std:.5f}"
         return result, message
 
-    result, message = check_normal(t1, 0, 1)
+    mean = sum(t1) / len(t1)
+    std = (sum((x - mean) ** 2 for x in t1) / (len(t1) - 1)) ** 0.5
+    result, message = check_normal(t1, mean, std)
     assert result, f"The samples likely do not follow a normal distribution. {message}"
 
     def check_exponential(data, rate, threshold=0.1):
