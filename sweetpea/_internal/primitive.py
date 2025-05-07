@@ -717,16 +717,19 @@ class ContinuousFactor(Factor):
     """
     name: str
     distribution: Optional[Distribution] = None  # Must be an instance of Distribution
-
+    start: Optional[int] = field(default=0)
     def __post_init__(self, distribution=None):
         self.levels = [HiddenName(self.name)]
         if not isinstance(self.distribution, Distribution):
             raise ValueError("distribution must be an instance of Distribution, got {}".format(type(self.distribution)))
         
+        if self.start>0:
+            raise ValueError("Starting index must be an int less or equal to 0, got {}".format(type(self.window)))
+
         self.initial_levels = self.distribution.get_init()
         for k in self.initial_levels:
             if not isinstance(k, Factor):
-                raise ValueError("CustomDisctribution should only inputs as Factors, got {}".format(type(k)))
+                raise ValueError("CustomDisctribution should only have inputs as Factors, got {}".format(type(k)))
 
     def generate(self, factor_values: List[Any] = []):
         """
@@ -739,7 +742,8 @@ class ContinuousFactor(Factor):
             raise ValueError("Distribution is not set for this ContinuousFactor.")
 
         return self.distribution.sample(factor_values)
-        
+    def get_start(self):
+        return self.start
     def get_levels(self):
         return self.initial_levels
 

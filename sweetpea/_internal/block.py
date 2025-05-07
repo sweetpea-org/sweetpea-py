@@ -111,6 +111,7 @@ class Block:
         continuous_output = {}
         self.continuous_factor_samples[trial_num] = continuous_output
         for cFactor in self.continuous_factors:
+            start = cFactor.get_start()
             # sample for current cfactor
             continuous_samples = []
             continuous_output[cFactor.name] = continuous_samples
@@ -120,11 +121,11 @@ class Block:
                 dependents = cFactor.get_levels()
                 for dependent in dependents:
                     if isinstance(dependent, ContinuousFactor):
-                        sample_input.append(continuous_output[dependent.name][i])
+                        sample_input.append(continuous_output[dependent.name][max(0, i+start)])
                     elif isinstance(dependent, (int, float)):
                         sample_input.append(dependent)
                     elif isinstance(dependent, Factor) and dependent.name in trial:
-                        sample_input.append(trial[dependent.name][i])
+                        sample_input.append(trial[dependent.name][max(0, i+start)])
                     else:  
                         raise RuntimeError("Dependency {} is not continuous factor or number or factor in the design".format(dependent))
                 c_value = cFactor.generate(sample_input)
