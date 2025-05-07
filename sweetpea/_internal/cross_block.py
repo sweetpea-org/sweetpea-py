@@ -67,14 +67,14 @@ class MultiCrossBlockRepeat(Block):
         if isinstance(mode, RepeatMode):
             self.mode = mode
         elif mode not in self._valid_modes:
-            raise ValueError(f"Invalid mode '{mode}'. Must be one of {list(self._valid_modes.keys())}.")
+            raise ValueError(f"Invalid mode '{mode}'. Must be RepeatMode OR one of {list(self._valid_modes.keys())}.")
         else:
             self.mode = self._valid_modes[mode]
 
         if isinstance(alignment, AlignmentMode):
             self.alignment = alignment
         elif alignment not in self._valid_alignment:
-            raise ValueError(f"Invalid alignment '{alignment}'. Must be one of {list(self._valid_alignment.keys())}.")
+            raise ValueError(f"Invalid alignment '{alignment}'. Must be AlignmentMode or one of {list(self._valid_alignment.keys())}.")
         else:
             self.alignment = self._valid_alignment[alignment]
 
