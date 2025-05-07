@@ -97,7 +97,7 @@ using :func:`.synthesize_trials`. Print generated trials using
    :return: a block description
    :rtype: Block
 
-.. class:: sweetpea.MultiCrossBlock(design, crossings, constraints, require_complete_crossing=True)
+.. class:: sweetpea.MultiCrossBlock(design, crossings, constraints, require_complete_crossing=True, mode=RepeatMode.EQUAL, alignment=AlignmentMode.EQUAL_PREAMBLE)
 
    Creates an experiment description as a block of trials based on
    multiple crossings.
@@ -110,15 +110,38 @@ using :func:`.synthesize_trials`. Print generated trials using
 
    The number of trials in each generated sequence for the experiment
    is determined by the *maximum* of number that would be determined
-   by an individual crossing in `crossings`.
+   by an individual crossing in `crossings`, and every combination 
+   of levels in each individual crossing in `crossings` appears at 
+   least once within that crossing's size.
 
-   Every combination of levels in each individual crossing in
-   `crossings` appears at least once within that crossing's size.
-   Smaller crossing sizes lead to replications of that crossing to
-   meet the number of trials required for larger crossings. At the
-   same time, different crossings in `crossings` can refer to the same
+   When a crossing's size S is smaller than the number of trials T to
+   be generated (as determined by another crossing whose size is
+   larger than S), the crossing's combinations are replicated using
+   the smallest multiple N such that so that S * N >= T. If S * N >
+   T, then only the first T generated combinations will be used.
+   There are two possible strategies for replicating a crossing, and
+   `mode` selects between them. :attr:`.RepeatMode.WEIGHT` weights
+   combinations, so that up to N instances of a combination can
+   appear anywhere in the T trials. :attr:`.RepeatMode.REPEAT` ensures that
+   each of the S combinations appears once in the first S trials,
+   then once again in the next S trials, and so on, up to N times. 
+   An example illustrating the difference of these two strategies is shown in  
+   :ref:`Crossing Sizes in MultiCrossBlock <working-with-multiple-crossings-example>` section.
+    
+   At the same time, different crossings in `crossings` can refer to the same
    factors, which creates constraints on how factor levels are chosen
    across crossings in a given trial.
+
+   In addition, each crossing in `crossings` could require different number of preamble trials
+   because of derived factors with varying window sizes in the crossing, 
+   the `alignment` parameter controls how crossings are aligned. 
+   Use :attr:`.AlignmentMode.POST_PREAMBLE` to start all crossings after the unified preamble
+   trials, or :attr:`.AlignmentMode.PARALLEL_START` to start individual crossing from 
+   its own required preamble trials.    
+   An example illustrating the difference of these two strategies is shown in  
+   :ref:`Preamble Trials in MultiCrossBlock <preamble-trials-multiple-crossings-example>` section.
+    
+
 
    :param design: the factors that make up the design
    :type design: List[Factor]
@@ -130,7 +153,31 @@ using :func:`.synthesize_trials`. Print generated trials using
    :param constraints: constraints that every sequence of trials must
                        satify; see :ref:`constraints`
    :type constraints: List[Constraint]
-   :param require_complete_crossing: same as for :class:`.MultiCrossBlock`
+   :param require_complete_crossing: same as for :class:`.CrossBlock`
+   :param mode: determines the strategy for :class:`.RepeatMode`, 
+                whether to use :attr:`.RepeatMode.WEIGHT` OR :attr:`.RepeatMode.REPEAT`
+                to generate additional trials for smaller crossings.
+                Mode must be specified when crossing sizes are different.
+                The default value is :attr:`RepeatMode.EQUAL`, which suggests
+                all crossings have equal crossing sizes. If `str` is provided instead of 
+                a :class:`.RepeatMode`, it will behave identically by mapping the string to 
+                the corresponding enum: 'weight' maps to :attr:`.RepeatMode.WEIGHT`, 
+                'repeat' maps to :attr:`.RepeatMode.REPEAT` and 'equal' maps to :attr:`.RepeatMode.EQUAL`
+   :type mode: Union[str, RepeatMode]
+   :param alignment: determines the strategy for :class:`.AlignmentMode`, 
+                     whether to use :attr:`.AlignmentMode.PARALLEL_START` OR :attr:`.AlignmentMode.POST_PREAMBLE`
+                     to align crossings with different preamble trials.
+                     Alignment must be specified when the number preamble trials is different
+                     for crossings because of window sizes of derived factors.
+                     The default value is :attr:`AlignmentMode.EQUAL_PREAMBLE`, which suggests
+                     the preamble trials are equal for all crossings. If `str` is provided instead of 
+                     a :class:`.AlignmentMode`, it will behave identically by mapping the string to 
+                     the corresponding enum: 'post preamble' maps to :attr:`.AlignmentMode.POST_PREAMBLE`, 
+                     'parallel start' maps to :attr:`.AlignmentMode.PARALLEL_START`, and
+                     'equal preamble' maps to :attr:`.AlignmentMode.EQUAL_PREAMBLE`. 
+   :type alignment: Union[str, AlignmentMode]
+
+
    :return: a block description
    :rtype: Block
 
@@ -283,3 +330,52 @@ using :func:`.synthesize_trials`. Print generated trials using
    :return: a list of lists of tuples, where each tuple contains the string
             names of levels selected for one trial
    :rtype: List[List[tuple]]
+
+
+.. class:: sweetpea.RepeatMode
+
+   Represents the strategies for generating additional trials
+   when individual crossings in a design differ in size. 
+   The :class:`.RepeatMode` is used in :class:`.MultiCrossBlock` 
+   to determine how to align the number of
+   trials across multiple crossings. When crossings have different crossing sizes,
+   additional trials must be added to ensure consistency across the design.
+
+   There are three available modes:
+
+   - :attr:`.EQUAL`: Indicates that all crossings are expected to have equal sizes,
+     and no additional trials should be added. This is the default setting.
+
+   - :attr:`.REPEAT`: Repeats the smaller crossings enough times until they reach the
+     required trial count to align with the trial count of larger crossings.
+     Unlike scaling the weight of smaller crossing combinations,
+     levels are selected for each replication of the crossing independently.
+
+   - :attr:`.WEIGHT`: Additional trials are added by scaling the weight of the smaller crossing 
+     combination to align with the trial count of larger crossings. 
+     Preamble trials are not scaled. 
+
+   :class:`.RepeatMode` is typically not instantiated directly; instead, it is passed
+   as a configuration value to :class:`.MultiCrossBlock`
+
+.. class:: sweetpea.AlignmentMode
+
+   Represents the strategies for aligning trials
+   when individual crossings in a design differ preamble trials. 
+   The :class:`.AlignmentMode` is used in :class:`.MultiCrossBlock` 
+   to determine how to align the crossings with different preamble trials.
+
+   There are three available modes:
+
+   - :attr:`.EQUAL_PREAMBLE`: Indicates that the preamble trials are equal for all crossings. 
+     This is the default setting.
+
+   - :attr:`.POST_PREAMBLE`: Starts all crossings after the unified preamble trials. The crossing 
+     with the latest starting trial determines the unified preamble trials.
+
+   - :attr:`.PARALLEL_START`: Starts individual crossing based on its own required preamble trials. 
+
+   :class:`.AlignmentMode` is typically not instantiated directly; instead, it is passed
+   as a configuration value to :class:`.MultiCrossBlock`
+
+

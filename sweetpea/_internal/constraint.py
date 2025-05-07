@@ -134,12 +134,14 @@ class Cross(Constraint):
             crossing_size = block.crossing_size(c)
             preamble_size = block.preamble_size(c)
             crossing_weight = block.crossing_weight(c)
-
+            
             # Step 1a: Get a list of the trials that are involved in the crossing. That list
             # omits leading trials that will be present to initialize transitions, and the
             # number of trials may have been reduced by exclusions.
-            crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t), c)),
-                                          range(1, block.trials_per_sample() + 1)))
+            # crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t), c)),
+            #                               range(1, block.trials_per_sample() + 1)))
+            # Modify this to make it depend on block property and preamble_size instead of factor
+            crossing_trials = list(range(1+preamble_size, block.trials_per_sample() + 1))
 
             # Step 1b: For each trial, cross all levels of all factors in the crossing.
             # We exclude any combination that is dsiallowed by implicit or explicit exlcusions.

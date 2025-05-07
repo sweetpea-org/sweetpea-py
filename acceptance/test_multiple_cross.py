@@ -36,7 +36,7 @@ def test_correct_solutions_with_different_crossing_sizes(strategy, add_transitio
     crossing = [[color, text] + ([repeated_color_factor] if add_transition else []), [text, mix]]
     constraints = []
 
-    block  = MultiCrossBlock(design, crossing, constraints)
+    block  = MultiCrossBlock(design, crossing, constraints, mode='repeat', alignment=AlignmentMode.PARALLEL_START)
     experiments  = synthesize_trials(block, 10, RandomGen)
 
     start = 1 if add_transition else 0
@@ -234,7 +234,7 @@ def test_works_with_much_smaller_first_crossing(strategy, design=[color, text, m
     c = Factor("c", ["c1", "c2"])
     design = [a, b, c]
     crossing = [[c], [a,b]]
-    block=MultiCrossBlock(design,crossing,[])
+    block=MultiCrossBlock(design,crossing,[], mode='repeat')
     
     experiments = synthesize_trials(block, 1, strategy)
     assert len(experiments[0]["a"]) == 4
