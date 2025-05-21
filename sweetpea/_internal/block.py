@@ -179,7 +179,7 @@ class Block:
         return included_factor_names
 
 
-    def __get_window_range(self, n: int, width: int, stride: int, start: int) -> tuple[int, int] | None:
+    def __get_window_range(self, n: int, width: int, stride: int, start: int) -> Union[tuple[int, int], None]:
         """
         Returns the start and end indices (inclusive) of the window at trial n,
         or None if the window does not apply at trial n.
