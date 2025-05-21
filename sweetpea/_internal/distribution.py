@@ -63,7 +63,7 @@ class CustomDistribution(Distribution):
         
         self.func = func
         self.dependents = []
-        self.sum = 0
+        self.sum = 0.
         self.cumulative = False
 
         if len(args)>0:
@@ -83,9 +83,9 @@ class CustomDistribution(Distribution):
         else:
             self.sum+= self.func(*factor_values)
             return self.sum
-            
+
     def get_init(self) ->List[Any]:
         return self.dependents
 
     def reset(self):
-        self.sum = 0
+        self.sum = 0.
