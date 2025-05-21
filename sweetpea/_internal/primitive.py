@@ -5,7 +5,7 @@ from __future__ import annotations
 __all__ = [
     'Level', 'SimpleLevel', 'DerivedLevel', 'ElseLevel',
     'Factor', 'SimpleFactor', 'DerivedFactor', 'ContinuousFactor',
-    'WithinTrial', 'Transition', 'Window'
+    'WithinTrial', 'Transition', 'Window', 'ContinuousWindow'
 ]
 
 from copy import deepcopy
@@ -717,19 +717,28 @@ class ContinuousFactor(Factor):
     """
     name: str
     distribution: Optional[Distribution] = None  # Must be an instance of Distribution
-    start: Optional[int] = field(default=0)
+    # start: Optional[int] = field(default=0)
     def __post_init__(self, distribution=None):
         self.levels = [HiddenName(self.name)]
         if not isinstance(self.distribution, Distribution):
             raise ValueError("distribution must be an instance of Distribution, got {}".format(type(self.distribution)))
         
-        if self.start>0:
-            raise ValueError("Starting index must be an int less or equal to 0, got {}".format(type(self.window)))
+        # if self.start>0:
+            # raise ValueError("Starting index must be an int less or equal to 0, got {}".format(type(self.window)))
 
-        self.initial_levels = self.distribution.get_init()
-        for k in self.initial_levels:
-            if not isinstance(k, Factor):
-                raise ValueError("CustomDisctribution should only have inputs as Factors, got {}".format(type(k)))
+        _initial_levels = self.distribution.get_init()
+        self.initial_levels = []
+        self.window_params = []
+
+        for k in _initial_levels:
+            if isinstance(k, ContinuousWindow):
+                self.initial_levels.append(k)
+                # self.window_params.append((k.width, k.stride, k.start))
+            elif isinstance(k, Factor):
+                self.initial_levels.append(k)
+                # self.widths.append(1)
+            else:
+                raise ValueError("CustomDisctribution should only have inputs as Factors OR ContinuousWindow, got {}".format(type(k)))
 
     def generate(self, factor_values: List[Any] = []):
         """
@@ -740,16 +749,20 @@ class ContinuousFactor(Factor):
         """
         if self.distribution is None:
             raise ValueError("Distribution is not set for this ContinuousFactor.")
-
         return self.distribution.sample(factor_values)
-    def get_start(self):
-        return self.start
+
+    def get_window_params(self):
+        return self.window_params
     def get_levels(self):
         return self.initial_levels
+    def get_distribution(self):
+        return self.distribution
 
     def __repr__(self) -> str:
         return self.__str__()
 
+    def __hash__(self):
+        return hash(self.name)
 ###############################################################################
 ##
 ## Derivation Windows
@@ -931,3 +944,36 @@ class Transition(Window):
     width: int = field(default=2, init=False)
     stride: int = field(default=1, init=False)
     start: int = field(default=1, init=False)
+
+
+
+@dataclass
+class ContinuousWindow:
+    # predicate: Callable
+    factors: List[Factor]
+    width: int
+    #: The stride of this window.
+    stride: int = 1
+    # start: int = field(default=0, init=False)
+    def __post_init__(self):
+        self.factor_idx = {}
+        for f in self.factors:
+            if not isinstance(f, ContinuousFactor):
+                raise TypeError(f"ContinuousWindow can only be constructed on ContinuousFactor; got {type(f)}")
+            else:
+                self.factor_idx[f] = {}
+                for i in range(self.width):
+                    self.factor_idx[f][-i] = float('nan')
+        
+    def get_window_val(self, idx, dependent_dict):   
+        outlist = []
+        for f in self.factor_idx:
+            if idx < self.width-1:
+                outlist.append(self.factor_idx[f])
+            else:
+                for k in self.factor_idx[f]:
+                    self.factor_idx[f][k] = dependent_dict[f.name][idx+k]
+                outlist.append(self.factor_idx[f])
+        if len(outlist)<2:
+            return outlist[0]
+        return outlist

@@ -12,7 +12,7 @@ __all__ = [
 
     'Factor', 'Level', 'DerivedLevel', 'ElseLevel', 'ContinuousFactor',
 
-    'Derivation', 'WithinTrial', 'Transition', 'Window',
+    'Derivation', 'WithinTrial', 'Transition', 'Window', 'ContinuousWindow',
 
     'Constraint',
     'Exclude', 'Pin', 'MinimumTrials', 'ExactlyK',
@@ -38,7 +38,7 @@ from sweetpea._internal.block import Block
 from sweetpea._internal.cross_block import MultiCrossBlockRepeat, MultiCrossBlock, CrossBlock, Repeat
 from sweetpea._internal.primitive import (
     Factor, SimpleFactor, DerivedFactor, ContinuousFactor, Level, SimpleLevel, DerivedLevel, ElseLevel,
-    Window, WithinTrial, Transition,
+    Window, WithinTrial, Transition, ContinuousWindow,
     HiddenName
 )
 from sweetpea._internal.constraint import (
