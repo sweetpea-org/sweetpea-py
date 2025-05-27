@@ -954,26 +954,29 @@ class ContinuousWindow:
     width: int
     #: The stride of this window.
     stride: int = 1
-    # start: int = field(default=0, init=False)
+    start: int = 0
     def __post_init__(self):
-        self.factor_idx = {}
         for f in self.factors:
             if not isinstance(f, ContinuousFactor):
                 raise TypeError(f"ContinuousWindow can only be constructed on ContinuousFactor; got {type(f)}")
-            else:
-                self.factor_idx[f] = {}
-                for i in range(self.width):
-                    self.factor_idx[f][-i] = float('nan')
         
     def get_window_val(self, idx, dependent_dict):   
         outlist = []
-        for f in self.factor_idx:
-            if idx < self.width-1:
-                outlist.append(self.factor_idx[f])
+        for f in self.factors:
+            if idx < self.width-1 or idx<self.start or ((idx-(self.width-1))%self.stride!=0):
+                outlist.append(self._return_nan())
             else:
-                for k in self.factor_idx[f]:
-                    self.factor_idx[f][k] = dependent_dict[f.name][idx+k]
-                outlist.append(self.factor_idx[f])
+                #### for factor f
+                factor_idx = {}
+                for k in range(self.width):
+                    factor_idx[-k] = dependent_dict[f.name][idx-k]
+                outlist.append(factor_idx)
         if len(outlist)<2:
             return outlist[0]
         return outlist
+
+    def _return_nan(self):
+        factor_idx = {}
+        for i in range(self.width):
+            factor_idx[-i] = float('nan')
+        return factor_idx
