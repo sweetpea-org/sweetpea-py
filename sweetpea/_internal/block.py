@@ -14,7 +14,7 @@ import inspect
 from sweetpea._internal.backend import BackendRequest
 from sweetpea._internal.level import get_all_levels
 from sweetpea._internal.primitive import (
-    DerivedFactor, DerivedLevel, ElseLevel, Factor, SimpleLevel, Level, ContinuousFactor, ContinuousWindow
+    DerivedFactor, DerivedLevel, ElseLevel, Factor, SimpleLevel, Level, ContinuousFactor, ContinuousFactorWindow
 )
 from sweetpea._internal.logic import to_cnf_tseitin
 from sweetpea._internal.base_constraint import Constraint
@@ -122,7 +122,7 @@ class Block:
                 # Get dependent factors for current factor
                 dependents = cFactor.get_levels()
                 for j, dependent in enumerate(dependents):
-                    if isinstance(dependent, ContinuousWindow):
+                    if isinstance(dependent, ContinuousFactorWindow):
                         sample_input.append(dependent.get_window_val(i, continuous_output))
                     elif isinstance(dependent, ContinuousFactor):
                         sample_input.append(continuous_output[dependent.name][i])
