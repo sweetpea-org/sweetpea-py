@@ -12,7 +12,7 @@ __all__ = [
 
     'Factor', 'Level', 'DerivedLevel', 'ElseLevel', 'ContinuousFactor',
 
-    'Derivation', 'WithinTrial', 'Transition', 'Window',
+    'Derivation', 'WithinTrial', 'Transition', 'Window', 'ContinuousFactorWindow',
 
     'Constraint',
     'Exclude', 'Pin', 'MinimumTrials', 'ExactlyK',
@@ -38,7 +38,7 @@ from sweetpea._internal.block import Block
 from sweetpea._internal.cross_block import MultiCrossBlockRepeat, MultiCrossBlock, CrossBlock, Repeat, RepeatMode, AlignmentMode
 from sweetpea._internal.primitive import (
     Factor, SimpleFactor, DerivedFactor, ContinuousFactor, Level, SimpleLevel, DerivedLevel, ElseLevel,
-    Window, WithinTrial, Transition,
+    Window, WithinTrial, Transition, ContinuousFactorWindow,
     HiddenName
 )
 from sweetpea._internal.constraint import (
@@ -161,15 +161,21 @@ def print_experiments(block: Block, experiments: List[dict]):
     nested_assignment_strs = [list(map(lambda l: cast(str, f.name) + " " + str(l.name), f.levels))
                               for f in __filter_hidden(block.design)]
     column_widths = list(map(lambda l: max(list(map(len, l))), nested_assignment_strs))
-
     format_str = reduce(lambda a, b: a + '{{:<{}}} | '.format(b), column_widths, '')[:-3] + '\n'
-
     print('\n{} trial sequences found.\n'.format(len(experiments)))
     for idx, e in enumerate(experiments):
         print('Experiment {}:'.format(idx))
         strs = [list(map(lambda v: name + " " + str(v), values)) for (name, values) in e.items()]
         transposed = list(map(list, zip(*strs)))
+        format_str = _get_column_widths(transposed)
         print(reduce(lambda a, b: a + format_str.format(*b), transposed, ''))
+
+def _get_column_widths(data):
+    # Compute column widths from actual content
+    columns = list(zip(*data))
+    column_widths = [max(len(cell) for cell in col) for col in columns]
+    format_str = reduce(lambda a, b: a + '{{:<{}}} | '.format(b), column_widths, '')[:-3] + '\n'
+    return format_str
 
 
 def tabulate_experiments(block: Optional[Block] = None,
