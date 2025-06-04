@@ -951,7 +951,7 @@ class Transition(Window):
 @dataclass
 class ContinuousFactorWindow:
     # predicate: Callable
-    factors: List[Factor]
+    factors: List[ContinuousFactor]
     width: int
     #: The stride of this window.
     stride: int = 1

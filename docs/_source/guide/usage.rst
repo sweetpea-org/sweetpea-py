@@ -494,6 +494,48 @@ To put it together, we do:
     color red   | response_time 1.2529270082663353
     color green | response_time 1.4106548040758589
 
+.. _window-for-continuousfactor-example:
+
+Windows for ContinuousFactor
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Just like derivations on discrete levels can look at previous trials using windows,
+SweetPea also supports defining derived continuous factors using windows over past values.
+
+To do this, use the :class:`.ContinuousFactorWindow` along with a :class:`.CustomDistribution`
+that takes windowed input.
+
+Here’s a minimal example:
+
+.. doctest::
+
+    >>> from sweetpea import ContinuousFactor, ContinuousFactorWindow, CustomDistribution, Factor, \
+    >>> CrossBlock, synthesize_trials, MinimumTrials, print_experiments
+    >>> import random
+    >>> def sample_continuous():
+    >>>     return random.uniform(0, 1)
+    >>> reward = ContinuousFactor("reward", distribution=CustomDistribution(sample_continuous))
+    >>> def difference(window):
+    >>>     return window[0] - window[-1]
+    >>> window = ContinuousFactorWindow([reward], width=2)
+    >>> reward_diff = ContinuousFactor("reward_diff", distribution=CustomDistribution(difference, [window]))
+    >>> color = Factor("color", ["red", "blue"])
+    >>> block = CrossBlock([color, reward, reward_diff], [color], [MinimumTrials(6)])
+    >>> experiments = synthesize_trials(block, 1)
+    Sampling 1 trial sequences using NonUniformGen.
+    Encoding experiment constraints...
+    Running CryptoMiniSat...
+    >>> print_experiments(block, experiments)
+    1 trial sequences found.
+    <BLANKLINE>
+    Experiment 0:
+    color blue | reward 0.9148493567759514  | reward_diff nan                
+    color blue | reward 0.5751320373836653  | reward_diff -0.3397173193922861
+    color red  | reward 0.22538414657155603 | reward_diff -0.3497478908121092
+    color red  | reward 0.34749367375749685 | reward_diff 0.12210952718594081
+    color red  | reward 0.7889544775824884  | reward_diff 0.44146080382499153
+    color blue | reward 0.8445088438260279  | reward_diff 0.05555436624353949
+
 Constraints for Design with ContinuousFactors 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

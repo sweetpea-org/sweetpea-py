@@ -123,3 +123,41 @@ combination that is not matched by other levels.
               :type start: Optional[int]
               :type factors: List(Factor)
               :rtype: Derivation
+
+.. class:: sweetpea.ContinuousFactorWindow(factors, width, stride=1, start=None)
+
+              Provides access to the numeric values of one or more `factors`
+              across a sliding window of trials. It provides functionality analogous to 
+              :class:`.Window` for discrete-level derivations,
+              but applies to continuousfactors. It enables runtime sampling in a 
+              new :class:`.ContinuousFactor` by accessing 
+              historical values from the specified factors, allowing the distribution function 
+              to incorporate trends or context from previous trials.
+               
+              When constructing a new :class:`.ContinuousFactor`, the window can be used 
+              within a :class:`.CustomDistribution` to control how values are sampled at runtime 
+              based on past value of `factors`.
+              
+              An example for :class:`.ContinuousFactorWindow` is shown in 
+              :ref:`Windows for ContinuousFactor <window-for-continuousfactor-example>` section
+
+
+              :param factors: A list of :class:`.ContinuousFactor`\s whose numeric values are retrieved
+                                        over a sliding window across trials
+              :type factors: List(ContinuousFactor)
+              :param width: the number of trials of `continuousfactors` to
+                            consider when sampling a new :class:`.ContinuousFactor`.
+              :type width: int
+              :param stride: Step size between evaluated trials. Defaults to 1.
+              :type stride: int
+              :param start: The first trial (counting from 0) at which the sampling function
+                            for the derived :class:`.ContinuousFactor` will begin receiving full 
+                            windowed values. If set to `None` (the default), the window will begin 
+                            at the earliest trial index where all factors have defined values 
+                            for that trial and the preceding width - 1 trials.
+                            If a specific start is provided but insufficient prior data exists 
+                            (based on width and stride), then the distribution function must be 
+                            prepared to handle missing values (e.g., float('nan')) for earlier trials.            
+              :type start: Optional[int]
+
+              :rtype: ContinuousFactorWindow
