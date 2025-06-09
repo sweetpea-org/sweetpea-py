@@ -505,7 +505,10 @@ SweetPea also supports defining derived continuous factors using windows over pa
 To do this, use the :class:`.ContinuousFactorWindow` along with a :class:`.CustomDistribution`
 that takes windowed input.
 
-Here’s a minimal example:
+Here’s a minimal example that demonstrates how to define a derived :class:`.ContinuousFactor` using 
+a :class:`.ContinuousFactorWindow` over another :class:`.ContinuousFactor`. 
+Specifically, it creates a `reward_diff` factor that calculates the difference between 
+the current and previous reward values of `reward`:
 
 .. doctest::
 
