@@ -163,7 +163,7 @@ Factors and Levels
               is used to initialize the :class:`.ContinuousFactor`,
               the factor will generate values following the corresponding distribution 
               at runtime through :meth:`.ContinuousFactor.generate`. 
-              In this case the factor is always a *non-derived continuousfactor*. 
+              In this case the factor is always a *non-derived continuous factor*. 
 
               The user can also use :class:`.CustomDistribution`, in which case
               the user needs to provide a custom `func(Callable)` 
@@ -176,7 +176,7 @@ Factors and Levels
               depends on. The list of factors can be either :class:`.DiscreteFactor`
               or :class:`.ContinuousFactor` in the design. In such cases,
               the :class:`ContinuousFactor` initialized 
-              is considered a *derived continuousfactor* and it also suggests
+              is considered a *derived continuous factor* and it also suggests
               that `func` would require additional values in order to 
               generate values at runtime. 
               For example, when `dependents` constains  a :class:`.Factor` `Color`
@@ -192,13 +192,13 @@ Factors and Levels
 
               .. property:: name
 
-                The continuousfactor's name.
+                The continuous factor's name.
 
                 :type: str
 
               .. method:: generate(factor_values=[])
 
-                Generate values for the continuousfactor based on 
+                Generate values for the continuous factor based on 
                 the input distribution. 
 
                 :param factor_values: optional factor values when generating values 

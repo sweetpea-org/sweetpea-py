@@ -97,7 +97,7 @@ from multiple factors can interact across trial boundaries:
   two consecutive trials.
 - :ref:`General windows <guide_factorial_derivations_basic_windows>` are defined
   in terms of a trial and any number of preceding trials.
-- :ref:`ContinuousFactor windows <guide_factorial_derivations_continuousfactor_windows>` 
+- :ref:`ContinuousFactor windows <guide_factorial_derivations_continuous_factor_windows>` 
   offer similar functionality to general derivation windows, 
   but operate on values of :class:`.ContinuousFactor` across a trial 
   and any number of preceding trials, rather than on discrete levels.
@@ -140,17 +140,17 @@ depending on a combination of levels from other factors in the current trial and
 zero or more preceding trials.
 
 
-.. _guide_factorial_derivations_continuousfactor_windows:
+.. _guide_factorial_derivations_continuous_factor_windows:
 
 ContinuousFactor Windows
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-A :term:`continuousfactor window <derivation window, continuousfactor>`
+A :term:`continuous factor window <derivation window, continuous factor>`
 (:class:`sweetpea.ContinuousFactorWindow`) is special kind of general window 
 that operates on :class:`.ContinuousFactor` instead of discrete levels. 
 It allows access to values of one or more :class:`.ContinuousFactor` 
 across a number of previous trials defined by window `width`. 
-This is useful for defining new continuousfactors that depend on recent trends, 
+This is useful for defining new continuous factors that depend on recent trends, 
 changes, or history — for example, computing the difference between the current 
 and previous trial values of reward.
 
@@ -191,9 +191,9 @@ Glossary
       A :term:`derivation window` that depends on :term:`levels <level>` from
       other :term:`factors <factor>`, all within the same trial.
 
-    derivation window, continuousfactor
-      A :term:`continuousfactor window` that operates over continuous-valued
-      :term:`continuousfactors <continuousfactor>` rather than discrete levels. 
+    derivation window, continuous factor
+      A :term:`continuous factor window` that operates over continuous-valued
+      :term:`continuous factors <continuous factor>` rather than discrete levels. 
       It provides runtime access to a
       sliding window of numeric values across multiple trials.
 
@@ -226,7 +226,7 @@ Glossary
       An independent variable in a factorial experiment, composed of finitely
       many :term:`levels <level>`.
 
-    continuousfactor
+    continuous factor
       A factor whose values are sampled from a distribution function at runtime, 
       rather than chosen from a predefined list of discrete levels. 
 
@@ -278,5 +278,5 @@ Glossary
     within-trial derivation
       See :term:`derivation window, within-trial`.
 
-    continuousfactor window
-      See :term:`derivation window, continuousfactor`.
+    continuous factor window
+      See :term:`derivation window, continuous factor`.

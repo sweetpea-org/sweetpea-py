@@ -494,7 +494,7 @@ To put it together, we do:
     color red   | response_time 1.2529270082663353
     color green | response_time 1.4106548040758589
 
-.. _window-for-continuousfactor-example:
+.. _window-for-continuous-factor-example:
 
 Windows for ContinuousFactor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

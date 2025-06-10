@@ -129,7 +129,7 @@ combination that is not matched by other levels.
               Provides access to the numeric values of one or more `factors`
               across a sliding window of trials. It provides functionality analogous to 
               :class:`.Window` for discrete-level derivations,
-              but applies to continuousfactors. It enables runtime sampling in a 
+              but applies to continuous factors. It enables runtime sampling in a 
               new :class:`.ContinuousFactor` by accessing 
               historical values from the specified factors, allowing the distribution function 
               to incorporate trends or context from previous trials.
@@ -139,13 +139,13 @@ combination that is not matched by other levels.
               based on past value of `factors`.
               
               An example for :class:`.ContinuousFactorWindow` is shown in 
-              :ref:`Windows for ContinuousFactor <window-for-continuousfactor-example>` section
+              :ref:`Windows for ContinuousFactor <window-for-continuous-factor-example>` section
 
 
               :param factors: A list of :class:`.ContinuousFactor`\s whose numeric values are retrieved
                                         over a sliding window across trials
               :type factors: List(ContinuousFactor)
-              :param width: the number of trials of `continuousfactors` to
+              :param width: the number of trials of `continuous factors` to
                             consider when sampling a new :class:`.ContinuousFactor`.
               :type width: int
               :param stride: Step size between evaluated trials. Defaults to 1.
