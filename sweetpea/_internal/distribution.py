@@ -13,6 +13,10 @@ class Distribution(ABC):
     def get_init(self) ->List[Any]:
         return []
 
+    def reset(self) -> None:
+        """Optional reset hook."""
+        pass
+
 class UniformDistribution(Distribution):
     def __init__(self, low: float, high: float):
         self.low = low
@@ -47,7 +51,7 @@ class LogNormalDistribution(Distribution):
 class CustomDistribution(Distribution):
     """Allows users to provide a custom distribution with any parameters."""
     
-    def __init__(self, func: Callable[..., float], *args: Any):
+    def __init__(self, func: Callable[..., float], *args: Any, **kwargs: Any):
         """
         :param func: A callable function that generates a float sample.
         :param args: Positional arguments for the function.
@@ -59,18 +63,29 @@ class CustomDistribution(Distribution):
         
         self.func = func
         self.dependents = []
-        
+        self.sum = 0.
+        self.cumulative = False
+
         if len(args)>0:
             for k in args[0]:
                 self.dependents.append(k)
+        if 'cumulative' in kwargs:           
+            self.cumulative = kwargs['cumulative']
 
 
     def sample(self, factor_values: List[Any] = []) -> float:
         if factor_values and (not isinstance(factor_values, list)):
-            raise RuntimeError("factor_values {} does not contain a list of values ".format(factor_values))
+            raise RuntimeError(f"factor_values must be a list, got {type(factor_values)}")
         if len(factor_values)!= len(self.dependents):
-            raise RuntimeError("Size of values of factors {} is different from that of dependents {}".format(len(factor_values), len(self.dependents)))
-        return self.func(*factor_values)
+            raise RuntimeError(f"Mismatched input length: {len(factor_values)} values vs {len(self.dependents)} dependents")
+        if not self.cumulative:
+            return self.func(*factor_values)
+        else:
+            self.sum+= self.func(*factor_values)
+            return self.sum
 
     def get_init(self) ->List[Any]:
         return self.dependents
+
+    def reset(self):
+        self.sum = 0.

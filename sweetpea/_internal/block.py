@@ -14,7 +14,7 @@ import inspect
 from sweetpea._internal.backend import BackendRequest
 from sweetpea._internal.level import get_all_levels
 from sweetpea._internal.primitive import (
-    DerivedFactor, DerivedLevel, ElseLevel, Factor, SimpleLevel, Level, ContinuousFactor
+    DerivedFactor, DerivedLevel, ElseLevel, Factor, SimpleLevel, Level, ContinuousFactor, ContinuousFactorWindow
 )
 from sweetpea._internal.logic import to_cnf_tseitin
 from sweetpea._internal.base_constraint import Constraint
@@ -111,6 +111,9 @@ class Block:
         continuous_output = {}
         self.continuous_factor_samples[trial_num] = continuous_output
         for cFactor in self.continuous_factors:
+            dist = cFactor.get_distribution()
+            if hasattr(dist, "reset"):
+                dist.reset()
             # sample for current cfactor
             continuous_samples = []
             continuous_output[cFactor.name] = continuous_samples
@@ -118,8 +121,10 @@ class Block:
                 sample_input = []
                 # Get dependent factors for current factor
                 dependents = cFactor.get_levels()
-                for dependent in dependents:
-                    if isinstance(dependent, ContinuousFactor):
+                for j, dependent in enumerate(dependents):
+                    if isinstance(dependent, ContinuousFactorWindow):
+                        sample_input.append(dependent.get_window_val(i, continuous_output))
+                    elif isinstance(dependent, ContinuousFactor):
                         sample_input.append(continuous_output[dependent.name][i])
                     elif isinstance(dependent, (int, float)):
                         sample_input.append(dependent)
@@ -173,6 +178,25 @@ class Block:
                 included_factor_names.add(factor.name)
         return included_factor_names
 
+
+    def __get_window_range(self, n: int, width: int, stride: int, start: int) -> Union[tuple[int, int], None]:
+        """
+        Returns the start and end indices (inclusive) of the window at trial n,
+        or None if the window does not apply at trial n.
+        """
+        if n < start:
+            return None  # window hasn't started
+        if (n - start) % stride != 0:
+            return None  # skip this trial due to stride
+
+        end_index = n
+        start_index = n - (width - 1)
+
+        if start_index < 0:
+            return None  # not enough history
+
+        return start_index, end_index
+        
     # DW: Validation for continuous factor
     def __check_dependency(self):
         allfactors = set()
