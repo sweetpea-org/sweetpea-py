@@ -169,6 +169,7 @@ class Cross(Constraint):
             # crossing weight in each `crossing_size * crossing_weight` set of trials, or at most
             # that much in a last set of trials that is less than `crossing_size * crossing_weight`
             # in length.
+
             states = list(chunk(state_vars, len(trial_combinations)))
             transposed = cast(List[List[int]], list(map(list, zip(*states))))
             reqss = map(lambda l, w: Cross.__add_weight_constraint(l, w, crossing_size, crossing_weight),

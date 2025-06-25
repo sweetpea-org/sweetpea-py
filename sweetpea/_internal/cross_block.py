@@ -61,15 +61,26 @@ class MultiCrossBlockRepeat(Block):
                 constraints: List[Constraint],
                 require_complete_crossing: bool,
                 within_block_count: Optional[int],
-                mode: Union[str, RepeatMode] = RepeatMode.EQUAL,
+                mode: Union[str, RepeatMode, List[Union[str, RepeatMode]]] = RepeatMode.EQUAL,
                 alignment: Union[str, AlignmentMode] = AlignmentMode.EQUAL_PREAMBLE
                 ):
         if isinstance(mode, RepeatMode):
             self.mode = mode
-        elif mode not in self._valid_modes:
+        elif not isinstance(mode, list) and mode not in self._valid_modes:
             raise ValueError(f"Invalid mode '{mode}'. Must be RepeatMode OR one of {list(self._valid_modes.keys())}.")
-        else:
+        elif not isinstance(mode, list):
             self.mode = self._valid_modes[mode]
+        else:
+            if len(mode) != len(crossings):
+                raise ValueError(f"Number of modes '{len(mode)}' is different from number of crossings ' {len(crossings)}.")
+            self.mode = []
+            for m in mode: 
+                if isinstance(m, RepeatMode):
+                    self.mode.append(m)
+                elif m not in self._valid_modes:
+                    raise ValueError(f"Invalid mode '{m}'. Must be RepeatMode OR one of {list(self._valid_modes.keys())}.")
+                else:
+                    self.mode.append(self._valid_modes[m])
 
         if isinstance(alignment, AlignmentMode):
             self.alignment = alignment
@@ -110,8 +121,15 @@ class MultiCrossBlockRepeat(Block):
         elif self.mode == RepeatMode.REPEAT:
             # If repeat is decalred for multicrossing case
             self.within_block_count = min(self.crossing_sizes)
+        elif isinstance(self.mode, list):
+            self.within_block_count = []
+            for _i, m in enumerate(self.mode):
+                if m == RepeatMode.REPEAT:
+                    self.within_block_count.append(self.crossing_sizes[_i])
+                else:
+                    self.within_block_count.append(self.trials_per_sample())
+        # Use weight otherwise
         else:
-            # Use weight otherwise
             self.within_block_count = self.trials_per_sample()
         self.__validate(who)
 
@@ -296,6 +314,12 @@ class MultiCrossBlockRepeat(Block):
             crossing = self.crossings[0]
         return crossing
 
+    def __get_crossing_ind(self, crossing: Optional[List[Factor]]) -> int:
+        for _id, cc in enumerate(self.crossings):
+            if cc == crossing:
+                return _id
+        return -1
+
     def crossing_size(self, crossing: Optional[List[Factor]] = None):
         """The crossing argument must be one of the block's crossings."""
         crossing = self.__select_crossing(crossing)
@@ -323,11 +347,14 @@ class MultiCrossBlockRepeat(Block):
         total number of trials in the block.
 
         """
+        crossing_ind = self.__get_crossing_ind(crossing)
         crossing = self.__select_crossing(crossing)
         crossing_size = self.crossing_size(crossing)
         preamble_size = self.preamble_size(crossing)
-        return max(1, ((self.within_block_count - preamble_size) + (crossing_size - 1)) // crossing_size)
-
+        if not isinstance(self.within_block_count, list):
+            return max(1, ((self.within_block_count - preamble_size) + (crossing_size - 1)) // crossing_size)
+        else:
+            return max(1, ((self.within_block_count[crossing_ind] - preamble_size) + (crossing_size - 1)) // crossing_size)
     def draw_design_graph(self):
         dg = DesignGraph(self.design)
         dg.draw()
@@ -501,8 +528,23 @@ class CrossBlock(MultiCrossBlock):
         who = "CrossBlock"
         argcheck(who, design, make_islistof(Factor), "list of Factors for design")
         argcheck(who, crossing, make_islistof(Factor), "list of Factors for crossing")
+        # Not sure whether constraints can be used here. To Do.
         argcheck(who, constraints, make_islistof(Constraint), "list of Constraints for constraints")
         self._create(who, design, [crossing], constraints, require_complete_crossing, None)
+
+
+class MiniBlock(CrossBlock):
+    def __init__(self,
+                 design: List[Factor],
+                 crossing: List[Factor],
+                 constraints: List[Constraint],
+                 require_complete_crossing: bool = True):
+        who = "MiniBlock"
+        argcheck(who, design, make_islistof(Factor), "list of Factors for design")
+        argcheck(who, crossing, make_islistof(Factor), "list of Factors for crossing")
+        argcheck(who, constraints, make_islistof(Constraint), "list of Constraints for constraints")
+        self._create(who, design, [crossing], constraints, require_complete_crossing, None)
+
 
 class Repeat(MultiCrossBlockRepeat):
     def __init__(self,
