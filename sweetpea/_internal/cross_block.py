@@ -9,6 +9,7 @@ from typing import List, Union, Tuple, Optional, cast, Any, Dict, Set
 from math import ceil
 from networkx import has_path
 import copy
+from itertools import permutations
 
 from sweetpea._internal.block import Block
 from sweetpea._internal.backend import BackendRequest
@@ -65,11 +66,11 @@ class MultiCrossBlockRepeat(Block):
                 alignment: Union[str, AlignmentMode] = AlignmentMode.EQUAL_PREAMBLE
                 ):
         if isinstance(mode, RepeatMode):
-            self.mode = mode
+            self.mode = [mode]
         elif not isinstance(mode, list) and mode not in self._valid_modes:
             raise ValueError(f"Invalid mode '{mode}'. Must be RepeatMode OR one of {list(self._valid_modes.keys())}.")
         elif not isinstance(mode, list):
-            self.mode = self._valid_modes[mode]
+            self.mode = [self._valid_modes[mode]]
         else:
             if len(mode) != len(crossings):
                 raise ValueError(f"Number of modes '{len(mode)}' is different from number of crossings ' {len(crossings)}.")
@@ -114,20 +115,20 @@ class MultiCrossBlockRepeat(Block):
                 raise RuntimeError("cannot repeat a block with crossings that have different preamble lengths")
             self.within_block_count = within_block_count
             self.within_block_preamble = self.preamble_sizes[0]
-        elif (not all(x == self.crossing_sizes[0] for x in self.crossing_sizes)) and self.mode == RepeatMode.EQUAL:
+        elif (not all(x == self.crossing_sizes[0] for x in self.crossing_sizes)) and len(self.mode)== 1 and self.mode[0] == RepeatMode.EQUAL:
             # MultiCrossBlock with Different Crossing Sizes
             # mode needs to be either weight OR repeat when crossing sizes are different
             raise RuntimeError(f"Invalid mode '{mode}' when crossing sizes are different for MultiCrossBlock.")
-        elif self.mode == RepeatMode.REPEAT:
+        elif len(self.mode)== 1 and self.mode[0] == RepeatMode.REPEAT:
             # If repeat is decalred for multicrossing case
             self.within_block_count = min(self.crossing_sizes)
-        elif isinstance(self.mode, list):
-            self.within_block_count = []
+        elif len(self.mode)>1: 
+            self.within_block_counts = []
             for _i, m in enumerate(self.mode):
                 if m == RepeatMode.REPEAT:
-                    self.within_block_count.append(self.crossing_sizes[_i])
+                    self.within_block_counts.append(self.crossing_sizes[_i])
                 else:
-                    self.within_block_count.append(self.trials_per_sample())
+                    self.within_block_counts.append(self.trials_per_sample())
         # Use weight otherwise
         else:
             self.within_block_count = self.trials_per_sample()
@@ -351,10 +352,10 @@ class MultiCrossBlockRepeat(Block):
         crossing = self.__select_crossing(crossing)
         crossing_size = self.crossing_size(crossing)
         preamble_size = self.preamble_size(crossing)
-        if not isinstance(self.within_block_count, list):
+        if len(self.mode)==1:
             return max(1, ((self.within_block_count - preamble_size) + (crossing_size - 1)) // crossing_size)
         else:
-            return max(1, ((self.within_block_count[crossing_ind] - preamble_size) + (crossing_size - 1)) // crossing_size)
+            return max(1, ((self.within_block_counts[crossing_ind] - preamble_size) + (crossing_size - 1)) // crossing_size)
     def draw_design_graph(self):
         dg = DesignGraph(self.design)
         dg.draw()
@@ -533,18 +534,73 @@ class CrossBlock(MultiCrossBlock):
         self._create(who, design, [crossing], constraints, require_complete_crossing, None)
 
 
-class MiniBlock(CrossBlock):
+class NestedBlock(CrossBlock):
     def __init__(self,
-                 design: List[Factor],
-                 crossing: List[Factor],
-                 constraints: List[Constraint],
-                 require_complete_crossing: bool = True):
-        who = "MiniBlock"
-        argcheck(who, design, make_islistof(Factor), "list of Factors for design")
-        argcheck(who, crossing, make_islistof(Factor), "list of Factors for crossing")
-        argcheck(who, constraints, make_islistof(Constraint), "list of Constraints for constraints")
-        self._create(who, design, [crossing], constraints, require_complete_crossing, None)
+                 design: List[Union[Factor, CrossBlock]],
+                 #  crossing: List[Union[Factor, CrossBlock]],
+                 #  constraints: List[Constraint] = [],
+                 require_complete_crossing: bool = True
+                 ):
+        who = "NestedBlock"
+        # Use a custom predicate to allow both types
+        
+        _factors = []
+        _blocks = []
+        constraints_: List[Constraint] = []
 
+        for fcb in design:
+            if isinstance(fcb, Factor):
+                _factors.append(fcb)
+            elif isinstance(fcb, NestedBlock):
+                _blocks.append(fcb)
+                constraints_ = fcb.get_constraints()
+                block_crossings = fcb.crossings
+                mode_ = fcb.get_mode()
+            elif isinstance(fcb, CrossBlock):
+                _blocks.append(fcb)
+                block_crossings = fcb.crossings
+                mode_ = [RepeatMode.REPEAT]
+            else:
+                raise ValueError("Types not allowed for design in NestedBlock")
+
+        if len(_blocks) != 1:
+            raise ValueError("Only one block can be used in a design")
+
+        _block = _blocks[0]
+        argcheck(who, _factors, make_islistof(Factor), "list of Factors for design")
+
+        from sweetpea._internal.constraint import MinimumTrials, AtLeastKInARow, ExactlyKInARow, ExactlyKMultipleInARow
+        block_size = _block.trials_per_sample()
+        trialNum = block_size
+        
+        _design = []        
+        for _id, f in enumerate(_factors):
+            constraints_.append(ExactlyKMultipleInARow(block_size, f))
+            trialNum = trialNum * len(f.levels)
+            _design.append(f)
+
+        self._constraints = [cc for cc in constraints_]
+
+        constraints_.append(MinimumTrials(trialNum))
+        alignment = AlignmentMode.EQUAL_PREAMBLE
+        _crossings = [_factors]
+        for _c in block_crossings:
+            _crossings.append(_c)
+
+        crossing_factors_ = [item for sublist in block_crossings for item in sublist]
+        for f in  crossing_factors_:
+            _design.append(f)
+
+        mode = [RepeatMode.WEIGHT]
+        for m in mode_:
+            mode.append(m)
+        self._mode = mode
+        self._create(who, _design, _crossings, constraints_, require_complete_crossing, None, mode, alignment)
+
+    def get_constraints(self):
+        return self._constraints
+    def get_mode(self):
+        return self._mode
 
 class Repeat(MultiCrossBlockRepeat):
     def __init__(self,
@@ -639,3 +695,53 @@ def _desugar_constraints(constraints: List[Constraint], replacements: dict) -> L
     for c in constraints:
         desugared_constraints.extend(c.desugar(replacements))
     return desugared_constraints
+
+
+
+
+class PermutedCrossBlock(MultiCrossBlockRepeat):
+    def __init__(self,
+                 block: Union['CrossBlock', 'NestedBlock'],
+                 external_factor: Factor):
+        # Basic validation
+        if not isinstance(block, MultiCrossBlockRepeat):
+            raise ValueError("block must be a CrossBlock or NestedBlock.")
+        if not isinstance(external_factor, Factor):
+            raise ValueError("external_factor must be a Factor.")
+
+        block_size = block.trials_per_sample()
+        num_levels = len(external_factor.levels)
+        all_perms = list(permutations(range(block_size)))
+
+        if num_levels > len(all_perms):
+            raise ValueError(f"External factor '{external_factor.name}' has {num_levels} levels, "
+                             f"but only {len(all_perms)} unique block permutations available.")
+
+        # Use only as many permutations as there are levels in the external factor
+        selected_perms = all_perms[:num_levels]
+
+        # Save for post-processing or synthesis mapping
+        self.permutation_map = {
+            level.name: selected_perms[i]
+            for i, level in enumerate(external_factor.levels)
+        }
+        from sweetpea._internal.constraint import MinimumTrials, AtLeastKInARow, ExactlyKInARow, ExactlyKMultipleInARow
+
+        # Combine design and constraints
+        full_design = list(block.act_design) + [external_factor]
+        full_crossings = block.crossings + [[external_factor]]
+        constraints: List[Constraint] = list(block.orig_constraints)
+        constraints.append(ExactlyKMultipleInARow(block_size, external_factor))
+        constraints.append(MinimumTrials(block_size * num_levels))
+
+        # Store perm info
+        self.block = block
+        self.external_factor = external_factor
+
+        super().__init__(design=full_design,
+                         crossings=full_crossings,
+                         constraints=constraints,
+                         require_complete_crossing=True)
+
+    def get_trial_permutation_for_level(self, level_name: str):
+        return self.permutation_map[level_name]

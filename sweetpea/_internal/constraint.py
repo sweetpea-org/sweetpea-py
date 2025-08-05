@@ -604,7 +604,6 @@ class ExactlyKInARow(_KInARow):
                 else:
                     q = And(l[1:]) if len(l[1:]) > 1 else l[self.k - 1]
                 implications.append(If(p, q))
-
             # Handle the tail
             if len(sublists[-1]) > 1:
                 tail = sublists[-1]
@@ -627,6 +626,65 @@ class ExactlyKInARow(_KInARow):
 
     def _potential_counts_conform(self, counts: List[int]) -> bool:
         return self._potential_counts_conform_individually(counts, op.eq)
+
+
+class ExactlyKMultipleInARow(_KInARow):
+    def apply_to_backend_request(
+        self,
+        block: Block,
+        level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]],
+        backend_request: BackendRequest
+    ) -> None:
+        k = self.k
+        max_len = block.trials_per_sample()
+        implications = []
+        var_lists = block.build_variable_lists(level, self.within_block)
+        all_trial_vars = var_lists[0]  # assume non-blocked design for now
+
+        selector_runs = []  # (selector_var, covered_indices)
+
+        # 1. Build selector variables for all valid run lengths
+        for run_len in range(k, max_len + 1, k):
+            for start in range(0, max_len - run_len + 1):
+                run_indices = list(range(start, start + run_len))
+                sel_var = backend_request.fresh
+                backend_request.fresh += 1
+                selector_runs.append((sel_var, run_indices))
+
+                # If selector is ON => all trials in run are ON
+                implications.append(
+                    If(sel_var, And([all_trial_vars[i] for i in run_indices]))
+                )
+
+                # Also: If selector is ON => next trial (if exists) is OFF
+                after = start + run_len
+                if after < max_len:
+                    implications.append(If(sel_var, Not(all_trial_vars[after])))
+
+        # 2. Ensure every active trial is covered by some selector
+        for i in range(max_len):
+            covering_selectors = [
+                sel for (sel, indices) in selector_runs if i in indices
+            ]
+            if covering_selectors:
+                implications.append(
+                    If(all_trial_vars[i], Or(covering_selectors))
+                )
+
+        # 3. Prevent overlapping selectors
+        for i, (sel_a, idxs_a) in enumerate(selector_runs):
+            for j in range(i + 1, len(selector_runs)):
+                sel_b, idxs_b = selector_runs[j]
+                if set(idxs_a).intersection(idxs_b):
+                    implications.append(Or([Not(sel_a), Not(sel_b)]))
+
+        # Encode all implications to CNF
+        cnf, backend_request.fresh = block.cnf_fn(And(implications), backend_request.fresh)
+        backend_request.cnfs.append(cnf)
+
+    def _potential_counts_conform(self, counts: List[int]) -> bool:
+        return all(c % self.k == 0 for c in counts)
+
 
 def filter_level(who, level, factor_ok: bool = False):
     if factor_ok and isinstance(level, Factor):
@@ -897,3 +955,36 @@ class ContinuousConstraint(Constraint):
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
         """Do nothing."""
+
+
+class PermutedBlockCrossConstraint(Constraint):
+    def __init__(self, factor: Factor, permutations: List[Tuple[int]], block: Block):
+        self.factor = factor
+        self.permutations = permutations
+        self.block = block
+
+    def validate(self, block: Block) -> None:
+        pass  # Optionally check design structure
+
+    def apply(self, block: Block, backend_request: BackendRequest) -> None:
+        from sweetpea._internal.logic import Iff, And, Not, Or
+
+        implications = []
+        num_trials_per_block = self.block.trials_per_sample()
+
+        for level_idx, perm in enumerate(self.permutations):
+            level = self.factor.levels[level_idx]
+            for trial_offset, permuted_idx in enumerate(perm):
+                for factor in self.block.design:
+                    for level_candidate in factor.levels:
+                        original_var = self.block.get_variable(permuted_idx + 1, (factor, level_candidate))
+                        trial_var = block.get_variable((level_idx * num_trials_per_block) + trial_offset + 1,
+                                                       (factor, level_candidate))
+                        # Force equality if external factor is active
+                        implications.append(Iff(trial_var, And([original_var, block.get_variable((level_idx * num_trials_per_block) + trial_offset + 1, (self.factor, level))])))
+
+        backend_request.cnfs.append(block.cnf_fn(And(implications), backend_request.fresh)[0])
+
+    def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
+        # Optional check
+        return True
