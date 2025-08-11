@@ -8,7 +8,7 @@ __all__ = [
     'print_experiments', 'tabulate_experiments',
     'save_experiments_csv', 'experiments_to_tuples', 'experiments_to_dicts',
 
-    'Block', 'CrossBlock', 'MultiCrossBlock', 'Repeat', 'RepeatMode', 'AlignmentMode', 'NestedBlock', 'PermutedCrossBlock',
+    'Block', 'CrossBlock', 'MultiCrossBlock', 'Repeat', 'RepeatMode', 'AlignmentMode', 'NestedBlock',
 
     'Factor', 'Level', 'DerivedLevel', 'ElseLevel', 'ContinuousFactor',
 
@@ -17,7 +17,7 @@ __all__ = [
     'Constraint',
     'Exclude', 'Pin', 'MinimumTrials', 'ExactlyK',
     'AtMostKInARow', 'AtLeastKInARow',
-    'ExactlyKInARow', 'ContinuousConstraint', 'ExactlyKMultipleInARow', 'PermutedBlockCrossConstraint',
+    'ExactlyKInARow', 'ContinuousConstraint', 'ExactlyKMultipleInARow', 'OrderRunsByPermutation', 'ConstantInWindows',
 
     'Gen', 'RandomGen', 'IterateSATGen',
     'CMSGen', 'UniGen', 'IterateILPGen',
@@ -25,9 +25,7 @@ __all__ = [
     'SMGen',
 
     'UniformDistribution', 'GaussianDistribution', 
-    'ExponentialDistribution', 'LogNormalDistribution', 'CustomDistribution',
-
-    'apply_trial_permutations_if_needed'
+    'ExponentialDistribution', 'LogNormalDistribution', 'CustomDistribution'
 ]
 
 from functools import reduce
@@ -37,7 +35,7 @@ import csv, os
 import time
 
 from sweetpea._internal.block import Block
-from sweetpea._internal.cross_block import MultiCrossBlockRepeat, MultiCrossBlock, CrossBlock, Repeat, RepeatMode, AlignmentMode, NestedBlock, PermutedCrossBlock
+from sweetpea._internal.cross_block import MultiCrossBlockRepeat, MultiCrossBlock, CrossBlock, Repeat, RepeatMode, AlignmentMode, NestedBlock
 from sweetpea._internal.primitive import (
     Factor, SimpleFactor, DerivedFactor, ContinuousFactor, Level, SimpleLevel, DerivedLevel, ElseLevel,
     Window, WithinTrial, Transition, ContinuousFactorWindow,
@@ -47,7 +45,7 @@ from sweetpea._internal.constraint import (
     Consistency, Constraint, Derivation,
     Exclude, Pin, MinimumTrials,
     ExactlyK, AtMostKInARow, AtLeastKInARow, ExactlyKInARow,
-    ContinuousConstraint, ExactlyKMultipleInARow, PermutedBlockCrossConstraint
+    ContinuousConstraint, ExactlyKMultipleInARow, OrderRunsByPermutation, ConstantInWindows
 )
 from sweetpea._internal.sampling_strategy.base import Gen
 from sweetpea._internal.sampling_strategy.uniform import UniformGen
@@ -378,8 +376,6 @@ def synthesize_trials(block: Block,
     trialss = list(map(lambda e: __filter_hidden_keys(block.add_implied_levels(e)),
                        sampling_result.samples))
 
-    trialss = apply_trial_permutations_if_needed(block, trialss)
-
     if os.getenv("SWEETPEA_CHECK_SYNTHESIZED"):
         for trials in trialss:
             mismatches = sample_mismatch_experiment(block, trials)
@@ -517,36 +513,6 @@ def save_cnf(block: Block, filename: str):
     cnf_str = __generate_cnf(block)
     with open(filename, 'w') as f:
         f.write(cnf_str)
-
-# May be needed for crossing NestedBlock
-def apply_trial_permutations_if_needed(block: Block, trialss: List[dict]) -> List[dict]:
-    if not hasattr(block, "get_trial_permutation_for_level"):
-        return trialss
-
-    external_factor = block.external_factor  # stored in PermutedCrossBlock
-    block_size = block.block.trials_per_sample()  # original inner block
-    new_trialss = []
-
-    for trial_set in trialss:
-        new_set = {k: [] for k in trial_set}
-        total_trials = len(trial_set[external_factor.name])
-        block_size = block.block.trials_per_sample()
-
-        for i in range(0, total_trials - block_size + 1, block_size):
-            level = trial_set[external_factor.name][i]
-            perm = block.get_trial_permutation_for_level(level)
-
-            for factor_name in trial_set:
-                chunk = trial_set[factor_name][i:i + block_size]
-                if len(chunk) != block_size:
-                    raise ValueError(f"Expected chunk of size {block_size}, got {len(chunk)} at index {i}")
-                reordered = [chunk[j] for j in perm]
-                new_set[factor_name].extend(reordered)
-
-        new_trialss.append(new_set)
-
-
-    return new_trialss
 
 
 # ~~~~~~~~~~ Helper functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

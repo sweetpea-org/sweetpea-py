@@ -5,7 +5,7 @@ a factorial experimental design.
 from abc import abstractmethod
 from functools import reduce
 from itertools import accumulate, combinations, product, repeat, chain
-from typing import List, Union, Tuple, Optional, cast, Any, Dict, Set
+from typing import List, Union, Tuple, Optional, cast, Any, Dict, Set, Sequence
 from math import ceil
 from networkx import has_path
 import copy
@@ -534,73 +534,175 @@ class CrossBlock(MultiCrossBlock):
         self._create(who, design, [crossing], constraints, require_complete_crossing, None)
 
 
-class NestedBlock(CrossBlock):
+class NestedBlock(MultiCrossBlockRepeat):
     def __init__(self,
-                 design: List[Union[Factor, CrossBlock]],
-                 #  crossing: List[Union[Factor, CrossBlock]],
-                 #  constraints: List[Constraint] = [],
-                 require_complete_crossing: bool = True
-                 ):
-        who = "NestedBlock"
-        # Use a custom predicate to allow both types
+                 design: List[Union[Factor, MultiCrossBlockRepeat]],
+                 crossing: List[Union[Factor, MultiCrossBlockRepeat]],
+                 constraints: Optional[List[Constraint]] = None,
+                 num_permutations: Optional[int] = None,
+                 permutation_factor_name: str = "order"):
+        from itertools import permutations as _perms
+        from sweetpea._internal.constraint import (
+            MinimumTrials, ExactlyK, ConstantInWindows, OrderRunsByPermutation
+        )
+
+        if constraints is None:
+            constraints = []
+
+        # ---- find inner block and externals at this level
+        inner_blocks = [x for x in design if isinstance(x, MultiCrossBlockRepeat)]
+        if len(inner_blocks) != 1:
+            raise ValueError("NestedBlock expects exactly one inner block in `design`.")
+        inner_block = inner_blocks[0]
+
+        externals: List[Factor] = [x for x in design if isinstance(x, Factor)]
+        # externals explicitly requested to be *jointly crossed* at this level
+        ext_in_crossing: List[Factor] = [x for x in crossing if isinstance(x, Factor)]
+
+        # If user lists the inner block in `crossing`, we’re in permuted mode
+        permuted_mode = any(x is inner_block for x in crossing)
+
+        # ---- gather inner factors and inner crossings for inheritance
+        inner_factors: List[Factor] = [f for f in inner_block.design if isinstance(f, Factor)]
+        inner_crossings: List[List[Factor]] = [list(c) for c in inner_block.crossings]
+
+        # Build full design (dedup by identity, keep order: externals first)
+        seen = set()
+        full_design: List[Factor] = []
+        for f in externals + inner_factors:
+            if id(f) not in seen:
+                seen.add(id(f))
+                full_design.append(f)
+
+        # ---- window geometry
+        inner_total = inner_block.trials_per_sample()
+
+        # ---- constraints
+        cs: List[Constraint] = []
+
+        if not permuted_mode:
+            # ===================== NESTED MODE =====================
+            # Treat the entire inner block as a single atomic window
+            run_len = inner_total
+
+            # Crossings: inherit ALL inner crossings
+            parent_crossings: List[List[Factor]] = [list(c) for c in inner_crossings]
+
+            # If the user asked for a joint external cross (e.g., [color, task]),
+            # append that crossing so externals are counterbalanced together across windows.
+            if ext_in_crossing:
+                parent_crossings.append(ext_in_crossing)
+
+            
+            # inherit inner constraints so the inner structure holds inside each window
+            cs.extend(inner_block.orig_constraints)
+
+            print('original constraint:', inner_block.orig_constraints )
+            # keep all externals constant per window
+            for f in externals:
+                cs.append(ConstantInWindows(f, run_len))
+            # ensure total length = (#external combinations) * run_len
+            total_windows = 1
+            for f in externals:
+                total_windows *= len(f.levels)
+            cs.append(MinimumTrials(total_windows * run_len))
+
+            print(parent_crossings, len(parent_crossings))
+            # When multiple crossings exist (sizes may differ), use WEIGHT mode on all.
+            mode = cast(List[Union[str, RepeatMode]], [RepeatMode.WEIGHT] * len(parent_crossings))
+            mode[0] = RepeatMode.REPEAT
+            self._create(
+                who="NestedBlock(nested)",
+                design=full_design,
+                crossings=parent_crossings,
+                constraints=constraints + cs,
+                require_complete_crossing=True,
+                within_block_count=None,
+                mode=mode,
+                alignment=AlignmentMode.EQUAL_PREAMBLE
+            )
+            return
+
+        # ===================== PERMUTED MODE =====================
+        # For permutations we must know the single inner crossing to permute.
+        if len(inner_crossings) != 1:
+            raise ValueError("Inner block must have a single crossing for permuted NestedBlock.")
+        inner_cross = inner_crossings[0]
+
+        cross_size = inner_block.crossing_size(inner_cross)
+        preamble  = inner_block.preamble_size(inner_cross)
+        base_run  = preamble + cross_size
+        if cross_size <= 0:
+            raise ValueError("Inner crossing has zero size after excludes.")
+        run_len = base_run
+
+        # permutation factor
+        all_perms = list(_perms(range(cross_size)))
+        maxK      = len(all_perms)
+        K         = maxK if (num_permutations is None) else num_permutations
+        if not (1 <= K <= maxK):
+            raise ValueError(f"num_permutations must be in [1, {maxK}].")
+        perms = [tuple(p) for p in all_perms[:K]]
+
+        perm_levels = [SimpleLevel(f"perm_{i}") for i in range(K)]
+        perm_factor = Factor(HiddenName(permutation_factor_name), perm_levels)
+        level2perm: Dict[Level, Tuple[int, ...]] = {lvl: perms[i] for i, lvl in enumerate(perm_levels)}
+
+        # design includes hidden perm factor
+        full_design = [*externals, perm_factor, *[f for f in full_design if f not in externals]]
+
+        # Crossings: always the inner crossing; optionally add external joint crossing
+        parent_crossings = [list(inner_cross)]
+        if ext_in_crossing:
+            parent_crossings.append(ext_in_crossing)
+            
+        # inherit inner constraints (deriveds/excludes/etc.)
+        cs.extend(inner_block.orig_constraints)
+
+        # constancy per (base) window
+        cs.append(ConstantInWindows(perm_factor, run_len))
+        for f in externals:
+            cs.append(ConstantInWindows(f, run_len))
+
+        # pin each window to the chosen permutation of the inner-crossing combos
+        cs.append(OrderRunsByPermutation(perm_factor, inner_block, level2perm))
+
+        # total windows
+        total_windows = K
+        for f in externals:
+            total_windows *= len(f.levels)
+        cs.append(MinimumTrials(total_windows * run_len))
+
+        # equal number of windows per permutation level
+        per_perm_windows = total_windows // K
+        for perm_lvl in perm_levels:
+            cs.append(ExactlyK(per_perm_windows * run_len, (perm_factor, perm_lvl)))
         
-        _factors = []
-        _blocks = []
-        constraints_: List[Constraint] = []
+        # If we didn’t add a joint external crossing, balance marginals by count.
+        if not ext_in_crossing:
+            for f in externals:
+                per_level_windows = total_windows // len(f.levels)
+                for ext_lvl in cast(Sequence[Level], f.levels):
+                    cs.append(ExactlyK(per_level_windows * run_len, (f, ext_lvl)))
+                    
+        mode = [RepeatMode.WEIGHT] * len(parent_crossings)
 
-        for fcb in design:
-            if isinstance(fcb, Factor):
-                _factors.append(fcb)
-            elif isinstance(fcb, NestedBlock):
-                _blocks.append(fcb)
-                constraints_ = fcb.get_constraints()
-                block_crossings = fcb.crossings
-                mode_ = fcb.get_mode()
-            elif isinstance(fcb, CrossBlock):
-                _blocks.append(fcb)
-                block_crossings = fcb.crossings
-                mode_ = [RepeatMode.REPEAT]
-            else:
-                raise ValueError("Types not allowed for design in NestedBlock")
+        # expose for pretty-print reordering hook
+        self.block = inner_block
+        self.perm_factor = perm_factor
+        self.get_trial_permutation_for_level = lambda lvl: level2perm[lvl]
 
-        if len(_blocks) != 1:
-            raise ValueError("Only one block can be used in a design")
+        self._create(
+            who="NestedBlock(permuted)",
+            design=full_design,
+            crossings=parent_crossings,
+            constraints=constraints + cs,
+            require_complete_crossing=True,
+            within_block_count=None,
+            mode=mode,
+            alignment=AlignmentMode.EQUAL_PREAMBLE
+        )
 
-        _block = _blocks[0]
-        argcheck(who, _factors, make_islistof(Factor), "list of Factors for design")
-
-        from sweetpea._internal.constraint import MinimumTrials, AtLeastKInARow, ExactlyKInARow, ExactlyKMultipleInARow
-        block_size = _block.trials_per_sample()
-        trialNum = block_size
-        
-        _design = []        
-        for _id, f in enumerate(_factors):
-            constraints_.append(ExactlyKMultipleInARow(block_size, f))
-            trialNum = trialNum * len(f.levels)
-            _design.append(f)
-
-        self._constraints = [cc for cc in constraints_]
-
-        constraints_.append(MinimumTrials(trialNum))
-        alignment = AlignmentMode.EQUAL_PREAMBLE
-        _crossings = [_factors]
-        for _c in block_crossings:
-            _crossings.append(_c)
-
-        crossing_factors_ = [item for sublist in block_crossings for item in sublist]
-        for f in  crossing_factors_:
-            _design.append(f)
-
-        mode = [RepeatMode.WEIGHT]
-        for m in mode_:
-            mode.append(m)
-        self._mode = mode
-        self._create(who, _design, _crossings, constraints_, require_complete_crossing, None, mode, alignment)
-
-    def get_constraints(self):
-        return self._constraints
-    def get_mode(self):
-        return self._mode
 
 class Repeat(MultiCrossBlockRepeat):
     def __init__(self,
@@ -695,53 +797,3 @@ def _desugar_constraints(constraints: List[Constraint], replacements: dict) -> L
     for c in constraints:
         desugared_constraints.extend(c.desugar(replacements))
     return desugared_constraints
-
-
-
-
-class PermutedCrossBlock(MultiCrossBlockRepeat):
-    def __init__(self,
-                 block: Union['CrossBlock', 'NestedBlock'],
-                 external_factor: Factor):
-        # Basic validation
-        if not isinstance(block, MultiCrossBlockRepeat):
-            raise ValueError("block must be a CrossBlock or NestedBlock.")
-        if not isinstance(external_factor, Factor):
-            raise ValueError("external_factor must be a Factor.")
-
-        block_size = block.trials_per_sample()
-        num_levels = len(external_factor.levels)
-        all_perms = list(permutations(range(block_size)))
-
-        if num_levels > len(all_perms):
-            raise ValueError(f"External factor '{external_factor.name}' has {num_levels} levels, "
-                             f"but only {len(all_perms)} unique block permutations available.")
-
-        # Use only as many permutations as there are levels in the external factor
-        selected_perms = all_perms[:num_levels]
-
-        # Save for post-processing or synthesis mapping
-        self.permutation_map = {
-            level.name: selected_perms[i]
-            for i, level in enumerate(external_factor.levels)
-        }
-        from sweetpea._internal.constraint import MinimumTrials, AtLeastKInARow, ExactlyKInARow, ExactlyKMultipleInARow
-
-        # Combine design and constraints
-        full_design = list(block.act_design) + [external_factor]
-        full_crossings = block.crossings + [[external_factor]]
-        constraints: List[Constraint] = list(block.orig_constraints)
-        constraints.append(ExactlyKMultipleInARow(block_size, external_factor))
-        constraints.append(MinimumTrials(block_size * num_levels))
-
-        # Store perm info
-        self.block = block
-        self.external_factor = external_factor
-
-        super().__init__(design=full_design,
-                         crossings=full_crossings,
-                         constraints=constraints,
-                         require_complete_crossing=True)
-
-    def get_trial_permutation_for_level(self, level_name: str):
-        return self.permutation_map[level_name]
