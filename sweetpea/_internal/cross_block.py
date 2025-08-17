@@ -559,12 +559,34 @@ class NestedBlock(MultiCrossBlockRepeat):
         # externals explicitly requested to be *jointly crossed* at this level
         ext_in_crossing: List[Factor] = [x for x in crossing if isinstance(x, Factor)]
 
+        # DW: This updates require that every Factor in `design` is provided in `crossing`
+        missing = [f for f in externals if f not in ext_in_crossing]
+        if missing:
+            names = ", ".join(str(getattr(f, "name", f)) for f in missing)
+            raise ValueError(
+                "NestedBlock: all Factors in `design` must also be included in `crossing`. "
+                f"Missing: {names}. (Blocks in `design` need not be listed.)"
+            )
         # If user lists the inner block in `crossing`, we’re in permuted mode
         permuted_mode = any(x is inner_block for x in crossing)
 
         # ---- gather inner factors and inner crossings for inheritance
         inner_factors: List[Factor] = [f for f in inner_block.design if isinstance(f, Factor)]
         inner_crossings: List[List[Factor]] = [list(c) for c in inner_block.crossings]
+
+        # Helper: decide alignment from the preambles of the *outer* crossings we’ll pass to _create.
+        def _choose_alignment_for(parent_crossings: List[List[Factor]]) -> AlignmentMode:
+            # Preamble for an inner crossing = inner_block.preamble_size(c)
+            # Preamble for a crossing of *external* factors = 0
+            preambles = []
+            for c in parent_crossings:
+                if any(c == ic for ic in inner_block.crossings):
+                    preambles.append(inner_block.preamble_size(c))
+                else:
+                    preambles.append(0)
+            return (AlignmentMode.EQUAL_PREAMBLE
+                    if all(p == preambles[0] for p in preambles)
+                    else AlignmentMode.POST_PREAMBLE)
 
         # Build full design (dedup by identity, keep order: externals first)
         seen = set()
@@ -611,6 +633,8 @@ class NestedBlock(MultiCrossBlockRepeat):
             # When multiple crossings exist (sizes may differ), use WEIGHT mode on all.
             mode = cast(List[Union[str, RepeatMode]], [RepeatMode.WEIGHT] * len(parent_crossings))
             mode[0] = RepeatMode.REPEAT
+            alignment_choice = _choose_alignment_for(parent_crossings)
+
             self._create(
                 who="NestedBlock(nested)",
                 design=full_design,
@@ -619,7 +643,7 @@ class NestedBlock(MultiCrossBlockRepeat):
                 require_complete_crossing=True,
                 within_block_count=None,
                 mode=mode,
-                alignment=AlignmentMode.EQUAL_PREAMBLE
+                alignment=alignment_choice
             )
             return
 
@@ -692,6 +716,8 @@ class NestedBlock(MultiCrossBlockRepeat):
         self.perm_factor = perm_factor
         self.get_trial_permutation_for_level = lambda lvl: level2perm[lvl]
 
+        alignment_choice = _choose_alignment_for(parent_crossings)
+
         self._create(
             who="NestedBlock(permuted)",
             design=full_design,
@@ -700,7 +726,7 @@ class NestedBlock(MultiCrossBlockRepeat):
             require_complete_crossing=True,
             within_block_count=None,
             mode=mode,
-            alignment=AlignmentMode.EQUAL_PREAMBLE
+            alignment=alignment_choice
         )
 
 
