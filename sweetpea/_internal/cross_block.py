@@ -619,7 +619,6 @@ class NestedBlock(MultiCrossBlockRepeat):
             # inherit inner constraints so the inner structure holds inside each window
             cs.extend(inner_block.orig_constraints)
 
-            print('original constraint:', inner_block.orig_constraints )
             # keep all externals constant per window
             for f in externals:
                 cs.append(ConstantInWindows(f, run_len))
@@ -629,7 +628,6 @@ class NestedBlock(MultiCrossBlockRepeat):
                 total_windows *= len(f.levels)
             cs.append(MinimumTrials(total_windows * run_len))
 
-            print(parent_crossings, len(parent_crossings))
             # When multiple crossings exist (sizes may differ), use WEIGHT mode on all.
             mode = cast(List[Union[str, RepeatMode]], [RepeatMode.WEIGHT] * len(parent_crossings))
             mode[0] = RepeatMode.REPEAT

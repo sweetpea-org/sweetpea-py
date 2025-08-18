@@ -220,6 +220,74 @@ using :func:`.synthesize_trials`. Print generated trials using
    :return: a block description
    :rtype: Block
 
+
+.. class:: sweetpea.NestedBlock(design, crossing, constraints=None, num_permutations=None, permutation_factor_name="order")
+
+   Creates an experiment description that repeats an `inner block` 
+   as consecutive windows while holding selected `external factors` 
+   constant within each window.
+
+   The :class:`.NestedBlock` class combines exactly one `inner block` (a
+   :class:`.CrossBlock`) with one or more external factors. 
+   When a sequence of trials is generated, each window consists of a
+   complete run of the `inner block`; 
+   `external factors` in the design remain constant
+   throughout that window and may change only between windows.
+
+   The `design` argument lists the `inner block` and the `external factors` 
+   used to form windows. The `crossing` argument must list all `external factors`
+   from design, and it may optionally include the `inner block` itself:
+
+   If `crossing` lists only the `external factors`, each window reuses 
+   the `inner block` exactly as defined, and windows are balanced 
+   across the `external factor` combinations.
+
+   If `crossing` also lists the `inner block`, the order of the `inner block`’s
+   trial combinations is allowed to vary between windows. In that case,
+   `num_permutations` can be used to limit how many distinct permutations
+   appear; a hidden ordering factor is added automatically 
+   using permutation_factor_name.
+
+   Constraints and derivations defined on the `inner block` are reused 
+   inside every window. Constraints supplied in constraints apply at 
+   the outer level (across windows). 
+   The number of trials in each generated sequence is determined by 
+   the size of one `inner block` run (including any preamble that the inner block
+   requires due to derived factors) multiplied by the number of windows, 
+   which is the product of the counterbalancing `external factors`. 
+
+   If the `inner block` is included in crossing, the number of trials is 
+   multiplied by `num_permutations` or the full number of distinct 
+   permutations when `num_permutations` is not specified.
+
+   `Design` must contain exactly one inner block and one or more `external factors`.
+
+   Every `external factor` listed in `design` must also be listed in 
+   the `crossing`. The `inner block` itself does not have to be included 
+   in `crossing`, unless you want different permutations between windows.
+   An example illustrating the the usage of :class:`.NestedBlock` is shown in  
+   :ref:`Using NestedBlockk <nestedblock-example>` section.
+
+   :param design: one `inner block` plus the `external factors` 
+   :type design: List[Union[Factor, MultiCrossBlock]]
+   :param crossing: all `external factors` from `design`; 
+                    optionally include the `inner block` 
+                    to allow different `inner block` orders per window
+   :type crossing: List[Union[Factor, MultiCrossBlock]]
+   :param constraints: outer-level constraints; 
+                       `inner block` constraints are inherited automatically
+   :type constraints: List[Constraint]
+   :param num_permutations: when the inner block is included in crossing, 
+                            `num_permutations` decides the number of distinct 
+                            `inner block` orders across windows. When it is not 
+                            specified, the full permutation will be used.
+   :type num_permutations: Optional[int]
+   :param permutation_factor_name: base name for the hidden ordering factor 
+                                   when `inner block` order varies.  
+   :type permutation_factor_name: str
+   :return: a block description
+   :rtype: Block
+
 .. function:: sweetpea.synthesize_trials(block, samples=10, sampling_strategy=IterateGen)
 
    Given an experiment description, generates multiple blocks of trials.

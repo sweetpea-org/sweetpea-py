@@ -749,3 +749,146 @@ In that case, we can add :class:`.ContinuousConstraint` to achieve that.
     color blue  | response_time 0.5357413769177958
     color red   | response_time 0.9859899610573284
     color green | response_time 0.5929666932777036
+
+
+
+Nesting Designs with NestedBlock
+--------------------------------
+
+Sweetpea also supports the experiment where a small design runs
+multiple times while holding one or more external factors constant 
+for each repeat (for example, run a 2×2 task
+inside each session or day) with :class:`.NestedBlock`. 
+:class:`.NestedBlock` treats one `inner block` as a window and 
+repeats that window across the levels of your `external factors`.
+
+If you already have a :class:`.CrossBlock` or :class:`.MultiCrossBlock`
+that you like, :class:`.NestedBlock` lets you reuse it as a unit.
+
+.. _nestedblock-example:
+
+Using NestedBlock
+^^^^^^^^^^^^^^^^^
+:class:`.NestedBlock` can keep an external factor (e.g., task, session, etc.) 
+constant within each window of the `inner block`.
+The `inner block` can repeat once per external combination OR 
+vary between windows for counterbalancing.
+
+Let's start with a 2×2 inner design:
+
+.. doctest::
+
+    >>> from sweetpea import Factor, CrossBlock
+    >>> A = Factor("A", ["a1", "a2"])
+    >>> B = Factor("B", ["b1", "b2"])
+    >>> inner = CrossBlock([A, B], [A, B], [])
+    >>> inner.trials_per_sample()
+    4
+
+Here we repeat the 2×2 inner block for each level of an external 
+:class:`.Factor` session. Inside each 4-trial window, session is constant.
+
+.. doctest::
+
+    >>> from sweetpea import NestedBlock, synthesize_trials, print_experiments
+    >>> session = Factor("session", ["s1", "s2"])
+    >>> # Every Factor in `design` must also be in `crossing`.
+    >>> nb = NestedBlock(design=[session, inner], crossing=[session], constraints=[])
+    >>> nb.trials_per_sample()
+    8 # Total trials = #session levels × inner trials = 2 × 4 = 8.
+    >>> exps = synthesize_trials(nb, 1) 
+    Sampling 1 trial sequences using NonUniformGen.
+    Encoding experiment constraints...
+    Running CryptoMiniSat...
+    >>> print_experiments(nb, exps) 
+    1 trial sequences found.
+    <BLANKLINE>
+    Experiment 0:
+    session s2 | A a2 | B b2
+    session s2 | A a2 | B b1
+    session s2 | A a1 | B b1
+    session s2 | A a1 | B b2
+    session s1 | A a2 | B b1
+    session s1 | A a1 | B b2
+    session s1 | A a2 | B b2
+    session s1 | A a1 | B b1
+
+
+Vary the inner block between windows
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If the inner block is included  in the crossing, 
+SweetPea introduces a hidden “order” factor and 
+balances windows over different orders of the inner
+crossing. 
+You can also choose how many orders to use with `num_permutations`.
+
+.. doctest::
+
+    >>> group = Factor("group", ["G1", "G2"])
+    >>> nb_perm = NestedBlock(
+    >>>     design=[group, inner],
+    >>>     crossing=[inner, group],        # include the inner block here to vary order
+    >>>     constraints=[])
+    >>> nb_perm.trials_per_sample()
+    192 # 192 = 2×4×4!
+    >>> nb_perm = NestedBlock(
+    >>>     design=[group, inner],
+    >>>     crossing=[inner, group],        # include the inner block here to vary order
+    >>>     constraints=[],
+    >>>     num_permutations=2)
+    >>> nb_perm.trials_per_sample()
+    16 # 16 = 2×4×2
+
+Nesting inside nesting
+^^^^^^^^^^^^^^^^^^^^^^
+
+You can create a :class:`.NestedBlock` using another :class:`.NestedBlock` 
+as the `inner block`. Each outer level repeats the entire 
+`inner block`. 
+
+.. doctest::
+  
+    >>> session = Factor("session", ["s1", "s2"])
+    >>> mid = NestedBlock(design=[session, inner], crossing=[session], constraints=[])
+    >>> exps = synthesize_trials(mid, 1) 
+    Sampling 1 trial sequences using NonUniformGen.
+    Encoding experiment constraints...
+    Running CryptoMiniSat...
+    >>> print_experiments(mid, exps) 
+    1 trial sequences found.
+    <BLANKLINE>
+    Experiment 0:
+    session s2 | A a2 | B b2
+    session s2 | A a2 | B b1
+    session s2 | A a1 | B b1
+    session s2 | A a1 | B b2
+    session s1 | A a2 | B b1
+    session s1 | A a1 | B b2
+    session s1 | A a2 | B b2
+    session s1 | A a1 | B b1
+    >>> day = Factor("day", ["d1", "d2"])
+    >>> outer = NestedBlock(design=[day, mid], crossing=[day], constraints=[])
+    >>> exps = synthesize_trials(outer, 1) 
+    Sampling 1 trial sequences using NonUniformGen.
+    Encoding experiment constraints...
+    Running CryptoMiniSat...
+    >>> print_experiments(outer, exps) 
+    1 trial sequences found.
+    <BLANKLINE>
+    day d2 | session s2 | A a2 | B b2
+    day d2 | session s2 | A a2 | B b1
+    day d2 | session s2 | A a1 | B b2
+    day d2 | session s2 | A a1 | B b1
+    day d2 | session s1 | A a2 | B b1
+    day d2 | session s1 | A a1 | B b1
+    day d2 | session s1 | A a2 | B b2
+    day d2 | session s1 | A a1 | B b2
+    day d1 | session s1 | A a2 | B b1
+    day d1 | session s1 | A a1 | B b2
+    day d1 | session s1 | A a2 | B b2
+    day d1 | session s1 | A a1 | B b1
+    day d1 | session s2 | A a2 | B b2
+    day d1 | session s2 | A a1 | B b1
+    day d1 | session s2 | A a2 | B b1
+    day d1 | session s2 | A a1 | B b2
