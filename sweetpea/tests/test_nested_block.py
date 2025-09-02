@@ -139,8 +139,7 @@ def test_permuted_mode_enforces_permutation_and_balancing(inner_2x2):
         design=[group, inner_2x2],
         crossing=[inner_2x2, group],   # include all Factors from design per rule
         constraints=[],
-        num_permutations=2,            # K = 2
-        permutation_factor_name="order"
+        num_permutations=2         # K = 2
     )
 
     # Access the hidden permutation factor
@@ -206,8 +205,7 @@ def test_permuted_mode_k1_small(inner_2x2):
         design=[cohort, inner_2x2],
         crossing=[inner_2x2, cohort],
         constraints=[],
-        num_permutations=1,
-        permutation_factor_name="order",
+        num_permutations=1
     )
     assert nb.trials_per_sample() == 4
 
@@ -235,8 +233,7 @@ def test_permuted_mode_with_joint_external_cross(inner_2x2):
         design=[group, inner_2x2],
         crossing=[inner_2x2, group],   # jointly crossed
         constraints=[],
-        num_permutations=2,
-        permutation_factor_name="order",
+        num_permutations=2
     )
 
     perm_factor = nb.perm_factor
@@ -287,8 +284,7 @@ def test_permuted_mode_with_inner_preamble(inner_2x2):
         design=[cohort, inner_with_preamble],
         crossing=[inner_with_preamble, cohort],
         constraints=[],
-        num_permutations=1,
-        permutation_factor_name="order",
+        num_permutations=1
     )
 
     orbp = next(c for c in nb.constraints if isinstance(c, OrderRunsByPermutation))

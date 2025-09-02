@@ -541,8 +541,7 @@ class NestedBlock(MultiCrossBlockRepeat):
                  design: List[Union[Factor, MultiCrossBlockRepeat]],
                  crossing: List[Union[Factor, MultiCrossBlockRepeat]],
                  constraints: Optional[List[Constraint]] = None,
-                 num_permutations: Optional[int] = None,
-                 permutation_factor_name: str = "order"):
+                 num_permutations: Optional[int] = None):
         from itertools import permutations as _perms
         from sweetpea._internal.constraint import (
             MinimumTrials, ExactlyK, ConstantInWindows, OrderRunsByPermutation
@@ -683,11 +682,8 @@ class NestedBlock(MultiCrossBlockRepeat):
         K         = maxK if (num_permutations is None) else num_permutations
         if not (1 <= K <= maxK):
             raise ValueError(f"num_permutations must be in [1, {maxK}].")
- 
-        # perms = [tuple(p) for p in all_perms[:K]]
-        # perm_levels = [SimpleLevel(f"perm_{i}") for i in range(K)]
-        # perm_factor = Factor(HiddenName(permutation_factor_name), perm_levels)
-        # level2perm: Dict[Level, Tuple[int, ...]] = {lvl: perms[i] for i, lvl in enumerate(perm_levels)}
+
+        permutation_factor_name: str = "order"
 
         # Keep state so we can refresh mapping per synthesized sample
         self._permuted_mode = True

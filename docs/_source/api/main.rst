@@ -221,7 +221,7 @@ using :func:`.synthesize_trials`. Print generated trials using
    :rtype: Block
 
 
-.. class:: sweetpea.NestedBlock(design, crossing, constraints=None, num_permutations=None, permutation_factor_name="order")
+.. class:: sweetpea.NestedBlock(design, crossing, constraints=None, num_permutations=None)
 
    Creates an experiment description that repeats an `inner block` 
    as consecutive windows while holding selected `external factors` 
@@ -245,8 +245,7 @@ using :func:`.synthesize_trials`. Print generated trials using
    If `crossing` also lists the `inner block`, the order of the `inner block`’s
    trial combinations is allowed to vary between windows. In that case,
    `num_permutations` can be used to limit how many distinct permutations
-   appear; a hidden ordering factor is added automatically 
-   using permutation_factor_name.
+   appear.
 
    Constraints and derivations defined on the `inner block` are reused 
    inside every window. Constraints supplied in constraints apply at 
@@ -282,9 +281,6 @@ using :func:`.synthesize_trials`. Print generated trials using
                             `inner block` orders across windows. When it is not 
                             specified, the full permutation will be used.
    :type num_permutations: Optional[int]
-   :param permutation_factor_name: base name for the hidden ordering factor 
-                                   when `inner block` order varies.  
-   :type permutation_factor_name: str
    :return: a block description
    :rtype: Block
 
