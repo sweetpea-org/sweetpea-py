@@ -3,7 +3,7 @@
 import operator as op
 from abc import abstractmethod
 from copy import deepcopy
-from typing import List, Tuple, Any, Union, cast, Dict, Callable
+from typing import List, Tuple, Any, Union, cast, Dict, Callable, Optional
 from itertools import chain, product
 from math import ceil
 import inspect
@@ -372,6 +372,10 @@ class _KInARow(Constraint):
 
     def set_within_block(self) -> None:
         self.within_block = True
+ 
+    # NEW:
+    def set_within_windows(self, window_len: int):
+        self._within_window_len = int(window_len)   # no within_block change
 
     def uses_factor(self, f: Factor) -> bool:
         if isinstance(self.level, Factor):
@@ -406,14 +410,32 @@ class _KInARow(Constraint):
         # that the constraint is applied to each level of the factor.
         self.apply_to_backend_request(block, (self.level.factor, self.level), backend_request)
 
-    def _build_variable_sublistss(self, block: Block,
-                                  level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]],
-                                  sublist_length: int) -> List[List[List[int]]]:
-        var_lists = block.build_variable_lists(level, self.within_block)
-        sublistss = cast(List[List[List[int]]], [])
+    def _build_variable_sublistss(
+        self,
+        block: Block,
+        level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]],
+        sublist_length: int
+    ) -> List[List[List[int]]]:
+        # If window-scoped, we operate over fixed-size windows; otherwise we
+        # use the original (global or repeat-scoped) behavior.
+        window_len = cast(Optional[int], getattr(self, "_within_window_len", None))
+
+        # When window-scoped, we must not trigger the repeat-only path in build_variable_lists
+        base_within_block = self.within_block if window_len is None else False
+        var_lists = block.build_variable_lists(level, base_within_block)
+
+        sublistss: List[List[List[int]]] = []
         for var_list in var_lists:
-            raw_sublists = [var_list[i:i+sublist_length] for i in range(0, len(var_list))]
-            sublistss.append(list(filter(lambda l: len(l) == sublist_length, raw_sublists)))
+            if window_len:
+                # carve into non-overlapping windows; runs must not cross windows
+                for start in range(0, len(var_list), window_len):
+                    window_vars = var_list[start:start + window_len]
+                    raw = [window_vars[i:i + sublist_length] for i in range(0, len(window_vars))]
+                    sublistss.append([sl for sl in raw if len(sl) == sublist_length])
+            else:
+                raw = [var_list[i:i + sublist_length] for i in range(0, len(var_list))]
+                sublistss.append([sl for sl in raw if len(sl) == sublist_length])
+
         return sublistss
 
     @abstractmethod
@@ -439,6 +461,19 @@ class _KInARow(Constraint):
                 counts.append(count)
             return self._potential_counts_conform(counts)
 
+        # Window-scoped: check each fixed window
+        if hasattr(self, "_within_window_len"):
+            win = int(self._within_window_len)
+            T = len(level_list)
+            if win <= 0 or T == 0:
+                return True
+            for start in range(0, T, win):
+                end = min(start + win, T)
+                if not check_sequence(start, end):
+                    return False
+            return True
+
+        # Repeat-scoped or global
         return all(block.map_block_trial_ranges(self.within_block, check_sequence))
 
     @abstractmethod
@@ -560,6 +595,15 @@ class ExactlyK(_KInARow):
                                  backend_request: BackendRequest
                                  ) -> None:
         sublistss = block.build_variable_lists(level, self.within_block)
+
+        window_len = cast(Optional[int], getattr(self, "_within_window_len", None))
+        if window_len:
+            new_sublistss = []
+            for sub in sublistss:
+                windows = [sub[s:s+window_len] for s in range(0, len(sub), window_len)]
+                new_sublistss.extend(windows)
+            sublistss = new_sublistss
+
         for sublists in sublistss:
             backend_request.ll_requests.append(LowLevelRequest("EQ", self.k, sublists))
 
@@ -604,12 +648,13 @@ class ExactlyKInARow(_KInARow):
                 else:
                     q = And(l[1:]) if len(l[1:]) > 1 else l[self.k - 1]
                 implications.append(If(p, q))
-            # Handle the tail
-            if len(sublists[-1]) > 1:
-                tail = sublists[-1]
-                tail.reverse()
-                for idx in range(len(tail) - 1):
-                    implications.append(If(l[idx], l[idx + 1]))
+
+            # Handle the tail: if the last element is ON, the previous one must be ON.
+            last_run = sublists[-1]
+            if len(last_run) > 1:
+                tail = list(reversed(last_run))  # [last, ..., first]
+                for i in range(len(tail) - 1):
+                    implications.append(If(tail[i], tail[i + 1]))
 
             (cnf, new_fresh) = block.cnf_fn(And(implications), backend_request.fresh)
             backend_request.cnfs.append(cnf)
@@ -635,52 +680,69 @@ class ExactlyKMultipleInARow(_KInARow):
         level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]],
         backend_request: BackendRequest
     ) -> None:
+    
         k = self.k
         max_len = block.trials_per_sample()
         implications: List[Any] = [] 
         var_lists = block.build_variable_lists(level, self.within_block)
         all_trial_vars = var_lists[0]  # assume non-blocked design for now
 
-        selector_runs = []  # (selector_var, covered_indices)
+        selector_runs: List[Tuple[int, List[int]]] = []  # (selector_var, covered_indices)
 
-        # 1. Build selector variables for all valid run lengths
-        for run_len in range(k, max_len + 1, k):
-            for start in range(0, max_len - run_len + 1):
-                run_indices = list(range(start, start + run_len))
-                sel_var = backend_request.fresh
-                backend_request.fresh += 1
-                selector_runs.append((sel_var, run_indices))
+        window_len = cast(Optional[int], getattr(self, "_within_window_len", None))
 
-                # If selector is ON => all trials in run are ON
-                implications.append(
-                    If(sel_var, And([all_trial_vars[i] for i in run_indices]))
-                )
+        def encode_segment(segment_vars: List[int]) -> None:
+            """Encode 'ON runs must have length ∈ {k, 2k, 3k, ...}' within this segment only."""
+            max_len = len(segment_vars)
+            if max_len == 0:
+                return
 
-                # Also: If selector is ON => next trial (if exists) is OFF
-                after = start + run_len
-                if after < max_len:
-                    implications.append(If(sel_var, Not(all_trial_vars[after])))
+            implications: List[Any] = []
+            selector_runs: List[Tuple[int, List[int]]] = []  # (selector_var, covered_indices)
 
-        # 2. Ensure every active trial is covered by some selector
-        for i in range(max_len):
-            covering_selectors = [
-                sel for (sel, indices) in selector_runs if i in indices
-            ]
-            if covering_selectors:
-                implications.append(
-                    If(all_trial_vars[i], Or(covering_selectors))
-                )
+            # 1) selectors for all multiples of k within this segment
+            for run_len in range(k, max_len + 1, k):
+                for start in range(0, max_len - run_len + 1):
+                    run_indices = list(range(start, start + run_len))
+                    sel_var = backend_request.fresh
+                    backend_request.fresh += 1
+                    selector_runs.append((sel_var, run_indices))
+                    implications.append(If(sel_var, And([all_trial_vars[i] for i in run_indices])))
+                    after = start + run_len
+                    if after < max_len:
+                        implications.append(If(sel_var, Not(all_trial_vars[after])))
 
-        # 3. Prevent overlapping selectors
-        for i, (sel_a, idxs_a) in enumerate(selector_runs):
-            for j in range(i + 1, len(selector_runs)):
-                sel_b, idxs_b = selector_runs[j]
-                if set(idxs_a).intersection(idxs_b):
-                    implications.append(Or([Not(sel_a), Not(sel_b)]))
+            # 2) Ensure every active trial is covered by some selector
+            for i in range(max_len):
+                covering = [sel for (sel, idxs) in selector_runs if i in idxs]
+                if covering:
+                    implications.append(If(segment_vars[i], Or(covering)))
 
-        # Encode all implications to CNF
-        cnf, backend_request.fresh = block.cnf_fn(And(implications), backend_request.fresh)
-        backend_request.cnfs.append(cnf)
+            # 3) prevent overlaps
+            for i, (sel_a, idxs_a) in enumerate(selector_runs):
+                set_a = set(idxs_a)
+                for j in range(i + 1, len(selector_runs)):
+                    sel_b, idxs_b = selector_runs[j]
+                    if set_a.intersection(idxs_b):
+                        implications.append(Or([Not(sel_a), Not(sel_b)]))
+
+            if implications:
+                cnf, backend_request.fresh = block.cnf_fn(And(implications), backend_request.fresh)
+                backend_request.cnfs.append(cnf)
+
+        # Build lists (not repeat-scoped for window behavior)
+        base_var_lists = block.build_variable_lists(level, within_block=self.within_block if not hasattr(self, "_within_window_len") else False)
+
+
+        if hasattr(self, "_within_window_len"):
+            win = int(self._within_window_len)
+            for var_list in base_var_lists:
+                for start in range(0, len(var_list), win):
+                    segment = var_list[start:start + win]
+                    encode_segment(segment)
+        else:
+            for var_list in base_var_lists:
+                encode_segment(var_list)
 
     def _potential_counts_conform(self, counts: List[int]) -> bool:
         return all(c % self.k == 0 for c in counts)
@@ -1034,8 +1096,8 @@ class OrderRunsByPermutation(Constraint):
             backend_request.cnfs.append(cnf)
 
     def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
-        # Compare by *names* to match synthesized output
         from itertools import product
+
         level_lists = [list(f.levels) for f in self.inner_cross]
         all_tuples  = list(product(*level_lists))
         all_dicts   = [{f: lv for f, lv in zip(self.inner_cross, tpl)} for tpl in all_tuples]
@@ -1043,27 +1105,37 @@ class OrderRunsByPermutation(Constraint):
         if len(valid) != self.cross_size:
             return False
 
+        # total trials
         T = len(next(iter(sample.values())))
         if T % self.run_len != 0:
             return False
         W = T // self.run_len
 
-        perm_name = cast(str, self.perm_factor.name)
+        # permutation sequence for this sample (Levels or strings)
+        perm_seq = _series_for(sample, self.perm_factor)
+
         for w in range(W):
             start0 = w * self.run_len
-            chosen_name = sample[perm_name][start0]
-            lvlobj = next((l for l in self.perm_factor.levels
-                           if (getattr(l, "name", None) == chosen_name) or (l == chosen_name)), None)
-            if lvlobj is None:
+            chosen = perm_seq[start0]
+            # resolve chosen level object (works if chosen is Level or string)
+            chosen_lvl = None
+            for l in self.perm_factor.levels:
+                if _val_name(l) == _val_name(chosen):
+                    chosen_lvl = l
+                    break
+            if chosen_lvl is None:
                 return False
-            perm = self.level2perm.get(lvlobj)
+            perm = self.level2perm.get(chosen_lvl)
             if perm is None or len(perm) != self.cross_size:
                 return False
+
+            # verify inner window matches the selected permutation
             for t in range(self.cross_size):
                 idx = start0 + self.preamble + t
                 combo = valid[perm[t]]
                 for f in self.inner_cross:
-                    if sample[cast(str, f.name)][idx] != combo[f].name:
+                    f_seq = _series_for(sample, f)
+                    if _val_name(f_seq[idx]) != _val_name(combo[f]):
                         return False
         return True
 
@@ -1110,15 +1182,37 @@ class ConstantInWindows(Constraint):
             backend_request.cnfs.append(cnf)
 
     def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
-        # Compare by *names*, since synthesized samples typically hold strings
+        # total length from any entry
         T = len(next(iter(sample.values())))
         if T % self.run_len != 0:
             return False
-        name = cast(str, self.factor.name)
+
+        seq = _series_for(sample, self.factor)  # list of Level or str
         for start in range(0, T, self.run_len):
-            window = sample[name][start:start + self.run_len]
-            head = window[0]
-            if not all(x == head for x in window):
+            window = seq[start:start + self.run_len]
+            if not window:  # defensive
+                return False
+            head = _val_name(window[0])
+            if any(_val_name(x) != head for x in window):
                 return False
         return True
 
+
+def _series_for(sample: dict, factor: Factor):
+    # Try Factor object key
+    if factor in sample:
+        return sample[factor]
+    # Try the HiddenName / name object itself
+    name_obj = getattr(factor, "name", None)
+    if name_obj in sample:
+        return sample[name_obj]
+    # Try string name
+    name_str = str(name_obj) if name_obj is not None else None
+    if name_str in sample:
+        return sample[name_str]
+    # Not found
+    raise KeyError(f"sample does not contain series for factor {factor}")
+
+def _val_name(x):
+    # Works for Level objects or plain strings
+    return getattr(x, "name", x)

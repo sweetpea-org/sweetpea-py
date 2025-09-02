@@ -27,7 +27,7 @@ from sweetpea._internal.argcheck import argcheck, make_islistof
 from sweetpea._internal.sample_conversion import convert_sample_from_names_to_objects
 from sweetpea._internal.check_mismatch import combinations_mismatched_weights
 from enum import Enum, auto
-
+import random
 
 class RepeatMode(Enum):
     WEIGHT = "weight"
@@ -534,6 +534,8 @@ class CrossBlock(MultiCrossBlock):
         self._create(who, design, [crossing], constraints, require_complete_crossing, None)
 
 
+
+
 class NestedBlock(MultiCrossBlockRepeat):
     def __init__(self,
                  design: List[Union[Factor, MultiCrossBlockRepeat]],
@@ -617,15 +619,32 @@ class NestedBlock(MultiCrossBlockRepeat):
 
             
             # inherit inner constraints so the inner structure holds inside each window
-            cs.extend(inner_block.orig_constraints)
+            # cs.extend(inner_block.orig_constraints)
+
+            # inherit inner constraints, scoped to each inner window
+            for c in inner_block.orig_constraints:
+                cc = copy.copy(c)
+                # Prefer precise window scoping if the constraint supports it
+                if hasattr(cc, "set_within_windows"):
+                    cc.set_within_windows(run_len)          # run_len == inner_total here
+                elif hasattr(cc, "set_within_block"):
+                    # Fallback: block-scope + hint the window length (used by encoders that look for it)
+                    cc.set_within_block()
+                    setattr(cc, "_within_window_len", run_len)
+                cs.append(cc)
+
 
             # keep all externals constant per window
             for f in externals:
                 cs.append(ConstantInWindows(f, run_len))
             # ensure total length = (#external combinations) * run_len
+
+
+
             total_windows = 1
             for f in externals:
-                total_windows *= len(f.levels)
+                total_windows *= _level_weight_sum(f)
+
             cs.append(MinimumTrials(total_windows * run_len))
 
             # When multiple crossings exist (sizes may differ), use WEIGHT mode on all.
@@ -664,11 +683,28 @@ class NestedBlock(MultiCrossBlockRepeat):
         K         = maxK if (num_permutations is None) else num_permutations
         if not (1 <= K <= maxK):
             raise ValueError(f"num_permutations must be in [1, {maxK}].")
-        perms = [tuple(p) for p in all_perms[:K]]
+ 
+        # perms = [tuple(p) for p in all_perms[:K]]
+        # perm_levels = [SimpleLevel(f"perm_{i}") for i in range(K)]
+        # perm_factor = Factor(HiddenName(permutation_factor_name), perm_levels)
+        # level2perm: Dict[Level, Tuple[int, ...]] = {lvl: perms[i] for i, lvl in enumerate(perm_levels)}
 
-        perm_levels = [SimpleLevel(f"perm_{i}") for i in range(K)]
+        # Keep state so we can refresh mapping per synthesized sample
+        self._permuted_mode = True
+        self._perm_cross_size: int = cross_size
+        self._perm_all_perms: List[Tuple[int, ...]] = [tuple(p) for p in all_perms]
+        self._perm_K: int = K
+        perm_levels: List[SimpleLevel] = [SimpleLevel(f"perm_{i}") for i in range(K)]
         perm_factor = Factor(HiddenName(permutation_factor_name), perm_levels)
-        level2perm: Dict[Level, Tuple[int, ...]] = {lvl: perms[i] for i, lvl in enumerate(perm_levels)}
+        self._perm_levels = perm_levels
+        self._perm_map: Dict[Level, Tuple[int, ...]] = {}   # mutable, shared with constraint
+        # base seed so we can vary deterministically per sample (you can set your own)
+
+        self._perm_base_seed: int = random.randrange(2**63)
+        # Initial mapping: first K permutations (keeps old behavior for single sample)
+        for lvl, perm in zip(self._perm_levels, self._perm_all_perms[:self._perm_K]):
+            self._perm_map[lvl] = perm
+
 
         # design includes hidden perm factor
         full_design = [*externals, perm_factor, *[f for f in full_design if f not in externals]]
@@ -679,7 +715,18 @@ class NestedBlock(MultiCrossBlockRepeat):
             parent_crossings.append(ext_in_crossing)
             
         # inherit inner constraints (deriveds/excludes/etc.)
-        cs.extend(inner_block.orig_constraints)
+        # cs.extend(inner_block.orig_constraints)
+
+        # inherit inner constraints, scoped to each base window (preamble + crossing)
+        for c in inner_block.orig_constraints:
+            cc = copy.copy(c)
+            if hasattr(cc, "set_within_windows"):
+                cc.set_within_windows(run_len)          # run_len == preamble + cross_size here
+            elif hasattr(cc, "set_within_block"):
+                cc.set_within_block()
+                setattr(cc, "_within_window_len", run_len)
+            cs.append(cc)
+            
 
         # constancy per (base) window
         cs.append(ConstantInWindows(perm_factor, run_len))
@@ -687,16 +734,20 @@ class NestedBlock(MultiCrossBlockRepeat):
             cs.append(ConstantInWindows(f, run_len))
 
         # pin each window to the chosen permutation of the inner-crossing combos
-        cs.append(OrderRunsByPermutation(perm_factor, inner_block, level2perm))
+        # NOTE: pass the MUTABLE dict so we can refresh it per sample
+        # cs.append(OrderRunsByPermutation(perm_factor, inner_block, self._perm_map))
+        orp = OrderRunsByPermutation(perm_factor, inner_block, self._perm_map)
+        cs.append(orp)
+        self._orp = orp  # keep a handle so we can mutate level2perm in-place
+
 
         # total windows
         total_windows = K
         for f in externals:
-            total_windows *= len(f.levels)
+            total_windows *= _level_weight_sum(f)
         cs.append(MinimumTrials(total_windows * run_len))
 
-        # equal number of windows per permutation level
-        per_perm_windows = total_windows // K
+        per_perm_windows = total_windows // K  # integer since total_windows is K * ∏ sum(weights)
         for perm_lvl in perm_levels:
             cs.append(ExactlyK(per_perm_windows * run_len, (perm_factor, perm_lvl)))
         
@@ -712,8 +763,8 @@ class NestedBlock(MultiCrossBlockRepeat):
         # expose for pretty-print reordering hook
         self.block = inner_block
         self.perm_factor = perm_factor
-        self.get_trial_permutation_for_level = lambda lvl: level2perm[lvl]
-
+        self.get_trial_permutation_for_level = lambda lvl: self._perm_map[lvl]
+ 
         alignment_choice = _choose_alignment_for(parent_crossings)
 
         self._create(
@@ -727,6 +778,45 @@ class NestedBlock(MultiCrossBlockRepeat):
             alignment=alignment_choice
         )
 
+    def _refresh_perm_map(self, *, sample_index: int = 0, seed: Optional[int] = None) -> None:
+        """
+        Choose a fresh set of K permutations and update the shared dict in-place.
+        Call once per synthesized sample (before CNF build / random proposal).
+        """
+        if not getattr(self, "_permuted_mode", False):
+            return
+
+        # derive a stable-but-different seed per sample
+        base = self._perm_base_seed if seed is None else seed
+        # mix in the sample_index deterministically
+        mixed = (base + 0x9E3779B97F4A7C15 * (sample_index + 1)) & ((1 << 64) - 1)
+        import random as _rnd
+        rng = _rnd.Random(mixed)
+
+        idxs = list(range(len(self._perm_all_perms)))
+        rng.shuffle(idxs)
+        chosen = idxs[:self._perm_K]
+
+        # mutate the mapping IN PLACE so OrderRunsByPermutation sees it
+        self._perm_map.clear()
+        for lvl, idx in zip(self._perm_levels, chosen):
+            self._perm_map[lvl] = self._perm_all_perms[idx]
+
+    def prepare_for_new_sample(self, *, sample_index: int = 0, seed: Optional[int] = None) -> None:
+        """Public hook for samplers: refresh internal permutation choice per sample."""
+        self._refresh_perm_map(sample_index=sample_index, seed=seed)
+
+    def build_backend_request(self):
+        """
+        Refresh permutation mapping each time a backend request is built.
+        This is called once per synthesized sample by SAT-based strategies,
+        so permutation choices vary per sample without touching samplers.
+        """
+        if getattr(self, "_permuted_mode", False):
+            # bump internal sample counter and refresh
+            self._perm_sample_counter = getattr(self, "_perm_sample_counter", -1) + 1
+            self._refresh_perm_map(sample_index=self._perm_sample_counter)
+        return super().build_backend_request()
 
 class Repeat(MultiCrossBlockRepeat):
     def __init__(self,
@@ -756,6 +846,11 @@ class Repeat(MultiCrossBlockRepeat):
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~                         Helper functions                            ~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+def _level_weight_sum(f: Factor) -> int:
+    # Works for Simple/Derived discrete factors with integer weights
+    return sum(l.weight for l in cast(Sequence[Level], f.levels))
+
 
 def _desugar_factors_with_weights(design: List[Factor],
                                   crossings: List[List[Factor]]) -> Tuple[List[Factor],
