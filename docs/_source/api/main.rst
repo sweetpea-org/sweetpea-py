@@ -247,19 +247,24 @@ using :func:`.synthesize_trials`. Print generated trials using
    `num_permutations` can be used to limit how many distinct permutations
    appear.
 
+   When in this permuted mode, the actual set of chosen permutations is
+   refreshed for each synthesized experiment. That means each call to
+   :func:`.synthesize_trials` will  use different permutations, 
+   rather than reusing the same ones across experiments.
+
    Constraints and derivations defined on the `inner block` are reused 
    inside every window. Constraints supplied in constraints apply at 
    the outer level (across windows). 
    The number of trials in each generated sequence is determined by 
-   the size of one `inner block` run (including any preamble that the inner block
-   requires due to derived factors) multiplied by the number of windows, 
+   the size of one `inner block` run (including any preamble implied 
+   by the derived factors) multiplied by the number of windows, 
    which is the product of the counterbalancing `external factors`. 
 
    If the `inner block` is included in crossing, the number of trials is 
    multiplied by `num_permutations` or the full number of distinct 
    permutations when `num_permutations` is not specified.
 
-   `Design` must contain exactly one inner block and one or more `external factors`.
+   `Design` must contain exactly one inner block and at least one `external factor`.
 
    Every `external factor` listed in `design` must also be listed in 
    the `crossing`. The `inner block` itself does not have to be included 
@@ -280,6 +285,9 @@ using :func:`.synthesize_trials`. Print generated trials using
                             `num_permutations` decides the number of distinct 
                             `inner block` orders across windows. When it is not 
                             specified, the full permutation will be used.
+                            The chosen set of permutations is refreshed on every 
+                            synthesized experiment, so repeated calls can yield 
+                            different orderings.
    :type num_permutations: Optional[int]
    :return: a block description
    :rtype: Block

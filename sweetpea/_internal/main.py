@@ -17,7 +17,7 @@ __all__ = [
     'Constraint',
     'Exclude', 'Pin', 'MinimumTrials', 'ExactlyK',
     'AtMostKInARow', 'AtLeastKInARow',
-    'ExactlyKInARow', 'ContinuousConstraint', 'ExactlyKMultipleInARow', 'OrderRunsByPermutation', 'ConstantInWindows',
+    'ExactlyKInARow', 'ContinuousConstraint',
 
     'Gen', 'RandomGen', 'IterateSATGen',
     'CMSGen', 'UniGen', 'IterateILPGen',
@@ -45,7 +45,7 @@ from sweetpea._internal.constraint import (
     Consistency, Constraint, Derivation,
     Exclude, Pin, MinimumTrials,
     ExactlyK, AtMostKInARow, AtLeastKInARow, ExactlyKInARow,
-    ContinuousConstraint, ExactlyKMultipleInARow, OrderRunsByPermutation, ConstantInWindows
+    ContinuousConstraint
 )
 from sweetpea._internal.sampling_strategy.base import Gen
 from sweetpea._internal.sampling_strategy.uniform import UniformGen
@@ -373,26 +373,29 @@ def synthesize_trials(block: Block,
         starting(sampling_strategy)
         sampling_result = sampling_strategy.sample_object(block, samples)
 
-    trialss = list(map(lambda e: __filter_hidden_keys(block.add_implied_levels(e)),
-                       sampling_result.samples))
+    raw_samples = sampling_result.samples
 
-    if os.getenv("SWEETPEA_CHECK_SYNTHESIZED"):
-        for trials in trialss:
-            mismatches = sample_mismatch_experiment(block, trials)
+    trialss = []
+    for e in raw_samples:
+        with_implied = block.add_implied_levels(e)
+        # Run mismatch check BEFORE filtering hidden keys
+        if os.getenv("SWEETPEA_CHECK_SYNTHESIZED"):
+            mismatches = sample_mismatch_experiment(block, with_implied)
             if mismatches:
-                print_experiments(block, [trials])
+                print_experiments(block, [with_implied])
                 print(mismatches)
                 raise RuntimeError("synthesized trials has mismatches")
 
-    # DW: Sampling for ContinuousFactor
+        # Now filter hidden keys for the returned trials
+        trialss.append(__filter_hidden_keys(with_implied))
+
+    # Sampling for ContinuousFactor
     if block.continuous_factors:
         for num_trial, trials in enumerate(trialss):
             continuous_samples = block.sample_continuous(num_trial, trialss[num_trial])
             for k in continuous_samples:
                 trials[k] = continuous_samples[k]
-        # DW: Restore ContinuousFactor to the design 
-        # block.restore_continuous()
-
+        # Restore ContinuousFactor to the design 
     return trialss
 
 

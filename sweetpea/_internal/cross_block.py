@@ -534,8 +534,6 @@ class CrossBlock(MultiCrossBlock):
         self._create(who, design, [crossing], constraints, require_complete_crossing, None)
 
 
-
-
 class NestedBlock(MultiCrossBlockRepeat):
     def __init__(self,
                  design: List[Union[Factor, MultiCrossBlockRepeat]],
@@ -696,7 +694,7 @@ class NestedBlock(MultiCrossBlockRepeat):
         self._perm_map: Dict[Level, Tuple[int, ...]] = {}   # mutable, shared with constraint
         # base seed so we can vary deterministically per sample (you can set your own)
 
-        self._perm_base_seed: int = random.randrange(2**63)
+        self._perm_base_seed: int = random.getrandbits(64)
         # Initial mapping: first K permutations (keeps old behavior for single sample)
         for lvl, perm in zip(self._perm_levels, self._perm_all_perms[:self._perm_K]):
             self._perm_map[lvl] = perm
@@ -782,10 +780,11 @@ class NestedBlock(MultiCrossBlockRepeat):
         if not getattr(self, "_permuted_mode", False):
             return
 
-        # derive a stable-but-different seed per sample
+        import time
         base = self._perm_base_seed if seed is None else seed
-        # mix in the sample_index deterministically
-        mixed = (base + 0x9E3779B97F4A7C15 * (sample_index + 1)) & ((1 << 64) - 1)
+        # mix in wall-clock time to avoid repeats
+        mixed = (base + 0x9E3779B97F4A7C15 * (sample_index + 1) + time.time_ns()) & ((1 << 64) - 1)
+
         import random as _rnd
         rng = _rnd.Random(mixed)
 
@@ -798,18 +797,8 @@ class NestedBlock(MultiCrossBlockRepeat):
         for lvl, idx in zip(self._perm_levels, chosen):
             self._perm_map[lvl] = self._perm_all_perms[idx]
 
-    def prepare_for_new_sample(self, *, sample_index: int = 0, seed: Optional[int] = None) -> None:
-        """Public hook for samplers: refresh internal permutation choice per sample."""
-        self._refresh_perm_map(sample_index=sample_index, seed=seed)
-
     def build_backend_request(self):
-        """
-        Refresh permutation mapping each time a backend request is built.
-        This is called once per synthesized sample by SAT-based strategies,
-        so permutation choices vary per sample without touching samplers.
-        """
         if getattr(self, "_permuted_mode", False):
-            # bump internal sample counter and refresh
             self._perm_sample_counter = getattr(self, "_perm_sample_counter", -1) + 1
             self._refresh_perm_map(sample_index=self._perm_sample_counter)
         return super().build_backend_request()

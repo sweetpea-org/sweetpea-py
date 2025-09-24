@@ -27,7 +27,6 @@ class SMGen(Gen):
 
     @staticmethod
     def sample(block: Block, sample_count: int) -> SamplingResult:
-        # print("In SMGen")
         assert(isinstance(block, MultiCrossBlockRepeat))
 
         if block.within_block_count != block.trials_per_sample():
@@ -146,7 +145,6 @@ class SMGen(Gen):
                 sm_cross.append(p_dc[f.name])
 
         encode_experiment(sm_design)
-        #print_factors()
 
         cross=define_cross(sm_cross)
         r=execute(answers_count=sample_count, maximum_trials=maximum_trials)
