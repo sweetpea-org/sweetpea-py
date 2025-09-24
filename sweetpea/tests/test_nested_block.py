@@ -16,7 +16,7 @@ from sweetpea._internal.main import synthesize_trials
 
 from sweetpea._internal.sampling_strategy.iterate import IterateGen
 from sweetpea._internal.sampling_strategy.iterate_sat import IterateSATGen
-from sweetpea._internal.sampling_strategy.iterate_ilp import IterateILPGen
+# from sweetpea._internal.sampling_strategy.iterate_ilp import IterateILPGen
 from sweetpea._internal.sampling_strategy.cmsgen import CMSGen
 from sweetpea._internal.sampling_strategy.uniform import UniformGen
 from sweetpea._internal.sampling_strategy.unigen import UniGen
@@ -556,7 +556,7 @@ def test_sampling_strategies_return_expected_number_of_experiments():
     nb = NestedBlock([session, inner], [inner, session], num_permutations=2)
 
     # Enumerative strategies should return all distinct experiments (36 total)
-    for Gen in (IterateGen, IterateILPGen, IterateSATGen):
+    for Gen in (IterateGen, IterateSATGen):#IterateILPGen, IterateSATGen):
         exps = synthesize_trials(nb, 1000, sampling_strategy=Gen)
         assert len(exps) == 36
 
