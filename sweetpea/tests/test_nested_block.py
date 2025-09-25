@@ -14,12 +14,9 @@ from sweetpea._internal.constraint import (
 from sweetpea._internal.primitive import Factor, SimpleLevel, DerivedLevel, Transition
 from sweetpea._internal.main import synthesize_trials
 
+import shutil
 from sweetpea._internal.sampling_strategy.iterate import IterateGen
-from sweetpea._internal.sampling_strategy.iterate_sat import IterateSATGen
-# from sweetpea._internal.sampling_strategy.iterate_ilp import IterateILPGen
-from sweetpea._internal.sampling_strategy.cmsgen import CMSGen
-from sweetpea._internal.sampling_strategy.uniform import UniformGen
-from sweetpea._internal.sampling_strategy.unigen import UniGen
+
 
 # ---------- helpers
 
@@ -555,15 +552,32 @@ def test_sampling_strategies_return_expected_number_of_experiments():
     session = Factor("session", [SimpleLevel("s1"), SimpleLevel("s2")])
     nb = NestedBlock([session, inner], [inner, session], num_permutations=2)
 
+
+
     # Enumerative strategies should return all distinct experiments (36 total)
-    for Gen in (IterateGen, IterateSATGen):#IterateILPGen, IterateSATGen):
-        exps = synthesize_trials(nb, 1000, sampling_strategy=Gen)
+    import importlib.util
+
+    if importlib.util.find_spec("gurobipy") is not None:
+        from sweetpea._internal.sampling_strategy.iterate_ilp import IterateILPGen
+        exps = synthesize_trials(nb, 1000, sampling_strategy=IterateILPGen)
+        assert len(exps) == 36
+    if shutil.which("cryptominisat5") is not None:
+        from sweetpea._internal.sampling_strategy.iterate_sat import IterateSATGen
+        exps = synthesize_trials(nb, 1000, sampling_strategy=IterateSATGen)
         assert len(exps) == 36
 
-    # Randomized strategies should return exactly the requested count
-    for Gen in (CMSGen, UniGen, UniformGen):
-        exps = synthesize_trials(nb, 1000, sampling_strategy=Gen)
-        assert len(exps) == 1000
+    exps = synthesize_trials(nb, 1000, sampling_strategy=IterateGen)
+    assert len(exps) == 36
+
+    if shutil.which("cryptominisat5") is not None:
+        from sweetpea._internal.sampling_strategy.cmsgen import CMSGen
+        from sweetpea._internal.sampling_strategy.unigen import UniGen
+        from sweetpea._internal.sampling_strategy.uniform import UniformGen
+        for Gen in (CMSGen, UnifromGen, UniGen):
+            exps = synthesize_trials(nb, 1000, sampling_strategy=Gen)
+            assert len(exps) == 1000
+
+
 
 
 def test_nestedblock_refreshes_permutations_each_time():
@@ -575,11 +589,11 @@ def test_nestedblock_refreshes_permutations_each_time():
     nb = NestedBlock([session, inner], [inner, session], num_permutations=2)
 
     # First sample
-    IterateSATGen.sample(nb, 1)
+    IterateGen.sample(nb, 1)
     perm_map_1 = dict(nb._perm_map)
 
     # Second sample should reshuffle the permutation mapping
-    IterateSATGen.sample(nb, 1)
+    IterateGen.sample(nb, 1)
     perm_map_2 = dict(nb._perm_map)
 
     assert len(perm_map_1) == 2
