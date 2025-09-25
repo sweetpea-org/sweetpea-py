@@ -497,7 +497,11 @@ def test_permuted_mode_can_produce_k_in_a_row(inner_2x2, target_level, k):
     # And the A sequence should really have k consecutive a1s
     assert has_run(A_vals, target_level, k), f"A sequence lacked {k} consecutive {target_level!r}"
 
+import os
+from sweetpea._internal.core.generate.tools.executables import CRYPTOMINISAT_EXE
+has_cms = shutil.which("cryptominisat5") or os.path.exists(CRYPTOMINISAT_EXE)
 
+@pytest.mark.skipif(has_cms is None, reason="cryptominisat5 is required for SAT-based sampling")
 @pytest.mark.parametrize("target_level,k", [("a1", 4)])
 def test_non_permuted_nested_can_yield_runs_across_windows(target_level, k):
     """
@@ -553,7 +557,6 @@ def test_sampling_strategies_return_expected_number_of_experiments():
     nb = NestedBlock([session, inner], [inner, session], num_permutations=2)
 
 
-
     # Enumerative strategies should return all distinct experiments (36 total)
     import importlib.util
 
@@ -561,25 +564,25 @@ def test_sampling_strategies_return_expected_number_of_experiments():
         from sweetpea._internal.sampling_strategy.iterate_ilp import IterateILPGen
         exps = synthesize_trials(nb, 1000, sampling_strategy=IterateILPGen)
         assert len(exps) == 36
-    if shutil.which("cryptominisat5") is not None:
+    if has_cms is not None:
         from sweetpea._internal.sampling_strategy.iterate_sat import IterateSATGen
         exps = synthesize_trials(nb, 1000, sampling_strategy=IterateSATGen)
         assert len(exps) == 36
 
-    exps = synthesize_trials(nb, 1000, sampling_strategy=IterateGen)
-    assert len(exps) == 36
+        exps = synthesize_trials(nb, 1000, sampling_strategy=IterateGen)
+        assert len(exps) == 36
 
-    if shutil.which("cryptominisat5") is not None:
+    if has_cms is not None:
         from sweetpea._internal.sampling_strategy.cmsgen import CMSGen
         from sweetpea._internal.sampling_strategy.unigen import UniGen
         from sweetpea._internal.sampling_strategy.uniform import UniformGen
-        for Gen in (CMSGen, UnifromGen, UniGen):
+        for Gen in (CMSGen, UniformGen, UniGen):
             exps = synthesize_trials(nb, 1000, sampling_strategy=Gen)
             assert len(exps) == 1000
 
 
 
-
+@pytest.mark.skipif(has_cms is None, reason="cryptominisat5 is required for SAT-based sampling")
 def test_nestedblock_refreshes_permutations_each_time():
     """Permuted NestedBlock should refresh its permutation map between samples."""
     A = Factor("A", ["a1", "a2"])
