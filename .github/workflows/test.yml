@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.9']
+        python-version: ['3.11']
     steps:
       - name: Checkout SweetPea
         uses: actions/checkout@v2
