@@ -498,10 +498,10 @@ def test_permuted_mode_can_produce_k_in_a_row(inner_2x2, target_level, k):
     assert has_run(A_vals, target_level, k), f"A sequence lacked {k} consecutive {target_level!r}"
 
 import os
-from sweetpea._internal.core.generate.tools.executables import CRYPTOMINISAT_EXE
-has_cms = os.path.exists(CRYPTOMINISAT_EXE) or shutil.which("cryptominisat5")
+# from sweetpea._internal.core.generate.tools.executables import CRYPTOMINISAT_EXE
+# has_cms = os.path.exists(CRYPTOMINISAT_EXE) or shutil.which("cryptominisat5")
 
-@pytest.mark.skipif(not has_cms, reason="cryptominisat5 is required for SAT-based sampling")
+# @pytest.mark.skipif(not has_cms, reason="cryptominisat5 is required for SAT-based sampling")
 @pytest.mark.parametrize("target_level,k", [("a1", 4)])
 def test_non_permuted_nested_can_yield_runs_across_windows(target_level, k):
     """
@@ -582,7 +582,7 @@ def test_sampling_strategies_return_expected_number_of_experiments():
 
 
 
-@pytest.mark.skipif(not has_cms, reason="cryptominisat5 is required for SAT-based sampling")
+# @pytest.mark.skipif(not has_cms, reason="cryptominisat5 is required for SAT-based sampling")
 def test_nestedblock_refreshes_permutations_each_time():
     """Permuted NestedBlock should refresh its permutation map between samples."""
     A = Factor("A", ["a1", "a2"])
