@@ -564,7 +564,7 @@ def test_sampling_strategies_return_expected_number_of_experiments():
         from sweetpea._internal.sampling_strategy.iterate_ilp import IterateILPGen
         exps = synthesize_trials(nb, 1000, sampling_strategy=IterateILPGen)
         assert len(exps) == 36
-    if has_cms:
+    # if has_cms:
         from sweetpea._internal.sampling_strategy.iterate_sat import IterateSATGen
         exps = synthesize_trials(nb, 1000, sampling_strategy=IterateSATGen)
         assert len(exps) == 36
@@ -572,7 +572,7 @@ def test_sampling_strategies_return_expected_number_of_experiments():
         exps = synthesize_trials(nb, 1000, sampling_strategy=IterateGen)
         assert len(exps) == 36
 
-    if has_cms:
+    # if has_cms:
         from sweetpea._internal.sampling_strategy.cmsgen import CMSGen
         from sweetpea._internal.sampling_strategy.unigen import UniGen
         from sweetpea._internal.sampling_strategy.uniform import UniformGen
