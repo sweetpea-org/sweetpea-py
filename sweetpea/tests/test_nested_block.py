@@ -557,19 +557,19 @@ def test_sampling_strategies_return_expected_number_of_experiments():
         exps = synthesize_trials(nb, 1000, sampling_strategy=IterateILPGen)
         assert len(exps) == 36
 
-        from sweetpea._internal.sampling_strategy.iterate_sat import IterateSATGen
-        exps = synthesize_trials(nb, 1000, sampling_strategy=IterateSATGen)
-        assert len(exps) == 36
+    from sweetpea._internal.sampling_strategy.iterate_sat import IterateSATGen
+    exps = synthesize_trials(nb, 1000, sampling_strategy=IterateSATGen)
+    assert len(exps) == 36
 
-        exps = synthesize_trials(nb, 1000, sampling_strategy=IterateGen)
-        assert len(exps) == 36
+    exps = synthesize_trials(nb, 1000, sampling_strategy=IterateGen)
+    assert len(exps) == 36
 
-        from sweetpea._internal.sampling_strategy.cmsgen import CMSGen
-        from sweetpea._internal.sampling_strategy.unigen import UniGen
-        from sweetpea._internal.sampling_strategy.uniform import UniformGen
-        for Gen in (CMSGen, UniformGen, UniGen):
-            exps = synthesize_trials(nb, 1000, sampling_strategy=Gen)
-            assert len(exps) == 1000
+    from sweetpea._internal.sampling_strategy.cmsgen import CMSGen
+    from sweetpea._internal.sampling_strategy.unigen import UniGen
+    from sweetpea._internal.sampling_strategy.uniform import UniformGen
+    for Gen in (CMSGen, UniformGen, UniGen):
+        exps = synthesize_trials(nb, 1000, sampling_strategy=Gen)
+        assert len(exps) == 1000
 
 def test_nestedblock_refreshes_permutations_each_time():
     """Permuted NestedBlock should refresh its permutation map between samples."""
