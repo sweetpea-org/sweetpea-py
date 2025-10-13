@@ -35,7 +35,7 @@ jobs:
 
       # --- START: New Caching Step ---
       - name: 📦 Cache SweetPea Executables
-        uses: actions/cache@v4
+        uses: actions/cache@v2
         with:
           # Define the paths where SweetPea stores the external executables (solvers)
           # These paths cover macOS, Linux, and Windows runners.
@@ -46,8 +46,8 @@ jobs:
           
           # The key ensures a unique cache entry for each OS/Python version and changes 
           # whenever requirements.txt is modified (ensuring cache invalidation).
-          key: ${{ runner.os }}-${{ matrix.python-version }}-sweetpea-executables-${{ hashFiles('requirements.txt') }}
-          
+          key: ${{ runner.os }}-sweetpea-executables-${{ hashFiles('requirements.txt') }}
+
           # This allows matching older, existing cache entries if the key changes slightly.
           restore-keys: |
             ${{ runner.os }}-${{ matrix.python-version }}-sweetpea-executables-
