@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: Checkout SweetPea
         uses: actions/checkout@v4
+        with:
+          path: sweetpea
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
