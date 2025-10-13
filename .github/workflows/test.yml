@@ -33,24 +33,23 @@ jobs:
       - name: Set up SweetPea's Python package dependencies
         run: pip install -r requirements.txt
 
-      # --- START: New Caching Step ---
-      - name: 📦 Cache SweetPea Executables
-        uses: actions/cache@v4
+      - name: Checkout executables
+        uses: actions/checkout@v4
         with:
-          # Define the paths where SweetPea stores the external executables (solvers)
-          # These paths cover macOS, Linux, and Windows runners.
-          path: |
-            ~/Library/Application Support/SweetPea/Executables
-            ~/.local/share/SweetPea/Executables
-            %APPDATA%/SweetPea/Executables
-          
-          # The key ensures a unique cache entry for each OS/Python version and changes 
-          # whenever requirements.txt is modified (ensuring cache invalidation).
-          key: ${{ runner.os }}-sweetpea-executables-${{ hashFiles('requirements.txt') }}
+          repository: sweetpea-org/unigen-exe
+          path: executables
+          ref: v0.2
+      - name: Set asset path name
+        shell: bash
+        run: echo "UNIGEN_ASSET_PATH=$(python sweetpea/sweetpea/_internal/core/generate/tools/executables.py --asset-string)" >> $GITHUB_ENV
+      - name: Set executable directory environment variable
+        shell: bash
+        run: echo "UNIGEN_EXE_DIR=$GITHUB_WORKSPACE/executables/$UNIGEN_ASSET_PATH/" >> $GITHUB_ENV
+      - name: Environment variable sanity test
+        shell: bash
+        run: |
+          echo UNIGEN_ASSET_PATH=$UNIGEN_ASSET_PATH
+          echo UNIGEN_EXE_DIR=$UNIGEN_EXE_DIR
 
-          # This allows matching older, existing cache entries if the key changes slightly.
-          restore-keys: |
-            ${{ runner.os }}-${{ matrix.python-version }}-sweetpea-executables-
-      # --- END: New Caching Step ---
       - name: Run tests
         run: python -m pytest sweetpea
