@@ -3,7 +3,7 @@
 import operator as op
 from abc import abstractmethod
 from copy import deepcopy
-from typing import List, Tuple, Any, Union, cast, Dict, Callable
+from typing import List, Tuple, Any, Union, cast, Dict, Callable, Optional
 from itertools import chain, product
 from math import ceil
 import inspect
@@ -169,6 +169,7 @@ class Cross(Constraint):
             # crossing weight in each `crossing_size * crossing_weight` set of trials, or at most
             # that much in a last set of trials that is less than `crossing_size * crossing_weight`
             # in length.
+
             states = list(chunk(state_vars, len(trial_combinations)))
             transposed = cast(List[List[int]], list(map(list, zip(*states))))
             reqss = map(lambda l, w: Cross.__add_weight_constraint(l, w, crossing_size, crossing_weight),
@@ -371,6 +372,10 @@ class _KInARow(Constraint):
 
     def set_within_block(self) -> None:
         self.within_block = True
+ 
+    # NEW:
+    def set_within_windows(self, window_len: int):
+        self._within_window_len = int(window_len)   # no within_block change
 
     def uses_factor(self, f: Factor) -> bool:
         if isinstance(self.level, Factor):
@@ -405,14 +410,32 @@ class _KInARow(Constraint):
         # that the constraint is applied to each level of the factor.
         self.apply_to_backend_request(block, (self.level.factor, self.level), backend_request)
 
-    def _build_variable_sublistss(self, block: Block,
-                                  level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]],
-                                  sublist_length: int) -> List[List[List[int]]]:
-        var_lists = block.build_variable_lists(level, self.within_block)
-        sublistss = cast(List[List[List[int]]], [])
+    def _build_variable_sublistss(
+        self,
+        block: Block,
+        level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]],
+        sublist_length: int
+    ) -> List[List[List[int]]]:
+        # If window-scoped, we operate over fixed-size windows; otherwise we
+        # use the original (global or repeat-scoped) behavior.
+        window_len = cast(Optional[int], getattr(self, "_within_window_len", None))
+
+        # When window-scoped, we must not trigger the repeat-only path in build_variable_lists
+        base_within_block = self.within_block if window_len is None else False
+        var_lists = block.build_variable_lists(level, base_within_block)
+
+        sublistss: List[List[List[int]]] = []
         for var_list in var_lists:
-            raw_sublists = [var_list[i:i+sublist_length] for i in range(0, len(var_list))]
-            sublistss.append(list(filter(lambda l: len(l) == sublist_length, raw_sublists)))
+            if window_len:
+                # carve into non-overlapping windows; runs must not cross windows
+                for start in range(0, len(var_list), window_len):
+                    window_vars = var_list[start:start + window_len]
+                    raw = [window_vars[i:i + sublist_length] for i in range(0, len(window_vars))]
+                    sublistss.append([sl for sl in raw if len(sl) == sublist_length])
+            else:
+                raw = [var_list[i:i + sublist_length] for i in range(0, len(var_list))]
+                sublistss.append([sl for sl in raw if len(sl) == sublist_length])
+
         return sublistss
 
     @abstractmethod
@@ -438,6 +461,19 @@ class _KInARow(Constraint):
                 counts.append(count)
             return self._potential_counts_conform(counts)
 
+        # Window-scoped: check each fixed window
+        if hasattr(self, "_within_window_len"):
+            win = int(self._within_window_len)
+            T = len(level_list)
+            if win <= 0 or T == 0:
+                return True
+            for start in range(0, T, win):
+                end = min(start + win, T)
+                if not check_sequence(start, end):
+                    return False
+            return True
+
+        # Repeat-scoped or global
         return all(block.map_block_trial_ranges(self.within_block, check_sequence))
 
     @abstractmethod
@@ -559,6 +595,15 @@ class ExactlyK(_KInARow):
                                  backend_request: BackendRequest
                                  ) -> None:
         sublistss = block.build_variable_lists(level, self.within_block)
+
+        window_len = cast(Optional[int], getattr(self, "_within_window_len", None))
+        if window_len:
+            new_sublistss = []
+            for sub in sublistss:
+                windows = [sub[s:s+window_len] for s in range(0, len(sub), window_len)]
+                new_sublistss.extend(windows)
+            sublistss = new_sublistss
+
         for sublists in sublistss:
             backend_request.ll_requests.append(LowLevelRequest("EQ", self.k, sublists))
 
@@ -604,12 +649,12 @@ class ExactlyKInARow(_KInARow):
                     q = And(l[1:]) if len(l[1:]) > 1 else l[self.k - 1]
                 implications.append(If(p, q))
 
-            # Handle the tail
-            if len(sublists[-1]) > 1:
-                tail = sublists[-1]
-                tail.reverse()
-                for idx in range(len(tail) - 1):
-                    implications.append(If(l[idx], l[idx + 1]))
+            # Handle the tail: if the last element is ON, the previous one must be ON.
+            last_run = sublists[-1]
+            if len(last_run) > 1:
+                tail = list(reversed(last_run))  # [last, ..., first]
+                for i in range(len(tail) - 1):
+                    implications.append(If(tail[i], tail[i + 1]))
 
             (cnf, new_fresh) = block.cnf_fn(And(implications), backend_request.fresh)
             backend_request.cnfs.append(cnf)
@@ -626,6 +671,82 @@ class ExactlyKInARow(_KInARow):
 
     def _potential_counts_conform(self, counts: List[int]) -> bool:
         return self._potential_counts_conform_individually(counts, op.eq)
+
+
+class ExactlyKMultipleInARow(_KInARow):
+    def apply_to_backend_request(
+        self,
+        block: Block,
+        level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]],
+        backend_request: BackendRequest
+    ) -> None:
+    
+        k = self.k
+        max_len = block.trials_per_sample()
+        implications: List[Any] = [] 
+        var_lists = block.build_variable_lists(level, self.within_block)
+        all_trial_vars = var_lists[0]  # assume non-blocked design for now
+
+        selector_runs: List[Tuple[int, List[int]]] = []  # (selector_var, covered_indices)
+
+        window_len = cast(Optional[int], getattr(self, "_within_window_len", None))
+
+        def encode_segment(segment_vars: List[int]) -> None:
+            """Encode 'ON runs must have length ∈ {k, 2k, 3k, ...}' within this segment only."""
+            max_len = len(segment_vars)
+            if max_len == 0:
+                return
+
+            implications: List[Any] = []
+            selector_runs: List[Tuple[int, List[int]]] = []  # (selector_var, covered_indices)
+
+            # 1) selectors for all multiples of k within this segment
+            for run_len in range(k, max_len + 1, k):
+                for start in range(0, max_len - run_len + 1):
+                    run_indices = list(range(start, start + run_len))
+                    sel_var = backend_request.fresh
+                    backend_request.fresh += 1
+                    selector_runs.append((sel_var, run_indices))
+                    implications.append(If(sel_var, And([all_trial_vars[i] for i in run_indices])))
+                    after = start + run_len
+                    if after < max_len:
+                        implications.append(If(sel_var, Not(all_trial_vars[after])))
+
+            # 2) Ensure every active trial is covered by some selector
+            for i in range(max_len):
+                covering = [sel for (sel, idxs) in selector_runs if i in idxs]
+                if covering:
+                    implications.append(If(segment_vars[i], Or(covering)))
+
+            # 3) prevent overlaps
+            for i, (sel_a, idxs_a) in enumerate(selector_runs):
+                set_a = set(idxs_a)
+                for j in range(i + 1, len(selector_runs)):
+                    sel_b, idxs_b = selector_runs[j]
+                    if set_a.intersection(idxs_b):
+                        implications.append(Or([Not(sel_a), Not(sel_b)]))
+
+            if implications:
+                cnf, backend_request.fresh = block.cnf_fn(And(implications), backend_request.fresh)
+                backend_request.cnfs.append(cnf)
+
+        # Build lists (not repeat-scoped for window behavior)
+        base_var_lists = block.build_variable_lists(level, within_block=self.within_block if not hasattr(self, "_within_window_len") else False)
+
+
+        if hasattr(self, "_within_window_len"):
+            win = int(self._within_window_len)
+            for var_list in base_var_lists:
+                for start in range(0, len(var_list), win):
+                    segment = var_list[start:start + win]
+                    encode_segment(segment)
+        else:
+            for var_list in base_var_lists:
+                encode_segment(var_list)
+
+    def _potential_counts_conform(self, counts: List[int]) -> bool:
+        return all(c % self.k == 0 for c in counts)
+
 
 def filter_level(who, level, factor_ok: bool = False):
     if factor_ok and isinstance(level, Factor):
@@ -896,3 +1017,202 @@ class ContinuousConstraint(Constraint):
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
         """Do nothing."""
+
+
+class OrderRunsByPermutation(Constraint):
+    """
+    Given a permutation factor and an inner single-crossing block, pin each window
+    (length = preamble + crossing_size) to the permutation chosen by the factor.
+    """
+    def __init__(self,
+                 perm_factor: Factor,
+                 inner_block: MultiCrossBlockRepeat,
+                 level2perm: Dict[Level, Tuple[int, ...]]):
+        self.perm_factor = perm_factor
+        self.inner_block = inner_block
+        if len(inner_block.crossings) != 1:
+            raise ValueError("OrderRunsByPermutation expects an inner block with exactly one crossing.")
+        self.inner_cross = inner_block.crossings[0]
+        self.cross_size  = inner_block.crossing_size(self.inner_cross)
+        self.preamble    = inner_block.preamble_size(self.inner_cross)
+        self.run_len     = self.preamble + self.cross_size
+        self.level2perm  = level2perm  # {Level: tuple[int]}
+
+    def validate(self, block: Block) -> None:
+        validate_factor(block, self.perm_factor)
+        # basic sanity
+        if self.cross_size <= 0:
+            raise ValueError("OrderRunsByPermutation: inner crossing has zero size.")
+        for lvl, perm in self.level2perm.items():
+            if len(perm) != self.cross_size:
+                raise ValueError(f"OrderRunsByPermutation: permutation for {lvl.name} "
+                                 f"has length {len(perm)} != crossing size {self.cross_size}.")
+
+    def uses_factor(self, f: Factor) -> bool:
+        return self.perm_factor.uses_factor(f)
+
+    def desugar(self, replacements: dict) -> List[Constraint]:
+        # Replace perm_factor and possibly Level keys if weights were desugared.
+        perm_factor = replacements.get(self.perm_factor, self.perm_factor)
+        # Re-map keys if levels got replaced
+        new_map: Dict[Level, Tuple[int, ...]] = {}
+        for k, v in self.level2perm.items():
+            new_k = replacements.get(k, k)
+            new_map[new_k] = v
+        return [OrderRunsByPermutation(perm_factor, self.inner_block, new_map)]
+
+    def apply(self, block: Block, backend_request: BackendRequest) -> None:
+        from itertools import product
+        from sweetpea._internal.logic import If, And
+
+        # Enumerate valid inner combos respecting excludes/derivations:
+        level_lists = [list(f.levels) for f in self.inner_cross]
+        all_tuples  = list(product(*level_lists))
+        all_dicts   = [{f: lv for f, lv in zip(self.inner_cross, tpl)} for tpl in all_tuples]
+        valid       = [d for d in all_dicts if not self.inner_block.is_excluded_or_inconsistent_combination(d)]
+        if len(valid) != self.cross_size:
+            raise RuntimeError("OrderRunsByPermutation: valid combo count != crossing_size.")
+
+        T = block.trials_per_sample()
+        if T % self.run_len != 0:
+            raise RuntimeError(f"OrderRunsByPermutation: total trials ({T}) not multiple of run_len ({self.run_len}).")
+        W = T // self.run_len
+
+        clauses = []
+        for w in range(W):
+            start0 = w * self.run_len
+            sel_t1 = start0 + 1  # selection read at first trial of window
+            for lvl, perm in self.level2perm.items():
+                sel = block.get_variable(sel_t1, (self.perm_factor, lvl))
+                # pin only post-preamble part
+                for t in range(self.cross_size):
+                    combo = valid[perm[t]]
+                    trial1 = start0 + self.preamble + t + 1
+                    need = [block.get_variable(trial1, (f, combo[f])) for f in self.inner_cross]
+                    clauses.append(If(sel, And(need)))
+
+        if clauses:
+            cnf, backend_request.fresh = block.cnf_fn(And(clauses), backend_request.fresh)
+            backend_request.cnfs.append(cnf)
+
+    def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
+        from itertools import product
+
+        level_lists = [list(f.levels) for f in self.inner_cross]
+        all_tuples  = list(product(*level_lists))
+        all_dicts   = [{f: lv for f, lv in zip(self.inner_cross, tpl)} for tpl in all_tuples]
+        valid       = [d for d in all_dicts if not self.inner_block.is_excluded_or_inconsistent_combination(d)]
+        if len(valid) != self.cross_size:
+            return False
+
+        # total trials
+        T = len(next(iter(sample.values())))
+        if T % self.run_len != 0:
+            return False
+        W = T // self.run_len
+
+        # permutation sequence for this sample (Levels or strings)
+        perm_seq = _series_for(sample, self.perm_factor)
+
+        for w in range(W):
+            start0 = w * self.run_len
+            chosen = perm_seq[start0]
+            # resolve chosen level object (works if chosen is Level or string)
+            chosen_lvl = None
+            for l in self.perm_factor.levels:
+                if _val_name(l) == _val_name(chosen):
+                    chosen_lvl = l
+                    break
+            if chosen_lvl is None:
+                return False
+            perm = self.level2perm.get(chosen_lvl)
+            if perm is None or len(perm) != self.cross_size:
+                return False
+
+            # verify inner window matches the selected permutation
+            for t in range(self.cross_size):
+                idx = start0 + self.preamble + t
+                combo = valid[perm[t]]
+                for f in self.inner_cross:
+                    f_seq = _series_for(sample, f)
+                    if _val_name(f_seq[idx]) != _val_name(combo[f]):
+                        return False
+        return True
+
+
+
+class ConstantInWindows(Constraint):
+    """
+    Enforce that `factor` is constant inside each fixed window of length `run_len`,
+    with windows starting at 0, run_len, 2*run_len, ...
+    """
+    def __init__(self, factor: Factor, run_len: int):
+        self.factor = factor
+        self.run_len = run_len
+
+    def validate(self, block: Block) -> None:
+        validate_factor(block, self.factor)
+        if not isinstance(self.run_len, int) or self.run_len <= 0:
+            raise ValueError("ConstantInWindows: run_len must be a positive integer.")
+
+    def uses_factor(self, f: Factor) -> bool:
+        return self.factor.uses_factor(f)
+
+    def desugar(self, replacements: dict) -> List[Constraint]:
+        # honor weight desugaring, etc.
+        factor = replacements.get(self.factor, self.factor)
+        return [ConstantInWindows(factor, self.run_len)]
+
+    def apply(self, block: Block, backend_request: BackendRequest) -> None:
+        from sweetpea._internal.logic import If, And
+        T = block.trials_per_sample()
+        if T % self.run_len != 0:
+            raise RuntimeError(f"ConstantInWindows: total trials ({T}) not multiple of run_len ({self.run_len}).")
+
+        clauses = []
+        for start in range(0, T, self.run_len):
+            t1 = start + 1  # trials are 1-based internally
+            for lvl in self.factor.levels:
+                sel = block.get_variable(t1, (self.factor, lvl))
+                need = [block.get_variable(t1 + k, (self.factor, lvl)) for k in range(self.run_len)]
+                clauses.append(If(sel, And(need)))
+
+        if clauses:
+            cnf, backend_request.fresh = block.cnf_fn(And(clauses), backend_request.fresh)
+            backend_request.cnfs.append(cnf)
+
+    def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
+        # total length from any entry
+        T = len(next(iter(sample.values())))
+        if T % self.run_len != 0:
+            return False
+
+        seq = _series_for(sample, self.factor)  # list of Level or str
+        for start in range(0, T, self.run_len):
+            window = seq[start:start + self.run_len]
+            if not window:  # defensive
+                return False
+            head = _val_name(window[0])
+            if any(_val_name(x) != head for x in window):
+                return False
+        return True
+
+
+def _series_for(sample: dict, factor: Factor):
+    # Try Factor object key
+    if factor in sample:
+        return sample[factor]
+    # Try the HiddenName / name object itself
+    name_obj = getattr(factor, "name", None)
+    if name_obj in sample:
+        return sample[name_obj]
+    # Try string name
+    name_str = str(name_obj) if name_obj is not None else None
+    if name_str in sample:
+        return sample[name_str]
+    # Not found
+    raise KeyError(f"sample does not contain series for factor {factor}")
+
+def _val_name(x):
+    # Works for Level objects or plain strings
+    return getattr(x, "name", x)

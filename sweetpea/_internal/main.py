@@ -8,7 +8,7 @@ __all__ = [
     'print_experiments', 'tabulate_experiments',
     'save_experiments_csv', 'experiments_to_tuples', 'experiments_to_dicts',
 
-    'Block', 'CrossBlock', 'MultiCrossBlock', 'Repeat', 'RepeatMode', 'AlignmentMode',
+    'Block', 'CrossBlock', 'MultiCrossBlock', 'Repeat', 'RepeatMode', 'AlignmentMode', 'NestedBlock',
 
     'Factor', 'Level', 'DerivedLevel', 'ElseLevel', 'ContinuousFactor',
 
@@ -35,7 +35,7 @@ import csv, os
 import time
 
 from sweetpea._internal.block import Block
-from sweetpea._internal.cross_block import MultiCrossBlockRepeat, MultiCrossBlock, CrossBlock, Repeat, RepeatMode, AlignmentMode
+from sweetpea._internal.cross_block import MultiCrossBlockRepeat, MultiCrossBlock, CrossBlock, Repeat, RepeatMode, AlignmentMode, NestedBlock
 from sweetpea._internal.primitive import (
     Factor, SimpleFactor, DerivedFactor, ContinuousFactor, Level, SimpleLevel, DerivedLevel, ElseLevel,
     Window, WithinTrial, Transition, ContinuousFactorWindow,
@@ -373,26 +373,29 @@ def synthesize_trials(block: Block,
         starting(sampling_strategy)
         sampling_result = sampling_strategy.sample_object(block, samples)
 
-    trialss = list(map(lambda e: __filter_hidden_keys(block.add_implied_levels(e)),
-                       sampling_result.samples))
+    raw_samples = sampling_result.samples
 
-    if os.getenv("SWEETPEA_CHECK_SYNTHESIZED"):
-        for trials in trialss:
-            mismatches = sample_mismatch_experiment(block, trials)
+    trialss = []
+    for e in raw_samples:
+        with_implied = block.add_implied_levels(e)
+        # Run mismatch check BEFORE filtering hidden keys
+        if os.getenv("SWEETPEA_CHECK_SYNTHESIZED"):
+            mismatches = sample_mismatch_experiment(block, with_implied)
             if mismatches:
-                print_experiments(block, [trials])
+                print_experiments(block, [with_implied])
                 print(mismatches)
                 raise RuntimeError("synthesized trials has mismatches")
 
-    # DW: Sampling for ContinuousFactor
+        # Now filter hidden keys for the returned trials
+        trialss.append(__filter_hidden_keys(with_implied))
+
+    # Sampling for ContinuousFactor
     if block.continuous_factors:
         for num_trial, trials in enumerate(trialss):
             continuous_samples = block.sample_continuous(num_trial, trialss[num_trial])
             for k in continuous_samples:
                 trials[k] = continuous_samples[k]
-        # DW: Restore ContinuousFactor to the design 
-        # block.restore_continuous()
-
+        # Restore ContinuousFactor to the design 
     return trialss
 
 
