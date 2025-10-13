@@ -50,7 +50,10 @@ jobs:
         run: |
           echo UNIGEN_ASSET_PATH=$UNIGEN_ASSET_PATH
           echo UNIGEN_EXE_DIR=$UNIGEN_EXE_DIR
-
+      - name: Add Executables to PATH
+        shell: bash
+        run: echo "$UNIGEN_EXE_DIR" >> $GITHUB_PATH
+        
       - name: Run tests
         env:
           UNIGEN_DOWNLOAD_IF_MISSING: no
