@@ -238,7 +238,7 @@ using :func:`.synthesize_trials`. Print generated trials using
    used to form windows. The `crossing` argument must list all `external factors`
    from design, and it may optionally include the `inner block` itself:
 
-   If `crossing` lists only the `external factors`, each window reuses 
+   If `crossing` only contains the `external factors`, each window reuses 
    the `inner block` exactly as defined, and windows are balanced 
    across the `external factor` combinations.
 

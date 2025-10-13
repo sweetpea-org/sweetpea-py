@@ -563,8 +563,8 @@ class NestedBlock(MultiCrossBlockRepeat):
         if missing:
             names = ", ".join(str(getattr(f, "name", f)) for f in missing)
             raise ValueError(
-                "NestedBlock: all Factors in `design` must also be included in `crossing`. "
-                f"Missing: {names}. (Blocks in `design` need not be listed.)"
+                "NestedBlock: all External Factors in `design` must also be included in `crossing`. "
+                f"Missing: {names}. (Blocks in `design` need to be listed.)"
             )
         # If user lists the inner block in `crossing`, we’re in permuted mode
         permuted_mode = any(x is inner_block for x in crossing)
