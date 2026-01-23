@@ -373,7 +373,8 @@ def synthesize_trials(block: Block,
         starting(sampling_strategy)
         sampling_result = sampling_strategy.sample_object(block, samples)
 
-    raw_samples = sampling_result.samples
+    # DW: I am not sure if I need to fix this. Need to discuss with Matthew
+    raw_samples = sampling_result.samples[:samples]
 
     trialss = []
     for e in raw_samples:
@@ -389,6 +390,18 @@ def synthesize_trials(block: Block,
         # Now filter hidden keys for the returned trials
         trialss.append(__filter_hidden_keys(with_implied))
 
+
+    # NestedBlock Specific
+    spec = getattr(block, "external_stitch_spec", lambda: None)()
+    if spec is not None:
+        with_implied = _apply_external_stitch(
+            block,
+            with_implied,
+            spec,
+            sampling_strategy
+        )
+
+
     # Sampling for ContinuousFactor
     if block.continuous_factors:
         for num_trial, trials in enumerate(trialss):
@@ -397,6 +410,40 @@ def synthesize_trials(block: Block,
                 trials[k] = continuous_samples[k]
         # Restore ContinuousFactor to the design 
     return trialss
+
+
+def _apply_external_stitch(block, sample, spec, sampling_strategy):
+    ext_block   = spec["external_block"]
+    run_len     = spec["run_len"]
+    ext_design  = spec["external_design"]
+
+    # Sample external block (miniblock-level)
+    ext_sample = synthesize_trials(
+        ext_block, samples=1, sampling_strategy=sampling_strategy
+    )[0]
+
+    # Determine external preamble length
+    if ext_block.crossings:
+        ext_preamble = ext_block.preamble_size(ext_block.crossings[0])
+    else:
+        ext_preamble = 0
+
+    # Expand base external factors (skip preamble)
+    for f in ext_design:
+        if isinstance(f.name, HiddenName):
+            continue
+        for ii in range(ext_preamble):
+
+            sample[f.name][ii] = ext_sample[f.name][ii]
+
+        values = ext_sample[f.name]
+        
+        for ind, v in enumerate(values[ext_preamble:]):
+            for rep in range(run_len):
+                sample[f.name][ext_preamble+ind*run_len+rep] = v
+
+    return block.add_implied_levels(sample)
+
 
 
 def sample_mismatch_experiment(block: Block, sample: dict) -> dict:

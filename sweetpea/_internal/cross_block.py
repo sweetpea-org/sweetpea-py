@@ -132,6 +132,17 @@ class MultiCrossBlockRepeat(Block):
         # Use weight otherwise
         else:
             self.within_block_count = self.trials_per_sample()
+
+        self._alignment_preamble = max(
+            (
+                f.first_level.window.start or 0
+                for f in self.design
+                if isinstance(f, DerivedFactor)
+                and f.has_complex_window
+            ),
+            default=0
+        )
+
         self.__validate(who)
 
     def __validate(self, who: str):
@@ -334,7 +345,8 @@ class MultiCrossBlockRepeat(Block):
 
     def preamble_size(self, crossing: Optional[List[Factor]] = None):
         if self.alignment == AlignmentMode.POST_PREAMBLE:
-            return max(self.preamble_sizes)
+            return max(self._alignment_preamble, max(self.preamble_sizes))
+        
         crossing = self.__select_crossing(crossing)
         return self._trials_per_sample_for_one_crossing(crossing) - self.crossing_size(crossing)
 
@@ -352,6 +364,7 @@ class MultiCrossBlockRepeat(Block):
         crossing = self.__select_crossing(crossing)
         crossing_size = self.crossing_size(crossing)
         preamble_size = self.preamble_size(crossing)
+        # print('ps: ', preamble_size, crossing)
         if len(self.mode)==1:
             return max(1, ((self.within_block_count - preamble_size) + (crossing_size - 1)) // crossing_size)
         else:
@@ -558,36 +571,29 @@ class NestedBlock(MultiCrossBlockRepeat):
         # externals explicitly requested to be *jointly crossed* at this level
         ext_in_crossing: List[Factor] = [x for x in crossing if isinstance(x, Factor)]
 
-        # DW: This updates require that every Factor in `design` is provided in `crossing`
-        missing = [f for f in externals if f not in ext_in_crossing]
+        alignment_choice = AlignmentMode.POST_PREAMBLE
+        
+        missing = [f for f in ext_in_crossing if f not in externals]
         if missing:
             names = ", ".join(str(getattr(f, "name", f)) for f in missing)
             raise ValueError(
                 "NestedBlock: all External Factors in `design` must also be included in `crossing`. "
                 f"Missing: {names}. (Blocks in `design` need to be listed.)"
             )
+
         # If user lists the inner block in `crossing`, we’re in permuted mode
         permuted_mode = any(x is inner_block for x in crossing)
-
+        if num_permutations is not None and (not permuted_mode):
+            raise ValueError(
+                "None empty num_permutations is only supported when miniblock is included in the Crossing"
+            )
         # ---- gather inner factors and inner crossings for inheritance
         inner_factors: List[Factor] = [f for f in inner_block.design if isinstance(f, Factor)]
         inner_crossings: List[List[Factor]] = [list(c) for c in inner_block.crossings]
+        
+        
+        parent_crossings: List[List[Factor]] = [list(c) for c in inner_crossings]
 
-        # Helper: decide alignment from the preambles of the *outer* crossings we’ll pass to _create.
-        def _choose_alignment_for(parent_crossings: List[List[Factor]]) -> AlignmentMode:
-            # Preamble for an inner crossing = inner_block.preamble_size(c)
-            # Preamble for a crossing of *external* factors = 0
-            preambles = []
-            for c in parent_crossings:
-                if any(c == ic for ic in inner_block.crossings):
-                    preambles.append(inner_block.preamble_size(c))
-                else:
-                    preambles.append(0)
-            return (AlignmentMode.EQUAL_PREAMBLE
-                    if all(p == preambles[0] for p in preambles)
-                    else AlignmentMode.POST_PREAMBLE)
-
-        # Build full design (dedup by identity, keep order: externals first)
         seen = set()
         full_design: List[Factor] = []
         for f in externals + inner_factors:
@@ -596,28 +602,41 @@ class NestedBlock(MultiCrossBlockRepeat):
                 full_design.append(f)
 
         # ---- window geometry
-        inner_total = inner_block.trials_per_sample()
-
+        run_len = inner_block.trials_per_sample()
+        self.run_len = run_len
         # ---- constraints
         cs: List[Constraint] = []
+        # external_preamble = 0
+        # for f in externals:
+        #     if isinstance(f, DerivedFactor):
+        #         external_preamble = max(
+        #             external_preamble,
+        #             f.first_level.window.start or 0
+        #         )
+
+        external_preamble = max(
+            (
+                f.first_level.window.start or 0
+                for f in externals
+                if isinstance(f, DerivedFactor)
+                and not f.applies_to_trial(1)
+            ),
+            default=0,
+        )
+
+
 
         if not permuted_mode:
-            # ===================== NESTED MODE =====================
-            # Treat the entire inner block as a single atomic window
-            run_len = inner_total
 
+
+            # ===================== NESTED MODE =====================
+
+            # Treat the entire inner block as a single atomic window
             # Crossings: inherit ALL inner crossings
-            parent_crossings: List[List[Factor]] = [list(c) for c in inner_crossings]
 
             # If the user asked for a joint external cross (e.g., [color, task]),
             # append that crossing so externals are counterbalanced together across windows.
-            if ext_in_crossing:
-                parent_crossings.append(ext_in_crossing)
-
             
-            # inherit inner constraints so the inner structure holds inside each window
-            # cs.extend(inner_block.orig_constraints)
-
             # inherit inner constraints, scoped to each inner window
             for c in inner_block.orig_constraints:
                 cc = copy.copy(c)
@@ -630,25 +649,26 @@ class NestedBlock(MultiCrossBlockRepeat):
                     setattr(cc, "_within_window_len", run_len)
                 cs.append(cc)
 
-
-            # keep all externals constant per window
-            for f in externals:
-                cs.append(ConstantInWindows(f, run_len))
-            # ensure total length = (#external combinations) * run_len
-
-
-
+            # compute number of windows based on external factor size
             total_windows = 1
             for f in externals:
                 total_windows *= _level_weight_sum(f)
 
-            cs.append(MinimumTrials(total_windows * run_len))
+            cs.append(MinimumTrials(external_preamble + total_windows * run_len))
 
             # When multiple crossings exist (sizes may differ), use WEIGHT mode on all.
-            mode = cast(List[Union[str, RepeatMode]], [RepeatMode.WEIGHT] * len(parent_crossings))
-            mode[0] = RepeatMode.REPEAT
-            alignment_choice = _choose_alignment_for(parent_crossings)
+            mode = cast(List[Union[str, RepeatMode]], [RepeatMode.REPEAT] * len(parent_crossings))
 
+            mode[0] = RepeatMode.REPEAT
+            
+            # CB to store Crossing of external factors 
+            self._external_block = CrossBlock(
+                design=externals,
+                crossing=ext_in_crossing,
+                constraints=constraints
+                )
+
+            # CB to store samples for miniblock. 
             self._create(
                 who="NestedBlock(nested)",
                 design=full_design,
@@ -661,116 +681,105 @@ class NestedBlock(MultiCrossBlockRepeat):
             )
             return
 
-        # ===================== PERMUTED MODE =====================
-        # For permutations we must know the single inner crossing to permute.
-        if len(inner_crossings) != 1:
-            raise ValueError("Inner block must have a single crossing for permuted NestedBlock.")
-        inner_cross = inner_crossings[0]
+        else: 
+            # ===================== PERMUTED MODE =====================
+            # For permutations we must know the single inner crossing to permute.
+            if len(inner_crossings) != 1:
+                raise ValueError("Inner block must have a single crossing for permuted NestedBlock.")
+            inner_cross = inner_crossings[0]
 
-        cross_size = inner_block.crossing_size(inner_cross)
-        preamble  = inner_block.preamble_size(inner_cross)
-        base_run  = preamble + cross_size
-        if cross_size <= 0:
-            raise ValueError("Inner crossing has zero size after excludes.")
-        run_len = base_run
+            cross_size = inner_block.crossing_size(inner_cross)
+            preamble  = inner_block.preamble_size(inner_cross)
+            base_run  = preamble + cross_size
 
-        # permutation factor
-        all_perms = list(_perms(range(cross_size)))
-        maxK      = len(all_perms)
-        K         = maxK if (num_permutations is None) else num_permutations
-        if not (1 <= K <= maxK):
-            raise ValueError(f"num_permutations must be in [1, {maxK}].")
-
-        permutation_factor_name: str = "order"
-
-        # Keep state so we can refresh mapping per synthesized sample
-        self._permuted_mode = True
-        self._perm_cross_size: int = cross_size
-        self._perm_all_perms: List[Tuple[int, ...]] = [tuple(p) for p in all_perms]
-        self._perm_K: int = K
-        perm_levels: List[SimpleLevel] = [SimpleLevel(f"perm_{i}") for i in range(K)]
-        perm_factor = Factor(HiddenName(permutation_factor_name), perm_levels)
-        self._perm_levels = perm_levels
-        self._perm_map: Dict[Level, Tuple[int, ...]] = {}   # mutable, shared with constraint
-        # base seed so we can vary deterministically per sample (you can set your own)
-
-        self._perm_base_seed: int = random.getrandbits(64)
-        # Initial mapping: first K permutations (keeps old behavior for single sample)
-        for lvl, perm in zip(self._perm_levels, self._perm_all_perms[:self._perm_K]):
-            self._perm_map[lvl] = perm
-
-
-        # design includes hidden perm factor
-        full_design = [*externals, perm_factor, *[f for f in full_design if f not in externals]]
-
-        # Crossings: always the inner crossing; optionally add external joint crossing
-        parent_crossings = [list(inner_cross)]
-        if ext_in_crossing:
-            parent_crossings.append(ext_in_crossing)
+            if cross_size <= 0:
+                raise ValueError("Inner crossing has zero size after excludes.")
+            run_len = base_run
             
-        # inherit inner constraints (deriveds/excludes/etc.)
-        # cs.extend(inner_block.orig_constraints)
+            # permutation factor
+            all_perms = list(_perms(range(cross_size)))
+            maxK      = len(all_perms)
+            K         = maxK if (num_permutations is None) else num_permutations
+            if not (1 <= K <= maxK):
+                raise ValueError(f"num_permutations must be in [1, {maxK}].")
 
-        # inherit inner constraints, scoped to each base window (preamble + crossing)
-        for c in inner_block.orig_constraints:
-            cc = copy.copy(c)
-            if hasattr(cc, "set_within_windows"):
-                cc.set_within_windows(run_len)          # run_len == preamble + cross_size here
-            elif hasattr(cc, "set_within_block"):
-                cc.set_within_block()
-                setattr(cc, "_within_window_len", run_len)
-            cs.append(cc)
-            
+            permutation_factor_name: str = "order"
 
-        # constancy per (base) window
-        cs.append(ConstantInWindows(perm_factor, run_len))
-        for f in externals:
-            cs.append(ConstantInWindows(f, run_len))
+            # Keep state so we can refresh mapping per synthesized sample
+            self._permuted_mode = True
+            self._perm_cross_size: int = cross_size
+            self._perm_all_perms: List[Tuple[int, ...]] = [tuple(p) for p in all_perms]
+            self._perm_K: int = K
+            perm_levels: List[SimpleLevel] = [SimpleLevel(f"perm_{i}") for i in range(K)]
+            perm_factor = Factor(HiddenName(permutation_factor_name), perm_levels)
+            self._perm_levels = perm_levels
+            self._perm_map: Dict[Level, Tuple[int, ...]] = {}   # mutable, shared with constraint
+            # base seed so we can vary deterministically per sample (you can set your own)
 
-        # pin each window to the chosen permutation of the inner-crossing combos
-        # NOTE: pass the MUTABLE dict so we can refresh it per sample
-        # cs.append(OrderRunsByPermutation(perm_factor, inner_block, self._perm_map))
-        orp = OrderRunsByPermutation(perm_factor, inner_block, self._perm_map)
-        cs.append(orp)
-        self._orp = orp  # keep a handle so we can mutate level2perm in-place
+            self._perm_base_seed: int = random.getrandbits(64)
+            # Initial mapping: first K permutations (keeps old behavior for single sample)
+            for lvl, perm in zip(self._perm_levels, self._perm_all_perms[:self._perm_K]):
+                self._perm_map[lvl] = perm
 
 
-        # total windows
-        total_windows = K
-        for f in externals:
-            total_windows *= _level_weight_sum(f)
-        cs.append(MinimumTrials(total_windows * run_len))
+            # design includes hidden perm factor
+            full_design = [*externals, perm_factor, *[f for f in full_design if f not in externals]]
 
-        per_perm_windows = total_windows // K  # integer since total_windows is K * ∏ sum(weights)
-        for perm_lvl in perm_levels:
-            cs.append(ExactlyK(per_perm_windows * run_len, (perm_factor, perm_lvl)))
-        
-        # If we didn’t add a joint external crossing, balance marginals by count.
-        if not ext_in_crossing:
+            for c in inner_block.orig_constraints:
+                cc = copy.copy(c)
+                if hasattr(cc, "set_within_windows"):
+                    cc.set_within_windows(run_len)          # run_len == preamble + cross_size here
+                elif hasattr(cc, "set_within_block"):
+                    cc.set_within_block()
+                    setattr(cc, "_within_window_len", run_len)
+                cs.append(cc)
+                
+
+            # constancy per (base) window for hidden factor that represents the innerblock
+            cs.append(ConstantInWindows(perm_factor, run_len, start=external_preamble))
+
+            # Constraints to map perm factor to actual miniblock
+            orp = OrderRunsByPermutation(perm_factor, inner_block, self._perm_map, external_preamble=external_preamble)
+
+            cs.append(orp)
+
+            self._orp = orp  # keep a handle so we can mutate level2perm in-place
+
+            # total windows
+            total_windows = K
             for f in externals:
-                per_level_windows = total_windows // len(f.levels)
-                for ext_lvl in cast(Sequence[Level], f.levels):
-                    cs.append(ExactlyK(per_level_windows * run_len, (f, ext_lvl)))
-                    
-        mode = [RepeatMode.WEIGHT] * len(parent_crossings)
+                total_windows *= _level_weight_sum(f)
 
-        # expose for pretty-print reordering hook
-        self.block = inner_block
-        self.perm_factor = perm_factor
-        self.get_trial_permutation_for_level = lambda lvl: self._perm_map[lvl]
- 
-        alignment_choice = _choose_alignment_for(parent_crossings)
+            cs.append(MinimumTrials(total_windows * run_len+external_preamble))
 
-        self._create(
-            who="NestedBlock(permuted)",
-            design=full_design,
-            crossings=parent_crossings,
-            constraints=constraints + cs,
-            require_complete_crossing=True,
-            within_block_count=None,
-            mode=mode,
-            alignment=alignment_choice
-        )
+            per_perm_windows = total_windows // K  # integer since total_windows is K * ∏ sum(weights)
+
+            # CB to store counter balancing of external factors and hiddend perm factor
+            self._external_block = CrossBlock(
+                design=ext_in_crossing+[perm_factor],
+                crossing=ext_in_crossing+[perm_factor],
+                constraints=constraints
+                )
+
+            mode = [RepeatMode.WEIGHT] * len(parent_crossings)
+
+            # expose for pretty-print reordering hook
+            self.block = inner_block
+            self.perm_factor = perm_factor
+            self.get_trial_permutation_for_level = lambda lvl: self._perm_map[lvl]
+    
+
+            self._create(
+                who="NestedBlock(permuted)",
+                design=full_design,
+                crossings=parent_crossings,
+                constraints=constraints + cs,
+                require_complete_crossing=True,
+                within_block_count=None,
+                mode=mode,
+                alignment=alignment_choice
+            )
+            return
 
     def _refresh_perm_map(self, *, sample_index: int = 0, seed: Optional[int] = None) -> None:
         """
@@ -802,6 +811,19 @@ class NestedBlock(MultiCrossBlockRepeat):
             self._perm_sample_counter = getattr(self, "_perm_sample_counter", -1) + 1
             self._refresh_perm_map(sample_index=self._perm_sample_counter)
         return super().build_backend_request()
+
+    def external_stitch_spec(self):
+        """
+        Returns instructions for runtime stitching, or None.
+        """
+        if not hasattr(self, "_external_block") or self._external_block is None:
+            return None
+
+        return {
+            "external_block": self._external_block,
+            "run_len": self.run_len,
+            "external_design": self._external_block.design
+        }
 
 class Repeat(MultiCrossBlockRepeat):
     def __init__(self,
