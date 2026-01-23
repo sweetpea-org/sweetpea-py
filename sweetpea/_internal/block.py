@@ -8,11 +8,13 @@ from itertools import accumulate, combinations, product, repeat
 from typing import List, Union, Tuple, Optional, cast, Any, Dict, Set, Callable, TypeVar
 from math import ceil
 from networkx import has_path
+import inspect
+# import time
 
 from sweetpea._internal.backend import BackendRequest
 from sweetpea._internal.level import get_all_levels
 from sweetpea._internal.primitive import (
-    DerivedFactor, DerivedLevel, ElseLevel, Factor, SimpleLevel, Level, ContinuousFactor
+    DerivedFactor, DerivedLevel, ElseLevel, Factor, SimpleLevel, Level, ContinuousFactor, ContinuousFactorWindow
 )
 from sweetpea._internal.logic import to_cnf_tseitin
 from sweetpea._internal.base_constraint import Constraint
@@ -35,6 +37,11 @@ class Block:
                  constraints: List[Constraint],
                  require_complete_crossing,
                  who: str) -> None:
+    
+        # Temporarily remove ContinuousFactor from the design
+        self.continuous_factors: List[ContinuousFactor] = []
+        design = self.sep_continuous_factors(design)
+        self.__check_dependency()
         self.design = list(design).copy()
         self.crossings = list(map(lambda c: list(c).copy(), crossings))
         self.constraints = list(constraints).copy()
@@ -54,6 +61,100 @@ class Block:
         self.__validate(who)
         self._cached_previous_count = cast(Dict[Tuple[Factor, int], int], {})
 
+    def sep_continuous_factors(self, 
+                             design: List[Factor])->List[Factor]:
+        discret_design = []
+        cFactor = []
+        for f in design:
+            if isinstance(f, ContinuousFactor):
+                cFactor.append(f)
+            else:
+                discret_design.append(f)
+        self.continuous_factors = cFactor
+        self.continuous_factor_samples: Dict[int, Dict[str, List[int]]] = {}
+        return discret_design
+
+    # Add continuous factors back to design after sampling continuous
+    def restore_continuous(self):
+        self.design = self.design + self.continuous_factors
+        return 
+
+    # Helper frunction to sample with continuous factor. 
+    # This stores values for continuousfactor
+    # Trial Number, Factor Name, List of values
+    # self.continuous_factor_samples = {}
+    def sample_continuous(self, trial_num, trial):
+        meet_constraints = False
+        continue_counter = 0
+        max_attempts = 10000000
+        # start_time = time.time()
+        # time_limit = 60
+        while not meet_constraints:
+            # if time.time() - start_time >= time_limit:
+            #     raise TimeoutError("Sampling process exceeded the time limit of {} seconds to meet continuous constraints.".format(time_limit)) 
+            if continue_counter >= max_attempts:
+                # raise RuntimeError("Exceeded the maximum number of resampling attempts ({}) to meet continuous constraints.".format(max_attempts))
+                print('Trial: {}, Sampling count {} exceeds max attempts. Consider modify continuous constraints.'.format(trial_num, continue_counter), end="\r", flush=True)  
+            elif continue_counter>0:
+                print('Trial: {}, Sampling count to meet continuous constraints: {}'.format(trial_num, continue_counter), end="\r", flush=True)  
+            continuous_samples = self._sample_continuous(trial_num, trial)
+            # Check if constraints are met.
+            meet_constraints = self._check_constraints(continuous_samples)
+            continue_counter+=1
+        # Should add Constraints here such that Not only Specific trial is resampled OR during the above function
+        if continue_counter>1:
+            print()
+        return continuous_samples
+
+    def _sample_continuous(self, trial_num, trial):
+        # samples per trial
+        continuous_output = {}
+        self.continuous_factor_samples[trial_num] = continuous_output
+        for cFactor in self.continuous_factors:
+            dist = cFactor.get_distribution()
+            if hasattr(dist, "reset"):
+                dist.reset()
+            # sample for current cfactor
+            continuous_samples = []
+            continuous_output[cFactor.name] = continuous_samples
+            for i in range(self._trials_per_sample):
+                sample_input = []
+                # Get dependent factors for current factor
+                dependents = cFactor.get_levels()
+                for j, dependent in enumerate(dependents):
+                    if isinstance(dependent, ContinuousFactorWindow):
+                        sample_input.append(dependent.get_window_val(i, continuous_output))
+                    elif isinstance(dependent, ContinuousFactor):
+                        sample_input.append(continuous_output[dependent.name][i])
+                    elif isinstance(dependent, (int, float)):
+                        sample_input.append(dependent)
+                    elif isinstance(dependent, Factor) and dependent.name in trial:
+                        sample_input.append(trial[dependent.name][i])
+                    else:  
+                        raise RuntimeError("Dependency {} is not continuous factor or number or factor in the design".format(dependent))
+                c_value = cFactor.generate(sample_input)
+                continuous_samples.append(c_value)
+            continuous_output[cFactor.name] = continuous_samples
+        return continuous_output
+
+    def _check_constraints(self, continuous_samples):
+        from sweetpea._internal.constraint import ContinuousConstraint
+        continue_constraints = []
+        for c in self.constraints:
+            if isinstance(c, ContinuousConstraint):
+                continue_constraints.append(c)
+        if len(continue_constraints)==0:
+            return True
+        for c in continue_constraints:
+            _factors = c.factors
+            _function = c.constraint_function 
+            num_trials = len(continuous_samples[_factors[0].name])
+            for i in range(num_trials):
+                inputs = [continuous_samples[f.name][i] for f in _factors]
+                if not _function(*inputs):
+                    return False
+        return True
+        
     def show_errors(self) -> bool:
         failed = False
         if self.errors:
@@ -77,10 +178,46 @@ class Block:
                 included_factor_names.add(factor.name)
         return included_factor_names
 
+
+    def __get_window_range(self, n: int, width: int, stride: int, start: int) -> Union[tuple[int, int], None]:
+        """
+        Returns the start and end indices (inclusive) of the window at trial n,
+        or None if the window does not apply at trial n.
+        """
+        if n < start:
+            return None  # window hasn't started
+        if (n - start) % stride != 0:
+            return None  # skip this trial due to stride
+
+        end_index = n
+        start_index = n - (width - 1)
+
+        if start_index < 0:
+            return None  # not enough history
+
+        return start_index, end_index
+        
+    # DW: Validation for continuous factor
+    def __check_dependency(self):
+        allfactors = set()
+        for cFactor in self.continuous_factors:
+            dependents = cFactor.get_levels()
+            if len(dependents)==0:
+                allfactors.add(cFactor.name)
+            else:
+                for dependent in dependents:
+                    if isinstance(dependent, ContinuousFactor) and dependent.name not in allfactors:
+                        raise RuntimeError("WARNING: Derived Conitunuous factor {} has dependency {} not included in the deisgn".format(cFactor.name, dependent.name))
+                    elif isinstance(dependent, ContinuousFactor):
+                        allfactors.add(cFactor.name)
+        return
+                
     def __validate(self, who: str):
         for cr in self.crossings:
             names = set()
             for f in cr:
+                if isinstance(f, ContinuousFactor):
+                    raise RuntimeError(f"{who}: factor should not be in crossing{f}")
                 if not f in self.design:
                     raise RuntimeError(f"{who}: factor in crossing is not in design: {f}")
                 if f.name in names:
@@ -93,25 +230,13 @@ class Block:
         basic_factor_names = set()
         included_factor_names = set()
         for design_factor in self.design:
-            # DW: modify this for ContinuousFactor
-            if not isinstance(design_factor, ContinuousFactor):
-            # if hasattr(design_factor, 'levels'):
-                for level in design_factor.levels:
-                    if isinstance(level, SimpleLevel):
-                        basic_factor_names.add(level.factor.name)
-                    elif isinstance(level, DerivedLevel):
-                        included_factor_names.update(self.extract_basic_factor_names(level))
-                    else:
-                        raise RuntimeError('Expected SimpleLevel or DerivedLevel but found ' + str(type(level)))
-            
-            # DW: Not sure if this is necessary 
-            # else:
-            #     # Check for continuousFactor since it does not have level
-            #     if isinstance(design_factor, ContinuousFactor):
-            #         basic_factor_names.add(design_factor.name)
-            #     elif isinstance(design_factor, DerivedFactor):
-                    
-                    # This should only happen if it is DerivedFactor of ContinuousFactor
+            for level in design_factor.levels:
+                if isinstance(level, SimpleLevel):
+                    basic_factor_names.add(level.factor.name)
+                elif isinstance(level, DerivedLevel):
+                    included_factor_names.update(self.extract_basic_factor_names(level))
+                else:
+                    raise RuntimeError('Expected SimpleLevel or DerivedLevel but found ' + str(type(level)))
         undefined_factor_names = included_factor_names - basic_factor_names
         if undefined_factor_names:
             # The derived levels include factors that are not basic factors.
@@ -126,7 +251,13 @@ class Block:
         for c in self.constraints:
             if isinstance(c, AtLeastKInARow):
                 c.max_trials_required = self.trials_per_sample() * c.k
-
+        
+        from sweetpea._internal.constraint import ContinuousConstraint
+        for c in self.constraints:
+            if isinstance(c, ContinuousConstraint):
+                _factors = c.factors
+                for f in _factors:
+                    self.errors.add("WARNING: ContinuousConstraint may cause the factor {} to deviate from its designated distribution.".format(f.name))
     @abstractmethod
     def trials_per_sample(self):
         """Indicates the number of trials that are generated per sample for
@@ -178,10 +309,6 @@ class Block:
                              start: int = 0,
                              end: Optional[int] = None) -> int:
         """Indicates the number of variables needed to encode this factor."""
-        # DW: Set as 0 for ContinuousFactor
-        # if isinstance(f, ContinuousFactor):
-        #     return 0
-        # else:
         trial_list = range(1 + start, (end if end else self.trials_per_sample()) + 1)
         return reduce(lambda sum, t: sum + len(f.levels) if f.applies_to_trial(t) else sum, trial_list, 0)
 
@@ -190,6 +317,8 @@ class Block:
         if not isinstance(factor, Factor):
             raise ValueError('Non-factor argument to has_factor.')
         if factor in self.design:
+            return factor
+        if factor in self.continuous_factors:
             return factor
         return cast(Factor, None)
 
@@ -212,7 +341,7 @@ class Block:
             return self.grid_variables() + offset
 
         else:
-            simple_factors = list(filter(lambda f: not (f.has_complex_window or isinstance(f, ContinuousFactor)), self.act_design))
+            simple_factors = list(filter(lambda f: not f.has_complex_window, self.act_design))
             simple_levels = get_all_levels(simple_factors)
             return simple_levels.index((factor, level))
 
