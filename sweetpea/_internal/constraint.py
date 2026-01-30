@@ -1027,15 +1027,18 @@ class OrderRunsByPermutation(Constraint):
     def __init__(self,
                  perm_factor: Factor,
                  inner_block: MultiCrossBlockRepeat,
-                 level2perm: Dict[Level, Tuple[int, ...]]):
+                 level2perm: Dict[Level, Tuple[int, ...]],
+                 external_preamble: int = 0):
         self.perm_factor = perm_factor
         self.inner_block = inner_block
         if len(inner_block.crossings) != 1:
             raise ValueError("OrderRunsByPermutation expects an inner block with exactly one crossing.")
         self.inner_cross = inner_block.crossings[0]
         self.cross_size  = inner_block.crossing_size(self.inner_cross)
-        self.preamble    = inner_block.preamble_size(self.inner_cross)
-        self.run_len     = self.preamble + self.cross_size
+
+        self.preamble = external_preamble
+        
+        self.run_len = self.cross_size#self.cross_size
         self.level2perm  = level2perm  # {Level: tuple[int]}
 
     def validate(self, block: Block) -> None:
@@ -1054,12 +1057,13 @@ class OrderRunsByPermutation(Constraint):
     def desugar(self, replacements: dict) -> List[Constraint]:
         # Replace perm_factor and possibly Level keys if weights were desugared.
         perm_factor = replacements.get(self.perm_factor, self.perm_factor)
+
         # Re-map keys if levels got replaced
         new_map: Dict[Level, Tuple[int, ...]] = {}
         for k, v in self.level2perm.items():
             new_k = replacements.get(k, k)
             new_map[new_k] = v
-        return [OrderRunsByPermutation(perm_factor, self.inner_block, new_map)]
+        return [OrderRunsByPermutation(perm_factor, self.inner_block, new_map, external_preamble=self.preamble)]
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
         from itertools import product
@@ -1074,20 +1078,25 @@ class OrderRunsByPermutation(Constraint):
             raise RuntimeError("OrderRunsByPermutation: valid combo count != crossing_size.")
 
         T = block.trials_per_sample()
-        if T % self.run_len != 0:
+
+        if (T - self.preamble) % self.run_len != 0:
             raise RuntimeError(f"OrderRunsByPermutation: total trials ({T}) not multiple of run_len ({self.run_len}).")
-        W = T // self.run_len
+        W = (T - self.preamble) // self.run_len
 
         clauses = []
         for w in range(W):
-            start0 = w * self.run_len
-            sel_t1 = start0 + 1  # selection read at first trial of window
+            
+            start0 = self.preamble + w * self.run_len
+            sel_t1 = start0 + 1
+
             for lvl, perm in self.level2perm.items():
                 sel = block.get_variable(sel_t1, (self.perm_factor, lvl))
                 # pin only post-preamble part
                 for t in range(self.cross_size):
                     combo = valid[perm[t]]
-                    trial1 = start0 + self.preamble + t + 1
+                    # trial1 = start0 + self.preamble + t + 1
+                    trial1 = start0 + t + 1
+
                     need = [block.get_variable(trial1, (f, combo[f])) for f in self.inner_cross]
                     clauses.append(If(sel, And(need)))
 
@@ -1107,16 +1116,21 @@ class OrderRunsByPermutation(Constraint):
 
         # total trials
         T = len(next(iter(sample.values())))
-        if T % self.run_len != 0:
+
+        if (T - self.preamble) % self.run_len != 0:
             return False
-        W = T // self.run_len
+        W = (T - self.preamble) // self.run_len
+
 
         # permutation sequence for this sample (Levels or strings)
         perm_seq = _series_for(sample, self.perm_factor)
 
+        print('ps: ', perm_seq)
         for w in range(W):
-            start0 = w * self.run_len
+            # start0 = w * self.run_len
+            start0 = self.preamble + w * self.run_len
             chosen = perm_seq[start0]
+
             # resolve chosen level object (works if chosen is Level or string)
             chosen_lvl = None
             for l in self.perm_factor.levels:
@@ -1131,7 +1145,8 @@ class OrderRunsByPermutation(Constraint):
 
             # verify inner window matches the selected permutation
             for t in range(self.cross_size):
-                idx = start0 + self.preamble + t
+                # idx = start0 + self.preamble + t
+                idx = start0 + t
                 combo = valid[perm[t]]
                 for f in self.inner_cross:
                     f_seq = _series_for(sample, f)
@@ -1146,14 +1161,18 @@ class ConstantInWindows(Constraint):
     Enforce that `factor` is constant inside each fixed window of length `run_len`,
     with windows starting at 0, run_len, 2*run_len, ...
     """
-    def __init__(self, factor: Factor, run_len: int):
+    def __init__(self, factor: Factor, run_len: int, start: int = 0):
         self.factor = factor
         self.run_len = run_len
+        self.start = int(start)
 
     def validate(self, block: Block) -> None:
         validate_factor(block, self.factor)
         if not isinstance(self.run_len, int) or self.run_len <= 0:
             raise ValueError("ConstantInWindows: run_len must be a positive integer.")
+        if self.start < 0:
+            raise ValueError("ConstantInWindows: start must be >= 0.")
+
 
     def uses_factor(self, f: Factor) -> bool:
         return self.factor.uses_factor(f)
@@ -1161,21 +1180,36 @@ class ConstantInWindows(Constraint):
     def desugar(self, replacements: dict) -> List[Constraint]:
         # honor weight desugaring, etc.
         factor = replacements.get(self.factor, self.factor)
-        return [ConstantInWindows(factor, self.run_len)]
+        return [ConstantInWindows(factor, self.run_len, start=self.start)]
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
         from sweetpea._internal.logic import If, And
+
+        # Compute window size multiples w/o preamble trials
         T = block.trials_per_sample()
-        if T % self.run_len != 0:
-            raise RuntimeError(f"ConstantInWindows: total trials ({T}) not multiple of run_len ({self.run_len}).")
+        if (T - self.start) % self.run_len != 0:
+            raise RuntimeError(
+                f"ConstantInWindows: total trials ({T}) minus start ({self.start}) "
+                f"not multiple of run_len ({self.run_len})."
+            )
+
 
         clauses = []
-        for start in range(0, T, self.run_len):
+        for start in range(self.start, T, self.run_len):
             t1 = start + 1  # trials are 1-based internally
+            
+            if not self.factor.applies_to_trial(t1):
+                continue
             for lvl in self.factor.levels:
                 sel = block.get_variable(t1, (self.factor, lvl))
-                need = [block.get_variable(t1 + k, (self.factor, lvl)) for k in range(self.run_len)]
+                need = [
+                    block.get_variable(t1 + k, (self.factor, lvl))
+                    for k in range(self.run_len)
+                    if block.has_factor(self.factor)
+                    and self.factor.applies_to_trial(t1 + k)
+                ]
                 clauses.append(If(sel, And(need)))
+
 
         if clauses:
             cnf, backend_request.fresh = block.cnf_fn(And(clauses), backend_request.fresh)
@@ -1184,11 +1218,13 @@ class ConstantInWindows(Constraint):
     def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
         # total length from any entry
         T = len(next(iter(sample.values())))
-        if T % self.run_len != 0:
+
+        if (T - self.start) % self.run_len != 0:
             return False
 
+
         seq = _series_for(sample, self.factor)  # list of Level or str
-        for start in range(0, T, self.run_len):
+        for start in range(self.start, T, self.run_len):
             window = seq[start:start + self.run_len]
             if not window:  # defensive
                 return False

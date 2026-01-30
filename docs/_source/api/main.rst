@@ -234,9 +234,9 @@ using :func:`.synthesize_trials`. Print generated trials using
    `external factors` in the design remain constant
    throughout that window and may change only between windows.
 
-   The `design` argument lists the `inner block` and the `external factors` 
-   used to form windows. The `crossing` argument must list all `external factors`
-   from design, and it may optionally include the `inner block` itself:
+   The `design` argument lists the `inner block` used to form windows 
+   and the `external factors`. The `crossing` argument could list any
+   `external factors` from design, including the `inner block`:
 
    If `crossing` only contains the `external factors`, each window reuses 
    the `inner block` exactly as defined, and windows are balanced 
