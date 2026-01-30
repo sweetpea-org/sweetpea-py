@@ -72,31 +72,31 @@ def main():
     sp.print_experiments(block, experiments)
 
     
-    size       = sp. Factor("size",  ["large", "small"])
-    color      = sp.Factor("color", ["red", "blue"]) 
-    design       = [size, color]
-    crossing     = [size, color]
-    block        = sp.CrossBlock(design, crossing, [])
+    # size       = sp. Factor("size",  ["large", "small"])
+    # color      = sp.Factor("color", ["red", "blue"]) 
+    # design       = [size, color]
+    # crossing     = [size, color]
+    # block        = sp.CrossBlock(design, crossing, [])
 
-    task = sp.Factor(name='task', initial_levels=['word_naming', 'color_naming'])
+    # task = sp.Factor(name='task', initial_levels=['word_naming', 'color_naming'])
     
-    # predicates
-    def is_repeat(_task):
-        return _task[-1] == _task[0]
-    is_switch = lambda x : not is_repeat(x)
+    # # predicates
+    # def is_repeat(_task):
+    #     return _task[-1] == _task[0]
+    # is_switch = lambda x : not is_repeat(x)
 
-    # levels
-    repeat = sp.DerivedLevel(name='repeat_block', window=sp.Transition(is_repeat, [task]))
-    switch = sp.DerivedLevel(name='switch_block', window=sp.Transition(is_switch, [task]))
+    # # levels
+    # repeat = sp.DerivedLevel(name='repeat_block', window=sp.Transition(is_repeat, [task]))
+    # switch = sp.DerivedLevel(name='switch_block', window=sp.Transition(is_switch, [task]))
 
-    task_transition = sp.Factor(name='task_transition', initial_levels=[repeat, switch])
+    # task_transition = sp.Factor(name='task_transition', initial_levels=[repeat, switch])
 
-    nested_design = [task, task_transition, block]
-    nested_cross = [task, task_transition, block]
-    permuted_block2 = sp.NestedBlock(nested_design, nested_cross, [])
+    # nested_design = [task, task_transition, block]
+    # nested_cross = [task, task_transition, block]
+    # permuted_block2 = sp.NestedBlock(nested_design, nested_cross, [])
 
-    experiments  = sp.synthesize_trials(permuted_block2, 1)#, CMSGen)
-    sp.print_experiments(permuted_block2, experiments)
+    # experiments  = sp.synthesize_trials(permuted_block2, 1)#, CMSGen)
+    # sp.print_experiments(permuted_block2, experiments)
 
     return
 
