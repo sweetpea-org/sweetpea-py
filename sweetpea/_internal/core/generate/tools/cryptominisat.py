@@ -1,5 +1,4 @@
-"""This module provides functionality for calling the third-party CryptoMiniSAT
-tool.
+"""This module provides functionality for calling the third-party CryptoMiniSAT tool.
 
 `CryptoMiniSAT <https://github.com/msoos/cryptominisat>`_ is a an advanced
 incremental SAT solver. SweetPea uses CryptoMiniSAT for a few processes,
@@ -7,11 +6,11 @@ including solving some CNF formulas or checking whether a CNF formula is
 satisfiable to begin with.
 """
 
-
 from pathlib import Path
 from shlex import split as shell_split
 from subprocess import CompletedProcess, run
 from typing import List, Optional, Tuple
+import warnings
 
 from .docker_utility import DEFAULT_DOCKER_MODE_ON, docker_run
 from .executables import CRYPTOMINISAT_EXE, DEFAULT_DOWNLOAD_IF_MISSING, ensure_executable_available
@@ -20,6 +19,14 @@ from .tool_error import ToolError
 
 
 __all__ = ['DEFAULT_DOCKER_MODE_ON', 'cryptominisat_solve', 'cryptominisat_is_satisfiable']
+
+
+# Try to import pycryptosat for Python-based solving
+try:
+    import pycryptosat
+    HAS_PYCRYPTOSAT = True
+except ImportError:
+    HAS_PYCRYPTOSAT = False
 
 
 class CryptoMiniSATReturnCode(ReturnCodeEnum):
@@ -38,6 +45,73 @@ class CryptoMiniSATReturnCode(ReturnCodeEnum):
 class CryptoMiniSATError(ToolError):
     """An error raised when CryptoMiniSAT fails."""
     pass
+
+
+def _use_pycryptosat_library(input_file: Path) -> CompletedProcess:
+    """Use pycryptosat Python library instead of CLI binary.
+    
+    This avoids DLL dependency issues on Windows and is faster since
+    it doesn't require subprocess overhead. Returns a CompletedProcess
+    object compatible with the CLI interface.
+    """
+    if not HAS_PYCRYPTOSAT:
+        raise ImportError("pycryptosat not available")
+    
+    # Parse DIMACS CNF file
+    clauses = []
+    num_vars = 0
+    
+    with open(input_file, 'r') as f:
+        for line in f:
+            line = line.strip()
+            
+            # Skip comments and empty lines
+            if line.startswith('c') or not line:
+                continue
+            
+            # Parse header: p cnf <num_vars> <num_clauses>
+            if line.startswith('p'):
+                parts = line.split()
+                if len(parts) >= 3:
+                    num_vars = int(parts[2])
+                continue
+            
+            # Parse clause
+            literals = [int(x) for x in line.split()]
+            if literals and literals[-1] == 0:
+                literals = literals[:-1]
+            if literals:
+                clauses.append(literals)
+    
+    # Solve with pycryptosat
+    solver = pycryptosat.Solver()
+    for clause in clauses:
+        solver.add_clause(clause)
+    
+    sat, solution = solver.solve()
+    
+    # Format output like CryptoMiniSat CLI
+    if sat:
+        solution_parts = []
+        for i in range(1, len(solution)):
+            if solution[i]:
+                solution_parts.append(str(i))
+            else:
+                solution_parts.append(str(-i))
+        solution_parts.append("0")
+        
+        output = f"s SATISFIABLE\nv {' '.join(solution_parts)}\n"
+        returncode = 10
+    else:
+        output = "s UNSATISFIABLE\n"
+        returncode = 20
+    
+    return CompletedProcess(
+        args=["pycryptosat", str(input_file)],
+        returncode=returncode,
+        stdout=output.encode(),
+        stderr=b""
+    )
 
 
 def call_cryptominisat_docker(input_file: Path) -> CompletedProcess:
@@ -59,10 +133,40 @@ def call_cryptominisat_cli(input_file: Path, download_if_missing: bool) -> Compl
     download the CryptoMiniSAT executable (and other executables SweetPea
     depends on) to a local directory from the `sweetpea-org/unigen-exe
     repository <https://github.com/sweetpea-org/unigen-exe>`_.
+    
+    Attempts to use pycryptosat library first to avoid subprocess and DLL
+    dependency issues.
     """
+    # Try pycryptosat library first
+    if HAS_PYCRYPTOSAT:
+        try:
+            return _use_pycryptosat_library(input_file)
+        except Exception as e:
+            warnings.warn(
+                f"pycryptosat library failed ({e}), falling back to binary",
+                UserWarning,
+                stacklevel=2
+            )
+    
+    # Fall back to binary
     ensure_executable_available(CRYPTOMINISAT_EXE, download_if_missing)
     command = [str(CRYPTOMINISAT_EXE), "--verb=0", str(input_file)]
     result = run(command, capture_output=True)
+    
+    # Check for Windows DLL error
+    if result.returncode == 3221225595:
+        friendly_message = """
+Windows DLL Error: CryptoMiniSAT binary is missing Visual C++ dependencies.
+
+SOLUTIONS:
+1. Use Python mode (recommended): pip install pycryptosat
+2. Use Docker mode: Set docker_mode=True
+3. Install Visual C++ Redistributable 2015-2022:
+   - x64: https://aka.ms/vs/17/release/vc_redist.x64.exe
+   - x86: https://aka.ms/vs/17/release/vc_redist.x86.exe
+"""
+        raise CryptoMiniSATError(result.returncode, result.stdout.decode(), friendly_message)
+    
     return result
 
 
@@ -73,7 +177,8 @@ def call_cryptominisat(input_file: Path,
     """Calls CryptoMiniSAT with the given file as input.
 
     If ``docker_mode`` is ``True``, this will use a Docker container to run
-    CryptoMiniSAT. If it's ``False``, a command-line executable will be used.
+    CryptoMiniSAT. If it's ``False``, a command-line executable will be used
+    (with automatic fallback to pycryptosat library if available).
 
     If ``docker_mode`` is ``False`` *and* no local CryptoMiniSAT executable can
     be found, and if ``download_if_missing`` is ``True``, the needed executable
@@ -83,6 +188,7 @@ def call_cryptominisat(input_file: Path,
         result = call_cryptominisat_docker(input_file)
     else:
         result = call_cryptominisat_cli(input_file, download_if_missing)
+    
     if CryptoMiniSATReturnCode.has_value(result.returncode):
         return (result.stdout.decode(), CryptoMiniSATReturnCode(result.returncode))
     else:

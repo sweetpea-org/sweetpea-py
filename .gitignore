@@ -34,3 +34,6 @@ __pycache__
 .#*
 sweetpea-py-env/
 docs/_build
+sweetpea-dev/
+*-dev/
+install-pyenv-win.ps1
