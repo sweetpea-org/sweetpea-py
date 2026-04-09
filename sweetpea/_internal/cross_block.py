@@ -560,12 +560,14 @@ class NestedBlock(MultiCrossBlockRepeat):
 
         if constraints is None:
             constraints = []
+        self._user_constraints = list(constraints)  # Store user's constraints before merging with internal ones
 
         # ---- find inner block and externals at this level
         inner_blocks = [x for x in design if isinstance(x, MultiCrossBlockRepeat)]
         if len(inner_blocks) != 1:
             raise ValueError("NestedBlock expects exactly one inner block in `design`.")
         inner_block = inner_blocks[0]
+        self._inner_block = inner_block  # Store for LatinSquare per-participant solving
 
         externals: List[Factor] = [x for x in design if isinstance(x, Factor)]
         # externals explicitly requested to be *jointly crossed* at this level

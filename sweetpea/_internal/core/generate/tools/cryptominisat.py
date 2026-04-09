@@ -21,7 +21,6 @@ from .tool_error import ToolError
 __all__ = ['DEFAULT_DOCKER_MODE_ON', 'cryptominisat_solve', 'cryptominisat_is_satisfiable']
 
 
-# Try to import pycryptosat for Python-based solving
 try:
     import pycryptosat
     HAS_PYCRYPTOSAT = True
@@ -48,11 +47,14 @@ class CryptoMiniSATError(ToolError):
 
 
 def _use_pycryptosat_library(input_file: Path) -> CompletedProcess:
-    """Use pycryptosat Python library instead of CLI binary.
-    
-    This avoids DLL dependency issues on Windows and is faster since
-    it doesn't require subprocess overhead. Returns a CompletedProcess
-    object compatible with the CLI interface.
+    """Use the ``pycryptosat`` library instead of the CLI binary.
+
+    :param input_file:
+        Path to a DIMACS CNF file.
+
+    :returns:
+        A :class:`~subprocess.CompletedProcess` compatible with the CLI
+        interface.
     """
     if not HAS_PYCRYPTOSAT:
         raise ImportError("pycryptosat not available")
@@ -83,7 +85,6 @@ def _use_pycryptosat_library(input_file: Path) -> CompletedProcess:
             if literals:
                 clauses.append(literals)
     
-    # Solve with pycryptosat
     solver = pycryptosat.Solver()
     for clause in clauses:
         solver.add_clause(clause)
@@ -133,11 +134,7 @@ def call_cryptominisat_cli(input_file: Path, download_if_missing: bool) -> Compl
     download the CryptoMiniSAT executable (and other executables SweetPea
     depends on) to a local directory from the `sweetpea-org/unigen-exe
     repository <https://github.com/sweetpea-org/unigen-exe>`_.
-    
-    Attempts to use pycryptosat library first to avoid subprocess and DLL
-    dependency issues.
     """
-    # Try pycryptosat library first
     if HAS_PYCRYPTOSAT:
         try:
             return _use_pycryptosat_library(input_file)

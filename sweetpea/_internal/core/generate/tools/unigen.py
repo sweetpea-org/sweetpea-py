@@ -22,14 +22,12 @@ from ..utility import temporary_cnf_file
 __all__ = ['DEFAULT_DOCKER_MODE_ON', 'UnigenError', 'call_unigen']
 
 
-# Try to import pyunigen for Python-based uniform sampling
 try:
     import pyunigen
     HAS_PYUNIGEN = True
 except ImportError:
     HAS_PYUNIGEN = False
 
-# Try to import pycmsgen for Python-based near-uniform sampling
 try:
     import pycmsgen
     HAS_PYCMSGEN = True
@@ -44,9 +42,12 @@ class UnigenError(ToolError):
 
 def parse_cnf_file(input_file: Path) -> Tuple[list, list, int]:
     """Parse a DIMACS CNF file to extract clauses, sampling set, and variable count.
-    
-    Returns:
-        (clauses, sampling_set, num_vars)
+
+    :param input_file:
+        Path to a DIMACS CNF file.
+
+    :returns:
+        A :class:`tuple` of ``(clauses, sampling_set, num_vars)``.
     """
     clauses = []
     sampling_set = []
@@ -94,17 +95,17 @@ def parse_cnf_file(input_file: Path) -> Tuple[list, list, int]:
 
 
 def call_unigen_python(input_file: Path, sample_count: int) -> str:
-    """Calls pyunigen library for uniform sampling (Python-based, no binary needed).
-    
-    This is the preferred method on Windows as it avoids DLL dependency issues.
-    
-    Args:
-        input_file: CNF file to sample from
-        sample_count: Number of samples requested. pyunigen may return
-                     a different number based on its internal algorithm.
-    
-    Returns:
-        Formatted sample output string matching UniGen binary format
+    """Calls the ``pyunigen`` library for uniform sampling.
+
+    :param input_file:
+        Path to a CNF file to sample from.
+
+    :param sample_count:
+        Number of samples requested. ``pyunigen`` may return a different
+        number based on its internal algorithm.
+
+    :returns:
+        Formatted sample output :class:`str` matching UniGen binary format.
     """
     if not HAS_PYUNIGEN:
         raise ImportError("pyunigen not available")
@@ -117,7 +118,6 @@ def call_unigen_python(input_file: Path, sample_count: int) -> str:
     if not sampling_set:
         sampling_set = list(range(1, num_vars + 1))
     
-    # Create pyunigen sampler and add all clauses
     sampler = pyunigen.Sampler()
     for clause in clauses:
         sampler.add_clause(clause)
@@ -145,18 +145,20 @@ def call_unigen_python(input_file: Path, sample_count: int) -> str:
 
 
 def call_cmsgen_python(input_file: Path, sample_count: int) -> str:
-    """Calls pycmsgen library for near-uniform sampling (Python-based, no binary needed).
+    """Calls the ``pycmsgen`` library for near-uniform sampling.
 
-    Unlike pyunigen which returns multiple samples in one call, pycmsgen only
-    returns one sample per solve() call. To collect multiple samples, we create
-    a new Solver with a different random seed for each sample.
+    Unlike ``pyunigen`` which returns multiple samples in one call, ``pycmsgen``
+    returns one sample per ``solve()`` call. To collect multiple samples, a new
+    ``Solver`` is created with a different random seed for each sample.
 
-    Args:
-        input_file: CNF file to sample from
-        sample_count: Number of samples requested.
+    :param input_file:
+        Path to a CNF file to sample from.
 
-    Returns:
-        Formatted sample output string matching CMSGen binary format
+    :param sample_count:
+        Number of samples requested.
+
+    :returns:
+        Formatted sample output :class:`str` matching CMSGen binary format.
     """
     if not HAS_PYCMSGEN:
         raise ImportError("pycmsgen not available")
@@ -217,9 +219,6 @@ def call_unigen_cli(input_file: Path,
     download the Unigen executable (and other executables SweetPea depends on)
     to a local directory from the `sweetpea-org/unigen-exe repository
     <https://github.com/sweetpea-org/unigen-exe>`_.
-    
-    Note: The preferred mode for both UniGen and CMSGen is Python library mode.
-    This CLI function is used as a fallback when the Python libraries are unavailable.
     """
     unigen_exe = CMSGEN_EXE if use_cmsgen else UNIGEN_EXE
     ensure_executable_available(unigen_exe, download_if_missing)
@@ -297,10 +296,8 @@ def call_unigen(sample_count: int,
                                             sample_count, use_cmsgen)
     
     if result.returncode == (10 if use_cmsgen else 0):
-        # Success
         return result.stdout.decode() + samples
     else:
-        # Failure
         stdout = result.stdout.decode()
         stderr = result.stderr.decode()
         

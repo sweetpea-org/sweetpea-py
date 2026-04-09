@@ -118,9 +118,89 @@ Constraints
 
               :param factors: the factors to add constraints on
               :type factors: List[ContinuousFactor]
-              :param predicate: a constraint function takes `factors` 
-                                initialized with sampling function. 
+              :param predicate: a constraint function takes `factors`
+                                initialized with sampling function.
                                 The function should return true if the
                                 combination of factors meet the constraints.
               :type predicate: Callable[[Any, ...], bool]
               :rtype: Constraint
+
+.. class:: sweetpea.LatinSquare(outer_factors, num_diagonals=None)
+
+              Constrains a :class:`.NestedBlock` experiment to use Latin
+              Square counterbalancing across participants.
+
+              A Latin Square partitions the combinations of ``outer_factors``
+              into diagonals, where each diagonal is assigned to a different
+              participant. For a square grid (all factors have the same number
+              of levels), each diagonal contains exactly one level of each
+              factor, ensuring balanced coverage.
+
+              The diagonal for each combination is computed as::
+
+                 diagonal = (i1 + i2 + ...) % D
+
+              where ``i1, i2, ...`` are the level indices and ``D`` is
+              ``num_diagonals`` (defaulting to the maximum number of levels
+              across all factors).
+
+              :class:`.LatinSquare` is used with :class:`.NestedBlock` and the
+              ``participants`` parameter of :func:`.synthesize_trials`. It does
+              not add SAT clauses to the formula; instead, it provides the
+              information needed to build per-participant reduced blocks.
+
+              For rectangular grids (factors with different numbers of levels),
+              balance warnings are printed at construction time.
+
+              :param outer_factors: the factors forming the outer grid of the
+                                    Latin Square; these should also be the
+                                    external factors in the :class:`.NestedBlock`
+              :type outer_factors: List[Factor]
+              :param num_diagonals: number of diagonals (and thus distinct
+                                    participant assignments) to create; defaults
+                                    to ``max`` of all factor level counts
+              :type num_diagonals: Optional[int]
+              :rtype: Constraint
+
+              .. attribute:: num_participants
+
+                 The number of distinct participant assignments (equal to the
+                 number of diagonals).
+
+                 :type: int
+
+              .. attribute:: diagonals
+
+                 A dictionary mapping each diagonal ID to a list of outer factor
+                 combination tuples. For example, with ``Font = {S, B}`` and
+                 ``Color = {R, G}``::
+
+                    {0: [('S', 'R'), ('B', 'G')],
+                     1: [('S', 'G'), ('B', 'R')]}
+
+                 :type: Dict[int, List[tuple]]
+
+              .. method:: diagonal_combos(participant)
+
+                 Returns the outer factor combinations assigned to a
+                 participant's diagonal. Participant IDs wrap cyclically:
+                 participant 4 on a 2-diagonal grid maps to diagonal 0.
+
+                 :param participant: participant ID
+                 :type participant: int
+                 :returns: combinations for this participant's diagonal
+                 :rtype: List[tuple]
+
+              .. method:: participant_for_trial(experiment, trial_index)
+
+                 Given a single experiment dictionary and a trial index,
+                 returns the participant ID whose diagonal contains
+                 that trial's outer factor combination.
+
+                 :param experiment: a single experiment dictionary from
+                                    :func:`.synthesize_trials`
+                 :type experiment: Dict[str, list]
+                 :param trial_index: index of the trial
+                 :type trial_index: int
+                 :returns: the participant ID, or ``None`` if no diagonal matches
+                 :rtype: Optional[int]
