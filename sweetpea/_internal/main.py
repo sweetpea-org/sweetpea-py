@@ -397,10 +397,10 @@ def synthesize_trials(block: Block,
         (when Latin Square counterbalancing is active).
     """
 
-    # --- Latin Square per-participant path ---
-    # When a LatinSquare constraint is present, default to all participants.
-    if participants is None:
-        for c in block.constraints:
+    # Latin Square: auto-detect all participants when LatinSquare is present
+    from sweetpea._internal.cross_block import NestedBlock
+    if participants is None and isinstance(block, NestedBlock):
+        for c in getattr(block, '_user_constraints', []):
             if isinstance(c, LatinSquare):
                 participants = list(range(c.num_participants))
                 break
@@ -410,7 +410,6 @@ def synthesize_trials(block: Block,
             block, samples, sampling_strategy, participants
         )
 
-    # --- Standard path (unchanged) ---
     def starting(who):
         # type: (Any) -> None
         print("Sampling {} trial sequences using {}.".format(samples, who))
@@ -488,7 +487,6 @@ def _synthesize_latin_square_participants(block, samples, sampling_strategy, par
         A :class:`dict` mapping participant IDs to :class:`lists <list>` of
         experiment :class:`dicts <dict>`.
     """
-    # Find the LatinSquare constraint
     ls_constraint = None
     for c in block.constraints:
         if isinstance(c, LatinSquare):
@@ -504,28 +502,26 @@ def _synthesize_latin_square_participants(block, samples, sampling_strategy, par
     results = {}
 
     for pid in participants:
-        # Build reduced NestedBlock for this participant
         reduced_nb, outer_factor_names, separator = \
             ls_constraint.build_participant_block(block, pid)
 
-        # Solve using standard path (participants=None)
-        experiments = synthesize_trials(
-            reduced_nb, samples=samples, sampling_strategy=sampling_strategy
-        )
+        # Solve one sample at a time so each gets its own external stitch
+        experiments = []
+        for _ in range(samples):
+            single = synthesize_trials(
+                reduced_nb, samples=1, sampling_strategy=sampling_strategy
+            )
+            experiments.extend(single)
 
-        # Post-process: split _ls_condition into original outer factor columns
+        # Split _ls_condition back into original outer factor columns
         processed_experiments = []
         for exp in experiments:
             new_exp = {}
-
-            # Reconstruct outer factor columns from condition values
             condition_values = exp.get("_ls_condition", [])
             for f_idx, f_name in enumerate(outer_factor_names):
                 new_exp[f_name] = [
                     v.split(separator)[f_idx] for v in condition_values
                 ]
-
-            # Copy inner factor columns (everything except _ls_condition)
             for key, values in exp.items():
                 if key != "_ls_condition":
                     new_exp[key] = values

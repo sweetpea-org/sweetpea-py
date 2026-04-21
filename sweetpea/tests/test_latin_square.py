@@ -229,16 +229,27 @@ class TestLatinSquareConstraint:
         assert ls.participant_for_trial(exp, 2) == 1  # S,G
         assert ls.participant_for_trial(exp, 3) == 1  # B,R
 
-    def test_constraint_noop(self):
-        """Constraint ABC methods are no-ops."""
+    def test_constraint_noop_methods(self):
+        """apply, potential_sample_conforms, desugar are no-ops."""
         font = Factor("Font", levels(["S", "B"]))
         ls = LatinSquare(outer_factors=[font])
 
         # These should not raise
-        ls.validate(None)
         ls.apply(None, None)
         assert ls.potential_sample_conforms(None, None) is True
         assert ls.desugar({}) == [ls]
+
+    def test_uses_factor(self):
+        """uses_factor reports whether the factor is an outer factor."""
+        font = Factor("Font", levels(["S", "B"]))
+        color = Factor("Color", levels(["R", "G"]))
+        task = Factor("Task", levels(["Rd", "Wr"]))
+
+        ls = LatinSquare(outer_factors=[font, color])
+
+        assert ls.uses_factor(font) is True
+        assert ls.uses_factor(color) is True
+        assert ls.uses_factor(task) is False
 
 
 # ==========================================================================
@@ -523,3 +534,387 @@ class TestLatinSquareIntegration:
         with pytest.raises(ValueError, match="LatinSquare constraint"):
             synthesize_trials(nb, 1, sampling_strategy=IterateGen,
                               participants=[0])
+
+
+# ==========================================================================
+# Validation tests: LatinSquare must be on NestedBlock with external factors
+# ==========================================================================
+
+class TestLatinSquareValidation:
+
+    def test_validate_skips_non_nestedblock(self):
+        """LatinSquare.validate() silently skips non-NestedBlock blocks.
+
+        NestedBlock merges constraints into the inner CrossBlock, so
+        validate() is called on both. It must not raise on CrossBlock."""
+        font = Factor("Font", levels(["S", "B"]))
+        color = Factor("Color", levels(["R", "G"]))
+
+        ls = LatinSquare(outer_factors=[font, color])
+        cb = CrossBlock([font, color], [font, color], [])
+
+        # Should not raise — silently skips validation on non-NestedBlock
+        ls.validate(cb)
+
+    def test_validate_rejects_inner_factors(self):
+        """LatinSquare.validate() raises ValueError when outer_factors reference
+        inner block factors instead of external factors.
+
+        The error fires during NestedBlock construction since Block.__init__
+        calls validate() on all constraints."""
+        font = Factor("Font", levels(["S", "B"]))
+        color = Factor("Color", levels(["R", "G"]))
+        task = Factor("Task", levels(["Rd", "Wr"]))
+        speed = Factor("Speed", levels(["F", "Sl"]))
+
+        # LatinSquare references inner factors (task, speed) — should fail
+        ls = LatinSquare(outer_factors=[task, speed])
+        inner = CrossBlock([task, speed], [task, speed], [])
+
+        with pytest.raises(ValueError, match="not an external factor"):
+            NestedBlock(
+                design=[font, color, inner],
+                crossing=[font, color],
+                constraints=[ls]
+            )
+
+    def test_validate_accepts_correct_external_factors(self):
+        """LatinSquare.validate() succeeds when outer_factors are external."""
+        font = Factor("Font", levels(["S", "B"]))
+        color = Factor("Color", levels(["R", "G"]))
+        task = Factor("Task", levels(["Rd", "Wr"]))
+        speed = Factor("Speed", levels(["F", "Sl"]))
+
+        ls = LatinSquare(outer_factors=[font, color])
+        inner = CrossBlock([task, speed], [task, speed], [])
+
+        nb = NestedBlock(
+            design=[font, color, inner],
+            crossing=[font, color],
+            constraints=[ls]
+        )
+
+        # Should not raise
+        ls.validate(nb)
+
+    def test_inner_factors_on_nestedblock_raises(self):
+        """LatinSquare on a NestedBlock referencing inner factors raises
+        ValueError during construction (validate rejects non-external factors)."""
+        font = Factor("Font", levels(["S", "B"]))
+        color = Factor("Color", levels(["R", "G"]))
+        task = Factor("Task", levels(["Rd", "Wr"]))
+        speed = Factor("Speed", levels(["F", "Sl"]))
+
+        # Wrong: LatinSquare references inner factors, placed on NestedBlock
+        ls = LatinSquare(outer_factors=[task, speed])
+        inner = CrossBlock([task, speed], [task, speed], [])
+
+        with pytest.raises(ValueError, match="not an external factor"):
+            NestedBlock(
+                design=[font, color, inner],
+                crossing=[font, color],
+                constraints=[ls]
+            )
+
+    def test_inner_crossblock_latin_square_ignored(self):
+        """LatinSquare placed on inner CrossBlock (not NestedBlock) is silently
+        ignored — validate() skips non-NestedBlock, no recursion."""
+        font = Factor("Font", levels(["S", "B"]))
+        color = Factor("Color", levels(["R", "G"]))
+        task = Factor("Task", levels(["Rd", "Wr"]))
+        speed = Factor("Speed", levels(["F", "Sl"]))
+
+        ls = LatinSquare(outer_factors=[task, speed])
+        inner = CrossBlock([task, speed], [task, speed], [ls])
+
+        # LatinSquare on inner block — NestedBlock has no LS in _user_constraints
+        nb = NestedBlock(
+            design=[font, color, inner],
+            crossing=[font, color],
+            constraints=[]
+        )
+
+        # Standard path — no recursion, no error, returns List[dict]
+        results = synthesize_trials(nb, 1, sampling_strategy=IterateGen)
+        assert isinstance(results, list)
+        assert len(results) == 1
+
+
+# ==========================================================================
+# Regression tests: samples > 1 must produce correct trials for all samples
+# ==========================================================================
+
+class TestLatinSquareMultipleSamples:
+
+    def _extract_outer_combos(self, exp, outer_names):
+        """Helper: extract set of outer combos from an experiment dict."""
+        combos = set()
+        n = len(exp[outer_names[0]])
+        for i in range(n):
+            combos.add(tuple(exp[name][i] for name in outer_names))
+        return combos
+
+    def _count_outer_combos(self, exp, outer_names):
+        """Helper: count occurrences of each outer combo in an experiment."""
+        from collections import Counter
+        n = len(exp[outer_names[0]])
+        return Counter(
+            tuple(exp[name][i] for name in outer_names)
+            for i in range(n)
+        )
+
+    def test_2x2_two_samples_correct_outer_combos(self):
+        """Each sample in samples=2 must have correct outer factor distribution.
+
+        Regression: previously only the last sample was correctly stitched.
+        """
+        font = Factor("Font", levels(["S", "B"]))
+        color = Factor("Color", levels(["R", "G"]))
+        task = Factor("Task", levels(["Rd", "Wr"]))
+        speed = Factor("Speed", levels(["F", "Sl"]))
+
+        ls = LatinSquare(outer_factors=[font, color])
+        inner = CrossBlock([task, speed], [task, speed], [])
+
+        nb = NestedBlock(
+            design=[font, color, inner],
+            crossing=[font, color],
+            constraints=[ls]
+        )
+
+        results = synthesize_trials(nb, 2, sampling_strategy=IterateGen,
+                                    participants=[0, 1])
+
+        for pid in [0, 1]:
+            assert len(results[pid]) == 2, (
+                f"Participant {pid} should have 2 experiments"
+            )
+
+            expected_combos = self._extract_outer_combos(
+                results[pid][0], ["Font", "Color"]
+            )
+
+            for sample_idx, exp in enumerate(results[pid]):
+                # Each sample should have 8 trials
+                assert len(exp["Font"]) == 8, (
+                    f"Participant {pid}, sample {sample_idx}: "
+                    f"expected 8 trials, got {len(exp['Font'])}"
+                )
+
+                # Each sample should have the same set of outer combos
+                actual_combos = self._extract_outer_combos(
+                    exp, ["Font", "Color"]
+                )
+                assert actual_combos == expected_combos, (
+                    f"Participant {pid}, sample {sample_idx}: "
+                    f"expected combos {expected_combos}, got {actual_combos}"
+                )
+
+                # Each outer combo should appear exactly 4 times
+                # (4 inner trials per block)
+                counts = self._count_outer_combos(exp, ["Font", "Color"])
+                for combo, count in counts.items():
+                    assert count == 4, (
+                        f"Participant {pid}, sample {sample_idx}: "
+                        f"combo {combo} appeared {count} times, expected 4"
+                    )
+
+    def test_2x2_three_samples_all_correct(self):
+        """All 3 samples in samples=3 must have balanced outer combos."""
+        color = Factor("Color", levels(["r", "g"]))
+        size = Factor("Size", levels(["s", "l"]))
+        task = Factor("Task", levels(["Rd", "Wr"]))
+        speed = Factor("Speed", levels(["F", "Sl"]))
+
+        ls = LatinSquare(outer_factors=[color, size])
+        inner = CrossBlock([task, speed], [task, speed], [])
+
+        nb = NestedBlock(
+            design=[color, size, inner],
+            crossing=[color, size],
+            constraints=[ls]
+        )
+
+        results = synthesize_trials(nb, 3, sampling_strategy=IterateGen,
+                                    participants=[0, 1])
+
+        for pid in [0, 1]:
+            assert len(results[pid]) == 3
+
+            for sample_idx, exp in enumerate(results[pid]):
+                assert len(exp["Color"]) == 8
+
+                counts = self._count_outer_combos(exp, ["Color", "Size"])
+                for combo, count in counts.items():
+                    assert count == 4, (
+                        f"Participant {pid}, sample {sample_idx}: "
+                        f"combo {combo} appeared {count} times, expected 4"
+                    )
+
+    def test_3x3_two_samples(self):
+        """3x3 grid with samples=2: each sample has 12 trials, 4 per combo."""
+        font = Factor("Font", levels(["S", "M", "B"]))
+        color = Factor("Color", levels(["R", "G", "Bu"]))
+        task = Factor("Task", levels(["Rd", "Wr"]))
+        speed = Factor("Speed", levels(["F", "Sl"]))
+
+        ls = LatinSquare(outer_factors=[font, color])
+        inner = CrossBlock([task, speed], [task, speed], [])
+
+        nb = NestedBlock(
+            design=[font, color, inner],
+            crossing=[font, color],
+            constraints=[ls]
+        )
+
+        results = synthesize_trials(nb, 2, sampling_strategy=IterateGen,
+                                    participants=[0, 1, 2])
+
+        for pid in range(3):
+            assert len(results[pid]) == 2
+
+            for sample_idx, exp in enumerate(results[pid]):
+                # 3 blocks x 4 inner trials = 12
+                assert len(exp["Font"]) == 12
+
+                # 3 unique outer combos
+                combos = self._extract_outer_combos(exp, ["Font", "Color"])
+                assert len(combos) == 3
+
+                # Each combo appears exactly 4 times
+                counts = self._count_outer_combos(exp, ["Font", "Color"])
+                for combo, count in counts.items():
+                    assert count == 4, (
+                        f"Participant {pid}, sample {sample_idx}: "
+                        f"combo {combo} appeared {count} times, expected 4"
+                    )
+
+    def test_samples_gt1_inner_crossing_complete(self):
+        """With samples=2, inner factors are fully crossed in every block
+        of every sample."""
+        font = Factor("Font", levels(["S", "B"]))
+        color = Factor("Color", levels(["R", "G"]))
+        task = Factor("Task", levels(["Rd", "Wr"]))
+        speed = Factor("Speed", levels(["F", "Sl"]))
+
+        ls = LatinSquare(outer_factors=[font, color])
+        inner = CrossBlock([task, speed], [task, speed], [])
+
+        nb = NestedBlock(
+            design=[font, color, inner],
+            crossing=[font, color],
+            constraints=[ls]
+        )
+
+        results = synthesize_trials(nb, 2, sampling_strategy=IterateGen,
+                                    participants=[0, 1])
+
+        expected_inner = {("Rd", "F"), ("Rd", "Sl"), ("Wr", "F"), ("Wr", "Sl")}
+
+        for pid in [0, 1]:
+            for sample_idx, exp in enumerate(results[pid]):
+                outer_combos = self._extract_outer_combos(
+                    exp, ["Font", "Color"]
+                )
+
+                for oc in outer_combos:
+                    inner_trials = []
+                    for i in range(len(exp["Font"])):
+                        if (exp["Font"][i], exp["Color"][i]) == oc:
+                            inner_trials.append(
+                                (exp["Task"][i], exp["Speed"][i])
+                            )
+
+                    assert set(inner_trials) == expected_inner, (
+                        f"Participant {pid}, sample {sample_idx}, "
+                        f"outer combo {oc}: inner crossing incomplete"
+                    )
+
+    def test_samples_gt1_no_ls_condition_leaked(self):
+        """Internal _ls_condition factor must not appear in any sample."""
+        font = Factor("Font", levels(["S", "B"]))
+        color = Factor("Color", levels(["R", "G"]))
+        task = Factor("Task", levels(["Rd", "Wr"]))
+        speed = Factor("Speed", levels(["F", "Sl"]))
+
+        ls = LatinSquare(outer_factors=[font, color])
+        inner = CrossBlock([task, speed], [task, speed], [])
+
+        nb = NestedBlock(
+            design=[font, color, inner],
+            crossing=[font, color],
+            constraints=[ls]
+        )
+
+        results = synthesize_trials(nb, 3, sampling_strategy=IterateGen,
+                                    participants=[0])
+
+        for sample_idx, exp in enumerate(results[0]):
+            assert "_ls_condition" not in exp, (
+                f"Sample {sample_idx} leaked _ls_condition factor"
+            )
+
+    def test_default_participants_multiple_samples(self):
+        """Auto-detected participants with samples > 1 produces correct output."""
+        font = Factor("Font", levels(["S", "B"]))
+        color = Factor("Color", levels(["R", "G"]))
+        task = Factor("Task", levels(["Rd", "Wr"]))
+        speed = Factor("Speed", levels(["F", "Sl"]))
+
+        ls = LatinSquare(outer_factors=[font, color])
+        inner = CrossBlock([task, speed], [task, speed], [])
+
+        nb = NestedBlock(
+            design=[font, color, inner],
+            crossing=[font, color],
+            constraints=[ls]
+        )
+
+        # No participants arg — auto-detects all
+        results = synthesize_trials(nb, 2, sampling_strategy=IterateGen)
+
+        assert isinstance(results, dict)
+        assert len(results) == 2
+
+        for pid in [0, 1]:
+            assert len(results[pid]) == 2
+            for exp in results[pid]:
+                assert len(exp["Font"]) == 8
+                counts = self._count_outer_combos(exp, ["Font", "Color"])
+                for combo, count in counts.items():
+                    assert count == 4
+
+    def test_participant_disjointness_multiple_samples(self):
+        """Across multiple samples, participants still have disjoint outer combos."""
+        font = Factor("Font", levels(["S", "B"]))
+        color = Factor("Color", levels(["R", "G"]))
+        task = Factor("Task", levels(["Rd", "Wr"]))
+        speed = Factor("Speed", levels(["F", "Sl"]))
+
+        ls = LatinSquare(outer_factors=[font, color])
+        inner = CrossBlock([task, speed], [task, speed], [])
+
+        nb = NestedBlock(
+            design=[font, color, inner],
+            crossing=[font, color],
+            constraints=[ls]
+        )
+
+        results = synthesize_trials(nb, 2, sampling_strategy=IterateGen,
+                                    participants=[0, 1])
+
+        # Check each sample independently
+        for sample_idx in range(2):
+            p0_combos = self._extract_outer_combos(
+                results[0][sample_idx], ["Font", "Color"]
+            )
+            p1_combos = self._extract_outer_combos(
+                results[1][sample_idx], ["Font", "Color"]
+            )
+
+            assert p0_combos.isdisjoint(p1_combos), (
+                f"Sample {sample_idx}: participants share outer combos"
+            )
+            assert p0_combos | p1_combos == {
+                ("S", "R"), ("S", "G"), ("B", "R"), ("B", "G")
+            }

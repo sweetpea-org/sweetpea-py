@@ -211,7 +211,6 @@ class LatinSquare(Constraint):
         separator = "|"
         outer_factor_names = [str(f.name) for f in self.outer_factors]
 
-        # Validate no level names contain the separator
         for f in self.outer_factors:
             for level in f.levels:
                 if separator in str(level.name):
@@ -221,36 +220,26 @@ class LatinSquare(Constraint):
                         "encoding.".format(level.name, f.name, separator)
                     )
 
-        # Build condition factor with only this participant's combos
         condition_levels = [separator.join(str(v) for v in combo)
                            for combo in combos]
         condition_factor = Factor("_ls_condition", condition_levels)
 
-        # Extract inner block from NestedBlock's stored reference
-        # (block.orig_design is the flattened factor list from _create(),
-        #  not the user's original design containing CrossBlock instances.
-        #  NestedBlock stores the inner block as _inner_block.)
         if not hasattr(block, '_inner_block'):
             raise ValueError(
-                "LatinSquare.build_participant_block: could not find inner "
-                "block on the NestedBlock. Ensure the block is a NestedBlock "
+                "LatinSquare.build_participant_block requires a NestedBlock "
                 "with an inner CrossBlock in its design."
             )
         orig_inner = block._inner_block
 
-        # Build a fresh inner CrossBlock to avoid state pollution
+        # Fresh CrossBlock avoids state pollution from the original
         fresh_inner = CrossBlock(
             orig_inner.orig_design,
             orig_inner.orig_crossings[0],
             list(orig_inner.orig_constraints)
         )
 
-        # Build reduced NestedBlock with only this participant's outer combos.
-        # Use _user_constraints (the user's original constraints before NestedBlock
-        # merges in internal constraints like MinimumTrials and scoped inner
-        # constraints). Using orig_constraints would carry over the original
-        # NestedBlock's MinimumTrials(N) which is sized for ALL outer combos,
-        # causing a trial count mismatch in the reduced block.
+        # Use _user_constraints to avoid carrying over MinimumTrials
+        # sized for ALL outer combos
         user_constraints = getattr(block, '_user_constraints', [])
         non_ls_constraints = [c for c in user_constraints
                               if not isinstance(c, LatinSquare)]
@@ -267,8 +256,29 @@ class LatinSquare(Constraint):
     # by build_participant_block() and synthesize_trials().
 
     def validate(self, block):
-        """No-op. Latin Square validation is handled at construction time."""
-        pass
+        """Validates that :class:`.LatinSquare` is applied to a :class:`.NestedBlock`
+        and that ``outer_factors`` are external factors of that block.
+
+        Skips validation on non-NestedBlocks and on constraints inherited
+        from inner blocks (NestedBlock merges inner constraints into its
+        own list)."""
+        from sweetpea._internal.cross_block import NestedBlock
+        if not isinstance(block, NestedBlock):
+            return
+        if self not in getattr(block, '_user_constraints', []):
+            return
+        # External = all design factors minus inner block factors
+        inner_factor_names = {str(f.name) for f in block._inner_block.design
+                              if hasattr(f, 'name')}
+        external_names = {str(f.name) for f in block.design} - inner_factor_names
+        for f in self.outer_factors:
+            if str(f.name) not in external_names:
+                raise ValueError(
+                    "LatinSquare outer_factor '{}' is not an external factor "
+                    "of the NestedBlock. outer_factors must be the external "
+                    "factors listed in the NestedBlock design, not factors "
+                    "from the inner block.".format(f.name)
+                )
 
     def apply(self, block, backend_request):
         """No-op. Latin Square does not add CNF clauses to the SAT formula."""
