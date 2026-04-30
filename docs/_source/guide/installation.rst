@@ -41,22 +41,6 @@ You can clone the repository, the SweetPea dependencies, and make the
   $ pip install -e .
 
 
-Python SAT Solver Libraries (critical for Windows users)
---------------------------------------------------------
-
-On Windows, the pre-compiled SAT solver binaries may require Visual C++
-runtime libraries that are not installed by default. To avoid this dependency,
-you can install Python-native SAT solver packages::
-
-  $ pip install pycryptosat pyunigen pycmsgen
-
-When these packages are installed, SweetPea uses them automatically instead of
-the command-line binaries. This is the recommended approach on Windows.
-
-On macOS and Linux, the pre-compiled binaries typically work without additional
-dependencies, so these packages are optional on those platforms as well.
-
-
 Contributing to SweetPea Development
 ------------------------------------
 

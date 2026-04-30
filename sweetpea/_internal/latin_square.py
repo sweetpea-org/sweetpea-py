@@ -118,6 +118,12 @@ class LatinSquare(Constraint):
         Number of diagonals (participants). Defaults to ``max`` of all factor
         level counts.
 
+    :param require_balanced_grid:
+        When ``True`` (default), prints balance warnings if the outer grid is
+        rectangular (factors have different numbers of levels). Set to
+        ``False`` to suppress these warnings when a rectangular grid is
+        intentional.
+
     Example::
 
         >>> ls = LatinSquare(outer_factors=[font, color])
@@ -130,12 +136,13 @@ class LatinSquare(Constraint):
         >>> print_experiments(nb, results)
     """
 
-    def __init__(self, outer_factors, num_diagonals=None):
+    def __init__(self, outer_factors, num_diagonals=None, require_balanced_grid=True):
         self.outer_factors = outer_factors
+        self.require_balanced_grid = require_balanced_grid
         self._diagonals = latin_square_diagonals(outer_factors, num_diagonals)
-        # Print balance warnings at construction
-        for w in validate_latin_square_balance(self._diagonals, outer_factors):
-            print("WARNING: {}".format(w))
+        if require_balanced_grid:
+            for w in validate_latin_square_balance(self._diagonals, outer_factors):
+                print("WARNING: {}".format(w))
 
     @property
     def num_participants(self):

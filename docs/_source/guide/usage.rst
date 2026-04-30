@@ -1024,8 +1024,8 @@ participants' blocks are solved:
     # Skip participants 0-49, only solve for 50-55
     results = synthesize_trials(nb, 1, participants=[50, 51, 52, 53, 54, 55])
 
-Participant IDs wrap cyclically. On a 2-diagonal grid, participant 4 gets the
-same diagonal as participant 0 (since 4 % 2 = 0).
+Participant IDs wrap cyclically. On a 2-diagonal grid, participant 2 and 4 gets the
+same diagonal as participant 0 (since 2 % 2 = 4 % 2 = 0).
 
 
 Without LatinSquare

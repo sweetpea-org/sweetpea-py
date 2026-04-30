@@ -145,9 +145,7 @@ Constraints
               across all factors).
 
               :class:`.LatinSquare` is used with :class:`.NestedBlock` and the
-              ``participants`` parameter of :func:`.synthesize_trials`. It does
-              not add SAT clauses to the formula; instead, it provides the
-              information needed to build per-participant reduced blocks.
+              ``participants`` parameter of :func:`.synthesize_trials`. 
 
               For rectangular grids (factors with different numbers of levels),
               balance warnings are printed at construction time.

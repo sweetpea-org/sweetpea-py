@@ -171,6 +171,65 @@ class TestValidateBalance:
 
 
 # ==========================================================================
+# Unit tests: require_balanced_grid parameter
+# ==========================================================================
+
+class TestRequireBalancedGrid:
+
+    def test_rectangular_grid_prints_warnings_by_default(self, capsys):
+        """2x3 grid prints WARNING lines by default (require_balanced_grid=True)."""
+        font = Factor("Font", levels(["S", "B"]))
+        color = Factor("Color", levels(["R", "G", "Bu"]))
+
+        LatinSquare(outer_factors=[font, color])
+        output = capsys.readouterr().out
+
+        assert "WARNING" in output
+
+    def test_rectangular_grid_suppresses_warnings(self, capsys):
+        """require_balanced_grid=False suppresses warnings for rectangular grids."""
+        font = Factor("Font", levels(["S", "B"]))
+        color = Factor("Color", levels(["R", "G", "Bu"]))
+
+        LatinSquare(outer_factors=[font, color], require_balanced_grid=False)
+        output = capsys.readouterr().out
+
+        assert output == ""
+
+    def test_square_grid_no_warnings_either_way(self, capsys):
+        """Square grids never produce warnings regardless of the flag."""
+        font = Factor("Font", levels(["S", "B"]))
+        color = Factor("Color", levels(["R", "G"]))
+
+        LatinSquare(outer_factors=[font, color])
+        LatinSquare(outer_factors=[font, color], require_balanced_grid=False)
+        output = capsys.readouterr().out
+
+        assert output == ""
+
+    def test_flag_stored_on_instance(self):
+        """require_balanced_grid value is stored on the instance."""
+        font = Factor("Font", levels(["S", "B"]))
+
+        ls_true = LatinSquare(outer_factors=[font], require_balanced_grid=True)
+        ls_false = LatinSquare(outer_factors=[font], require_balanced_grid=False)
+
+        assert ls_true.require_balanced_grid is True
+        assert ls_false.require_balanced_grid is False
+
+    def test_diagonals_unaffected_by_flag(self):
+        """Diagonal structure is identical regardless of require_balanced_grid."""
+        font = Factor("Font", levels(["S", "B"]))
+        color = Factor("Color", levels(["R", "G", "Bu"]))
+
+        ls_with = LatinSquare(outer_factors=[font, color], require_balanced_grid=True)
+        ls_without = LatinSquare(outer_factors=[font, color], require_balanced_grid=False)
+
+        assert ls_with.diagonals == ls_without.diagonals
+        assert ls_with.num_participants == ls_without.num_participants
+
+
+# ==========================================================================
 # Unit tests: LatinSquare constraint class
 # ==========================================================================
 
