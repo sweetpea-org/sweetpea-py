@@ -118,9 +118,44 @@ Constraints
 
               :param factors: the factors to add constraints on
               :type factors: List[ContinuousFactor]
-              :param predicate: a constraint function takes `factors` 
-                                initialized with sampling function. 
+              :param predicate: a constraint function takes `factors`
+                                initialized with sampling function.
                                 The function should return true if the
                                 combination of factors meet the constraints.
               :type predicate: Callable[[Any, ...], bool]
+              :rtype: Constraint
+
+.. class:: sweetpea.LatinSquare(outer_factors, num_diagonals=None)
+
+              Constrains a :class:`.NestedBlock` experiment to use Latin
+              Square counterbalancing across participants.
+
+              A Latin Square partitions the combinations of ``outer_factors``
+              into diagonals, where each diagonal is assigned to a different
+              participant. For a square grid (all factors have the same number
+              of levels), each diagonal contains exactly one level of each
+              factor, ensuring balanced coverage.
+
+              The diagonal for each combination is computed as::
+
+                 diagonal = (i1 + i2 + ...) % D
+
+              where ``i1, i2, ...`` are the level indices and ``D`` is
+              ``num_diagonals`` (defaulting to the maximum number of levels
+              across all factors).
+
+              :class:`.LatinSquare` is used with :class:`.NestedBlock` and the
+              ``participants`` parameter of :func:`.synthesize_trials`. 
+
+              For rectangular grids (factors with different numbers of levels),
+              balance warnings are printed at construction time.
+
+              :param outer_factors: the factors forming the outer grid of the
+                                    Latin Square; these should also be the
+                                    external factors in the :class:`.NestedBlock`
+              :type outer_factors: List[Factor]
+              :param num_diagonals: number of diagonals (and thus distinct
+                                    participant assignments) to create; defaults
+                                    to ``max`` of all factor level counts
+              :type num_diagonals: Optional[int]
               :rtype: Constraint

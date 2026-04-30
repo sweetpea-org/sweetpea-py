@@ -14,7 +14,7 @@ __all__ = [
 
     'Derivation', 'WithinTrial', 'Transition', 'Window', 'ContinuousFactorWindow',
 
-    'Constraint',
+    'Constraint', 'LatinSquare',
     'Exclude', 'Pin', 'MinimumTrials', 'ExactlyK',
     'AtMostKInARow', 'AtLeastKInARow',
     'ExactlyKInARow', 'ContinuousConstraint',
@@ -48,6 +48,7 @@ from sweetpea._internal.constraint import (
     ExactlyK, AtMostKInARow, AtLeastKInARow, ExactlyKInARow,
     ContinuousConstraint, ExhaustLevelsInOrder
 )
+from sweetpea._internal.latin_square import LatinSquare
 from sweetpea._internal.sampling_strategy.base import Gen
 from sweetpea._internal.sampling_strategy.uniform import UniformGen
 from sweetpea._internal.sampling_strategy.iterate import IterateGen
@@ -146,30 +147,52 @@ def __filter_hidden_keys(d: dict) -> dict:
     return {name: d[name] for name in filter(lambda name: not isinstance(name, HiddenName), d.keys())}
 
 
-def print_experiments(block: Block, experiments: List[dict]):
-    
-    # Restore continuous factors for printing trials
-    block.restore_continuous()
+def print_experiments(block, experiments):
     """Displays the generated experiments in a human-friendly form.
 
     :param block:
         An experimental description as a :class:`.Block`.
 
     :param experiments:
-        A list of experiments as :class:`dicts <dict>`. These are produced by
-        calls to synthesis function :func:`.synthesize_trials`.
+        Either a :class:`list` of experiment :class:`dicts <dict>` (standard
+        output from :func:`.synthesize_trials`), or a :class:`dict` mapping
+        participant IDs to lists of experiment dicts (Latin Square output
+        from :func:`.synthesize_trials` with ``participants`` parameter).
+        When a dict is provided, output is labeled by participant.
     """
-    nested_assignment_strs = [list(map(lambda l: cast(str, f.name) + " " + str(l.name), f.levels))
-                              for f in __filter_hidden(block.design)]
-    column_widths = list(map(lambda l: max(list(map(len, l))), nested_assignment_strs))
-    format_str = reduce(lambda a, b: a + '{{:<{}}} | '.format(b), column_widths, '')[:-3] + '\n'
+    # Restore continuous factors for printing trials
+    block.restore_continuous()
+
+    # Handle Dict[int, List[dict]] from Latin Square synthesize_trials
+    if isinstance(experiments, dict):
+        for pid in sorted(experiments.keys()):
+            print('\nParticipant {}:'.format(pid))
+            exps = experiments[pid]
+            print('{} trial sequences found.\n'.format(len(exps)))
+            for idx, e in enumerate(exps):
+                print('Experiment {}:'.format(idx))
+                _print_experiment_default(e)
+        return
+
+    # Standard List[dict] path
     print('\n{} trial sequences found.\n'.format(len(experiments)))
     for idx, e in enumerate(experiments):
         print('Experiment {}:'.format(idx))
-        strs = [list(map(lambda v: name + " " + str(v), values)) for (name, values) in e.items()]
-        transposed = list(map(list, zip(*strs)))
-        format_str = _get_column_widths(transposed)
-        print(reduce(lambda a, b: a + format_str.format(*b), transposed, ''))
+        _print_experiment_default(e)
+
+
+def _print_experiment_default(e):
+    """Print a single experiment in the default format (no Latin Square)."""
+    strs = [list(map(lambda v: name + " " + str(v), values)) for (name, values) in e.items()]
+    transposed = list(map(list, zip(*strs)))
+    format_str = _get_column_widths(transposed)
+    print(reduce(lambda a, b: a + format_str.format(*b), transposed, ''))
+
+
+# --- _print_experiment_with_latin_square() removed ---
+# Replaced by Dict[int, List[dict]] handling in print_experiments().
+# Per-participant output is now handled by synthesize_trials(participants=...)
+# which returns a dict, and print_experiments auto-detects and labels it.
 
 def _get_column_widths(data):
     # Compute column widths from actual content
@@ -325,8 +348,9 @@ def save_experiments_csv(block: Block,
 
 def synthesize_trials(block: Block,
                       samples: int = 10,
-                      sampling_strategy=IterateGen
-                      ) -> List[dict]:
+                      sampling_strategy=IterateGen,
+                      participants=None
+                      ):
     """Given an experiment described with a :class:`.Block`, randomly generates
     multiple sets of trials for that experiment.
 
@@ -356,16 +380,40 @@ def synthesize_trials(block: Block,
         The strategy to use for trial generation. The default is
         :class:`.NonUniformGen`.
 
+    :param participants:
+        Optional list of participant IDs for Latin Square counterbalancing.
+        When the block contains a :class:`.LatinSquare` constraint and
+        ``participants`` is ``None``, defaults to all participants
+        (``range(num_participants)``). When explicitly provided, only those
+        participants are solved, saving computation.
+
+        When Latin Square is active (either by default or explicit list),
+        returns ``Dict[int, List[dict]]`` instead of ``List[dict]``.
+
     :returns:
-        A :class:`list` of trial sets. Each set is represented as a
-        :class:`dictionary <dict>` mapping each factor name to a list of
-        levels, where each such list contains to one level per trial.
+        A :class:`list` of trial sets (when no :class:`.LatinSquare`
+        constraint is present and ``participants`` is ``None``),
+        or a :class:`dict` mapping participant IDs to lists of trial sets
+        (when Latin Square counterbalancing is active).
     """
 
-    def starting(who: Any) -> None:
-        nonlocal samples
-        print(f"Sampling {samples} trial sequences using {who}.")
-    
+    # Latin Square: auto-detect all participants when LatinSquare is present
+    from sweetpea._internal.cross_block import NestedBlock
+    if participants is None and isinstance(block, NestedBlock):
+        for c in getattr(block, '_user_constraints', []):
+            if isinstance(c, LatinSquare):
+                participants = list(range(c.num_participants))
+                break
+
+    if participants is not None:
+        return _synthesize_latin_square_participants(
+            block, samples, sampling_strategy, participants
+        )
+
+    def starting(who):
+        # type: (Any) -> None
+        print("Sampling {} trial sequences using {}.".format(samples, who))
+
     if isinstance(sampling_strategy, type):
         assert issubclass(sampling_strategy, Gen)
         starting(sampling_strategy.class_name())
@@ -409,9 +457,80 @@ def synthesize_trials(block: Block,
             continuous_samples = block.sample_continuous(num_trial, trialss[num_trial])
             for k in continuous_samples:
                 trials[k] = continuous_samples[k]
-        # Restore ContinuousFactor to the design 
+        # Restore ContinuousFactor to the design
     return trialss
 
+
+def _synthesize_latin_square_participants(block, samples, sampling_strategy, participants):
+    """Build per-participant :class:`.NestedBlock` instances and solve each independently.
+
+    For each participant, creates a synthetic ``_ls_condition`` factor with only
+    that participant's diagonal combos, builds a reduced :class:`.NestedBlock`,
+    and solves it. Post-processes the output to split ``_ls_condition`` back
+    into original outer factor columns.
+
+    :param block:
+        The original :class:`.NestedBlock` containing a :class:`.LatinSquare`
+        constraint.
+
+    :param samples:
+        Number of trial sets to generate per participant.
+
+    :param sampling_strategy:
+        The sampling strategy to use (passed through to
+        :func:`.synthesize_trials`).
+
+    :param participants:
+        :class:`list` of participant IDs (:class:`int`).
+
+    :returns:
+        A :class:`dict` mapping participant IDs to :class:`lists <list>` of
+        experiment :class:`dicts <dict>`.
+    """
+    ls_constraint = None
+    for c in block.constraints:
+        if isinstance(c, LatinSquare):
+            ls_constraint = c
+            break
+
+    if ls_constraint is None:
+        raise ValueError(
+            "synthesize_trials: 'participants' parameter requires a "
+            "LatinSquare constraint in the block."
+        )
+
+    results = {}
+
+    for pid in participants:
+        reduced_nb, outer_factor_names, separator = \
+            ls_constraint.build_participant_block(block, pid)
+
+        # Solve one sample at a time so each gets its own external stitch
+        experiments = []
+        for _ in range(samples):
+            single = synthesize_trials(
+                reduced_nb, samples=1, sampling_strategy=sampling_strategy
+            )
+            experiments.extend(single)
+
+        # Split _ls_condition back into original outer factor columns
+        processed_experiments = []
+        for exp in experiments:
+            new_exp = {}
+            condition_values = exp.get("_ls_condition", [])
+            for f_idx, f_name in enumerate(outer_factor_names):
+                new_exp[f_name] = [
+                    v.split(separator)[f_idx] for v in condition_values
+                ]
+            for key, values in exp.items():
+                if key != "_ls_condition":
+                    new_exp[key] = values
+
+            processed_experiments.append(new_exp)
+
+        results[pid] = processed_experiments
+
+    return results
 
 def _apply_external_stitch(block, sample, spec, sampling_strategy):
     ext_block   = spec["external_block"]

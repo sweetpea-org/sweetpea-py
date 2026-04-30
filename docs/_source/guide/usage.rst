@@ -892,3 +892,187 @@ as the `inner block`. Each outer level repeats the entire
     day d1 | session s2 | A a1 | B b1
     day d1 | session s2 | A a2 | B b1
     day d1 | session s2 | A a1 | B b2
+
+
+
+Latin Square Counterbalancing
+-----------------------------
+
+Latin Square counterbalancing is a technique for assigning different subsets of
+experimental conditions to different participants, so that each participant sees
+a balanced sample and the full set of conditions is covered across all
+participants.
+
+SweetPea supports Latin Square counterbalancing through the :class:`.LatinSquare`
+constraint, used with :class:`.NestedBlock` and the ``participants`` parameter of
+:func:`.synthesize_trials`.
+
+
+When to Use Latin Square
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Use Latin Square counterbalancing when:
+
+- Your experiment has *outer factors* (e.g., Font, Color) whose combinations
+  define blocks, and *inner factors* (e.g., Task, Speed) that are fully crossed
+  within each block.
+- You want each participant to see only a balanced subset of the outer
+  combinations, rather than all of them.
+- You want to save computation by only solving for the participants you need.
+
+
+A 2x2 Example
+^^^^^^^^^^^^^
+
+Suppose we have two outer factors (Font and Color) and two inner factors
+(Task and Speed):
+
+.. code-block:: python
+
+    from sweetpea import *
+
+    font  = Factor("Font",  ["S", "B"])
+    color = Factor("Color", ["R", "G"])
+    task  = Factor("Task",  ["Rd", "Wr"])
+    speed = Factor("Speed", ["F", "Sl"])
+
+The outer grid has 4 combinations: SR, SG, BR, BG. A Latin Square with 2
+diagonals partitions these into two groups:
+
+.. list-table:: 2x2 Latin Square Diagonals
+   :widths: auto
+   :align: center
+   :header-rows: 1
+   :stub-columns: 1
+
+   * -
+     - Color R
+     - Color G
+   * - Font S
+     - Diagonal 0
+     - Diagonal 1
+   * - Font B
+     - Diagonal 1
+     - Diagonal 0
+
+- **Diagonal 0**: (S, R) and (B, G)
+- **Diagonal 1**: (S, G) and (B, R)
+
+Each diagonal contains exactly one level of Font and one level of Color.
+
+
+Building the Experiment
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: python
+
+    # Create the LatinSquare constraint on the outer factors
+    ls = LatinSquare(outer_factors=[font, color])
+
+    # Define the inner block (fully crossed Task x Speed)
+    inner = CrossBlock([task, speed], [task, speed], [])
+
+    # Build the NestedBlock with the LatinSquare constraint
+    nb = NestedBlock(
+        design=[font, color, inner],
+        crossing=[font, color],
+        constraints=[ls]
+    )
+
+    # Inspect the diagonals
+    print(ls.diagonals)
+    # {0: [('S', 'R'), ('B', 'G')], 1: [('S', 'G'), ('B', 'R')]}
+    print(ls.num_participants)
+    # 2
+
+
+Generating Trials
+^^^^^^^^^^^^^^^^^
+
+When a :class:`.LatinSquare` constraint is present, :func:`.synthesize_trials`
+automatically generates trials for all participants and returns a
+``Dict[int, List[dict]]`` grouped by participant ID:
+
+.. code-block:: python
+
+    # Generate trials for all participants (default)
+    results = synthesize_trials(nb, 1)
+
+    # results is a Dict[int, List[dict]]
+    # Each participant gets 2 blocks x 4 inner trials = 8 trials
+    for pid in sorted(results.keys()):
+        exp = results[pid][0]
+        print(f"Participant {pid}: {len(exp['Font'])} trials")
+    # Participant 0: 8 trials
+    # Participant 1: 8 trials
+
+    # Print with participant labels
+    print_experiments(nb, results)
+
+
+Generating a Subset of Participants
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You can request specific participants to save computation. Only those
+participants' blocks are solved:
+
+.. code-block:: python
+
+    # Only solve for participant 0 -- participant 1 is never computed
+    results = synthesize_trials(nb, 1, participants=[0])
+
+    # Skip participants 0-49, only solve for 50-55
+    results = synthesize_trials(nb, 1, participants=[50, 51, 52, 53, 54, 55])
+
+Participant IDs wrap cyclically. On a 2-diagonal grid, participant 2 and 4 gets the
+same diagonal as participant 0 (since 2 % 2 = 4 % 2 = 0).
+
+
+Without LatinSquare
+^^^^^^^^^^^^^^^^^^^
+
+When no :class:`.LatinSquare` constraint is present, :func:`.synthesize_trials`
+behaves returns a ``List[dict]`` with all outer combinations and 
+no participant grouping:
+
+.. code-block:: python
+
+    # NestedBlock without LatinSquare — standard behavior
+    nb_plain = NestedBlock(
+        design=[font, color, inner],
+        crossing=[font, color],
+        constraints=[]
+    )
+    experiments = synthesize_trials(nb_plain, 1)
+    # Returns List[dict] with 4 blocks x 4 inner trials = 16 trials
+
+
+Larger Grids
+^^^^^^^^^^^^
+
+Latin Square works with any number of factors and levels:
+
+.. code-block:: python
+
+    # 3x3 grid: 3 diagonals, 3 participants
+    font  = Factor("Font",  ["S", "M", "B"])
+    color = Factor("Color", ["R", "G", "Bu"])
+    ls = LatinSquare(outer_factors=[font, color])
+    # ls.num_participants == 3
+    # Each participant gets 3 outer combos x 4 inner trials = 12 trials
+
+
+Rectangular Grids
+^^^^^^^^^^^^^^^^^
+
+When factors have different numbers of levels, the number of diagonals is
+``max`` of the level counts. Balance warnings are printed if some diagonals
+are missing levels of a factor:
+
+.. code-block:: python
+
+    # 2x3 grid: D = max(2, 3) = 3 diagonals
+    font  = Factor("Font",  ["S", "B"])
+    color = Factor("Color", ["R", "G", "Bu"])
+    ls = LatinSquare(outer_factors=[font, color])
+    # WARNING: Diagonal 2: factor 'Font' is missing levels ...
