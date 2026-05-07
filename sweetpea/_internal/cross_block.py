@@ -716,6 +716,21 @@ class NestedBlock(MultiCrossBlockRepeat):
 
             mode[0] = RepeatMode.REPEAT
             
+            if not externals:
+                self._external_block = None
+                self._external_stitch_specs = self._collect_external_stitch_specs(inner_block)
+                self._create(
+                    who="NestedBlock(nested)",
+                    design=full_design,
+                    crossings=parent_crossings,
+                    constraints=constraints + cs,
+                    require_complete_crossing=True,
+                    within_block_count=None,
+                    mode=mode,
+                    alignment=alignment_choice
+                )
+                return
+
             # CB to store Crossing of external factors 
             self._external_block = CrossBlock(
                 design=externals,
@@ -816,6 +831,11 @@ class NestedBlock(MultiCrossBlockRepeat):
             cs.append(MinimumTrials(total_windows * run_len+external_preamble))
 
             per_perm_windows = total_windows // K  # integer since total_windows is K * ∏ sum(weights)
+
+
+            if not externals:
+                for lvl in perm_levels:
+                    cs.append(ExactlyK(per_perm_windows * run_len, lvl))
 
             # CB to store counter balancing of external factors and hiddend perm factor
             self._external_block = CrossBlock(

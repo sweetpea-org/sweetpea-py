@@ -1,6 +1,6 @@
 import pytest
 
-from sweetpea._internal.cross_block import CrossBlock, NestedBlock
+from sweetpea._internal.cross_block import CrossBlock, CrossBlock
 from sweetpea._internal.constraint import (
     MinimumTrials,
     ConstantInWindows,
@@ -92,7 +92,7 @@ def inner_2x2():
 def test_nested_mode_constant_windows_and_length(inner_2x2):
     task = Factor("task", levels(["single", "dual"]))  # 2 levels
 
-    nb = NestedBlock(
+    nb = CrossBlock(
         design=[task, inner_2x2],
         crossing=[task],             # inner block NOT listed => non-permuted
         constraints=[]
@@ -128,7 +128,7 @@ def test_nested_mode_constant_windows_and_length(inner_2x2):
 
 
 def test_inner_constraints_are_inherited(inner_2x2):
-    """Put a simple constraint on the inner block and ensure NestedBlock inherits it."""
+    """Put a simple constraint on the inner block and ensure CrossBlock inherits it."""
     A = next(f for f in inner_2x2.orig_design if getattr(f, "name", None) == "A")
     inner_constrained = CrossBlock(
         design=inner_2x2.orig_design,
@@ -136,13 +136,13 @@ def test_inner_constraints_are_inherited(inner_2x2):
         constraints=[AtMostKInARow(1, (A, "a1"))],
     )
     task = Factor("task", levels(["T1", "T2"]))
-    nb = NestedBlock(design=[task, inner_constrained], crossing=[task], constraints=[])
+    nb = CrossBlock(design=[task, inner_constrained], crossing=[task], constraints=[])
     assert any(isinstance(c, AtMostKInARow) for c in nb.constraints)
 
 
 def test_nested_mode_minimum_trials_rounds_up(inner_2x2):
     task = Factor("task", levels(["T1", "T2"]))
-    nb = NestedBlock(design=[task, inner_2x2], crossing=[task], constraints=[])
+    nb = CrossBlock(design=[task, inner_2x2], crossing=[task], constraints=[])
 
     nb.constraints.append(MinimumTrials(6))  # lower than required 8
 
@@ -162,7 +162,7 @@ def test_nested_mode_minimum_trials_rounds_up(inner_2x2):
 def test_permuted_mode_enforces_permutation_and_windows(inner_2x2):
     group = Factor("group", levels(["G1", "G2"]))
 
-    nb = NestedBlock(
+    nb = CrossBlock(
         design=[group, inner_2x2],
         crossing=[inner_2x2, group],   # permuted mode
         constraints=[],
@@ -250,7 +250,7 @@ def test_permuted_mode_enforces_permutation_and_windows(inner_2x2):
 def test_permuted_mode_k1_small(inner_2x2):
     """Permuted mode with K=1 (minimal total trials)."""
     cohort = Factor("cohort", levels(["C"]))  # single-level external
-    nb = NestedBlock(
+    nb = CrossBlock(
         design=[cohort, inner_2x2],
         crossing=[inner_2x2, cohort],
         constraints=[],
@@ -277,7 +277,7 @@ def test_permuted_mode_with_joint_external_cross(inner_2x2):
     """
     group = Factor("group", levels(["G1", "G2"]))
 
-    nb = NestedBlock(
+    nb = CrossBlock(
         design=[group, inner_2x2],
         crossing=[inner_2x2, group],
         constraints=[],
@@ -335,7 +335,7 @@ def test_permuted_mode_with_inner_preamble(inner_2x2):
 
     # Wrap in permuted mode with a trivial external factor in the crossing
     cohort = Factor("cohort", levels(["C"]))  # satisfies “factor in design must be in crossing”
-    nb = NestedBlock(
+    nb = CrossBlock(
         design=[cohort, inner_with_preamble],
         crossing=[inner_with_preamble, cohort],
         constraints=[],
@@ -357,13 +357,13 @@ def test_permuted_mode_with_inner_preamble(inner_2x2):
 # def test_nested_nested_block_small(inner_2x2):
 #     """day -> (session -> inner_2x2), both non-permuted."""
 #     session = Factor("session", levels(["s1", "s2"]))
-#     inner_nb = NestedBlock(design=[session, inner_2x2], crossing=[session], constraints=[])
+#     inner_nb = CrossBlock(design=[session, inner_2x2], crossing=[session], constraints=[])
 #     assert inner_nb.trials_per_sample() == 8
 #     assert any(isinstance(c, ConstantInWindows) and c.factor is session and c.run_len == 4
 #                for c in inner_nb.constraints)
 
 #     day = Factor("day", levels(["d1", "d2"]))
-#     outer_nb = NestedBlock(design=[day, inner_nb], crossing=[day], constraints=[])
+#     outer_nb = CrossBlock(design=[day, inner_nb], crossing=[day], constraints=[])
 #     assert outer_nb.trials_per_sample() == 16
 #     assert any(isinstance(c, ConstantInWindows) and c.factor is day and c.run_len == 8
 #                for c in outer_nb.constraints)
@@ -372,11 +372,11 @@ def test_permuted_mode_with_inner_preamble(inner_2x2):
 # def test_nested_nested_smoke(inner_2x2):
 #     """Tiny nested-nested: outer(nested(inner_2x2))—both non-permuted and minimal."""
 #     session = Factor("session", levels(["s1", "s2"]))
-#     mid = NestedBlock(design=[session, inner_2x2], crossing=[session], constraints=[])
+#     mid = CrossBlock(design=[session, inner_2x2], crossing=[session], constraints=[])
 #     assert mid.trials_per_sample() == 8
 
 #     day = Factor("day", levels(["d1"]))
-#     outer = NestedBlock(design=[day, mid], crossing=[day], constraints=[])
+#     outer = CrossBlock(design=[day, mid], crossing=[day], constraints=[])
 #     assert outer.trials_per_sample() == 8
 
 
@@ -387,10 +387,10 @@ def test_permuted_mode_with_inner_preamble(inner_2x2):
 def test_permuted_mode_rejects_bad_num_permutations(inner_2x2):
     g = Factor("g", levels(["x", "y"]))
     with pytest.raises(ValueError):
-        NestedBlock(design=[g, inner_2x2], crossing=[inner_2x2, g], constraints=[], num_permutations=0)
+        CrossBlock(design=[g, inner_2x2], crossing=[inner_2x2, g], constraints=[], num_permutations=0)
     with pytest.raises(ValueError):
         # 2x2 inner crossing => 4 combos => 4! = 24 permutations; 25 invalid
-        NestedBlock(design=[g, inner_2x2], crossing=[inner_2x2, g], constraints=[], num_permutations=25)
+        CrossBlock(design=[g, inner_2x2], crossing=[inner_2x2, g], constraints=[], num_permutations=25)
 
 
 def test_nested_block_requires_single_inner_block_in_design(inner_2x2):
@@ -399,7 +399,7 @@ def test_nested_block_requires_single_inner_block_in_design(inner_2x2):
                              crossing=inner_2x2.orig_crossings[0],
                              constraints=[])
     with pytest.raises(ValueError):
-        NestedBlock(design=[inner_2x2, other_inner], crossing=[inner_2x2], constraints=[])
+        CrossBlock(design=[inner_2x2, other_inner], crossing=[inner_2x2], constraints=[])
 
 
 def test_nested_block_crossing_rules(inner_2x2):
@@ -415,17 +415,17 @@ def test_nested_block_crossing_rules(inner_2x2):
 
     # Empty crossing is valid (no window structure)
     # with pytest.raises(ValueError):
-    NestedBlock(design=[task, inner_2x2], crossing=[], constraints=[])
+    CrossBlock(design=[task, inner_2x2], crossing=[], constraints=[])
 
     # External factor may appear alone
-    NestedBlock(design=[task, inner_2x2], crossing=[task], constraints=[])
+    CrossBlock(design=[task, inner_2x2], crossing=[task], constraints=[])
 
     # ---------- Permuted mode ----------
     group = Factor("group", levels(["G1", "G2"]))
 
     # Permuted mode requires inner block in crossing
     with pytest.raises(ValueError):
-        NestedBlock(
+        CrossBlock(
             design=[group, inner_2x2],
             crossing=[group],        # inner block missing
             constraints=[],
@@ -433,7 +433,7 @@ def test_nested_block_crossing_rules(inner_2x2):
         )
 
     # Inner block alone is sufficient
-    NestedBlock(
+    CrossBlock(
         design=[group, inner_2x2],
         crossing=[inner_2x2],
         constraints=[],
@@ -441,7 +441,7 @@ def test_nested_block_crossing_rules(inner_2x2):
     )
 
     # Inner block + external factor also valid
-    NestedBlock(
+    CrossBlock(
         design=[group, inner_2x2],
         crossing=[inner_2x2, group],
         constraints=[],
@@ -451,7 +451,7 @@ def test_nested_block_crossing_rules(inner_2x2):
 
 def test_weighted_external_levels_scale_windows(inner_2x2):
     """
-    Weighted external factor in non-permuted NestedBlock.
+    Weighted external factor in non-permuted CrossBlock.
     External scaling is applied at runtime via stitching,
     not fully enforced in CNF.
     """
@@ -462,7 +462,7 @@ def test_weighted_external_levels_scale_windows(inner_2x2):
         SimpleLevel("G2", weight=1)
     ])
 
-    nb = NestedBlock(
+    nb = CrossBlock(
         design=[group, inner_2x2],
         crossing=[],          # non-permuted, no external crossing
         constraints=[]
@@ -511,13 +511,13 @@ def test_weighted_external_levels_scale_windows(inner_2x2):
 @pytest.mark.parametrize("target_level,k", [("a1", 4)])
 def test_permuted_mode_can_produce_k_in_a_row(inner_2x2, target_level, k):
     """
-    Construct a permuted NestedBlock and force specific permutations
+    Construct a permuted CrossBlock and force specific permutations
     that produce a run of `k` identical A levels across a window boundary.
     This checks that OrderRunsByPermutation plus ConstantInWindows
     allow such a construction.
     """
     group = Factor("group", levels(["G1", "G2"]))
-    nb = NestedBlock(
+    nb = CrossBlock(
         design=[group, inner_2x2],
         crossing=[inner_2x2, group],
         constraints=[],
@@ -573,7 +573,7 @@ def test_non_permuted_nested_can_yield_runs_across_windows(target_level, k):
     Regression for reviewer’s 'four in a row' example:
 
     Inner block enforces ExactlyKInARow(2, A='a1') within a window.
-    A non-permuted NestedBlock repeats that block, so a long run can
+    A non-permuted CrossBlock repeats that block, so a long run can
     appear if one window ends with 'a1 a1' and the next begins with 'a1 a1'.
     """
     A = Factor("A", ["a1", "a2"])
@@ -581,16 +581,16 @@ def test_non_permuted_nested_can_yield_runs_across_windows(target_level, k):
     inner = CrossBlock([A, B], [A, B], [ExactlyKInARow(2, (A, "a1"))])
 
     session = Factor("session", [SimpleLevel("s1"), SimpleLevel("s2")])
-    nb = NestedBlock([session, inner], [session], constraints=[])
+    nb = CrossBlock([session, inner], [session], constraints=[])
 
     exps = synthesize_trials(nb, 1000, sampling_strategy=IterateGen)
     assert exps  # should generate some experiments
     # At least one experiment should contain k 'a1's in a row across a boundary
     assert any(has_run(get_series(exp, "A"), target_level, k) for exp in exps)
 
-def test_randomgen_nestedblock_smoke_non_permuted():
+def test_randomgen_CrossBlock_smoke_non_permuted():
     """
-    RandomGen smoke test for non-permuted NestedBlock.
+    RandomGen smoke test for non-permuted CrossBlock.
 
     This test only checks:
     - sampling succeeds
@@ -605,7 +605,7 @@ def test_randomgen_nestedblock_smoke_non_permuted():
     inner = CrossBlock([A, B], [A, B], [])
     session = Factor("session", [SimpleLevel("s1"), SimpleLevel("s2")])
 
-    nb = NestedBlock([session, inner], [session], [])
+    nb = CrossBlock([session, inner], [session], [])
 
     run_len = inner.trials_per_sample()   # 4
     total_len = 2 * run_len               # two session levels
@@ -634,7 +634,7 @@ def test_sampling_strategies_return_expected_number_of_experiments():
     B = Factor("B", ["b1", "b2"])
     inner = CrossBlock([A, B], [A, B], [])
     session = Factor("session", [SimpleLevel("s1"), SimpleLevel("s2")])
-    nb = NestedBlock([session, inner], [inner, session], constraints=[], num_permutations=2)
+    nb = CrossBlock([session, inner], [inner, session], constraints=[], num_permutations=2)
 
     import importlib.util
 
@@ -687,7 +687,7 @@ def test_sampling_strategies_return_expected_number_of_experiments():
 #     B = Factor("B", ["b1", "b2"])
 #     inner = CrossBlock([A, B], [A, B], [])
 #     session = Factor("session", [SimpleLevel("s1"), SimpleLevel("s2")])
-#     nb = NestedBlock([session, inner], [inner, session], num_permutations=2)
+#     nb = CrossBlock([session, inner], [inner, session], num_permutations=2)
 
 #     # Enumerative strategies should return all distinct experiments (36 total)
 #     import importlib.util
@@ -711,13 +711,13 @@ def test_sampling_strategies_return_expected_number_of_experiments():
 #         exps = synthesize_trials(nb, 1000, sampling_strategy=Gen)
 #         assert len(exps) == 1000
 
-def test_nestedblock_refreshes_permutations_each_time():
-    """Permuted NestedBlock should refresh its permutation map between samples."""
+def test_CrossBlock_refreshes_permutations_each_time():
+    """Permuted CrossBlock should refresh its permutation map between samples."""
     A = Factor("A", ["a1", "a2"])
     B = Factor("B", ["b1", "b2"])
     inner = CrossBlock([A, B], [A, B], [])
     session = Factor("session", [SimpleLevel("s1"), SimpleLevel("s2")])
-    nb = NestedBlock([session, inner], [inner, session], constraints=[], num_permutations=2)
+    nb = CrossBlock([session, inner], [inner, session], constraints=[], num_permutations=2)
 
     # First sample
     synthesize_trials(nb, 1000, sampling_strategy=IterateGen)

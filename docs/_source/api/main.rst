@@ -228,7 +228,7 @@ using :func:`.synthesize_trials`. Print generated trials using
    constant within each window.
 
    The :class:`.NestedBlock` class combines exactly one `inner block` (a
-   :class:`.CrossBlock`) with one or more external factors. 
+   :class:`.CrossBlock`) with or without external factors. 
    When a sequence of trials is generated, each window consists of a
    complete run of the `inner block`; 
    `external factors` in the design remain constant
@@ -246,7 +246,6 @@ using :func:`.synthesize_trials`. Print generated trials using
    trial combinations is allowed to vary between windows. In that case,
    `num_permutations` can be used to limit how many distinct permutations
    appear.
-
    When in this permuted mode, the actual set of chosen permutations is
    refreshed for each synthesized experiment. That means each call to
    :func:`.synthesize_trials` will  use different permutations, 
@@ -264,13 +263,13 @@ using :func:`.synthesize_trials`. Print generated trials using
    multiplied by `num_permutations` or the full number of distinct 
    permutations when `num_permutations` is not specified.
 
-   `Design` must contain exactly one inner block and at least one `external factor`.
+   `Design` must contain exactly one inner block.
 
-   Every `external factor` listed in `design` must also be listed in 
-   the `crossing`. The `inner block` itself does not have to be included 
+   All factors in `crossing` must also appear in `design`." 
+   The `inner block` itself does not have to be included 
    in `crossing`, unless you want different permutations between windows.
    An example illustrating the the usage of :class:`.NestedBlock` is shown in  
-   :ref:`Using NestedBlockk <nestedblock-example>` section.
+   :ref:`Using NestedBlock <nestedblock-example>` section.
 
    :param design: one `inner block` plus the `external factors` 
    :type design: List[Union[Factor, MultiCrossBlock]]

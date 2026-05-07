@@ -755,24 +755,29 @@ In that case, we can add :class:`.ContinuousConstraint` to achieve that.
 Nesting Designs with NestedBlock
 --------------------------------
 
-Sweetpea also supports the experiment where a small design runs
-multiple times while holding one or more external factors constant 
-for each repeat (for example, run a 2×2 task
-inside each session or day) with :class:`.NestedBlock`. 
-:class:`.NestedBlock` treats one `inner block` as a window and 
-repeats that window across the levels of your `external factors`.
+SweetPea supports experiments where a small design runs multiple times
+while holding one or more external factors constant for each repeat
+(for example, running a 2×2 task inside each session or day) via
+:class:`.NestedBlock`. :class:`.NestedBlock` treats one `inner block`
+as a window and repeats that window across the levels of your
+`external factors`.
 
 If you already have a :class:`.CrossBlock` or :class:`.MultiCrossBlock`
 that you like, :class:`.NestedBlock` lets you reuse it as a unit.
+
+When a :class:`.CrossBlock` call includes a block object inside
+``design``, SweetPea automatically constructs a :class:`.NestedBlock`
+instead — no extra import is required.
 
 .. _nestedblock-example:
 
 Using NestedBlock
 ^^^^^^^^^^^^^^^^^
-:class:`.NestedBlock` can keep an external factor (e.g., task, session, etc.) 
-constant within each window of the `inner block`.
-The `inner block` can repeat once per external combination OR 
-vary between windows for counterbalancing.
+:class:`.NestedBlock` keeps each external factor constant within every
+window of the `inner block`. The `inner block` repeats once per
+external combination. External factors may appear in ``design``
+without appearing in ``crossing``; the only requirement is that every
+factor listed in ``crossing`` must also appear in ``design``.
 
 Let's start with a 2×2 inner design:
 
@@ -785,15 +790,16 @@ Let's start with a 2×2 inner design:
     >>> inner.trials_per_sample()
     4
 
-Here we repeat the 2×2 inner block for each level of an external 
-:class:`.Factor` session. Inside each 4-trial window, session is constant.
+Here we repeat the 2×2 inner block for each level of an external
+:class:`.Factor` ``session``. Inside each 4-trial window, ``session``
+is constant. Because ``design`` contains a block, :class:`.CrossBlock`
+automatically produces a :class:`.NestedBlock`:
 
 .. doctest::
 
-    >>> from sweetpea import NestedBlock, synthesize_trials, print_experiments
+    >>> from sweetpea import synthesize_trials, print_experiments
     >>> session = Factor("session", ["s1", "s2"])
-    >>> # Every Factor in `design` must also be in `crossing`.
-    >>> nb = NestedBlock(design=[session, inner], crossing=[session], constraints=[])
+    >>> nb = CrossBlock(design=[session, inner], crossing=[session], constraints=[])
     >>> nb.trials_per_sample()
     8 # Total trials = #session levels × inner trials = 2 × 4 = 8.
     >>> exps = synthesize_trials(nb, 1) 
@@ -817,22 +823,24 @@ Here we repeat the 2×2 inner block for each level of an external
 Vary the inner block between windows
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If the inner block is included  in the crossing, 
-SweetPea introduces a hidden “order” factor and 
-balances windows over different orders of the inner
-crossing. 
-You can also choose how many orders to use with `num_permutations`.
+If the inner block is included in ``crossing``, SweetPea introduces a
+hidden ``order`` factor and balances windows across different orderings
+of the inner crossing. By default all orderings are used; pass
+``num_permutations`` to limit how many.
+
+A 2×2 inner block has 4 trials and 4! = 24 possible orderings.
+With two ``group`` levels the default produces 24 × 2 × 4 = 192 trials:
 
 .. doctest::
 
     >>> group = Factor("group", ["G1", "G2"])
-    >>> nb_perm = NestedBlock(
+    >>> nb_perm = CrossBlock(
     >>>     design=[group, inner],
     >>>     crossing=[inner, group],        # include the inner block here to vary order
     >>>     constraints=[])
     >>> nb_perm.trials_per_sample()
     192 # 192 = 2×4×4!
-    >>> nb_perm = NestedBlock(
+    >>> nb_perm = CrossBlock(
     >>>     design=[group, inner],
     >>>     crossing=[inner, group],        # include the inner block here to vary order
     >>>     constraints=[],
@@ -843,14 +851,16 @@ You can also choose how many orders to use with `num_permutations`.
 Nesting inside nesting
 ^^^^^^^^^^^^^^^^^^^^^^
 
-You can create a :class:`.NestedBlock` using another :class:`.NestedBlock` 
-as the `inner block`. Each outer level repeats the entire 
-`inner block`. 
+You can create a :class:`.NestedBlock` using another :class:`.NestedBlock`
+as the ``inner block``. Each outer level repeats the entire inner block.
+
+Wrapping the session block from the previous example inside a ``day``
+factor gives one full session-block per day:
 
 .. doctest::
   
     >>> session = Factor("session", ["s1", "s2"])
-    >>> mid = NestedBlock(design=[session, inner], crossing=[session], constraints=[])
+    >>> mid = CrossBlock(design=[session, inner], crossing=[session], constraints=[])
     >>> exps = synthesize_trials(mid, 1) 
     Sampling 1 trial sequences using NonUniformGen.
     Encoding experiment constraints...
@@ -868,7 +878,7 @@ as the `inner block`. Each outer level repeats the entire
     session s1 | A a2 | B b2
     session s1 | A a1 | B b1
     >>> day = Factor("day", ["d1", "d2"])
-    >>> outer = NestedBlock(design=[day, mid], crossing=[day], constraints=[])
+    >>> outer = CrossBlock(design=[day, mid], crossing=[day], constraints=[])
     >>> exps = synthesize_trials(outer, 1) 
     Sampling 1 trial sequences using NonUniformGen.
     Encoding experiment constraints...

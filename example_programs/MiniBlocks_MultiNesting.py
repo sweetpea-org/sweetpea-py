@@ -17,6 +17,7 @@ block        = CrossBlock(design, crossing, [])
 experiments  = synthesize_trials(block, 1, CMSGen)
 print_experiments(block, experiments)
 
+
 print('Nested block with an additional factor color without crossing the block')
 color      = Factor("color", ["red", "blue"]) 
 
