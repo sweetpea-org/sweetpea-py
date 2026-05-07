@@ -65,7 +65,7 @@ def main():
     design = [task, task_transition, mini_block]
     crossing = [task, task_transition]
 
-    block = sp.NestedBlock(design=design, crossing=crossing, constraints=[])
+    block = sp.CrossBlock(design=design, crossing=crossing, constraints=[])
 
 
     experiments = sp.synthesize_trials(block, 1, sp.CMSGen)
