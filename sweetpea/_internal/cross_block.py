@@ -608,11 +608,14 @@ class NestedBlock(MultiCrossBlockRepeat):
         if not require_complete_crossing:
             raise ValueError("NestedBlock currently requires require_complete_crossing=True.")
 
+        self._user_constraints = list(constraints)  # Store user's constraints before merging with internal ones
+
         # ---- find inner block and externals at this level
         inner_blocks = [x for x in design if isinstance(x, MultiCrossBlockRepeat)]
         if len(inner_blocks) != 1:
             raise ValueError("NestedBlock expects exactly one inner block in `design`.")
         inner_block = inner_blocks[0]
+        self._inner_block = inner_block  # Store for LatinSquare per-participant solving
 
         crossing_blocks = [x for x in crossing if isinstance(x, MultiCrossBlockRepeat)]
 

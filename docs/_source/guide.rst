@@ -15,5 +15,5 @@ beginning: :ref:`guide_installation`.
 
    guide/installation
    guide/factorial_design
-   guide/usage
+   guide/usage   
    guide/contributing

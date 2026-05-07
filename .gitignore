@@ -37,3 +37,4 @@ docs/_build
 sweetpea-dev/
 *-dev/
 install-pyenv-win.ps1
+.claude/
