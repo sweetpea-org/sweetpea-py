@@ -325,7 +325,8 @@ def save_experiments_csv(block: Block,
 
 def synthesize_trials(block: Block,
                       samples: int = 10,
-                      sampling_strategy=IterateGen
+                      sampling_strategy=IterateGen,
+                      verbose: bool = True         
                       ) -> List[dict]:
     """Given an experiment described with a :class:`.Block`, randomly generates
     multiple sets of trials for that experiment.
@@ -361,91 +362,111 @@ def synthesize_trials(block: Block,
         :class:`dictionary <dict>` mapping each factor name to a list of
         levels, where each such list contains to one level per trial.
     """
+    import contextlib, io as _io                   # ← add this
 
-    def starting(who: Any) -> None:
-        nonlocal samples
-        print(f"Sampling {samples} trial sequences using {who}.")
-    
-    if isinstance(sampling_strategy, type):
-        assert issubclass(sampling_strategy, Gen)
-        starting(sampling_strategy.class_name())
-        sampling_result = sampling_strategy.sample(block, samples)
-    else:
-        starting(sampling_strategy)
-        sampling_result = sampling_strategy.sample_object(block, samples)
+    # ← add this: silence everything when verbose=False
+    _ctx = contextlib.nullcontext() if verbose else contextlib.redirect_stdout(_io.StringIO())
 
-    # DW: I am not sure if I need to fix this. Need to discuss with Matthew
-    raw_samples = sampling_result.samples[:samples]
+    with _ctx:  
 
-    trialss = []
-    for e in raw_samples:
-        with_implied = block.add_implied_levels(e)
-        # Run mismatch check BEFORE filtering hidden keys
-        if os.getenv("SWEETPEA_CHECK_SYNTHESIZED"):
-            mismatches = sample_mismatch_experiment(block, with_implied)
-            if mismatches:
-                print_experiments(block, [with_implied])
-                print(mismatches)
-                raise RuntimeError("synthesized trials has mismatches")
+        def starting(who: Any) -> None:
+            nonlocal samples
+            print(f"Sampling {samples} trial sequences using {who}.")
+        
+        if isinstance(sampling_strategy, type):
+            assert issubclass(sampling_strategy, Gen)
+            starting(sampling_strategy.class_name())
+            sampling_result = sampling_strategy.sample(block, samples)
+        else:
+            starting(sampling_strategy)
+            sampling_result = sampling_strategy.sample_object(block, samples)
 
-        # Now filter hidden keys for the returned trials
-        trialss.append(__filter_hidden_keys(with_implied))
+        # DW: I am not sure if I need to fix this. Need to discuss with Matthew
+        raw_samples = sampling_result.samples[:samples]
 
+        trialss = []
+        for e in raw_samples:
+            with_implied = block.add_implied_levels(e)
+            
+            specs: List[dict] = cast(List[dict], getattr(block, "external_stitch_specs", lambda: [])())
 
-    # NestedBlock Specific
-    spec = getattr(block, "external_stitch_spec", lambda: None)()
-    if spec is not None:
-        with_implied = _apply_external_stitch(
-            block,
-            with_implied,
-            spec,
-            sampling_strategy
-        )
+            for spec in reversed(specs):
+                with_implied = _apply_external_stitch_once(
+                    with_implied,
+                    spec,
+                    sampling_strategy
+                )
 
 
-    # Sampling for ContinuousFactor
-    if block.continuous_factors:
-        for num_trial, trials in enumerate(trialss):
-            continuous_samples = block.sample_continuous(num_trial, trialss[num_trial])
-            for k in continuous_samples:
-                trials[k] = continuous_samples[k]
-        # Restore ContinuousFactor to the design 
-    return trialss
+            # Run mismatch check BEFORE filtering hidden keys
+            if os.getenv("SWEETPEA_CHECK_SYNTHESIZED"):
+                mismatches = sample_mismatch_experiment(block, with_implied)
+                if mismatches:
+                    print_experiments(block, [with_implied])
+                    print(mismatches)
+                    raise RuntimeError("synthesized trials has mismatches")
+
+            # Now filter hidden keys for the returned trials
+            trialss.append(__filter_hidden_keys(with_implied))
 
 
-def _apply_external_stitch(block, sample, spec, sampling_strategy):
+        # # NestedBlock Specific
+        # spec = getattr(block, "external_stitch_spec", lambda: None)()
+        # if spec is not None:
+        #     with_implied = _apply_external_stitch(
+        #         block,
+        #         with_implied,
+        #         spec,
+        #         sampling_strategy
+        #     )
+
+
+        # Sampling for ContinuousFactor
+        if block.continuous_factors:
+            for num_trial, trials in enumerate(trialss):
+                continuous_samples = block.sample_continuous(num_trial, trialss[num_trial])
+                for k in continuous_samples:
+                    trials[k] = continuous_samples[k]
+            # Restore ContinuousFactor to the design 
+        return trialss
+
+
+
+def _apply_external_stitch_once(sample, spec, sampling_strategy):
     ext_block   = spec["external_block"]
     run_len     = spec["run_len"]
     ext_design  = spec["external_design"]
 
-    # Sample external block (miniblock-level)
-    ext_sample = synthesize_trials(
-        ext_block, samples=1, sampling_strategy=sampling_strategy
-    )[0]
-
-    # Determine external preamble length
     if ext_block.crossings:
         ext_preamble = ext_block.preamble_size(ext_block.crossings[0])
     else:
         ext_preamble = 0
 
-    # Expand base external factors (skip preamble)
-    for f in ext_design:
-        if isinstance(f.name, HiddenName):
-            continue
-        for ii in range(ext_preamble):
+    meaningful_trials = ext_block.trials_per_sample() - ext_preamble
+    one_block_len = ext_preamble + meaningful_trials * run_len
 
-            sample[f.name][ii] = ext_sample[f.name][ii]
+    total_len = len(next(iter(sample.values())))
+    num_reps = total_len // one_block_len if one_block_len > 0 else 1
 
-        values = ext_sample[f.name]
-        
-        for ind, v in enumerate(values[ext_preamble:]):
-            for rep in range(run_len):
-                sample[f.name][ext_preamble+ind*run_len+rep] = v
+    for rep_idx in range(num_reps):
+        offset = rep_idx * one_block_len
 
-    return block.add_implied_levels(sample)
+        ext_sample = synthesize_trials(
+            ext_block, samples=1, sampling_strategy=sampling_strategy,
+            verbose=False        # ← add this
+        )[0]
 
+        for f in ext_design:
+            if isinstance(f.name, HiddenName):
+                continue
+            for ii in range(ext_preamble):
+                sample[f.name][offset + ii] = ext_sample[f.name][ii]
+            values = ext_sample[f.name]
+            for ind, v in enumerate(values[ext_preamble:]):
+                for r in range(run_len):
+                    sample[f.name][offset + ext_preamble + ind * run_len + r] = v
 
+    return sample
 
 def sample_mismatch_experiment(block: Block, sample: dict) -> dict:
     """Given an experiment described with a :class:`.Block`, tests if :class:`list`

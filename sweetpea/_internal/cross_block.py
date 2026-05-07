@@ -545,6 +545,9 @@ class CrossBlock(MultiCrossBlock):
         if cls is not CrossBlock:
             return super().__new__(cls)
 
+        design = list(design)
+        crossing = list(crossing)
+
         inner_blocks = [x for x in design if isinstance(x, MultiCrossBlockRepeat)]
 
         # Ordinary CrossBlock path: no block in design.
@@ -571,6 +574,10 @@ class CrossBlock(MultiCrossBlock):
                  constraints: List[Constraint],
                  require_complete_crossing: bool = True,
                  num_permutations: Optional[int] = None):
+        
+        design = list(design)
+        crossing = list(crossing)
+
         who = "CrossBlock"
         argcheck(who, design, make_islistof(Factor), "list of Factors for design")
         argcheck(who, crossing, make_islistof(Factor), "list of Factors for crossing")
@@ -592,14 +599,14 @@ class NestedBlock(MultiCrossBlockRepeat):
             MinimumTrials, ExactlyK, ConstantInWindows, OrderRunsByPermutation
         )
 
+        design = list(design)
+        crossing = list(crossing)
+
         who = "NestedBlock"
         argcheck(who, constraints, make_islistof(Constraint), "list of Constraints for constraints")
 
         if not require_complete_crossing:
             raise ValueError("NestedBlock currently requires require_complete_crossing=True.")
-
-        # if constraints is None:
-        #     constraints = []
 
         # ---- find inner block and externals at this level
         inner_blocks = [x for x in design if isinstance(x, MultiCrossBlockRepeat)]
@@ -645,8 +652,6 @@ class NestedBlock(MultiCrossBlockRepeat):
         # ---- gather inner factors and inner crossings for inheritance
         inner_factors: List[Factor] = [f for f in inner_block.design if isinstance(f, Factor)]
         inner_crossings: List[List[Factor]] = [list(c) for c in inner_block.crossings]
-        
-        
         parent_crossings: List[List[Factor]] = [list(c) for c in inner_crossings]
 
         seen = set()
@@ -659,15 +664,10 @@ class NestedBlock(MultiCrossBlockRepeat):
         # ---- window geometry
         run_len = inner_block.trials_per_sample()
         self.run_len = run_len
+        self._external_stitch_specs: List[dict] = self._collect_external_stitch_specs(inner_block)
+
         # ---- constraints
         cs: List[Constraint] = []
-        # external_preamble = 0
-        # for f in externals:
-        #     if isinstance(f, DerivedFactor):
-        #         external_preamble = max(
-        #             external_preamble,
-        #             f.first_level.window.start or 0
-        #         )
 
         external_preamble = max(
             (
@@ -723,6 +723,12 @@ class NestedBlock(MultiCrossBlockRepeat):
                 constraints=constraints
                 )
 
+            self._external_stitch_specs.append({
+                "external_block": self._external_block,
+                "run_len": self.run_len,
+                "external_design": self._external_block.design
+            })
+
             # CB to store samples for miniblock. 
             self._create(
                 who="NestedBlock(nested)",
@@ -734,6 +740,8 @@ class NestedBlock(MultiCrossBlockRepeat):
                 mode=mode,
                 alignment=alignment_choice
             )
+
+
             return
 
         else: 
@@ -816,6 +824,12 @@ class NestedBlock(MultiCrossBlockRepeat):
                 constraints=constraints
                 )
 
+            self._external_stitch_specs.append({
+                "external_block": self._external_block,
+                "run_len": self.run_len,
+                "external_design": self._external_block.design
+            })
+
             mode = [RepeatMode.WEIGHT] * len(parent_crossings)
 
             # expose for pretty-print reordering hook
@@ -867,20 +881,25 @@ class NestedBlock(MultiCrossBlockRepeat):
             self._refresh_perm_map(sample_index=self._perm_sample_counter)
         return super().build_backend_request()
 
+    def external_stitch_specs(self):
+        specs = getattr(self, "_external_stitch_specs", None)
+        return list(specs) if specs is not None else []
+
     def external_stitch_spec(self):
-        """
-        Returns instructions for runtime stitching, or None.
-        """
-        if not hasattr(self, "_external_block") or self._external_block is None:
-            return None
-
-        return {
-            "external_block": self._external_block,
-            "run_len": self.run_len,
-            "external_design": self._external_block.design
-        }
+        specs = self.external_stitch_specs()
+        return specs[-1] if specs else None
 
 
+    def _collect_external_stitch_specs(self, inner_block) -> List[dict]:
+        if hasattr(inner_block, "external_stitch_specs"):
+            return list(inner_block.external_stitch_specs())
+
+        if hasattr(inner_block, "external_stitch_spec"):
+            spec = inner_block.external_stitch_spec()
+            return [spec] if spec is not None else []
+
+        return []
+        
 class Repeat(MultiCrossBlockRepeat):
     def __init__(self,
                  block: MultiCrossBlock,
