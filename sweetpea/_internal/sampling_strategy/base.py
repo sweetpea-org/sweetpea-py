@@ -65,6 +65,7 @@ class Gen(ABC):
         # Start after 'width' trials, and shift 'stride' trials for each variable.
         complex_factors = list(filter(lambda f: f.has_complex_window, block.act_design))
         for f in complex_factors:
+            sustain_count = block.sustain_count(f)
             # Get variables for this factor
             start = block.first_variable_for_level(f, f.levels[0]) + 1
             end = start + block.variables_for_factor(f)
@@ -79,7 +80,7 @@ class Gen(ABC):
             #level_names = list(repeat('', f.levels[0].window.width - 1)) + level_names
             level_names_fill = []
             for n in range(block.trials_per_sample()):
-                level_names_fill.append(level_names.pop(0) if f.applies_to_trial(n+1) else '')
+                level_names_fill.append(level_names.pop(0) if f.applies_to_trial(n//sustain_count+1) else '')
             experiment[f.name] = level_names_fill
 
         return experiment

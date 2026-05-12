@@ -200,8 +200,8 @@ def test_generate_argument_list_with_transition():
 
 
 def test_shift_window():
-    assert DerivationProcessor.shift_window([[0, 0], [1, 1]], WithinTrial(lambda x: x, [color]), 0) == [[0, 0], [1, 1]]
-    assert DerivationProcessor.shift_window([[0, 0], [1, 1]], Transition(lambda x: x, [color]), 4) == [[0, 4], [1, 5]]
-    assert DerivationProcessor.shift_window([[0, 2, 4], [1, 3, 5]], Window(lambda x: x, [color], 2, 3), 6) == [[0, 8, 16], [1, 9, 17]]
-    assert DerivationProcessor.shift_window([[1, 1, 1, 1], [2, 2, 2, 2]], Window(lambda x: x, [color], 2, 4), 10) == \
+    assert DerivationProcessor.shift_window([[0, 0], [1, 1]], WithinTrial(lambda x: x, [color]), 0, 1) == [[0, 0], [1, 1]]
+    assert DerivationProcessor.shift_window([[0, 0], [1, 1]], Transition(lambda x: x, [color]), 4, 1) == [[0, 4], [1, 5]]
+    assert DerivationProcessor.shift_window([[0, 2, 4], [1, 3, 5]], Window(lambda x: x, [color], 2, 3), 6, 1) == [[0, 8, 16], [1, 9, 17]]
+    assert DerivationProcessor.shift_window([[1, 1, 1, 1], [2, 2, 2, 2]], Window(lambda x: x, [color], 2, 4), 10, 1) == \
         [[1, 11, 21, 31], [2, 12, 22, 32]]

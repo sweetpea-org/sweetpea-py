@@ -2,7 +2,7 @@
 
 
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Tuple
 
 from sweetpea._internal.primitive import Factor
 
@@ -51,5 +51,16 @@ class Constraint(ABC):
         """
         pass
 
-    def set_within_block(self) -> None:
+    def init_within_block(self, within_block) -> None:
         pass
+
+    def sustain_within_block(self, sustain_count: int) -> None:
+        pass
+
+    def derivable_factors(self, block) -> Tuple[List[Factor], List[Factor]]:
+        """Returns factors (first list) where the constraints imply that
+        some factor levels can be inferred from the trial index
+        and other factor's levels. If the second reculrd list is nonempty,
+        those factors' values are needed to derive the values for factors
+        in the first result list."""
+        return ([], [])

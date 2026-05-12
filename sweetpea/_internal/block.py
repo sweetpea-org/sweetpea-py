@@ -7,6 +7,7 @@ from functools import reduce
 from itertools import accumulate, combinations, product, repeat
 from typing import List, Union, Tuple, Optional, cast, Any, Dict, Set, Callable, TypeVar
 from math import ceil
+from itertools import chain
 from networkx import has_path
 import inspect
 # import time
@@ -24,7 +25,20 @@ from sweetpea._internal.weight import combination_weight
 from sweetpea._internal.argcheck import argcheck, make_islistof
 
 T = TypeVar('T')
-            
+
+class BlockGeometry():
+    def __init__(self, num_trials: int, preamble_size: int, factor_to_sustain_count: Dict[Factor, int]):
+        self.num_trials = num_trials
+        self.preamble_size = preamble_size
+        self.factor_to_sustain_count = factor_to_sustain_count
+    def __repr__(self):
+        return f"BlockGeometry({self.num_trials!r}, {self.preamble_size!r}, {self.factor_to_sustain_count!r})"
+
+    def sustain(self, sustain_count: int):
+        return BlockGeometry(self.num_trials * sustain_count,
+                             self.preamble_size * sustain_count,
+                             {f:n*sustain_count for f,n in self.factor_to_sustain_count.items()})
+
 class Block:
     """Abstract class for Blocks. Contains the required data, and defines
     abstract methods that other blocks _must_ implement in order to work
@@ -34,6 +48,8 @@ class Block:
     def __init__(self,
                  design: List[Factor],
                  crossings: List[List[Factor]],
+                 crossing_sustain_counts: List[int],
+                 crossing_weights: List[int],
                  constraints: List[Constraint],
                  require_complete_crossing,
                  who: str) -> None:
@@ -44,7 +60,13 @@ class Block:
         self.__check_dependency()
         self.design = list(design).copy()
         self.crossings = list(map(lambda c: list(c).copy(), crossings))
+        self.crossing_sustain_counts = list(crossing_sustain_counts).copy()
+        self.crossing_weights = list(crossing_weights).copy()
         self.constraints = list(constraints).copy()
+        self.factor_to_sustain_count = {}
+        for c, count in zip(crossings, crossing_sustain_counts):
+            for f in c:
+                self.factor_to_sustain_count[f] = count
         self.cnf_fn = to_cnf_tseitin
         self.complex_factors_or_constraints = True
         self.min_trials = cast(int, 0)
@@ -54,12 +76,14 @@ class Block:
         self.errors = cast(Set[str], set())
         self.act_design = list(filter(lambda f: not self.factor_is_implied(f), self.design))
         self._trials_per_sample = None
-        self.within_block_count = cast(Optional[int], None)
-        self.within_block_preamble = cast(Optional[int], None)
         self._simple_tuples = cast(Optional[List[Tuple[Factor, Union[SimpleLevel, DerivedLevel]]]], None)
         self._variables_per_trial = None
         self.__validate(who)
         self._cached_previous_count = cast(Dict[Tuple[Factor, int], int], {})
+        for count in crossing_sustain_counts:
+            # round min trials up to multiple of sustain
+            if (self.min_trials//count) * count != self.min_trials:
+                self.min_trials = ((self.min_trials//count) + 1) * count
 
     def sep_continuous_factors(self, 
                              design: List[Factor])->List[Factor]:
@@ -268,6 +292,10 @@ class Block:
         pass
 
     @abstractmethod
+    def get_geometry(self) -> BlockGeometry:
+        pass
+
+    @abstractmethod
     def variables_per_trial(self):
         """Indicates the number of variables that are present in each trial.
 
@@ -309,8 +337,9 @@ class Block:
                              start: int = 0,
                              end: Optional[int] = None) -> int:
         """Indicates the number of variables needed to encode this factor."""
+        sustain_count = self.sustain_count(f)
         trial_list = range(1 + start, (end if end else self.trials_per_sample()) + 1)
-        return reduce(lambda sum, t: sum + len(f.levels) if f.applies_to_trial(t) else sum, trial_list, 0)
+        return reduce(lambda sum, t: sum + len(f.levels) if f.applies_to_trial((t-1)//sustain_count + 1) else sum, trial_list, 0)
 
     def has_factor(self, factor: Factor) -> Factor:
         """Determines whether a given factor is in this block."""
@@ -347,6 +376,7 @@ class Block:
 
     def _get_previous_trials_variable_count(self, f: Factor, trial: int):
         """The `trial` argument is 1-based."""
+        sustain_count = self.sustain_count(f)
         t = trial
         while True:
             maybe_count = cast(Optional[int], 0)
@@ -358,7 +388,7 @@ class Block:
             if maybe_count is not None:
                 count = maybe_count
                 while t < trial:
-                    if (f.applies_to_trial(t)):
+                    if (f.applies_to_trial((t-1)//sustain_count + 1)):
                         count += 1
                     t += 1
                     self._cached_previous_count[(f, t)] = count
@@ -370,7 +400,7 @@ class Block:
         return a list of the variables representing the levels of the given
         factor for that trial. The variable list is also 1-based.
         """
-        if not f.applies_to_trial(t):
+        if not f.applies_to_trial((t-1)//self.sustain_count(f) + 1):
             raise ValueError('Factor does not apply to trial #' + str(t) + ' f=' + str(f))
 
         previous_trials = self._get_previous_trials_variable_count(f, t)
@@ -401,8 +431,9 @@ class Block:
         """
         variables = cast(List[List[int]], [])
         for f in self.act_design:
+            sustain_count = self.sustain_count(f)
             # Skip factors that don't apply.
-            if not f.applies_to_trial(t):
+            if not f.applies_to_trial((t-1)//sustain_count + 1):
                 variables.append([])
                 continue
 
@@ -465,6 +496,8 @@ class Block:
         """
         if self.is_excluded_combination(di):
             return True
+        if self.crossings == []:
+            return False
         for f in self.crossings[0]:
             if isinstance(f, DerivedFactor) and not f.has_complex_window and f in di:
                 l = cast(DerivedLevel, di[f])
@@ -498,7 +531,7 @@ class Block:
 
     def build_variable_lists(self,
                              level_pair: Tuple[Factor, Union[SimpleLevel, DerivedLevel]],
-                             within_block: bool = False) -> List[List[int]]:
+                             within_block: Optional[BlockGeometry] = None) -> List[List[int]]:
         """Given a specific level (factor + level pair), this method will
         return the list of variables that correspond to that level in each
         trial in the encoding.
@@ -538,9 +571,10 @@ class Block:
         n = len(list(results.values())[0])
         for f in self.design:
             if f not in self.act_design:
+                sustain_count = self.sustain_count(f)
                 vals = []
                 for i in range(0, n):
-                    if f.applies_to_trial(i + 1):
+                    if f.applies_to_trial(i//sustain_count + 1):
                         for l in f.levels:
                             if isinstance(l, ElseLevel):
                                 vals.append(l.name)
@@ -550,8 +584,9 @@ class Block:
                                 for idx, df in enumerate(w.factors):
                                     for j in range(w.width):
                                         shift = w.width - j - 1
-                                        if i - shift >= 0:
-                                            args.append(results[df.name][i - shift])
+                                        rel_i = (i//sustain_count) * sustain_count
+                                        if rel_i - shift >= 0:
+                                            args.append(results[df.name][rel_i - shift])
                                         else:
                                             args.append(None)
                                 if w.width > 1:
@@ -565,29 +600,13 @@ class Block:
                 results[f.name] = vals
         return results
 
-    def map_block_trial_ranges(self, within_block: bool, proc: Callable[[int, int], T]) -> List[T]:
-        num_trials = self.trials_per_sample()
-        if within_block:
-            start = 0
-            if self.within_block_count and (self.within_block_preamble != None):
-                end = self.within_block_count
-                step = self.within_block_count - cast(int, self.within_block_preamble)
-            else:
-                raise RuntimeError("within-block but not in a repeat?!")
-        else:
-            start = 0
-            end = num_trials
-            step = num_trials
-        lists = cast(List[T], [])
-        while start < num_trials:
-            lists.append(proc(start, end))
-            start += step
-            end += step
-        return lists
+    @abstractmethod    
+    def map_block_trial_ranges(self, within_block: Optional[BlockGeometry], proc: Callable[[int, int], T]) -> List[T]:
+        pass
 
     def __build_simple_variable_lists(self,
                                       level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]],
-                                      within_block: bool = False) -> List[List[int]]:
+                                      within_block: Optional[BlockGeometry] = None) -> List[List[int]]:
         def get_variables(start: int, end: int) -> List[int]:
             nonlocal level
             design_var_count = self.variables_per_trial()
@@ -600,7 +619,7 @@ class Block:
 
     def __build_complex_variable_lists(self,
                                        level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]],
-                                       within_block: bool = False) -> List[List[int]]:
+                                       within_block: Optional[BlockGeometry] = None) -> List[List[int]]:
         factor = level[0]
         level_count = len(factor.levels)
         start_idx = self.first_variable_for_level(level[0], level[1]) + 1
@@ -610,22 +629,37 @@ class Block:
             return reduce(lambda l, v: l + [start_idx + ((v + start) * level_count)], range(n), [])
         return self.map_block_trial_ranges(within_block, get_variables)
 
-    def get_trial_numbers(self, b_trial_no: int, within_block: bool = False) -> List[int]:
-        def get_variables(start: int, end: int) -> int:
-            nonlocal b_trial_no
-            if b_trial_no < 0:
-                trial_no = end + b_trial_no
-            else:
-                trial_no = start + b_trial_no
-            if (trial_no >= start) and (trial_no < end):
-                return trial_no
-            else:
-                return -1
-        nums = self.map_block_trial_ranges(within_block, get_variables)
-        if all([n >= 0 for n in nums]):
-            return nums
+    def sustain_count(self, f: Factor):
+        if f in self.factor_to_sustain_count:
+            return self.factor_to_sustain_count[f]
         else:
-            return []
+            return 1
+
+    @abstractmethod
+    def factor_preamble_size(self, f: Factor):
+        pass
+
+    def get_trial_numbers(self, f: Factor, b_trial_no: int, within_block: Optional[BlockGeometry] = None) -> List[int]:
+        if within_block is None:
+            sustain_count = self.sustain_count(f)
+        else:
+            if f in within_block.factor_to_sustain_count:
+                sustain_count = within_block.factor_to_sustain_count[f]
+            else:
+                sustain_count = 1
+        def get_variables(start: int, end: int) -> List[int]:
+            nonlocal b_trial_no
+            nonlocal sustain_count
+            if b_trial_no < 0:
+                trial_no = end + (sustain_count * b_trial_no)
+            else:
+                trial_no = start + (sustain_count * b_trial_no)
+            if (trial_no >= start) and (trial_no < end):
+                return [trial_no + i for i in range(0, sustain_count)]
+            else:
+                return []
+        numss = self.map_block_trial_ranges(within_block, get_variables)
+        return list(chain.from_iterable(numss))
 
     def rearrage_samples(self, samples, results):
         pass

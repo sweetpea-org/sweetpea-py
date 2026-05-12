@@ -19,6 +19,11 @@ class DesignPartitions():
     def __init__(self, block: Block) -> None:
         self._block = block
         self._crossed = None
+        self.main_crossing = 0
+        while (block.crossing_sustain_counts[self.main_crossing] != 1):
+            self.main_crossing += 1
+            if self.main_crossing >= len(block.crossing_sustain_counts):
+                ValueError("RandomGen: no crossing found with sustain count 1")
 
     def get_crossed_noncomplex_factors(self):
         """Noncomplex factors are ones that have a window size of 1
@@ -30,7 +35,9 @@ class DesignPartitions():
         """
         if self._crossed:
             return self._crossed
-        result = self._block.crossings[0]
+        if self._block.crossings == []:
+            return []        
+        result = self._block.crossings[self.main_crossing]
         result = list(filter(lambda f: not f.has_complex_window, result))
         self._crossed = result
         return result
@@ -46,7 +53,9 @@ class DesignPartitions():
 
         """
         result = []
-        for f in self._block.crossings[0]:
+        if self._block.crossings == []:
+            return []        
+        for f in self._block.crossings[self.main_crossing]:
             if f.has_complex_window:
                 if f not in result:
                     result.append(f)

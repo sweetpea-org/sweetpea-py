@@ -233,14 +233,14 @@ class DerivedLevel(Level):
     def uses_factor(self, f: Factor):
         return any(list(map(lambda wf: wf.uses_factor(f), self.window.factors)))
 
-    def _trial_arguments(self, sample: dict, i: int) -> list:
+    def _trial_arguments(self, sample: dict, i: int, sustain_count: int) -> list:
         """Returns the arguments used from sample trial i (zero-based) used in the level's predicate."""
         window = self.window
         args = []
         for f in window.factors:
             levels = sample[f]
             for j in range(window.width):
-                idx = i-(window.width-1)+j
+                idx = i+(j-(window.width-1))*sustain_count
                 if idx >= 0:
                     args.append(levels[idx].name)
                 else:
@@ -530,7 +530,7 @@ class Factor:
     def level_weight_sum(self):
         return sum([l.weight for l in self.levels])
 
-    def test_trial(self, i, trial_sequence):
+    def test_trial(self, i, trial_sequence, sustain_count):
         """Test if trial i of trial_sequence meets the criteria
         If this is a regular factor this is always True
         """
@@ -675,10 +675,10 @@ class DerivedFactor(Factor):
     def uses_factor(self, f: Factor):
         return (self == f) or any(list(map(lambda l: l.uses_factor(f), self.levels)))
 
-    def select_level_for_sample(self, i: int, sample: dict) -> Any:
+    def select_level_for_sample(self, i: int, sample: dict, sustain_count: int) -> Any:
         """Get level name for trial i (zero-based) depending on
         values of other factors already in the sample."""
-        args = self.levels[0]._trial_arguments(sample, i)
+        args = self.levels[0]._trial_arguments(sample, i, sustain_count)
         for l in self.levels:
             if l.window.predicate(*args):
                 return l
@@ -691,11 +691,11 @@ class DerivedFactor(Factor):
             f = DerivedFactor(self.name, [replacements[l] for l in self.levels])
             replacements[self] = [f, f]
 
-    def test_trial(self, i, trial_sequence):
+    def test_trial(self, i, trial_sequence, sustain_count):
         res = True
         for level in self.levels:
             if trial_sequence[self][i] == level:
-                args = level._trial_arguments(trial_sequence, i)
+                args = level._trial_arguments(trial_sequence, i, sustain_count)
                 res &= level.window.predicate(*args)
         return res
 

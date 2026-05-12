@@ -5,13 +5,13 @@ a factorial experimental design.
 from abc import abstractmethod
 from functools import reduce
 from itertools import accumulate, combinations, product, repeat, chain
-from typing import List, Union, Tuple, Optional, cast, Any, Dict, Set, Sequence
+from typing import List, Union, Tuple, Optional, cast, Any, Dict, Set, Sequence, Callable, TypeVar
 from math import ceil
 from networkx import has_path
 import copy
 from itertools import permutations
 
-from sweetpea._internal.block import Block
+from sweetpea._internal.block import Block, BlockGeometry
 from sweetpea._internal.backend import BackendRequest
 from sweetpea._internal.level import get_all_levels
 from sweetpea._internal.primitive import (
@@ -29,6 +29,8 @@ from sweetpea._internal.check_mismatch import combinations_mismatched_weights
 from enum import Enum, auto
 import random
 
+T = TypeVar('T')
+
 class RepeatMode(Enum):
     WEIGHT = "weight"
     REPEAT = "repeat"
@@ -37,13 +39,29 @@ class RepeatMode(Enum):
 class AlignmentMode(Enum):
     POST_PREAMBLE  = "post preamble"       # Start all crossings after preamble ends
     PARALLEL_START = "parallel start"      # Start all crossings at the beginning
-    EQUAL_PREAMBLE = "equal preamble"
+    EQUAL_PREAMBLE = "equal preamble"      # Assert that no choice is needed
 
+def normalize_mode(who, mode):
+    _valid_modes = {m.value: m for m in RepeatMode} 
+    if isinstance(mode, RepeatMode):
+        return mode
+    elif not isinstance(mode, list) and mode not in _valid_modes:
+        raise ValueError(who, f"Invalid mode '{mode}'. Must be RepeatMode OR one of {list(_valid_modes.keys())}.")
+    else:
+        return _valid_modes[mode]
+            
+def normalize_alignment(who, alignment):
+    _valid_alignment = {m.value: m for m in AlignmentMode} 
+    if isinstance(alignment, AlignmentMode):
+        return alignment
+    elif alignment not in _valid_alignment:
+        raise ValueError(who, f"Invalid alignment '{alignment}'. Must be AlignmentMode or one of {list(_valid_alignment.keys())}.")
+    else:
+        return _valid_alignment[alignment]
+            
 class MultiCrossBlockRepeat(Block):
     """An internal :class:`.Block` to handle blocks and repeats.
     """
-    _valid_modes = {m.value: m for m in RepeatMode} 
-    _valid_alignment = {m.value: m for m in AlignmentMode} 
     def __init__(self,
                  design: List[Factor],
                  crossings: List[List[Factor]],
@@ -53,52 +71,39 @@ class MultiCrossBlockRepeat(Block):
         argcheck(who, design, make_islistof(Factor), "list of Factors for design")
         argcheck(who, crossings, make_islistof(make_islistof(Factor)), "list of list of Factors for crossings")
         argcheck(who, constraints, make_islistof(Constraint), "list of Constraints for constraints")
-        self._create(who, design, crossings, constraints, require_complete_crossing, None)
+        self._create(who, design,
+                     crossings, [1 for c in crossings], [1 for c in crossings],
+                     constraints, require_complete_crossing)
 
     def _create(self,
                 who: str,
                 design: List[Factor],
                 crossings: List[List[Factor]],
+                crossing_sustain_counts: List[int],
+                crossing_weights: List[int],
                 constraints: List[Constraint],
                 require_complete_crossing: bool,
-                within_block_count: Optional[int],
-                mode: Union[str, RepeatMode, List[Union[str, RepeatMode]]] = RepeatMode.EQUAL,
-                alignment: Union[str, AlignmentMode] = AlignmentMode.EQUAL_PREAMBLE
+                mode: Union[str, RepeatMode] = RepeatMode.WEIGHT,
+                alignment: Union[str, AlignmentMode] = AlignmentMode.EQUAL_PREAMBLE,
                 ):
-        if isinstance(mode, RepeatMode):
-            self.mode = [mode]
-        elif not isinstance(mode, list) and mode not in self._valid_modes:
-            raise ValueError(f"Invalid mode '{mode}'. Must be RepeatMode OR one of {list(self._valid_modes.keys())}.")
-        elif not isinstance(mode, list):
-            self.mode = [self._valid_modes[mode]]
-        else:
-            if len(mode) != len(crossings):
-                raise ValueError(f"Number of modes '{len(mode)}' is different from number of crossings ' {len(crossings)}.")
-            self.mode = []
-            for m in mode: 
-                if isinstance(m, RepeatMode):
-                    self.mode.append(m)
-                elif m not in self._valid_modes:
-                    raise ValueError(f"Invalid mode '{m}'. Must be RepeatMode OR one of {list(self._valid_modes.keys())}.")
-                else:
-                    self.mode.append(self._valid_modes[m])
+        mode = normalize_mode(who, mode)
+        self.alignment = normalize_alignment(who, alignment)
 
-        if isinstance(alignment, AlignmentMode):
-            self.alignment = alignment
-        elif alignment not in self._valid_alignment:
-            raise ValueError(f"Invalid alignment '{alignment}'. Must be AlignmentMode or one of {list(self._valid_alignment.keys())}.")
-        else:
-            self.alignment = self._valid_alignment[alignment]
+        crossings = [c for c in crossings if len(c) > 0]
 
-        from sweetpea._internal.constraint import Cross, Consistency
+        from sweetpea._internal.constraint import Cross, Consistency, Sustain
         from sweetpea._internal.derivation_processor import DerivationProcessor
         self.orig_design = design
         self.orig_crossings = crossings
         self.orig_constraints = constraints
         design, crossings, replacements = _desugar_factors_with_weights(design, crossings)
         all_constraints = cast(List[Constraint], [Cross(), Consistency()]) + constraints
+        if any(count != 1 for count in crossing_sustain_counts):
+            all_constraints += [Sustain()]
         all_constraints = _desugar_constraints(all_constraints, replacements)
-        super().__init__(design, crossings, all_constraints, require_complete_crossing, who)
+        super().__init__(design,
+                         crossings, crossing_sustain_counts, crossing_weights,
+                         all_constraints, require_complete_crossing, who)
         self.crossing_sizes = [self.crossing_size(c) for c in self.crossings]
         self.preamble_sizes = [self._trials_per_sample_for_one_crossing(c) - self.crossing_size(c)
                                for c in self.crossings]
@@ -108,30 +113,16 @@ class MultiCrossBlockRepeat(Block):
             self.complex_factors_or_constraints = False
         
         if not all([s == self.preamble_sizes[0] for s in self.preamble_sizes]) and self.alignment == AlignmentMode.EQUAL_PREAMBLE:
-            raise RuntimeError("AlignmentMode is not defined in MultiCrossBlock with different preamble sizes")
-        if within_block_count:
-            # Repeat Block
-            if not all([s == self.preamble_sizes[0] for s in self.preamble_sizes]):
-                raise RuntimeError("cannot repeat a block with crossings that have different preamble lengths")
-            self.within_block_count = within_block_count
-            self.within_block_preamble = self.preamble_sizes[0]
-        elif (not all(x == self.crossing_sizes[0] for x in self.crossing_sizes)) and len(self.mode)== 1 and self.mode[0] == RepeatMode.EQUAL:
-            # MultiCrossBlock with Different Crossing Sizes
-            # mode needs to be either weight OR repeat when crossing sizes are different
-            raise RuntimeError(f"Invalid mode '{mode}' when crossing sizes are different for MultiCrossBlock.")
-        elif len(self.mode)== 1 and self.mode[0] == RepeatMode.REPEAT:
-            # If repeat is decalred for multicrossing case
-            self.within_block_count = min(self.crossing_sizes)
-        elif len(self.mode)>1: 
-            self.within_block_counts = []
-            for _i, m in enumerate(self.mode):
-                if m == RepeatMode.REPEAT:
-                    self.within_block_counts.append(self.crossing_sizes[_i])
-                else:
-                    self.within_block_counts.append(self.trials_per_sample())
-        # Use weight otherwise
-        else:
-            self.within_block_count = self.trials_per_sample()
+            raise RuntimeError("AlignmentMode.EQUAL_PREAMBLE not allowed with different preamble sizes")
+
+        if mode != RepeatMode.REPEAT:
+            num_trials = self.trials_per_sample()
+            for i in range(0, len(crossings)):
+                w = ((num_trials // crossing_sustain_counts[i]) - self.preamble_sizes[i] + self.crossing_sizes[i] - 1) // self.crossing_sizes[i]
+                if w != self.crossing_weights[i]:
+                    if mode == RepeatMode.EQUAL:
+                        raise RuntimeError("RepeatMode.EQUAL not allowed with different crossing+preamble sizes")
+                    self.crossing_weights[i] = w;
 
         self._alignment_preamble = max(
             (
@@ -143,7 +134,28 @@ class MultiCrossBlockRepeat(Block):
             default=0
         )
 
+        within_block = self.get_geometry(0)
+        for ct in self.constraints:
+            ct.init_within_block(within_block)
+        # in case this block is later combined, also update constraints in `orig_constraints`
+        for ct in self.orig_constraints:
+            ct.init_within_block(within_block)
+
         self.__validate(who)
+
+        # knowing that factors can be derived (and how) is useful for `RandomGen`
+        derivable_factors = {}
+        non_derivable_factors = []
+        for ct in self.constraints:
+            (deriv_f, non_deriv_f) = ct.derivable_factors(self)
+            for f in deriv_f:
+                derivable_factors[f] = ct
+            for f in non_deriv_f:
+                non_derivable_factors.append(f)
+        for f in non_derivable_factors:
+            if f in derivable_factors:
+                derivable_factors.pop(f)
+        self.derivable_factors = derivable_factors
 
     def __validate(self, who: str):
         self.__validate_crossing(who)
@@ -169,7 +181,8 @@ class MultiCrossBlockRepeat(Block):
     def __trials_required_for_crossing(self, f: Factor, crossing_size: int) -> int:
         """Given a factor ``f``, and a crossing size, this function will
         compute the number of trials required to fully cross ``f`` with the
-        other factors.
+        other factors. The result includes a sustain factor, because that must be
+        built into the `crossing_size` argument.
 
         For example, if ``f`` is a transition, it doesn't apply to trial 1. So
         when the ``crossing_size`` is ``4``, we'd actually need 5 trials to
@@ -177,11 +190,12 @@ class MultiCrossBlockRepeat(Block):
 
         This is a helper for :class:`.MultipleCrossBlock.trials_per_sample`.
         """
+        sustain_count = self.sustain_count(f)
         trial = 0
         counter = 0
         while counter != crossing_size:
             trial += 1
-            if f.applies_to_trial(trial):
+            if f.applies_to_trial((trial-1)//sustain_count + 1):
                 counter += 1
         return trial
 
@@ -193,13 +207,13 @@ class MultiCrossBlockRepeat(Block):
             crossing_trials = list(map(lambda c: list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size),
                                                         c)),
                                     self.crossings))
-        else:# self.alignment == AlignmentMode.PARALLEL_START:
+        else: # self.alignment == AlignmentMode.PARALLEL_START or == AlignmentMode.EQUAL_PREAMBLE:
             crossing_sizes = map(lambda c: self.crossing_size(c), self.crossings)
             crossing_trials = list(map(lambda c: list(map(lambda f: self.__trials_required_for_crossing(f, c[1]),
                                                         c[0])),
                                     zip(self.crossings, crossing_sizes)))
-        required_trials = list(map(lambda l: max([0] + l), crossing_trials))
-        return max(required_trials)
+        required_trials = list(map(lambda l: max([0] + l), crossing_trials))        
+        return max([1] + required_trials)
 
     def _trials_per_sample_for_one_crossing(self, c: List[Factor]):
         """Result includes preamble trials."""
@@ -211,6 +225,15 @@ class MultiCrossBlockRepeat(Block):
             return self._trials_per_sample
         self._trials_per_sample = max([self.min_trials, self._trials_per_sample_for_crossing()])
         return self._trials_per_sample
+
+    def get_geometry(self, sustain_count: int = 1) -> BlockGeometry:
+        if len(self.crossings) == 0:
+            preamble_size = 0
+        else:
+            preamble_size = self.preamble_size(self.crossings[0]) * max(1, sustain_count)            
+        return BlockGeometry(self.trials_per_sample() * max(1, sustain_count),
+                             preamble_size,
+                             {f: max(1, n*sustain_count) for f,n in self.factor_to_sustain_count.items()})
 
     def variables_per_trial(self):
         # Factors with complex windows are excluded because we don't want variables allocated
@@ -337,7 +360,7 @@ class MultiCrossBlockRepeat(Block):
         crossing = self.__select_crossing(crossing)
         crossing_size = self.crossing_size_without_exclusions(crossing)
         crossing_size -= self.__count_exclusions(crossing)
-        return crossing_size
+        return crossing_size * self.crossing_sustain_count(crossing)
 
     def crossing_size_without_exclusions(self, crossing: List[Factor]):
         """The crossing argument must be one of the block's crossings."""
@@ -346,29 +369,42 @@ class MultiCrossBlockRepeat(Block):
     def preamble_size(self, crossing: Optional[List[Factor]] = None):
         if self.alignment == AlignmentMode.POST_PREAMBLE:
             return max(self._alignment_preamble, max(self.preamble_sizes))
-        
         crossing = self.__select_crossing(crossing)
         return self._trials_per_sample_for_one_crossing(crossing) - self.crossing_size(crossing)
+
+    def common_preamble_size(self):
+        if len(self.crossings) == 0:
+            return 0
+        return self.preamble_size(self.crossings[0])
+
+    def factor_preamble_size(self, f: Factor):
+        size = None
+        for c in self.crossings:
+            if f in c:
+                c_size = self.preamble_size(c)
+                if size is None:
+                    size = c_size
+                else:
+                    raise ValueError("Inconsistent preamble size for factor")
+        return 0 if size is None else size
 
     def crossing_weight(self, crossing: Optional[List[Factor]] = None):
         """Gets the implicit weight applied to every combination in
         the given crossing. This weight becomes greater than 1 when a
         MinimumTrials constraint forces a number of trials that is
         larger than the number of different combinations of levels in
-        the crossing, for example. To get the result, we work backward
-        from a previously computed `within_block_count`, which is the
-        total number of trials in the block.
-
+        the crossing, for example, or when a crossing is weighted to
+        match the length of another crossing.
         """
-        crossing_ind = self.__get_crossing_ind(crossing)
         crossing = self.__select_crossing(crossing)
-        crossing_size = self.crossing_size(crossing)
-        preamble_size = self.preamble_size(crossing)
-        # print('ps: ', preamble_size, crossing)
-        if len(self.mode)==1:
-            return max(1, ((self.within_block_count - preamble_size) + (crossing_size - 1)) // crossing_size)
-        else:
-            return max(1, ((self.within_block_counts[crossing_ind] - preamble_size) + (crossing_size - 1)) // crossing_size)
+        i = self.__get_crossing_ind(crossing)
+        return self.crossing_weights[i]
+
+    def crossing_sustain_count(self, crossing: List[Factor]):
+        if len(crossing) == 0:
+            return 1
+        return self.sustain_count(crossing[0])
+
     def draw_design_graph(self):
         dg = DesignGraph(self.design)
         dg.draw()
@@ -392,8 +428,9 @@ class MultiCrossBlockRepeat(Block):
         for factor in self.design:
             if not isinstance(factor.name, HiddenName):
                 factor_test = True
-                for i in range(len(sample_objects[factor])):
-                    factor_test &= factor.test_trial(i, sample_objects)
+                sustain_count = self.sustain_count(factor)
+                for i in range(0, len(sample_objects[factor]), sustain_count):
+                    factor_test &= factor.test_trial(i, sample_objects, sustain_count)
                 if not factor_test:
                     res.append(factor.name)
         return res
@@ -420,9 +457,13 @@ class MultiCrossBlockRepeat(Block):
 
         for i, crossing in enumerate(self.crossings):
             bad = 0
-            start = self.preamble_sizes[i]
+            if self.alignment is AlignmentMode.POST_PREAMBLE:
+                start = self.preamble_size()
+            else:
+                start = self.preamble_sizes[i]
             c_weight = self.crossing_weight(crossing)
             c_crossing_size = self.crossing_sizes[i] * c_weight
+            c_sustain_weight = c_weight * self.crossing_sustain_count(crossing)
             levels_lists = [sample[f.name] for f in crossing]
             # check if length of sample is enough to satisfy the crossings
             for levels in levels_lists:
@@ -434,11 +475,33 @@ class MultiCrossBlockRepeat(Block):
                 if (end > trial_count):
                     end = trial_count
                     or_less = True
-                bad += combinations_mismatched_weights(start, end, c_weight, crossing, sample_objects, or_less)
+                bad += combinations_mismatched_weights(start, end, c_sustain_weight, crossing, sample_objects, or_less)
                 start += c_crossing_size
             if bad > acceptable_error_per_crossing:
                 res.append(str(crossing))
         return res
+
+    def map_block_trial_ranges(self, within_block: Optional[BlockGeometry], proc: Callable[[int, int], T]) -> List[T]:
+        num_trials = self.trials_per_sample()
+        if within_block:
+            if self.alignment == AlignmentMode.POST_PREAMBLE:
+                start = self.preamble_size() - within_block.preamble_size
+            else:
+                start = 0
+            end = within_block.num_trials
+            step = within_block.num_trials - within_block.preamble_size
+            preamble = within_block.preamble_size
+        else:
+            start = 0
+            end = num_trials
+            step = num_trials
+            preamble = 0
+        lists = cast(List[T], [])
+        while start < num_trials - preamble:
+            lists.append(proc(start, end))
+            start += step
+            end += step
+        return lists
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
@@ -495,7 +558,9 @@ class MultiCrossBlock(MultiCrossBlockRepeat):
         argcheck(who, design, make_islistof(Factor), "list of Factors for design")
         argcheck(who, crossings, make_islistof(make_islistof(Factor)), "list of list of Factors for crossings")
         argcheck(who, constraints, make_islistof(Constraint), "list of Constraints for constraints")
-        self._create(who, design, crossings, constraints, require_complete_crossing, None, mode, alignment)
+        self._create(who, design,
+                     crossings, [1 for c in crossings], [1 for c in crossings],
+                     constraints, require_complete_crossing, mode=mode, alignment=alignment)
 
 class CrossBlock(MultiCrossBlock):
     """A fully crossed :class:`.Block` meant to be used in experiment
@@ -544,313 +609,132 @@ class CrossBlock(MultiCrossBlock):
         argcheck(who, crossing, make_islistof(Factor), "list of Factors for crossing")
         # Not sure whether constraints can be used here. To Do.
         argcheck(who, constraints, make_islistof(Constraint), "list of Constraints for constraints")
-        self._create(who, design, [crossing], constraints, require_complete_crossing, None)
+        self._create(who, design, [crossing], [1], [1], constraints, require_complete_crossing,
+                     mode=RepeatMode.WEIGHT)
 
-
-class NestedBlock(MultiCrossBlockRepeat):
+class Nest(MultiCrossBlockRepeat):
     def __init__(self,
-                 design: List[Union[Factor, MultiCrossBlockRepeat]],
-                 crossing: List[Union[Factor, MultiCrossBlockRepeat]],
-                 constraints: Optional[List[Constraint]] = None,
-                 num_permutations: Optional[int] = None):
-        from itertools import permutations as _perms
-        from sweetpea._internal.constraint import (
-            MinimumTrials, ExactlyK, ConstantInWindows, OrderRunsByPermutation
+                 outer_block: MultiCrossBlockRepeat,
+                 inner_block: MultiCrossBlockRepeat,
+                 constraints: List[Constraint] = [],
+                 alignment: Optional[Union[str, AlignmentMode]] = None
+                 ):
+        who = "Nest"
+        argcheck(who, outer_block, MultiCrossBlockRepeat, "Block")
+        argcheck(who, inner_block, MultiCrossBlockRepeat, "Block")
+        argcheck(who, constraints, make_islistof(Constraint), "list of Constraints")
+
+        for c in outer_block.crossings:
+            for f in c:
+                for ic in inner_block.crossings:
+                    if f in ic:
+                        raise ValueError("Factor cannot be in crossing for both outer and inner blocks.")
+
+        if alignment is None:
+            alignment = outer_block.alignment
+        else:
+            alignment = normalize_alignment(who, alignment)
+
+        if alignment != inner_block.alignment:
+            if alignment == AlignmentMode.EQUAL_PREAMBLE and len(outer_block.crossings) == 1:
+                alignment = inner_block.alignment
+            elif inner_block.alignment == AlignmentMode.EQUAL_PREAMBLE and len(inner_block.crossings) == 1:
+                pass
+            else:
+                raise ValueError("Outer and inner blocks cannot have different alignment.")
+        design = outer_block.design + []
+        for f in inner_block.design:
+            if f not in design:
+                design.append(f)
+        crossings = outer_block.crossings + inner_block.crossings
+        inner_len = inner_block.trials_per_sample() - inner_block.common_preamble_size()
+        outer_sustain_counts = [inner_len * sc for sc in outer_block.crossing_sustain_counts]
+        crossing_sustain_counts = outer_sustain_counts + inner_block.crossing_sustain_counts
+        inner_constraints = inner_block.orig_constraints
+        outer_constraints = [copy.copy(ct) for ct in outer_block.orig_constraints]
+        for ct in outer_constraints:
+            ct.sustain_within_block(inner_len)
+        all_constraints = outer_constraints + inner_constraints + constraints
+        self._create(
+            who=who,
+            design=design,
+            crossings=crossings,
+            crossing_sustain_counts=crossing_sustain_counts,
+            crossing_weights=outer_block.crossing_weights+inner_block.crossing_weights,
+            constraints=all_constraints,
+            require_complete_crossing = outer_block.require_complete_crossing and inner_block.require_complete_crossing,
+            mode=RepeatMode.REPEAT,
+            alignment=cast(AlignmentMode, alignment)
         )
 
-        if constraints is None:
-            constraints = []
-        self._user_constraints = list(constraints)  # Store user's constraints before merging with internal ones
+class Merge(MultiCrossBlock):
+    def __init__(self,
+                 blocks: List[MultiCrossBlockRepeat],
+                 constraints: List[Constraint] = [],
+                 mode: Union[str, RepeatMode] = RepeatMode.REPEAT,
+                 alignment: Optional[Union[str, AlignmentMode]] = None
+                 ):
+        who = "Merge"
+        argcheck(who, blocks, make_islistof(MultiCrossBlockRepeat), "list of Blocks")
+        argcheck(who, constraints, make_islistof(Constraint), "list of Constraints")
 
-        # ---- find inner block and externals at this level
-        inner_blocks = [x for x in design if isinstance(x, MultiCrossBlockRepeat)]
-        if len(inner_blocks) != 1:
-            raise ValueError("NestedBlock expects exactly one inner block in `design`.")
-        inner_block = inner_blocks[0]
-        self._inner_block = inner_block  # Store for LatinSquare per-participant solving
+        if len(blocks) == 0:
+            raise ValueError(who, "Blocks to merge must be nonempty.")
 
-        externals: List[Factor] = [x for x in design if isinstance(x, Factor)]
-        # externals explicitly requested to be *jointly crossed* at this level
-        ext_in_crossing: List[Factor] = [x for x in crossing if isinstance(x, Factor)]
+        if alignment is None:
+            alignment = blocks[0].alignment
+        else:
+            alignment = normalize_alignment(who, alignment)
+        for b in blocks:
+            if b.alignment != alignment:
+                raise ValueError(who, "Blocks have different alignments.")
+        mode = normalize_mode(who, mode)
 
-        alignment_choice = AlignmentMode.POST_PREAMBLE
+        design = []
+        crossings = []
+        crossing_sustain_counts = []
+        crossing_weights = []
+        constraints = constraints + []
+        for b in blocks:
+            for f in b.design:
+                if f not in design:
+                    design.append(f)
+            for c in b.crossings:
+                crossings.append(c)
+            for count in b.crossing_sustain_counts:
+                crossing_sustain_counts.append(count)
+            for w in b.crossing_weights:
+                crossing_weights.append(w)
+            for ct in b.orig_constraints:
+                constraints.append(ct)
         
-        missing = [f for f in ext_in_crossing if f not in externals]
-        if missing:
-            names = ", ".join(str(getattr(f, "name", f)) for f in missing)
-            raise ValueError(
-                "NestedBlock: all External Factors in `design` must also be included in `crossing`. "
-                f"Missing: {names}. (Blocks in `design` need to be listed.)"
-            )
-
-        # If user lists the inner block in `crossing`, we’re in permuted mode
-        permuted_mode = any(x is inner_block for x in crossing)
-        if num_permutations is not None and (not permuted_mode):
-            raise ValueError(
-                "None empty num_permutations is only supported when miniblock is included in the Crossing"
-            )
-        # ---- gather inner factors and inner crossings for inheritance
-        inner_factors: List[Factor] = [f for f in inner_block.design if isinstance(f, Factor)]
-        inner_crossings: List[List[Factor]] = [list(c) for c in inner_block.crossings]
-        
-        
-        parent_crossings: List[List[Factor]] = [list(c) for c in inner_crossings]
-
-        seen = set()
-        full_design: List[Factor] = []
-        for f in externals + inner_factors:
-            if id(f) not in seen:
-                seen.add(id(f))
-                full_design.append(f)
-
-        # ---- window geometry
-        run_len = inner_block.trials_per_sample()
-        self.run_len = run_len
-        # ---- constraints
-        cs: List[Constraint] = []
-        # external_preamble = 0
-        # for f in externals:
-        #     if isinstance(f, DerivedFactor):
-        #         external_preamble = max(
-        #             external_preamble,
-        #             f.first_level.window.start or 0
-        #         )
-
-        external_preamble = max(
-            (
-                f.first_level.window.start or 0
-                for f in externals
-                if isinstance(f, DerivedFactor)
-                and not f.applies_to_trial(1)
-            ),
-            default=0,
+        self._create(
+            who=who,
+            design=design,
+            crossings=crossings,
+            crossing_sustain_counts=crossing_sustain_counts,
+            crossing_weights=crossing_weights,
+            constraints=constraints,
+            require_complete_crossing = all(b.require_complete_crossing for b in blocks),
+            mode=mode,
+            alignment=cast(AlignmentMode, alignment)
         )
-
-
-
-        if not permuted_mode:
-
-
-            # ===================== NESTED MODE =====================
-
-            # Treat the entire inner block as a single atomic window
-            # Crossings: inherit ALL inner crossings
-
-            # If the user asked for a joint external cross (e.g., [color, task]),
-            # append that crossing so externals are counterbalanced together across windows.
-            
-            # inherit inner constraints, scoped to each inner window
-            for c in inner_block.orig_constraints:
-                cc = copy.copy(c)
-                # Prefer precise window scoping if the constraint supports it
-                if hasattr(cc, "set_within_windows"):
-                    cc.set_within_windows(run_len)          # run_len == inner_total here
-                elif hasattr(cc, "set_within_block"):
-                    # Fallback: block-scope + hint the window length (used by encoders that look for it)
-                    cc.set_within_block()
-                    setattr(cc, "_within_window_len", run_len)
-                cs.append(cc)
-
-            # compute number of windows based on external factor size
-            total_windows = 1
-            for f in externals:
-                total_windows *= _level_weight_sum(f)
-
-            cs.append(MinimumTrials(external_preamble + total_windows * run_len))
-
-            # When multiple crossings exist (sizes may differ), use WEIGHT mode on all.
-            mode = cast(List[Union[str, RepeatMode]], [RepeatMode.REPEAT] * len(parent_crossings))
-
-            mode[0] = RepeatMode.REPEAT
-            
-            # CB to store Crossing of external factors 
-            self._external_block = CrossBlock(
-                design=externals,
-                crossing=ext_in_crossing,
-                constraints=constraints
-                )
-
-            # CB to store samples for miniblock. 
-            self._create(
-                who="NestedBlock(nested)",
-                design=full_design,
-                crossings=parent_crossings,
-                constraints=constraints + cs,
-                require_complete_crossing=True,
-                within_block_count=None,
-                mode=mode,
-                alignment=alignment_choice
-            )
-            return
-
-        else: 
-            # ===================== PERMUTED MODE =====================
-            # For permutations we must know the single inner crossing to permute.
-            if len(inner_crossings) != 1:
-                raise ValueError("Inner block must have a single crossing for permuted NestedBlock.")
-            inner_cross = inner_crossings[0]
-
-            cross_size = inner_block.crossing_size(inner_cross)
-            preamble  = inner_block.preamble_size(inner_cross)
-            base_run  = preamble + cross_size
-
-            if cross_size <= 0:
-                raise ValueError("Inner crossing has zero size after excludes.")
-            run_len = base_run
-            
-            # permutation factor
-            all_perms = list(_perms(range(cross_size)))
-            maxK      = len(all_perms)
-            K         = maxK if (num_permutations is None) else num_permutations
-            if not (1 <= K <= maxK):
-                raise ValueError(f"num_permutations must be in [1, {maxK}].")
-
-            permutation_factor_name: str = "order"
-
-            # Keep state so we can refresh mapping per synthesized sample
-            self._permuted_mode = True
-            self._perm_cross_size: int = cross_size
-            self._perm_all_perms: List[Tuple[int, ...]] = [tuple(p) for p in all_perms]
-            self._perm_K: int = K
-            perm_levels: List[SimpleLevel] = [SimpleLevel(f"perm_{i}") for i in range(K)]
-            perm_factor = Factor(HiddenName(permutation_factor_name), perm_levels)
-            self._perm_levels = perm_levels
-            self._perm_map: Dict[Level, Tuple[int, ...]] = {}   # mutable, shared with constraint
-            # base seed so we can vary deterministically per sample (you can set your own)
-
-            self._perm_base_seed: int = random.getrandbits(64)
-            # Initial mapping: first K permutations (keeps old behavior for single sample)
-            for lvl, perm in zip(self._perm_levels, self._perm_all_perms[:self._perm_K]):
-                self._perm_map[lvl] = perm
-
-
-            # design includes hidden perm factor
-            full_design = [*externals, perm_factor, *[f for f in full_design if f not in externals]]
-
-            for c in inner_block.orig_constraints:
-                cc = copy.copy(c)
-                if hasattr(cc, "set_within_windows"):
-                    cc.set_within_windows(run_len)          # run_len == preamble + cross_size here
-                elif hasattr(cc, "set_within_block"):
-                    cc.set_within_block()
-                    setattr(cc, "_within_window_len", run_len)
-                cs.append(cc)
-                
-
-            # constancy per (base) window for hidden factor that represents the innerblock
-            cs.append(ConstantInWindows(perm_factor, run_len, start=external_preamble))
-
-            # Constraints to map perm factor to actual miniblock
-            orp = OrderRunsByPermutation(perm_factor, inner_block, self._perm_map, external_preamble=external_preamble)
-
-            cs.append(orp)
-
-            self._orp = orp  # keep a handle so we can mutate level2perm in-place
-
-            # total windows
-            total_windows = K
-            for f in externals:
-                total_windows *= _level_weight_sum(f)
-
-            cs.append(MinimumTrials(total_windows * run_len+external_preamble))
-
-            per_perm_windows = total_windows // K  # integer since total_windows is K * ∏ sum(weights)
-
-            # CB to store counter balancing of external factors and hiddend perm factor
-            self._external_block = CrossBlock(
-                design=ext_in_crossing+[perm_factor],
-                crossing=ext_in_crossing+[perm_factor],
-                constraints=constraints
-                )
-
-            mode = [RepeatMode.WEIGHT] * len(parent_crossings)
-
-            # expose for pretty-print reordering hook
-            self.block = inner_block
-            self.perm_factor = perm_factor
-            self.get_trial_permutation_for_level = lambda lvl: self._perm_map[lvl]
-    
-
-            self._create(
-                who="NestedBlock(permuted)",
-                design=full_design,
-                crossings=parent_crossings,
-                constraints=constraints + cs,
-                require_complete_crossing=True,
-                within_block_count=None,
-                mode=mode,
-                alignment=alignment_choice
-            )
-            return
-
-    def _refresh_perm_map(self, *, sample_index: int = 0, seed: Optional[int] = None) -> None:
-        """
-        Choose a fresh set of K permutations and update the shared dict in-place.
-        Call once per synthesized sample (before CNF build / random proposal).
-        """
-        if not getattr(self, "_permuted_mode", False):
-            return
-
-        import time
-        base = self._perm_base_seed if seed is None else seed
-        # mix in wall-clock time to avoid repeats
-        mixed = (base + 0x9E3779B97F4A7C15 * (sample_index + 1) + time.time_ns()) & ((1 << 64) - 1)
-
-        import random as _rnd
-        rng = _rnd.Random(mixed)
-
-        idxs = list(range(len(self._perm_all_perms)))
-        rng.shuffle(idxs)
-        chosen = idxs[:self._perm_K]
-
-        # mutate the mapping IN PLACE so OrderRunsByPermutation sees it
-        self._perm_map.clear()
-        for lvl, idx in zip(self._perm_levels, chosen):
-            self._perm_map[lvl] = self._perm_all_perms[idx]
-
-    def build_backend_request(self):
-        if getattr(self, "_permuted_mode", False):
-            self._perm_sample_counter = getattr(self, "_perm_sample_counter", -1) + 1
-            self._refresh_perm_map(sample_index=self._perm_sample_counter)
-        return super().build_backend_request()
-
-    def external_stitch_spec(self):
-        """
-        Returns instructions for runtime stitching, or None.
-        """
-        if not hasattr(self, "_external_block") or self._external_block is None:
-            return None
-
-        return {
-            "external_block": self._external_block,
-            "run_len": self.run_len,
-            "external_design": self._external_block.design
-        }
-
+        
 class Repeat(MultiCrossBlockRepeat):
     def __init__(self,
                  block: MultiCrossBlock,
                  constraints: List[Constraint]):
         from sweetpea._internal.constraint import Exclude
         who = "Repeat"
-        
-        argcheck(who, block, MultiCrossBlock, "MultiCrossBlock object")
-        argcheck(who, constraints, make_islistof(Constraint), "list of Constraints for constraints")
 
-        # We might need another subtype layer in the future, but currently `Exclude`
-        # is the only disallowed `Constraint` type:
-        for c in constraints:
-            if isinstance(c, Exclude):
-                raise ValueError("Exclude constraints not allowed in list of constraints")
-
-        block_constraints = [copy.copy(c) for c in block.orig_constraints]
-        for c in block_constraints:
-            c.set_within_block()
+        argcheck(who, block, MultiCrossBlock, "Block")
+        argcheck(who, constraints, make_islistof(Constraint), "list of Constraints")
 
         self._create(who,
-                     block.orig_design, block.orig_crossings, block_constraints + constraints,
+                     block.orig_design, block.orig_crossings, block.crossing_sustain_counts, block.crossing_weights,
+                     block.orig_constraints + constraints,
                      block.require_complete_crossing,
-                     block.within_block_count)
+                     mode = RepeatMode.REPEAT)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # ~~~~~~~~~~~~~                         Helper functions                            ~~~~~~~~~~~~~~~~~~~~~

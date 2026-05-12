@@ -459,15 +459,21 @@ complex experimental designs that consist of multiple fully-crossed components.
 Defining MultiCrossBlock
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Using :class:`.MultiCrossBlock` could create an experiment description as a 
+Using :class:`.MultiCrossBlock` creates an experiment description as a 
 block of trials based on multiple crossings. This allows you to combine
 different subsets of factors into a unified experiment while maintaining
 independent full crossings within each subset.
 
-This is especially useful in complex experimental designs where some
+Multiple crossings are useful in complex experimental designs where some
 factors are fully crossed only within specific conditions.
 By passing a list of crossings to the crossing argument 
 in :class:`.MultiCrossBlock`, each inner list defines a separate crossing.
+
+The :class:`.MultiCrossBlock` constructor is a shorthand for
+:class:.`.Merge` of separately constructed blocks, each with its own
+crossing(s). The :class:`.Merge` constructor is more general, because
+it allows each merged block to supply constraints with the block's
+original geometry.
 
 .. _working-with-multiple-crossings-example:
 
@@ -487,7 +493,12 @@ appear anywhere in the T trials. :attr:`.RepeatMode.REPEAT` ensures that
 each of the S combinations appears once in the first S trials,
 then once again in the next S trials, and so on, up to N times.
 
-The difference of these two strategies for replication are shown in the following example:
+The difference of these two strategies for replication are shown in
+the following example. The first configurations adds weight to ``f2``
+so levels that ``"a"``, ``"b"``, and ``"c"`` do not necessarily appear
+in the first three trials. The second configuration repeats ``f2`` so
+that ``"a"``, ``"b"``, and ``"c"`` all reliably appear within in the
+first three trials (and each subsequent group of three).
 
 .. doctest::
 
@@ -558,14 +569,14 @@ its own required preamble trials.
 
 The difference of these two strategies are shown in the following example. If 
 :attr:`.AlignmentMode.PARALLEL_START` is used in the :class:`.MultiCrossBlock`, 
-the crossing [color, task_transition] would have one preamble trial because of 
+the crossing ``[color, task_transition]`` would have one preamble trial because of 
 derived factor task_transition, whereas the crossing [task] and [word] would have 
 no preamble trials since it does not require preamble trials. Thus the first trial
-`color green | word red   | task word  | task_transition` is considered preamble 
-trial for the crossing [color, task_transition], but the first 
-trial for the crossing [task] and the crossing [word].  
+``color green | word red   | task word  | task_transition`` is considered preamble 
+trial for the crossing ``[color, task_transition]``, but the first 
+trial for the crossing ``[task]`` and the crossing ``[word]``.
 If :attr:`.AlignmentMode.POST_PREAMBLE` is used in the :class:`.MultiCrossBlock`,
-the first trial `color red | word blue | task color | task_transition` would be the 
+the first trial ``color red | word blue | task color | task_transition`` would be the 
 preamble trial for all crossings:  
 
 .. doctest::
@@ -755,24 +766,22 @@ In that case, we can add :class:`.ContinuousConstraint` to achieve that.
 Nesting Designs with NestedBlock
 --------------------------------
 
-Sweetpea also supports the experiment where a small design runs
-multiple times while holding one or more external factors constant 
-for each repeat (for example, run a 2×2 task
-inside each session or day) with :class:`.NestedBlock`. 
-:class:`.NestedBlock` treats one `inner block` as a window and 
-repeats that window across the levels of your `external factors`.
+Instead of performing multiple crossings in parallel with
+:class:`.MultiCrossBlock` or :class:`.Merge`, some experiments need an
+inner crossing nested within each combination of an outer crossing.
 
-If you already have a :class:`.CrossBlock` or :class:`.MultiCrossBlock`
-that you like, :class:`.NestedBlock` lets you reuse it as a unit.
+The :class:`.Nest` constructor performans that nesting. Note that
+:class:`.Nest` is applied to existing blocks that are formed with,
+say, :class:`.CrossBlock` or :class:`.MultiCrossBlock`. The combined
+blocks can have overlapping sets of factors in their designs, but they
+must have distinct factors in their crossings.
 
 .. _nestedblock-example:
 
 Using NestedBlock
 ^^^^^^^^^^^^^^^^^
-:class:`.NestedBlock` can keep an external factor (e.g., task, session, etc.) 
-constant within each window of the `inner block`.
-The `inner block` can repeat once per external combination OR 
-vary between windows for counterbalancing.
+A :class:`.Nest` block keeps an `outer block` combination
+constant over multiple trials representing an instance of the `inner block`.
 
 Let's start with a 2×2 inner design:
 
@@ -785,15 +794,16 @@ Let's start with a 2×2 inner design:
     >>> inner.trials_per_sample()
     4
 
-Here we repeat the 2×2 inner block for each level of an external 
-:class:`.Factor` session. Inside each 4-trial window, session is constant.
+Here we repeat the 2×2 inner block for each level of an outer block
+that has a session :class:`.Factor`. During each 4-trial instance of
+the inner block, session is constant.
 
 .. doctest::
 
-    >>> from sweetpea import NestedBlock, synthesize_trials, print_experiments
+    >>> from sweetpea import Nest, synthesize_trials, print_experiments
     >>> session = Factor("session", ["s1", "s2"])
-    >>> # Every Factor in `design` must also be in `crossing`.
-    >>> nb = NestedBlock(design=[session, inner], crossing=[session], constraints=[])
+    >>> outer = CrossBlock([session], [session], [])
+    >>> nb = Nest(outer_block=outer, inner_block=inner, constraints=[])
     >>> nb.trials_per_sample()
     8 # Total trials = #session levels × inner trials = 2 × 4 = 8.
     >>> exps = synthesize_trials(nb, 1) 
@@ -813,131 +823,91 @@ Here we repeat the 2×2 inner block for each level of an external
     session s1 | A a2 | B b2
     session s1 | A a1 | B b1
 
-
-Vary the inner block between windows
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-If the inner block is included  in the crossing, 
-SweetPea introduces a hidden “order” factor and 
-balances windows over different orders of the inner
-crossing. 
-You can also choose how many orders to use with `num_permutations`.
+Note that the outer ``session`` levels are not required to be in
+order. To force those levels to be in order, we could use
+:class:`.Merge` to add a :class:`.Sequential` constraint.
 
 .. doctest::
 
-    >>> group = Factor("group", ["G1", "G2"])
-    >>> nb_perm = NestedBlock(
-    >>>     design=[group, inner],
-    >>>     crossing=[inner, group],        # include the inner block here to vary order
-    >>>     constraints=[])
-    >>> nb_perm.trials_per_sample()
-    192 # 192 = 2×4×4!
-    >>> nb_perm = NestedBlock(
-    >>>     design=[group, inner],
-    >>>     crossing=[inner, group],        # include the inner block here to vary order
-    >>>     constraints=[],
-    >>>     num_permutations=2)
-    >>> nb_perm.trials_per_sample()
-    16 # 16 = 2×4×2
+    >>> from sweetpea import Merge, Sequential, RepeatMode
+    >>> nb2 = Merge([nb], constraints=[Sequential(session)])
+    >>> exps = synthesize_trials(nb2, 1)
+    Sampling 1 trial sequences using NonUniformGen.
+    Encoding experiment constraints...
+    Running CryptoMiniSat...
+    >>> print_experiments(nb2, exps)
+    1 trial sequences found.
+    <BLANKLINE>
+    Experiment 0:
+    session s1 | A a2 | B b2
+    session s1 | A a2 | B b1
+    session s1 | A a1 | B b2
+    session s1 | A a1 | B b1
+    session s2 | A a2 | B b2
+    session s2 | A a1 | B b1
+    session s2 | A a2 | B b1
+    session s2 | A a1 | B b2
 
 Nesting inside nesting
 ^^^^^^^^^^^^^^^^^^^^^^
 
-You can create a :class:`.NestedBlock` using another :class:`.NestedBlock` 
+You can create a :class:`.Nest` using another :class:`.Nest` 
 as the `inner block`. Each outer level repeats the entire 
-`inner block`. 
+original `inner block`. 
 
 .. doctest::
-  
-    >>> session = Factor("session", ["s1", "s2"])
-    >>> mid = NestedBlock(design=[session, inner], crossing=[session], constraints=[])
-    >>> exps = synthesize_trials(mid, 1) 
+
+    >>> day = Factor("day", ["d1", "d2"])
+    >>> outermost = CrossBlock(design=[day], crossing=[day], constraints=[])
+    >>> nnb = Nest(outer_block=outermost, inner_block=nb, constraints=[])
+    >>> exps = synthesize_trials(nnb, 1)
     Sampling 1 trial sequences using NonUniformGen.
     Encoding experiment constraints...
     Running CryptoMiniSat...
-    >>> print_experiments(mid, exps) 
+    >>> print_experiments(nnb, exps)
     1 trial sequences found.
     <BLANKLINE>
     Experiment 0:
-    session s2 | A a2 | B b2
-    session s2 | A a2 | B b1
-    session s2 | A a1 | B b1
-    session s2 | A a1 | B b2
-    session s1 | A a2 | B b1
-    session s1 | A a1 | B b2
-    session s1 | A a2 | B b2
-    session s1 | A a1 | B b1
-    >>> day = Factor("day", ["d1", "d2"])
-    >>> outer = NestedBlock(design=[day, mid], crossing=[day], constraints=[])
-    >>> exps = synthesize_trials(outer, 1) 
-    Sampling 1 trial sequences using NonUniformGen.
-    Encoding experiment constraints...
-    Running CryptoMiniSat...
-    >>> print_experiments(outer, exps) 
-    1 trial sequences found.
-    <BLANKLINE>
-    day d2 | session s2 | A a2 | B b2
-    day d2 | session s2 | A a2 | B b1
-    day d2 | session s2 | A a1 | B b2
-    day d2 | session s2 | A a1 | B b1
-    day d2 | session s1 | A a2 | B b1
-    day d2 | session s1 | A a1 | B b1
     day d2 | session s1 | A a2 | B b2
+    day d2 | session s1 | A a1 | B b1
     day d2 | session s1 | A a1 | B b2
-    day d1 | session s1 | A a2 | B b1
-    day d1 | session s1 | A a1 | B b2
+    day d2 | session s1 | A a2 | B b1
+    day d2 | session s2 | A a1 | B b2
+    day d2 | session s2 | A a2 | B b1
+    day d2 | session s2 | A a2 | B b2
+    day d2 | session s2 | A a1 | B b1
     day d1 | session s1 | A a2 | B b2
+    day d1 | session s1 | A a1 | B b2
+    day d1 | session s1 | A a2 | B b1
     day d1 | session s1 | A a1 | B b1
     day d1 | session s2 | A a2 | B b2
-    day d1 | session s2 | A a1 | B b1
     day d1 | session s2 | A a2 | B b1
     day d1 | session s2 | A a1 | B b2
+    day d1 | session s2 | A a1 | B b1
 
-
-
+.. _latin-square-counterbalancing:
+    
 Latin Square Counterbalancing
 -----------------------------
 
-Latin Square counterbalancing is a technique for assigning different subsets of
-experimental conditions to different participants, so that each participant sees
-a balanced sample and the full set of conditions is covered across all
-participants.
-
-SweetPea supports Latin Square counterbalancing through the :class:`.LatinSquare`
-constraint, used with :class:`.NestedBlock` and the ``participants`` parameter of
-:func:`.synthesize_trials`.
-
-
-When to Use Latin Square
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-Use Latin Square counterbalancing when:
-
-- Your experiment has *outer factors* (e.g., Font, Color) whose combinations
-  define blocks, and *inner factors* (e.g., Task, Speed) that are fully crossed
-  within each block.
-- You want each participant to see only a balanced subset of the outer
-  combinations, rather than all of them.
-- You want to save computation by only solving for the participants you need.
-
+A *Latin Square* is pattern that orders a crossing so that successive
+diagonals are first explored, which provides a more varierty for
+combinations within a trial subsequence than could be expected
+otherwise. A Latin Square can be particularly useful in an experiment
+with multiple participants, where each participant sees only a subset
+of the possible combinations, but still sees each level that could
+contribute to a combination---and all conbinations are generated
+across multiple participants. SweetPea supports Latin Square
+counterbalancing through the :class:`.LatinSquare` constraint, which
+expects a list of factors that are crossed.
 
 A 2x2 Example
 ^^^^^^^^^^^^^
 
-Suppose we have two outer factors (Font and Color) and two inner factors
-(Task and Speed):
-
-.. code-block:: python
-
-    from sweetpea import *
-
-    font  = Factor("Font",  ["S", "B"])
-    color = Factor("Color", ["R", "G"])
-    task  = Factor("Task",  ["Rd", "Wr"])
-    speed = Factor("Speed", ["F", "Sl"])
-
-The outer grid has 4 combinations: SR, SG, BR, BG. A Latin Square with 2
-diagonals partitions these into two groups:
+Suppose we have `Font` (`small` or `big`) and `Color` (`red` or
+`green`) to cross, and we don't need every participant to see every
+combination. Since these factor each have 2 levels, there are 2
+diagonals in a Latin Square for the factors.
 
 .. list-table:: 2x2 Latin Square Diagonals
    :widths: auto
@@ -946,133 +916,157 @@ diagonals partitions these into two groups:
    :stub-columns: 1
 
    * -
-     - Color R
-     - Color G
-   * - Font S
+     - Color red
+     - Color green
+   * - Font small
      - Diagonal 0
      - Diagonal 1
-   * - Font B
+   * - Font big
      - Diagonal 1
      - Diagonal 0
 
-- **Diagonal 0**: (S, R) and (B, G)
-- **Diagonal 1**: (S, G) and (B, R)
+- **Diagonal 0**: (small, red) and (big, green)
+- **Diagonal 1**: (small, green) and (big, red)
 
-Each diagonal contains exactly one level of Font and one level of Color.
+If we simply cross the factors, there's no guarantee that both colors
+will show up in the first two trails, only that all `Font`-`Color` word
+combinations will show up over four trials.
+  
+  .. doctest::
 
+    >>> from sweetpea import Factor, CrossBlock, synthesize_trials, print_experiments
+    >>> font  = Factor("Font",  ["small", "big"])
+    >>> color = Factor("Color", ["red", "green"])
+    >>> b = CrossBlock(design=[font, color], crossing=[font, color], constraints=[])
+    >>> exps = synthesize_trials(b, 1)
+    Sampling 1 trial sequences using NonUniformGen.
+    Encoding experiment constraints...
+    Running CryptoMiniSat...
+    >>> print_experiments(b, exps)
+    1 trial sequences found.
+    <BLANKLINE>
+    Experiment 0:
+    Font big   | Color green
+    Font small | Color green
+    Font big   | Color red  
+    Font small | Color red 
 
-Building the Experiment
-^^^^^^^^^^^^^^^^^^^^^^^
+We can force both `Font` levels and both `Color` levels to show up in
+the first two trials---without picking a specific color or font---by
+adding a :class:`.LatinSquare` constraint.
 
-.. code-block:: python
+  .. doctest::
 
-    # Create the LatinSquare constraint on the outer factors
-    ls = LatinSquare(outer_factors=[font, color])
+    >>> from sweetpea import LatinSquare, Merge
+    >>> lsb = Merge(blocks=[b], constraints=[LatinSquare([font, color])])
+    >>> exps = synthesize_trials(lsb, 1)
+    Sampling 1 trial sequences using NonUniformGen.
+    Encoding experiment constraints...
+    Running CryptoMiniSat...
+    >>> print_experiments(lsb, exps)
+    1 trial sequences found.
+    <BLANKLINE>
+    Experiment 0:
+    Font big   | Color green
+    Font small | Color red  
+    Font big   | Color red  
+    Font small | Color green
 
-    # Define the inner block (fully crossed Task x Speed)
-    inner = CrossBlock([task, speed], [task, speed], [])
+After generating this trial sequence, we might use the first two
+trials for the first participant, and the second two trials for the
+second participant.
 
-    # Build the NestedBlock with the LatinSquare constraint
-    nb = NestedBlock(
-        design=[font, color, inner],
-        crossing=[font, color],
-        constraints=[ls]
-    )
+Synthesizing Experiments for Participants
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    # Inspect the diagonals
-    print(ls.diagonals)
-    # {0: [('S', 'R'), ('B', 'G')], 1: [('S', 'G'), ('B', 'R')]}
-    print(ls.num_participants)
-    # 2
+Using just the output of ``print_experiments(lsb, exps)``, we have to
+figure out for ourselves where to draw the boundary between
+participants. If the block for an experiment has a :class:`.LatinSquare`
+constraint with a name for the diagonal, then printing breaks up
+each generated experiment into sections labelled by participant name.
 
+  .. doctest::
 
-Generating Trials
-^^^^^^^^^^^^^^^^^
+    >>> lsb = Merge(blocks=[b], constraints=[LatinSquare([font, color],
+                                                         name="Participant")])
+    >>> exps = synthesize_trials(lsb, 2)
+    Sampling 1 trial sequences using NonUniformGen.
+    Encoding experiment constraints...
+    Running CryptoMiniSat...
+    >>> print_experiments(lsb, exps)
+    2 trial sequences found.
+    <BLANKLINE>
+    Experiment 0:
+    <BLANKLINE>
+    Participant 0:
+    Font big   | Color green
+    Font small | Color red  
+    <BLANKLINE>
+    Participant 1:
+    Font big   | Color red  
+    Font small | Color green
+    <BLANKLINE>
+    Experiment 1:
+    <BLANKLINE>
+    Participant 0:
+    Font big   | Color green
+    Font small | Color red  
+    <BLANKLINE>
+    Participant 1:
+    Font small | Color green
+    Font big   | Color red  
 
-When a :class:`.LatinSquare` constraint is present, :func:`.synthesize_trials`
-automatically generates trials for all participants and returns a
-``Dict[int, List[dict]]`` grouped by participant ID:
+    
+Latin Squares as Crossing
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. code-block:: python
+In the example with `Font` and `Color`, we crossed the factors to take
+sure that each generated experiment covers all combinations. The
+:class:`LatinSquare` constraint does not require the factors that is
+is given to be crossed already. The constraint that it imposes is
+stronger than crossing in terms of trial sequences, but weaker than
+crossing because :class:`LatinSquare` does not imply a number of
+trials. It can be imposed after the fact to a design that supplies
+enough trials.
 
-    # Generate trials for all participants (default)
-    results = synthesize_trials(nb, 1)
+  .. doctest::
 
-    # results is a Dict[int, List[dict]]
-    # Each participant gets 2 blocks x 4 inner trials = 8 trials
-    for pid in sorted(results.keys()):
-        exp = results[pid][0]
-        print(f"Participant {pid}: {len(exp['Font'])} trials")
-    # Participant 0: 8 trials
-    # Participant 1: 8 trials
-
-    # Print with participant labels
-    print_experiments(nb, results)
-
-
-Generating a Subset of Participants
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-You can request specific participants to save computation. Only those
-participants' blocks are solved:
-
-.. code-block:: python
-
-    # Only solve for participant 0 -- participant 1 is never computed
-    results = synthesize_trials(nb, 1, participants=[0])
-
-    # Skip participants 0-49, only solve for 50-55
-    results = synthesize_trials(nb, 1, participants=[50, 51, 52, 53, 54, 55])
-
-Participant IDs wrap cyclically. On a 2-diagonal grid, participant 2 and 4 gets the
-same diagonal as participant 0 (since 2 % 2 = 4 % 2 = 0).
-
-
-Without LatinSquare
-^^^^^^^^^^^^^^^^^^^
-
-When no :class:`.LatinSquare` constraint is present, :func:`.synthesize_trials`
-behaves returns a ``List[dict]`` with all outer combinations and 
-no participant grouping:
-
-.. code-block:: python
-
-    # NestedBlock without LatinSquare — standard behavior
-    nb_plain = NestedBlock(
-        design=[font, color, inner],
-        crossing=[font, color],
-        constraints=[]
-    )
-    experiments = synthesize_trials(nb_plain, 1)
-    # Returns List[dict] with 4 blocks x 4 inner trials = 16 trials
-
-
-Larger Grids
-^^^^^^^^^^^^
-
-Latin Square works with any number of factors and levels:
-
-.. code-block:: python
-
-    # 3x3 grid: 3 diagonals, 3 participants
-    font  = Factor("Font",  ["S", "M", "B"])
-    color = Factor("Color", ["R", "G", "Bu"])
-    ls = LatinSquare(outer_factors=[font, color])
-    # ls.num_participants == 3
-    # Each participant gets 3 outer combos x 4 inner trials = 12 trials
-
-
-Rectangular Grids
-^^^^^^^^^^^^^^^^^
-
-When factors have different numbers of levels, the number of diagonals is
-``max`` of the level counts. Balance warnings are printed if some diagonals
-are missing levels of a factor:
-
-.. code-block:: python
-
-    # 2x3 grid: D = max(2, 3) = 3 diagonals
-    font  = Factor("Font",  ["S", "B"])
-    color = Factor("Color", ["R", "G", "Bu"])
-    ls = LatinSquare(outer_factors=[font, color])
-    # WARNING: Diagonal 2: factor 'Font' is missing levels ...
+    >>> from sweetpea import (Factor, CrossBlock, MinimumTrials,
+                              Nest, LatinSquare,
+                              synthesize_trials, print_experiments)
+    >>> font  = Factor("Font",  ["small", "big"])
+    >>> color = Factor("Color", ["red", "green"])
+    >>> task  = Factor("Task",  ["read", "paint"])
+    >>> b = CrossBlock(design=[font, color],
+                       crossing=[],
+                       constraints=[MinimumTrials(2)])
+    >>> nb = Nest(outer_block=CrossBlock([task], [task], []),
+                  inner_block=b,
+                  constraints=[LatinSquare([font, color],
+                                           name="Participant")])
+    >>> exps = synthesize_trials(nb, 2)
+    Sampling 1 trial sequences using NonUniformGen.
+    Encoding experiment constraints...
+    Running CryptoMiniSat...
+    >>> print_experiments(nb, exps)
+    2 trial sequences found.
+    <BLANKLINE>
+    Experiment 0:
+    <BLANKLINE>
+    Participant 0:
+    Task paint | Font big   | Color green
+    Task paint | Font small | Color red  
+    <BLANKLINE>
+    Participant 1:
+    Task read | Font small | Color green
+    Task read | Font big   | Color red  
+    <BLANKLINE>
+    Experiment 1:
+    <BLANKLINE>
+    Participant 0:
+    Task paint | Font small | Color red  
+    Task paint | Font big   | Color green
+    <BLANKLINE>
+    Participant 1:
+    Task read | Font small | Color green
+    Task read | Font big   | Color red  

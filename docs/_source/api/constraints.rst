@@ -105,6 +105,42 @@ Constraints
               :type level: Union[Level, Tuple[Factor, Any], Tuple[Factor, Level], Factor]
               :rtype: Constraint
 
+.. class:: sweetpea.Sequential(factor)
+
+              Constrains the experiment so that the levels of `factor`
+              must appear in order over a sequence of trials. When the
+              last level of `factor` is used for a trial, the next
+              trial starts the sequence again with the first level of
+              `factor`.
+
+              :param factor: the factor to constrain to seqential use of its
+                             levels in an experiment
+              :type factor: Factor
+              :rtype: Constraint
+           
+.. class:: sweetpea.LatinSquare(factors)
+
+              Constrains an experiment so that the levels of `factors`
+              are combied in a Latin Square pattern. If the factor in
+              `factors` with the most levels has N levels, then every
+              N trials will include every level of every factor in
+              `factors`. Furthermore, each subsequent sequence of N
+              trials will have a distinct possible combination of
+              levels until all possibilities are exhausted, and the
+              combination order is deterministic.
+
+              The given `factors` are typically crossed in an
+              experiment description, but they are not required to be
+              crossed explicitly; a :class:`LatinSquare` constraint
+              effectivley forces a crossing as long as an experiment
+              includes enough trials.
+
+              See :ref:`Latin Square Counterbalancing <latin-square-counterbalancing>`
+              for more information.
+
+              :param factors: the factors forming the Latin Square pattern
+              :type outer_factors: List[Factor]
+              :rtype: Constraint
 
 .. class:: sweetpea.ContinuousConstraint(factors, predicate)
 
@@ -123,39 +159,4 @@ Constraints
                                 The function should return true if the
                                 combination of factors meet the constraints.
               :type predicate: Callable[[Any, ...], bool]
-              :rtype: Constraint
-
-.. class:: sweetpea.LatinSquare(outer_factors, num_diagonals=None)
-
-              Constrains a :class:`.NestedBlock` experiment to use Latin
-              Square counterbalancing across participants.
-
-              A Latin Square partitions the combinations of ``outer_factors``
-              into diagonals, where each diagonal is assigned to a different
-              participant. For a square grid (all factors have the same number
-              of levels), each diagonal contains exactly one level of each
-              factor, ensuring balanced coverage.
-
-              The diagonal for each combination is computed as::
-
-                 diagonal = (i1 + i2 + ...) % D
-
-              where ``i1, i2, ...`` are the level indices and ``D`` is
-              ``num_diagonals`` (defaulting to the maximum number of levels
-              across all factors).
-
-              :class:`.LatinSquare` is used with :class:`.NestedBlock` and the
-              ``participants`` parameter of :func:`.synthesize_trials`. 
-
-              For rectangular grids (factors with different numbers of levels),
-              balance warnings are printed at construction time.
-
-              :param outer_factors: the factors forming the outer grid of the
-                                    Latin Square; these should also be the
-                                    external factors in the :class:`.NestedBlock`
-              :type outer_factors: List[Factor]
-              :param num_diagonals: number of diagonals (and thus distinct
-                                    participant assignments) to create; defaults
-                                    to ``max`` of all factor level counts
-              :type num_diagonals: Optional[int]
               :rtype: Constraint

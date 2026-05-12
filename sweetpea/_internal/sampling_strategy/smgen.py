@@ -29,8 +29,6 @@ class SMGen(Gen):
     def sample(block: Block, sample_count: int) -> SamplingResult:
         assert(isinstance(block, MultiCrossBlockRepeat))
 
-        if block.within_block_count != block.trials_per_sample():
-            _cexit(f"Repeated blocks are not supported by SMGen.")
         if len(block.crossings) != 1:
             _cexit(f"Multiple-crossing blocks are not supported by SMGen.")
 

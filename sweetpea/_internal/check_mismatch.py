@@ -12,7 +12,7 @@ def combinations_mismatched_weights(start: int, end: int, weight: int, crossing:
         key = tuple([sample[f][t] for f in crossing])
         combos[key] = combos.get(key, 0) + 1
     for combo, count in combos.items():
-        delta = count - (combination_weight(combo) * weight)
+        delta = count - (combination_weight(combo) * weight)        
         if or_less and (delta < 0):
             delta = 0
         mismatch += abs(delta)

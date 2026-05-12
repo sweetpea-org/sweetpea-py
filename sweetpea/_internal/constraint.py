@@ -10,12 +10,12 @@ import inspect
 
 from sweetpea._internal.base_constraint import Constraint
 from sweetpea._internal.iter import chunk, chunk_list
-from sweetpea._internal.block import Block
+from sweetpea._internal.block import Block, BlockGeometry
 from sweetpea._internal.cross_block import MultiCrossBlockRepeat
 from sweetpea._internal.backend import LowLevelRequest, BackendRequest
-from sweetpea._internal.logic import If, Iff, And, Or, Not
+from sweetpea._internal.logic import If, Iff, And, Or, Not, Formula
 from sweetpea._internal.primitive import DerivedFactor, DerivedLevel, Factor, Level, SimpleLevel, ContinuousFactor
-from sweetpea._internal.argcheck import argcheck, make_istuple
+from sweetpea._internal.argcheck import argcheck, make_istuple, make_islistof
 from sweetpea._internal.weight import combination_weight
 from sweetpea._internal.beforestart import BeforeStart
 
@@ -134,13 +134,10 @@ class Cross(Constraint):
             crossing_size = block.crossing_size(c)
             preamble_size = block.preamble_size(c)
             crossing_weight = block.crossing_weight(c)
-            
+
             # Step 1a: Get a list of the trials that are involved in the crossing. That list
             # omits leading trials that will be present to initialize transitions, and the
             # number of trials may have been reduced by exclusions.
-            # crossing_trials = list(filter(lambda t: all(map(lambda f: f.applies_to_trial(t), c)),
-            #                               range(1, block.trials_per_sample() + 1)))
-            # Modify this to make it depend on block property and preamble_size instead of factor
             crossing_trials = list(range(1+preamble_size, block.trials_per_sample() + 1))
 
             # Step 1b: For each trial, cross all levels of all factors in the crossing.
@@ -154,7 +151,7 @@ class Cross(Constraint):
             # as tuple of CNF variables.
 
             # Step 2a: Allocate additional variables to represent each crossing in each trial.
-            num_state_vars = len(crossing_combinations) * len(crossing_combinations[0])
+            num_state_vars = len(crossing_trials) * len(crossing_combinations[0])
             state_vars = list(range(fresh, fresh + num_state_vars))
             fresh += num_state_vars
 
@@ -163,13 +160,13 @@ class Cross(Constraint):
             iffs = list(map(lambda n: Iff(state_vars[n], And([*flattened_combinations[n]])), range(len(state_vars))))
 
             # Step 2c: Get weight associated with each combination.
-            combination_weights = [combination_weight(tuple(c.values())) for c in trial_combinations]
+            sustain_count = block.sustain_count(c[0])
+            combination_weights = [combination_weight(tuple(c.values())) * sustain_count for c in trial_combinations]
 
             # Step 3: Constrain each crossing to occur exactly according to its weight time the
             # crossing weight in each `crossing_size * crossing_weight` set of trials, or at most
             # that much in a last set of trials that is less than `crossing_size * crossing_weight`
             # in length.
-
             states = list(chunk(state_vars, len(trial_combinations)))
             transposed = cast(List[List[int]], list(map(list, zip(*states))))
             reqss = map(lambda l, w: Cross.__add_weight_constraint(l, w, crossing_size, crossing_weight),
@@ -203,6 +200,41 @@ class Cross(Constraint):
 
     def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
         # conformance by construction or direct checking in combinatoric
+        return True
+
+class Sustain(Constraint):
+    """A sustain constraint forces consecutive trials to have the same variable assignments"""
+
+    def validate(self, block: Block) -> None:
+        pass
+
+    @staticmethod
+    def apply(block: MultiCrossBlockRepeat, backend_request: BackendRequest) -> None:
+        iffs = []
+        for f in block.design:
+            sustain_count = block.sustain_count(f)
+            for l in f.levels:
+                varss = block.build_variable_lists((f, cast(Union[SimpleLevel, DerivedLevel], l)), None)
+                for vars in list(varss):
+                    for i in range(0, len(vars)):
+                        same_as_i = (i // sustain_count) * sustain_count
+                        iffs.append(Iff(vars[i], vars[same_as_i]))
+
+        (cnf, new_fresh) = block.cnf_fn(And(iffs), backend_request.fresh)
+        backend_request.cnfs.append(cnf)
+        backend_request.fresh = new_fresh
+
+    def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
+        for f in block.design:
+            sustain_count = block.sustain_count(f)
+            if sustain_count > 1:
+                levels = sample[f]
+                for i in range(0, len(levels), sustain_count):
+                    if f.applies_to_trial(i//sustain_count + 1):
+                        level = levels[i]
+                        for j in range(1, sustain_count):
+                            if levels[i+j] != level:
+                                return False
         return True
 
 class Derivation(Constraint):
@@ -259,7 +291,7 @@ class Derivation(Constraint):
                  dependent_idxs: List[List[object]],
                  factor: DerivedFactor) -> None:
         self.derived_idx = derived_idx
-        self.dependent_idxs = dependent_idxs
+        self.dependent_idxs = dependent_idxs # sustain count is built into these indices
         self.factor = factor
         # TODO: validation
 
@@ -296,11 +328,12 @@ class Derivation(Constraint):
         trial_count = block.trials_per_sample()
         iffs = []
         f = self.factor
+        sustain_count = block.sustain_count(f)
         window = f.levels[0].window
         t = 0
-        delta = window.start_delta
-        for n in range(trial_count):
-            if not f.applies_to_trial(n + 1):
+        delta = window.start_delta * sustain_count
+        for n in range(0, trial_count, sustain_count):
+            if not f.applies_to_trial(n//sustain_count + 1):
                 continue
             num_levels = len(f.levels)
             get_trial_size = lambda x: trial_size if x < block.grid_variables() else len(block.decode_variable(x+1)[0].levels)
@@ -326,7 +359,7 @@ class Derivation(Constraint):
 
             or_clause = Or(ands)
             iffs.append(Iff(self.derived_idx + (t * num_levels) + 1, or_clause))
-            t += 1
+            t += sustain_count
         (cnf, new_fresh) = block.cnf_fn(And(iffs), backend_request.fresh)
 
         backend_request.cnfs.append(cnf)
@@ -352,7 +385,7 @@ class _KInARow(Constraint):
     def __init__(self, k, level):
         self.k = k
         self.level = level
-        self.within_block = False
+        self.within_block = cast(Optional[BlockGeometry], None)
         self.__validate()
 
     def __validate(self) -> None:
@@ -370,13 +403,13 @@ class _KInARow(Constraint):
     def validate(self, block: Block) -> None:
         validate_factor_and_level(block, self.level.get_factor(), self.level)
 
-    def set_within_block(self) -> None:
-        self.within_block = True
- 
-    # NEW:
-    def set_within_windows(self, window_len: int):
-        self._within_window_len = int(window_len)   # no within_block change
+    def init_within_block(self, within_block: BlockGeometry) -> None:
+        if self.within_block is None:
+            self.within_block = within_block
 
+    def sustain_within_block(self, sustain_count: int) -> None:
+        self.within_block = self.within_block.sustain(sustain_count)
+ 
     def uses_factor(self, f: Factor) -> bool:
         if isinstance(self.level, Factor):
             return self.level.uses_factor(f)
@@ -418,23 +451,13 @@ class _KInARow(Constraint):
     ) -> List[List[List[int]]]:
         # If window-scoped, we operate over fixed-size windows; otherwise we
         # use the original (global or repeat-scoped) behavior.
-        window_len = cast(Optional[int], getattr(self, "_within_window_len", None))
 
-        # When window-scoped, we must not trigger the repeat-only path in build_variable_lists
-        base_within_block = self.within_block if window_len is None else False
-        var_lists = block.build_variable_lists(level, base_within_block)
+        var_lists = block.build_variable_lists(level, self.within_block)
 
         sublistss: List[List[List[int]]] = []
         for var_list in var_lists:
-            if window_len:
-                # carve into non-overlapping windows; runs must not cross windows
-                for start in range(0, len(var_list), window_len):
-                    window_vars = var_list[start:start + window_len]
-                    raw = [window_vars[i:i + sublist_length] for i in range(0, len(window_vars))]
-                    sublistss.append([sl for sl in raw if len(sl) == sublist_length])
-            else:
-                raw = [var_list[i:i + sublist_length] for i in range(0, len(var_list))]
-                sublistss.append([sl for sl in raw if len(sl) == sublist_length])
+            raw = [var_list[i:i + sublist_length] for i in range(0, len(var_list))]
+            sublistss.append([sl for sl in raw if len(sl) == sublist_length])
 
         return sublistss
 
@@ -461,19 +484,6 @@ class _KInARow(Constraint):
                 counts.append(count)
             return self._potential_counts_conform(counts)
 
-        # Window-scoped: check each fixed window
-        if hasattr(self, "_within_window_len"):
-            win = int(self._within_window_len)
-            T = len(level_list)
-            if win <= 0 or T == 0:
-                return True
-            for start in range(0, T, win):
-                end = min(start + win, T)
-                if not check_sequence(start, end):
-                    return False
-            return True
-
-        # Repeat-scoped or global
         return all(block.map_block_trial_ranges(self.within_block, check_sequence))
 
     @abstractmethod
@@ -596,14 +606,6 @@ class ExactlyK(_KInARow):
                                  ) -> None:
         sublistss = block.build_variable_lists(level, self.within_block)
 
-        window_len = cast(Optional[int], getattr(self, "_within_window_len", None))
-        if window_len:
-            new_sublistss = []
-            for sub in sublistss:
-                windows = [sub[s:s+window_len] for s in range(0, len(sub), window_len)]
-                new_sublistss.extend(windows)
-            sublistss = new_sublistss
-
         for sublists in sublistss:
             backend_request.ll_requests.append(LowLevelRequest("EQ", self.k, sublists))
 
@@ -619,6 +621,13 @@ class ExactlyK(_KInARow):
     def _potential_counts_conform(self, counts: List[int]) -> bool:
         return sum(counts) == self.k
 
+    def init_within_block(self, within_block: BlockGeometry) -> None:
+        super().init_within_block(within_block)
+
+    def sustain_within_block(self, sustain_count: int) -> None:
+        super().sustain_within_block(sustain_count)
+        self.k *= sustain_count
+ 
 
 class ExactlyKInARow(_KInARow):
     """Requires that if the given level exists at all, it must exist in a
@@ -689,8 +698,6 @@ class ExactlyKMultipleInARow(_KInARow):
 
         selector_runs: List[Tuple[int, List[int]]] = []  # (selector_var, covered_indices)
 
-        window_len = cast(Optional[int], getattr(self, "_within_window_len", None))
-
         def encode_segment(segment_vars: List[int]) -> None:
             """Encode 'ON runs must have length ∈ {k, 2k, 3k, ...}' within this segment only."""
             max_len = len(segment_vars)
@@ -731,18 +738,10 @@ class ExactlyKMultipleInARow(_KInARow):
                 backend_request.cnfs.append(cnf)
 
         # Build lists (not repeat-scoped for window behavior)
-        base_var_lists = block.build_variable_lists(level, within_block=self.within_block if not hasattr(self, "_within_window_len") else False)
-
-
-        if hasattr(self, "_within_window_len"):
-            win = int(self._within_window_len)
-            for var_list in base_var_lists:
-                for start in range(0, len(var_list), win):
-                    segment = var_list[start:start + win]
-                    encode_segment(segment)
-        else:
-            for var_list in base_var_lists:
-                encode_segment(var_list)
+        base_var_lists = block.build_variable_lists(level, within_block=self.within_block)
+        
+        for var_list in base_var_lists:
+            encode_segment(var_list)
 
     def _potential_counts_conform(self, counts: List[int]) -> bool:
         return all(c % self.k == 0 for c in counts)
@@ -859,14 +858,19 @@ class Pin(Constraint):
         self.index = index
         self.factor = level.factor
         self.level = level
-        self.within_block = False
+        self.within_block = cast(Optional[BlockGeometry], None)
 
-    def set_within_block(self) -> None:
-        self.within_block = True
+    def init_within_block(self, within_block: BlockGeometry) -> None:
+        if self.within_block is None:
+            self.within_block = within_block
+
+    def sustain_within_block(self, sustain_count: int) -> None:
+        if self.within_block:
+            self.within_block = self.within_block.sustain(sustain_count)
 
     def validate(self, block: Block) -> None:
         validate_factor_and_level(block, self.factor, self.level)
-        if not block.get_trial_numbers(self.index):
+        if not block.get_trial_numbers(self.factor, self.index):
             num_trials = block.trials_per_sample()
             block.errors.add("WARNING: Pin constraint unsatisfiable, because "
                              + str(self.index) + " is out of range for " + str(num_trials) + " trials")
@@ -881,7 +885,7 @@ class Pin(Constraint):
         return [p]
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
-        trial_nos = block.get_trial_numbers(self.index, self.within_block)
+        trial_nos = block.get_trial_numbers(self.factor, self.index, self.within_block)
         if trial_nos:
             for trial_no in trial_nos:
                 var = block.get_variable(trial_no+1, (self.factor, self.level))
@@ -903,7 +907,7 @@ class Pin(Constraint):
 
     def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
         levels = sample[self.factor]
-        trial_nos = block.get_trial_numbers(self.index, self.within_block)
+        trial_nos = block.get_trial_numbers(self.factor, self.index, self.within_block)
         if trial_nos:
             for trial_no in trial_nos:
                 if levels[trial_no] != self.level:
@@ -934,7 +938,7 @@ class Reify(Constraint):
         return True
 
     def desugar(self, replacements: dict) -> List:
-        factor = replacements.get(self.factor, self.factor)
+        factor = replacements.get(self.factor, [self.factor, self.factor])[1]
         return [Reify(factor)]
 
 
@@ -970,6 +974,8 @@ class MinimumTrials(Constraint):
     def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
         return True
 
+    def sustain_within_block(self, sustain_count: int) -> None:
+        self.trials *= sustain_count
 
 
 class ContinuousConstraint(Constraint):
@@ -1018,441 +1024,248 @@ class ContinuousConstraint(Constraint):
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
         """Do nothing."""
 
-
-class OrderRunsByPermutation(Constraint):
+class LatinSquare(Constraint):
     """
     Given a permutation factor and an inner single-crossing block, pin each window
     (length = preamble + crossing_size) to the permutation chosen by the factor.
     """
     def __init__(self,
-                 perm_factor: Factor,
-                 inner_block: MultiCrossBlockRepeat,
-                 level2perm: Dict[Level, Tuple[int, ...]],
-                 external_preamble: int = 0):
-        self.perm_factor = perm_factor
-        self.inner_block = inner_block
-        if len(inner_block.crossings) != 1:
-            raise ValueError("OrderRunsByPermutation expects an inner block with exactly one crossing.")
-        self.inner_cross = inner_block.crossings[0]
-        self.cross_size  = inner_block.crossing_size(self.inner_cross)
-
-        self.preamble = external_preamble
-        
-        self.run_len = self.cross_size#self.cross_size
-        self.level2perm  = level2perm  # {Level: tuple[int]}
+                 factors: List[Factor],
+                 name: Optional[str] = None):
+        who = "LatinSquare"
+        if factors == []:
+            raise ValueError(who, "factor list must be non-empty")
+        argcheck(who, factors, make_islistof(Factor), "factors")
+        self.factors = factors
+        self.within_block = cast(Optional[BlockGeometry], None)
+        self.name = name
 
     def validate(self, block: Block) -> None:
-        validate_factor(block, self.perm_factor)
-        # basic sanity
-        if self.cross_size <= 0:
-            raise ValueError("OrderRunsByPermutation: inner crossing has zero size.")
-        for lvl, perm in self.level2perm.items():
-            if len(perm) != self.cross_size:
-                raise ValueError(f"OrderRunsByPermutation: permutation for {lvl.name} "
-                                 f"has length {len(perm)} != crossing size {self.cross_size}.")
+        who = "LatinSquare"
+        for f in self.factors:
+            validate_factor(block, f)
+        sustain_count = block.sustain_count(self.factors[0])
+        preamble_size = block.factor_preamble_size(self.factors[0])
+        for f in self.factors:
+            if block.sustain_count(f) != sustain_count:
+                raise ValueError(who, "inconsistent sustain counts for factors")
+            if block.factor_preamble_size(f) != preamble_size:
+                raise ValueError(who, "inconsistent preamble sizes for factor")
+            if f.level_weight_sum() != len(f.levels):
+                raise ValueError(who, "weighted levels not currently supported")
 
     def uses_factor(self, f: Factor) -> bool:
-        return self.perm_factor.uses_factor(f)
+        for factor in self.factors:
+            if factor.uses_factor(f):
+                return True
+        return False
 
-    def desugar(self, replacements: dict) -> List[Constraint]:
-        # Replace perm_factor and possibly Level keys if weights were desugared.
-        perm_factor = replacements.get(self.perm_factor, self.perm_factor)
+    def desugar(self, replacements: dict) -> List:
+        return [LatinSquare([replacements.get(f, [f, f])[1] for f in self.factors],
+                            self.name)]
 
-        # Re-map keys if levels got replaced
-        new_map: Dict[Level, Tuple[int, ...]] = {}
-        for k, v in self.level2perm.items():
-            new_k = replacements.get(k, k)
-            new_map[new_k] = v
-        return [OrderRunsByPermutation(perm_factor, self.inner_block, new_map, external_preamble=self.preamble)]
+    def _make_rotations(self):
+        return [0 for f in self.factors]
 
-    def apply(self, block: Block, backend_request: BackendRequest) -> None:
-        from itertools import product
-        from sweetpea._internal.logic import If, And
-
-        # Enumerate valid inner combos respecting excludes/derivations:
-        level_lists = [list(f.levels) for f in self.inner_cross]
-        all_tuples  = list(product(*level_lists))
-        all_dicts   = [{f: lv for f, lv in zip(self.inner_cross, tpl)} for tpl in all_tuples]
-        valid       = [d for d in all_dicts if not self.inner_block.is_excluded_or_inconsistent_combination(d)]
-        if len(valid) != self.cross_size:
-            raise RuntimeError("OrderRunsByPermutation: valid combo count != crossing_size.")
-
-        T = block.trials_per_sample()
-
-        if (T - self.preamble) % self.run_len != 0:
-            raise RuntimeError(f"OrderRunsByPermutation: total trials ({T}) not multiple of run_len ({self.run_len}).")
-        W = (T - self.preamble) // self.run_len
-
-        clauses = []
-        for w in range(W):
-            
-            start0 = self.preamble + w * self.run_len
-            sel_t1 = start0 + 1
-
-            for lvl, perm in self.level2perm.items():
-                sel = block.get_variable(sel_t1, (self.perm_factor, lvl))
-                # pin only post-preamble part
-                for t in range(self.cross_size):
-                    combo = valid[perm[t]]
-                    # trial1 = start0 + self.preamble + t + 1
-                    trial1 = start0 + t + 1
-
-                    need = [block.get_variable(trial1, (f, combo[f])) for f in self.inner_cross]
-                    clauses.append(If(sel, And(need)))
-
-        if clauses:
-            cnf, backend_request.fresh = block.cnf_fn(And(clauses), backend_request.fresh)
-            backend_request.cnfs.append(cnf)
-
-    def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
-        from itertools import product
-
-        level_lists = [list(f.levels) for f in self.inner_cross]
-        all_tuples  = list(product(*level_lists))
-        all_dicts   = [{f: lv for f, lv in zip(self.inner_cross, tpl)} for tpl in all_tuples]
-        valid       = [d for d in all_dicts if not self.inner_block.is_excluded_or_inconsistent_combination(d)]
-        if len(valid) != self.cross_size:
-            return False
-
-        # total trials
-        T = len(next(iter(sample.values())))
-
-        if (T - self.preamble) % self.run_len != 0:
-            return False
-        W = (T - self.preamble) // self.run_len
-
-
-        # permutation sequence for this sample (Levels or strings)
-        perm_seq = _series_for(sample, self.perm_factor)
-
-        print('ps: ', perm_seq)
-        for w in range(W):
-            # start0 = w * self.run_len
-            start0 = self.preamble + w * self.run_len
-            chosen = perm_seq[start0]
-
-            # resolve chosen level object (works if chosen is Level or string)
-            chosen_lvl = None
-            for l in self.perm_factor.levels:
-                if _val_name(l) == _val_name(chosen):
-                    chosen_lvl = l
+    def _step_rotations(self, rotations, main_factor_idx):
+        k = len(self.factors) - 1
+        while k >= 0:
+            if k != main_factor_idx:
+                rotations[k] += 1
+                if rotations[k] < len(self.factors[k].levels):
                     break
-            if chosen_lvl is None:
-                return False
-            perm = self.level2perm.get(chosen_lvl)
-            if perm is None or len(perm) != self.cross_size:
-                return False
+                else:
+                    rotations[k] = 0
+            k = k - 1
 
-            # verify inner window matches the selected permutation
-            for t in range(self.cross_size):
-                # idx = start0 + self.preamble + t
-                idx = start0 + t
-                combo = valid[perm[t]]
-                for f in self.inner_cross:
-                    f_seq = _series_for(sample, f)
-                    if _val_name(f_seq[idx]) != _val_name(combo[f]):
-                        return False
-        return True
-
-
-
-class ConstantInWindows(Constraint):
-    """
-    Enforce that `factor` is constant inside each fixed window of length `run_len`,
-    with windows starting at 0, run_len, 2*run_len, ...
-    """
-    def __init__(self, factor: Factor, run_len: int, start: int = 0):
-        self.factor = factor
-        self.run_len = run_len
-        self.start = int(start)
-
-    def validate(self, block: Block) -> None:
-        validate_factor(block, self.factor)
-        if not isinstance(self.run_len, int) or self.run_len <= 0:
-            raise ValueError("ConstantInWindows: run_len must be a positive integer.")
-        if self.start < 0:
-            raise ValueError("ConstantInWindows: start must be >= 0.")
-
-
-    def uses_factor(self, f: Factor) -> bool:
-        return self.factor.uses_factor(f)
-
-    def desugar(self, replacements: dict) -> List[Constraint]:
-        # honor weight desugaring, etc.
-        factor = replacements.get(self.factor, self.factor)
-        return [ConstantInWindows(factor, self.run_len, start=self.start)]
+    def diagonal_length(self):
+        return max([len(f.levels) for f in self.factors])
+                
+    def _get_shape(self):
+        diagonal_length = self.diagonal_length()
+        main_factor_idx = 0
+        for idx, f in enumerate(self.factors):
+            if len(f.levels) == diagonal_length:
+                main_factor_idx = idx
+        return (diagonal_length, main_factor_idx)
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
-        from sweetpea._internal.logic import If, And
+        if len(self.factors) == 1:
+            return
 
-        # Compute window size multiples w/o preamble trials
-        T = block.trials_per_sample()
-        if (T - self.start) % self.run_len != 0:
-            raise RuntimeError(
-                f"ConstantInWindows: total trials ({T}) minus start ({self.start}) "
-                f"not multiple of run_len ({self.run_len})."
-            )
+        (diagonal_length, main_factor_idx) = self._get_shape()
 
+        level_lists = [list(f.levels) for f in self.factors]
+        sustain_count = block.sustain_count(self.factors[0])
+        preamble_size = block.factor_preamble_size(self.factors[0])
+        num_trials = block.trials_per_sample()
+        main_factor = self.factors[main_factor_idx]
 
-        clauses = []
-        for start in range(self.start, T, self.run_len):
-            t1 = start + 1  # trials are 1-based internally
-            
-            if not self.factor.applies_to_trial(t1):
-                continue
-            for lvl in self.factor.levels:
-                sel = block.get_variable(t1, (self.factor, lvl))
-                need = [
-                    block.get_variable(t1 + k, (self.factor, lvl))
-                    for k in range(self.run_len)
-                    if block.has_factor(self.factor)
-                    and self.factor.applies_to_trial(t1 + k)
-                ]
-                clauses.append(If(sel, And(need)))
+        ands = []
+        i = preamble_size
+        rotations = self._make_rotations()
+        while i < num_trials:
+            # For each trial in the segment:
+            for j in range(0, diagonal_length):
+                if i+j < num_trials:
+                    # Each possible choice of the main factor determines
+                    # the other factors
+                    for k in range(0, diagonal_length):
+                        l = main_factor.levels[(k + rotations[main_factor_idx]) % len(main_factor.levels)]
+                        main_var = block.get_variable(i+j+1, (main_factor, l))
+                        for idx, f in enumerate(self.factors):
+                            if idx != main_factor_idx:
+                                l = f.levels[(k + rotations[idx]) % len(f.levels)]
+                                var = block.get_variable(i+j+1, (f, l))
+                                ands.append(If(main_var, var))
 
+            # Make sure each main-factor level is picked at most once in each segment
+            for l in main_factor.levels:
+                vars = []
+                for j in range(0, diagonal_length):
+                    if i+j < num_trials:
+                        var = block.get_variable(i+j+1, (main_factor, l))
+                        vars.append(var)
+                new_request = LowLevelRequest("LT", 2, vars)
+                backend_request.ll_requests.append(new_request)
 
-        if clauses:
-            cnf, backend_request.fresh = block.cnf_fn(And(clauses), backend_request.fresh)
-            backend_request.cnfs.append(cnf)
+            self._step_rotations(rotations, main_factor_idx)
+
+            i += diagonal_length * sustain_count
+
+        (cnf, new_fresh) = block.cnf_fn(And(ands), backend_request.fresh)
+        backend_request.cnfs.append(cnf)
+        backend_request.fresh = new_fresh
 
     def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
-        # total length from any entry
-        T = len(next(iter(sample.values())))
+        if len(self.factors) == 1:
+            return True
 
-        if (T - self.start) % self.run_len != 0:
-            return False
+        (diagonal_length, main_factor_idx) = self._get_shape()
 
+        level_lists = [list(f.levels) for f in self.factors]
+        sustain_count = block.sustain_count(self.factors[0])
+        preamble_size = block.factor_preamble_size(self.factors[0])
+        num_trials = block.trials_per_sample()
+        main_factor = self.factors[main_factor_idx]
 
-        seq = _series_for(sample, self.factor)  # list of Level or str
-        for start in range(self.start, T, self.run_len):
-            window = seq[start:start + self.run_len]
-            if not window:  # defensive
-                return False
-            head = _val_name(window[0])
-            if any(_val_name(x) != head for x in window):
-                return False
+        i = preamble_size
+        rotations = self._make_rotations()
+        while i < num_trials:
+            # For each trial in the segment:
+            for j in range(0, diagonal_length):
+                if i+j < num_trials:
+                    # Each possible choice of the main factor determines
+                    # the other factors
+                    k = 0
+                    for idx, l in enumerate(main_factor.levels):
+                        if sample[main_factor][i+j] is l:
+                            k = idx
+                    for idx, f in enumerate(self.factors):
+                        expect_l = f.levels[(k + rotations[idx]) % len(f.levels)]
+                        if not sample[f][i+j] is expect_l:
+                            return False
+
+            # Make sure main-factor selections are unique
+            found = {}
+            for j in range(0, diagonal_length):
+                if i+j < num_trials:
+                    f = sample[main_factor][i+j]
+                    if f in found:
+                        return False
+                    found[f] = True
+
+            self._step_rotations(rotations, main_factor_idx)
+
+            i += diagonal_length * sustain_count
+
         return True
 
+    def derivable_factors(self, block: Block) -> Tuple[List[Factor], List[Factor]]:
+        (diagonal_length, main_factor_idx) = self._get_shape()
+        return (self.factors[:main_factor_idx] + self.factors[main_factor_idx+1:],
+                [self.factors[main_factor_idx]])
 
-class ExhaustLevelsInOrder(Constraint):
-    """Constraint that ensures all trials for one level of a factor are
-    completed before trials for the next level begin. The user must specify
-    the exact order in which levels are exhausted.
+class Sequential(Constraint):
+    """Constraint that ensures that the levels of a trial are used by trails in order.
 
     Usage::
 
-        ExhaustLevelsInOrder(factor, order=['level1', 'level2'])
+        Sequential(factor)
     """
 
-    def __init__(self, factor: Factor, order: List[str]):
-        who = "ExhaustLevelsInOrder"
-        if not isinstance(factor, Factor):
-            raise ValueError(f"{who}: expected a Factor, given {type(factor).__name__}")
+    def __init__(self, factor: Factor):
+        who = "Sequential"
+        argcheck(who, factor, Factor, "factor")
         self.factor = factor
 
-        if not isinstance(order, list) or len(order) == 0:
-            raise ValueError(f"{who}: order must be a non-empty list of level names")
-        self.order = order
-
-        level_names = [l.name for l in factor.levels]
-        for name in order:
-            if name not in level_names:
-                raise ValueError(
-                    f"{who}: '{name}' is not a level of factor '{factor.name}'. "
-                    f"Valid levels: {level_names}"
-                )
-        if len(order) != len(set(order)):
-            raise ValueError(f"{who}: order contains duplicate level names")
-        if set(order) != set(level_names):
-            raise ValueError(
-                f"{who}: order must include all levels of the factor. "
-                f"Missing: {set(level_names) - set(order)}"
-            )
+        # We could allow the levels to be specified, but then we have to check and
+        # deal with weights on levels. Let's leave that until it seems to be needed,
+        # since we can otherwise deal with desugared factors
 
     def validate(self, block: Block) -> None:
+        who = "Sequential"
         validate_factor(block, self.factor)
-        if len(self.factor.levels) < 2:
-            raise ValueError(
-                "ExhaustLevelsInOrder: factor must have at least 2 levels"
-            )
-        if self.factor.has_complex_window:
-            raise ValueError(
-                "ExhaustLevelsInOrder: not supported for factors with complex windows "
-                "(transitions, etc.)"
-            )
+        if self.factor.level_weight_sum() != len(self.factor.levels):
+            raise ValueError(who, "weighted levels not currently supported")
 
     def uses_factor(self, f: Factor) -> bool:
         return self.factor.uses_factor(f)
 
     def desugar(self, replacements: dict) -> List[Constraint]:
-        factor = replacements.get(self.factor, self.factor)
-        return [ExhaustLevelsInOrder(factor, self.order)]
+        factor = replacements.get(self.factor, [self.factor, self.factor])[1]
+        return [Sequential(factor)]
 
     def is_complex_for_combinatoric(self) -> bool:
         return True
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
-        ordered_levels = [self.factor.get_level(name) for name in self.order]
-        self._apply_ordered(block, backend_request, ordered_levels)
-        # NOTE: Contiguous/random-order mode commented out for now.
-        # To re-enable, make `order` optional and uncomment:
-        # if self.order is not None:
-        #     ordered_levels = [self.factor.get_level(name) for name in self.order]
-        #     self._apply_ordered(block, backend_request, ordered_levels)
-        # else:
-        #     self._apply_contiguous(block, backend_request)
-
-    def _apply_ordered(self, block: Block, backend_request: BackendRequest,
-                       ordered_levels: list) -> None:
-        """Ordered encoding using switch/boundary auxiliary variables.
-
-        For each consecutive pair (Li, Li+1), introduce N fresh switch variables
-        s_t meaning 'transition from Li to Li+1 has happened by trial t'.
-        """
-        N = block.trials_per_sample()
-        clauses: List[Any] = []
-
-        for pair_idx in range(len(ordered_levels) - 1):
-            level_before = ordered_levels[pair_idx]
-            level_after = ordered_levels[pair_idx + 1]
-
-            # Allocate N fresh switch variables
-            s_vars = list(range(backend_request.fresh,
-                                backend_request.fresh + N))
-            backend_request.fresh += N
-
-            for t in range(N):
-                trial = t + 1  # 1-based 
-                var_li = block.get_variable(trial, (self.factor, level_before))
-                var_li1 = block.get_variable(trial, (self.factor, level_after))
-                s_t = s_vars[t]
-
-                # Monotonic: once switched, stays switched
-                if t < N - 1:
-                    clauses.append(Or([-s_t, s_vars[t + 1]]))
-
-                # Li+1 only after switch
-                clauses.append(Or([s_t, -var_li1]))
-
-                # Li only before switch
-                clauses.append(Or([-s_t, -var_li]))
-
-        if clauses:
-            backend_request.cnfs.append(And(clauses))
-
-    # NOTE: _apply_contiguous is commented out. It implements random-order mode
-    # where the solver picks level ordering but enforces contiguity.
-    #
-    # def _apply_contiguous(self, block: Block, backend_request: BackendRequest) -> None:
-    #     """Contiguity encoding: each level's appearances form a contiguous block.
-    #
-    #     For each level, introduce 'started' and 'past' auxiliary variables
-    #     to prevent gaps in a level's appearances.
-    #     """
-    #     N = block.trials_per_sample()
-    #     clauses: List[Any] = []
-    #
-    #     for level in self.factor.levels:
-    #         # Allocate 2*N fresh variables: started_1..N and past_1..N
-    #         started_vars = list(range(backend_request.fresh,
-    #                                   backend_request.fresh + N))
-    #         backend_request.fresh += N
-    #         past_vars = list(range(backend_request.fresh,
-    #                                backend_request.fresh + N))
-    #         backend_request.fresh += N
-    #
-    #         for t in range(N):
-    #             trial = t + 1  # 1-based
-    #             var_l = block.get_variable(trial, (self.factor, level))
-    #             started_t = started_vars[t]
-    #             past_t = past_vars[t]
-    #
-    #             # started is monotonic
-    #             if t < N - 1:
-    #                 clauses.append(Or([-started_t, started_vars[t + 1]]))
-    #
-    #             # If L appears, mark started
-    #             clauses.append(Or([-var_l, started_t]))
-    #
-    #             # If started and L absent, mark past
-    #             clauses.append(Or([-started_t, var_l, past_t]))
-    #
-    #             # past is monotonic
-    #             if t < N - 1:
-    #                 clauses.append(Or([-past_t, past_vars[t + 1]]))
-    #
-    #             # L cannot appear once past
-    #             clauses.append(Or([-past_t, -var_l]))
-    #
-    #     if clauses:
-    #         backend_request.cnfs.append(And(clauses))
+        sustain_count = block.sustain_count(self.factor)
+        preamble_size = block.factor_preamble_size(self.factor)
+        num_trials = block.trials_per_sample()
+        f = self.factor
+        
+        i = preamble_size
+        ands = cast(List[Formula], [])
+        while i < num_trials:
+            # For each trial in the segment:
+            use_l = f.levels[((i - preamble_size) //sustain_count) % len(f.levels)]
+            for l in f.levels:
+                var = block.get_variable(i+1, (f, l))
+                if l is use_l:
+                    ands.append(var)
+                else:
+                    ands.append(Not(var))
+            i += sustain_count
+        (cnf, new_fresh) = block.cnf_fn(And(ands), backend_request.fresh)
+        backend_request.cnfs.append(cnf)
+        backend_request.fresh = new_fresh
 
     def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
-        seq = _series_for(sample, self.factor)
+        sustain_count = block.sustain_count(self.factor)
+        preamble_size = block.factor_preamble_size(self.factor)
+        num_trials = block.trials_per_sample()
+        f = self.factor
 
-        # Check that the order of level blocks matches the specified order
-        observed_order: List[str] = []
-        for trial_val in seq:
-            name = _val_name(trial_val)
-            if not observed_order or observed_order[-1] != name:
-                observed_order.append(name)
-
-        # observed_order must be a subsequence of self.order
-        order_idx = 0
-        for name in observed_order:
-            while order_idx < len(self.order) and self.order[order_idx] != name:
-                order_idx += 1
-            if order_idx >= len(self.order):
+        i = preamble_size
+        while i < num_trials:
+            # For each trial in the segment:
+            use_l = f.levels[(i - preamble_size) % len(f.levels)]
+            if not sample[self.factor][i] is use_l:
                 return False
-            order_idx += 1
+            i += sustain_count
 
         return True
 
-        # NOTE: Contiguity-only check for random-order mode commented out.
-        # To re-enable, make order optional and uncomment:
-        # if not self._check_contiguous(seq):
-        #     return False
-
-    # NOTE: _check_contiguous is commented out (used by random-order mode).
-    #
-    # @staticmethod
-    # def _check_contiguous(seq) -> bool:
-    #     """Check that each level's appearances form a contiguous block."""
-    #     finished_levels: set = set()
-    #     prev_name = None
-    #     for trial_val in seq:
-    #         name = _val_name(trial_val)
-    #         if name != prev_name:
-    #             if name in finished_levels:
-    #                 return False
-    #             if prev_name is not None:
-    #                 finished_levels.add(prev_name)
-    #         prev_name = name
-    #     return True
-
     def __eq__(self, other):
-        return (isinstance(other, ExhaustLevelsInOrder) and
-                self.factor == other.factor and
-                self.order == other.order)
+        return (isinstance(other, Sequential) and
+                self.factor == other.factor)
 
     def __repr__(self):
-        return f"ExhaustLevelsInOrder({self.factor.name}, order={self.order})"
+        return f"Sequential({self.factor.name})"
 
-
-def _series_for(sample: dict, factor: Factor):
-    # Try Factor object key
-    if factor in sample:
-        return sample[factor]
-    # Try the HiddenName / name object itself
-    name_obj = getattr(factor, "name", None)
-    if name_obj in sample:
-        return sample[name_obj]
-    # Try string name
-    name_str = str(name_obj) if name_obj is not None else None
-    if name_str in sample:
-        return sample[name_str]
-    # Not found
-    raise KeyError(f"sample does not contain series for factor {factor}")
+    def derivable_factors(self, block: Block) -> Tuple[List[Factor], List[Factor]]:
+        return ([self.factor], [])
 
 def _val_name(x):
     # Works for Level objects or plain strings

@@ -64,8 +64,8 @@ def test_generate_derivations():
 
 
 def test_shift_window():
-    assert DerivationProcessor.shift_window([[0, 0, 2, 3]], one_level.window, 4) == [[0, 4, 2, 7]]
-    assert DerivationProcessor.shift_window([[1, 1, 3, 2]], one_level.window, 4) == [[1, 5, 3, 6]]
+    assert DerivationProcessor.shift_window([[0, 0, 2, 3]], one_level.window, 4, 1) == [[0, 4, 2, 7]]
+    assert DerivationProcessor.shift_window([[1, 1, 3, 2]], one_level.window, 4, 1) == [[1, 5, 3, 6]]
 
-    assert DerivationProcessor.shift_window([[0, 0, 2, 2]], other_level.window, 4) == [[0, 4, 2, 6]]
-    assert DerivationProcessor.shift_window([[0, 0, 3, 3]], other_level.window, 4) == [[0, 4, 3, 7]]
+    assert DerivationProcessor.shift_window([[0, 0, 2, 2]], other_level.window, 4, 1) == [[0, 4, 2, 6]]
+    assert DerivationProcessor.shift_window([[0, 0, 3, 3]], other_level.window, 4, 1) == [[0, 4, 3, 7]]

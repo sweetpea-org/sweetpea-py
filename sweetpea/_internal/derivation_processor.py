@@ -96,7 +96,8 @@ class DerivationProcessor:
                                      for valid_tuple in valid_tuples]
                     shifted_indices = DerivationProcessor.shift_window(valid_indices,
                                                                        level.window,
-                                                                       block.variables_per_trial())
+                                                                       block.variables_per_trial(),
+                                                                       block.sustain_count(factor))
                     level_index = block.first_variable_for_level(factor, level)
                     accum.append(Derivation(level_index, shifted_indices, factor))
             # check that everything in the cross product is covered by some level
@@ -124,7 +125,8 @@ class DerivationProcessor:
     @staticmethod
     def shift_window(indices: List[List[object]],
                      window: Window,
-                     trial_size: int
+                     trial_size: int,
+                     sustain_count: int
                      ) -> List[List[object]]:
         """This is a helper function that shifts the indices of
         :func:`.DerivationProcessor.generate_derivations`.
@@ -164,7 +166,7 @@ class DerivationProcessor:
                     if isinstance(idx, BeforeStart):
                         l.append(BeforeStart(idx.ready_at+(len(idx_list) - i - 1)))
                     else:
-                        l.append(cast(int, idx) + i * trial_size)
+                        l.append(cast(int, idx) + i * sustain_count * trial_size)
                 shifted_sublists.append(l)
             shifted_idxs.append(list(reduce(op.add, shifted_sublists, [])))
 
