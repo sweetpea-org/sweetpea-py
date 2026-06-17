@@ -160,11 +160,12 @@ def print_experiments(block, experiments):
         An experimental description as a :class:`.Block`.
 
     :param experiments:
-        Either a :class:`list` of experiment :class:`dicts <dict>` (standard
-        output from :func:`.synthesize_trials`), or a :class:`dict` mapping
-        participant IDs to lists of experiment dicts (Latin Square output
-        from :func:`.synthesize_trials` with ``participants`` parameter).
-        When a dict is provided, output is labeled by participant.
+        A :class:`list` of experiment :class:`dicts <dict>`, as produced by
+        :func:`.synthesize_trials`.
+
+        When the ``block`` includes a :class:`.LatinSquare` constraint that was
+        given a ``name``, each experiment's output is divided into sections
+        labeled by that name (one section per diagonal).
     """
     # Restore continuous factors for printing trials
     block.restore_continuous()
@@ -197,11 +198,6 @@ def _print_experiment_participant(design, e, start, end):
     format_str = _get_column_widths(transposed)
     print(reduce(lambda a, b: a + format_str.format(*b), transposed, ''))
 
-
-# --- _print_experiment_with_latin_square() removed ---
-# Replaced by Dict[int, List[dict]] handling in print_experiments().
-# Per-participant output is now handled by synthesize_trials(participants=...)
-# which returns a dict, and print_experiments auto-detects and labels it.
 
 def _get_column_widths(data):
     # Compute column widths from actual content
@@ -357,8 +353,7 @@ def save_experiments_csv(block: Block,
 
 def synthesize_trials(block: Block,
                       samples: int = 10,
-                      sampling_strategy=IterateGen,
-                      participants=None
+                      sampling_strategy=IterateGen
                       ):
     """Given an experiment described with a :class:`.Block`, randomly generates
     multiple sets of trials for that experiment.
@@ -389,21 +384,8 @@ def synthesize_trials(block: Block,
         The strategy to use for trial generation. The default is
         :class:`.NonUniformGen`.
 
-    :param participants:
-        Optional list of participant IDs for Latin Square counterbalancing.
-        When the block contains a :class:`.LatinSquare` constraint and
-        ``participants`` is ``None``, defaults to all participants
-        (``range(num_participants)``). When explicitly provided, only those
-        participants are solved, saving computation.
-
-        When Latin Square is active (either by default or explicit list),
-        returns ``Dict[int, List[dict]]`` instead of ``List[dict]``.
-
     :returns:
-        A :class:`list` of trial sets (when no :class:`.LatinSquare`
-        constraint is present and ``participants`` is ``None``),
-        or a :class:`dict` mapping participant IDs to lists of trial sets
-        (when Latin Square counterbalancing is active).
+        A :class:`list` of trial sets.
     """
 
     def starting(who):
