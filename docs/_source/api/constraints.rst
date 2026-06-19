@@ -139,7 +139,7 @@ Constraints
               for more information.
 
               :param factors: the factors forming the Latin Square pattern
-              :type outer_factors: List[Factor]
+              :type factors: List[Factor]
               :rtype: Constraint
 
 .. class:: sweetpea.ContinuousConstraint(factors, predicate)
