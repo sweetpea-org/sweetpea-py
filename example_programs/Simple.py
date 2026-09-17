@@ -34,7 +34,6 @@ experiments  = synthesize_trials(block, N, CMSGen)
 # experiments  = synthesize_trials(block, N, IterateGen)
 # experiments  = synthesize_trials(block, N, UniGen)
 # experiments  = synthesize_trials(block, N, IterateSATGen)
-# experiments  = synthesize_trials(block, N, IterateILPGen)
 # experiments  = synthesize_trials(block, N, RandomGen)
 
 print_experiments(block, experiments)

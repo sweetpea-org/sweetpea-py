@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from ..cnf import CNF
-from .tools.cryptominisat import DEFAULT_DOCKER_MODE_ON, cryptominisat_solve
+from .tools.cryptominisat import cryptominisat_solve
 from .utility import GenerationRequest, ProblemSpecification, Solution, combine_and_save_cnf, temporary_cnf_file
 
 
@@ -57,7 +57,6 @@ def compute_solutions(filename: Path,
                       support: int,
                       count: int,
                       solutions: Optional[List[List[int]]] = None,
-                      use_docker: bool = DEFAULT_DOCKER_MODE_ON
                       ) -> List[List[int]]:
     """Attempts to solve a CNF problem ``count`` times with CryptoMiniSAT. Each
     time a solution is generated, it is added to the problem file's header so
@@ -71,7 +70,7 @@ def compute_solutions(filename: Path,
             solutions = []
         if count == 0:
             return solutions
-        solution = cryptominisat_solve(filename, use_docker)
+        solution = cryptominisat_solve(filename)
         if not solution:
             return solutions
         solution = solution[:support]
