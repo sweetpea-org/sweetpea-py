@@ -35,7 +35,8 @@ def test_latin_square_three_by_three():
     C = Factor("C", ["c1", "c2"])
     outer = CrossBlock([A, B, C], [A, C], [LatinSquare([A, B])])
     exps = synthesize_trials(outer, 1000, sampling_strategy=IterateGen)
-    assert len(exps) == 288
+    # Three rotations of the pattern, any of which the solver may start from.
+    assert len(exps) == 864
 
 def test_latin_rectangle1():
     A = Factor("A", ["a1", "a2", "a3", "a4"])

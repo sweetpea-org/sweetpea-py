@@ -92,7 +92,7 @@ class MultiCrossBlockRepeat(Block):
         crossings = [c for c in crossings if len(c) > 0]
 
         from sweetpea._internal.constraint import (Cross, Consistency, Sustain,
-                                                   CoverAllCombinations, _KInARow)
+                                                   CoverAllCombinations)
         from sweetpea._internal.derivation_processor import DerivationProcessor
         self.orig_design = design
         self.orig_crossings = crossings
@@ -100,7 +100,7 @@ class MultiCrossBlockRepeat(Block):
         # Counted before desugaring, so a whole-factor Relax stays the one
         # constraint the user wrote rather than one per level.
         relaxed = [c for c in constraints
-                   if isinstance(c, _KInARow) and c.relaxation is not None]
+                   if getattr(c, 'relaxation', None) is not None]
         if len(relaxed) > 1:
             raise ValueError((who,
                               "an experiment may relax one constraint, but {} were "
@@ -157,7 +157,7 @@ class MultiCrossBlockRepeat(Block):
         pass produced, so that giving a factor up can make the block shorter."""
         from sweetpea._internal.constraint import CoverAllCombinations
         self.min_trials = self._base_min_trials
-        self._trials_per_sample = None
+        self._trials_per_sample_cache = None
         for ct in self.constraints:
             if isinstance(ct, CoverAllCombinations):
                 reported = len(self.applied_relaxations)
@@ -184,14 +184,14 @@ class MultiCrossBlockRepeat(Block):
                             self.min_trials = ((self.min_trials // count) + 1) * count
                     # A constraint's validate() (e.g. Pin's range check) may have
                     # already cached the pre-growth trial count; invalidate it.
-                    self._trials_per_sample = None
+                    self._trials_per_sample_cache = None
 
     def _apply_trial_count(self) -> None:
         """The part of construction that depends on how many trials the block
         has. Repeated after a resize, since every piece of it is derived from
         that count."""
         if self._mode != RepeatMode.REPEAT:
-            num_trials = self.trials_per_sample()
+            num_trials = self._trials_per_sample()
             for i in range(0, len(self.crossings)):
                 w = ((num_trials // self.crossing_sustain_counts[i]) - self.preamble_sizes[i]
                      + self.crossing_sizes[i] - 1) // self.crossing_sizes[i]
@@ -258,7 +258,7 @@ class MultiCrossBlockRepeat(Block):
         when the ``crossing_size`` is ``4``, we'd actually need 5 trials to
         fully cross with ``f``.
 
-        This is a helper for :class:`.MultipleCrossBlock.trials_per_sample`.
+        This is a helper for :class:`.MultipleCrossBlock._trials_per_sample`.
         """
         sustain_count = self.sustain_count(f)
         trial = 0
@@ -290,18 +290,18 @@ class MultiCrossBlockRepeat(Block):
         crossing_size = self.crossing_size(c)
         return max([0] + list(map(lambda f: self.__trials_required_for_crossing(f, crossing_size), c)))
 
-    def trials_per_sample(self):
-        if self._trials_per_sample:
-            return self._trials_per_sample
-        self._trials_per_sample = max([self.min_trials, self._trials_per_sample_for_crossing()])
-        return self._trials_per_sample
+    def _trials_per_sample(self):
+        if self._trials_per_sample_cache:
+            return self._trials_per_sample_cache
+        self._trials_per_sample_cache = max([self.min_trials, self._trials_per_sample_for_crossing()])
+        return self._trials_per_sample_cache
 
     def get_geometry(self, sustain_count: int = 1) -> BlockGeometry:
         if len(self.crossings) == 0:
             preamble_size = 0
         else:
             preamble_size = self.preamble_size(self.crossings[0]) * max(1, sustain_count)            
-        return BlockGeometry(self.trials_per_sample() * max(1, sustain_count),
+        return BlockGeometry(self._trials_per_sample() * max(1, sustain_count),
                              preamble_size,
                              {f: max(1, n*sustain_count) for f,n in self.factor_to_sustain_count.items()})
 
@@ -315,7 +315,7 @@ class MultiCrossBlockRepeat(Block):
         return self._variables_per_trial
 
     def grid_variables(self):
-        return self.trials_per_sample() * self.variables_per_trial()
+        return self._trials_per_sample() * self.variables_per_trial()
 
     def __count_exclusions(self, crossing):
         """This method is responsible for determining the number of trials that
@@ -523,7 +523,7 @@ class MultiCrossBlockRepeat(Block):
         """Test if a given sequence meet the criteria defined for the crossings"""
         sample_objects = convert_sample_from_names_to_objects(sample, self.design)
         res = cast(list, [])
-        trial_count = self.trials_per_sample()
+        trial_count = self._trials_per_sample()
 
         for i, crossing in enumerate(self.crossings):
             bad = 0
@@ -552,7 +552,7 @@ class MultiCrossBlockRepeat(Block):
         return res
 
     def map_block_trial_ranges(self, within_block: Optional[BlockGeometry], proc: Callable[[int, int], T]) -> List[T]:
-        num_trials = self.trials_per_sample()
+        num_trials = self._trials_per_sample()
         if within_block:
             if self.alignment == AlignmentMode.POST_PREAMBLE:
                 start = self.preamble_size() - within_block.preamble_size
@@ -717,7 +717,7 @@ class Nest(MultiCrossBlockRepeat):
             if f not in design:
                 design.append(f)
         crossings = outer_block.crossings + inner_block.crossings
-        inner_len = inner_block.trials_per_sample() - inner_block.common_preamble_size()
+        inner_len = inner_block._trials_per_sample() - inner_block.common_preamble_size()
         outer_sustain_counts = [inner_len * sc for sc in outer_block.crossing_sustain_counts]
         crossing_sustain_counts = outer_sustain_counts + inner_block.crossing_sustain_counts
         inner_constraints = inner_block.orig_constraints

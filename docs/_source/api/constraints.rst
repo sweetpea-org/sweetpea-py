@@ -119,20 +119,28 @@ Constraints
               :func:`.print_experiments`. An experiment may relax one
               constraint.
 
-              :class:`.ExactlyK`, :class:`.AtMostKInARow` and
-              :class:`.AtLeastKInARow` can be relaxed; passing any
-              other constraint raises an error. An :class:`.ExactlyK`
-              is adjusted while the block is sized, where
-              :class:`.CoverAllCombinations` can compute the value it
-              must take. The in-a-row constraints have no such model,
-              so they are adjusted only after the solver reports that
-              the design has no solution. See
+              :class:`.ExactlyK`, :class:`.AtMostKInARow`,
+              :class:`.AtLeastKInARow` and :class:`.LatinSquare` can
+              be relaxed; passing any other constraint raises an
+              error. An :class:`.ExactlyK` is adjusted while the block
+              is sized, where :class:`.CoverAllCombinations` can
+              compute the value it must take. The others have no such
+              model, so they are adjusted only after the solver
+              reports that the design has no solution.
+
+              For a :class:`.LatinSquare`, `by` is how many sequences
+              of N trials may be left out of the pattern, counting
+              from the end. A sequence left out keeps its trials but
+              is no longer required to hold a combination, so that
+              combination may not appear at all. See
               :ref:`relaxing-a-constraint`.
 
               :param constraint: the constraint that may be weakened
               :type constraint: Constraint
-              :param by: how many steps the constraint's `k` may move
-                         towards the weaker requirement
+              :param by: how far the constraint may move towards the
+                         weaker requirement: for `k`, how many steps;
+                         for a :class:`.LatinSquare`, how many
+                         sequences may be left out
               :type by: int
               :rtype: Constraint
 
@@ -157,8 +165,14 @@ Constraints
               N trials will include every level of every factor in
               `factors`. Furthermore, each subsequent sequence of N
               trials will have a distinct possible combination of
-              levels until all possibilities are exhausted, and the
-              combination order is deterministic.
+              levels until all possibilities are exhausted.
+
+              Which combination a given sequence receives is settled
+              when the experiment is solved. Consecutive sequences
+              take consecutive combinations and all are used before
+              any repeats, but where that cycle starts is left to the
+              solver, so it does not depend on the order the levels
+              were declared in.
 
               The given `factors` are typically crossed in an
               experiment description, but they are not required to be

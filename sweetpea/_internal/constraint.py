@@ -67,7 +67,7 @@ class Consistency(Constraint):
     @staticmethod
     def apply(block: Block, backend_request: BackendRequest) -> None:
         next_var = 1
-        for _ in range(block.trials_per_sample()):
+        for _ in range(block._trials_per_sample()):
             for f in filter(lambda f: not f.has_complex_window, block.act_design):
                 number_of_levels = len(f.levels)
                 new_request = LowLevelRequest("EQ", 1, list(range(next_var, next_var + number_of_levels)))
@@ -138,7 +138,7 @@ class Cross(Constraint):
             # Step 1a: Get a list of the trials that are involved in the crossing. That list
             # omits leading trials that will be present to initialize transitions, and the
             # number of trials may have been reduced by exclusions.
-            crossing_trials = list(range(1+preamble_size, block.trials_per_sample() + 1))
+            crossing_trials = list(range(1+preamble_size, block._trials_per_sample() + 1))
 
             # Step 1b: For each trial, cross all levels of all factors in the crossing.
             # We exclude any combination that is dsiallowed by implicit or explicit exlcusions.
@@ -311,7 +311,7 @@ class Derivation(Constraint):
 
     def __apply_derivation(self, block: Block, backend_request: BackendRequest) -> None:
         trial_size = block.variables_per_trial()
-        cross_size = block.trials_per_sample()
+        cross_size = block._trials_per_sample()
 
         iffs = []
         for n in range(cross_size):
@@ -325,7 +325,7 @@ class Derivation(Constraint):
 
     def __apply_derivation_with_complex_window(self, block: Block, backend_request: BackendRequest) -> None:
         trial_size = block.variables_per_trial()
-        trial_count = block.trials_per_sample()
+        trial_count = block._trials_per_sample()
         iffs = []
         f = self.factor
         sustain_count = block.sustain_count(f)
@@ -582,9 +582,20 @@ class AtLeastKInARow(_KInARow):
                                     backend_request: BackendRequest) -> None:
 
         # Request sublists for k+1 to allow us to determine the transition
+        var_lists = block.build_variable_lists(level, self.within_block)
         sublistss = self._build_variable_sublistss(block, level, self.k + 1)
-        implications = []
-        for sublists in sublistss:
+        implications = cast(List[FormulaWithIff], [])
+        for var_list, sublists in zip(var_lists, sublistss):
+            if not sublists:
+                # No window of k+1 trials fits, so there is no transition to
+                # find: a run of k can only be the whole stretch. The level
+                # therefore fills every trial or none of them, and none at all
+                # when the stretch is shorter than k.
+                if len(var_list) < self.k:
+                    implications.extend(Not(v) for v in var_list)
+                else:
+                    implications.extend(Iff(var_list[0], v) for v in var_list[1:])
+                continue
             # Starting corner case
             implications.append(If(sublists[0][0], And(sublists[0][1:-1])))
             for sublist in sublists:
@@ -699,11 +710,6 @@ class ExactlyK(_KInARow):
             self.relaxation.scale(sustain_count)
 
 
-#: The constraints `Relax` accepts. `ExactlyK` is repaired while the block is
-#: sized; the other two are stepped only after the solver reports no solution.
-_RELAXABLE = (ExactlyK, AtMostKInARow, AtLeastKInARow)
-
-
 def Relax(constraint: Constraint, by: int) -> Constraint:
     """Authorizes `constraint` to be weakened by up to `by`, when it would
     otherwise leave the design with no solution. Returns a copy to use in place
@@ -730,10 +736,14 @@ def Relax(constraint: Constraint, by: int) -> Constraint:
         CrossBlock(design, crossing, [Relax(AtMostKInARow(2, (color, 'red')), by=1)])
     """
     who = "Relax"
-    if not isinstance(constraint, _RELAXABLE):
+    # Named here rather than at module level because LatinSquare is defined
+    # further down. ExactlyK is repaired while the block is sized; the rest are
+    # stepped only after the solver reports no solution.
+    relaxable = (ExactlyK, AtMostKInARow, AtLeastKInARow, LatinSquare)
+    if not isinstance(constraint, relaxable):
         raise ValueError((who,
                           "only {} can be relaxed, received {}"
-                          .format(", ".join(c.__name__ for c in _RELAXABLE),
+                          .format(", ".join(c.__name__ for c in relaxable),
                                   type(constraint).__name__)))
     # bool is a subclass of int, and `by=True` is a units mistake, not a budget.
     if not isinstance(by, int) or isinstance(by, bool):
@@ -763,6 +773,10 @@ def record_concessions(block) -> None:
                 "{} for '{} {}' relaxed from {} to {}, as {}."
                 .format(type(ct).__name__, ct.level.factor.name, ct.level.name,
                         rl.original_k, rl.applied_k, rl.applied_for))
+        elif isinstance(ct, LatinSquare) and ct.released:
+            messages.append(
+                "Latin square stopped holding its last {} participant(s), as the "
+                "solver found no solution otherwise.".format(ct.released))
         elif isinstance(ct, CoverAllCombinations) and ct.dropped:
             given_up = ct.optional[len(ct.optional) - ct.dropped:]
             messages.append(
@@ -851,7 +865,7 @@ class ExactlyKMultipleInARow(_KInARow):
     ) -> None:
     
         k = self.k
-        max_len = block.trials_per_sample()
+        max_len = block._trials_per_sample()
         implications: List[Any] = [] 
         var_lists = block.build_variable_lists(level, self.within_block)
         all_trial_vars = var_lists[0]  # assume non-blocked design for now
@@ -1034,7 +1048,7 @@ class Pin(Constraint):
     def validate(self, block: Block) -> None:
         validate_factor_and_level(block, self.factor, self.level)
         if not block.get_trial_numbers(self.factor, self.index):
-            num_trials = block.trials_per_sample()
+            num_trials = block._trials_per_sample()
             block.errors.add("WARNING: Pin constraint unsatisfiable, because "
                              + str(self.index) + " is out of range for " + str(num_trials) + " trials")
 
@@ -1202,6 +1216,18 @@ class LatinSquare(Constraint):
         self.factors = factors
         self.within_block = cast(Optional[BlockGeometry], None)
         self.name = name
+        # Set by `Relax`; None means every participant is held to the pattern.
+        self.relaxation = cast(Optional[_Relaxation], None)
+        # Participants at the end that are no longer held to it.
+        self.released = 0
+
+    def can_release(self) -> bool:
+        return self.relaxation is not None and self.released < self.relaxation.by
+
+    def release_one(self) -> int:
+        """Stop holding one more participant, counting from the end."""
+        self.released += 1
+        return self.released
 
     def validate(self, block: Block) -> None:
         who = "LatinSquare"
@@ -1224,8 +1250,13 @@ class LatinSquare(Constraint):
         return False
 
     def desugar(self, replacements: dict) -> List:
-        return [LatinSquare([replacements.get(f, [f, f])[1] for f in self.factors],
-                            self.name)]
+        c = LatinSquare([replacements.get(f, [f, f])[1] for f in self.factors],
+                        self.name)
+        # The copy is what the block holds and what a release mutates, so the
+        # authorization has to travel with it.
+        c.relaxation = self.relaxation
+        c.released = self.released
+        return [c]
 
     def _make_rotations(self):
         return [0 for f in self.factors]
@@ -1252,6 +1283,24 @@ class LatinSquare(Constraint):
                 main_factor_idx = idx
         return (diagonal_length, main_factor_idx)
 
+    def _released_trials(self, block: Block) -> int:
+        """Trials at the end that no longer have to follow the pattern."""
+        return (self.released * self.diagonal_length()
+                * block.sustain_count(self.factors[0]))
+
+    def _rotation_cycle(self):
+        """Every rotation the odometer visits before it repeats, in order. Its
+        length is how many participants a whole pattern takes."""
+        (_, main_factor_idx) = self._get_shape()
+        start = self._make_rotations()
+        rotations = self._make_rotations()
+        cycle = []
+        while True:
+            cycle.append(list(rotations))
+            self._step_rotations(rotations, main_factor_idx)
+            if rotations == start:
+                return cycle
+
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
         if len(self.factors) == 1:
             return
@@ -1261,26 +1310,41 @@ class LatinSquare(Constraint):
         level_lists = [list(f.levels) for f in self.factors]
         sustain_count = block.sustain_count(self.factors[0])
         preamble_size = block.factor_preamble_size(self.factors[0])
-        num_trials = block.trials_per_sample()
+        num_trials = block._trials_per_sample() - self._released_trials(block)
         main_factor = self.factors[main_factor_idx]
+
+        cycle = self._rotation_cycle()
+
+        # One shift for the whole experiment: participant s takes rotation
+        # s + shift of the cycle. Participants still take consecutive rotations
+        # and still exhaust the cycle before it repeats; only where the cycle
+        # starts is left open, which is otherwise settled by the order the
+        # levels happen to be declared in.
+        shifts = []
+        for _ in cycle:
+            shifts.append(backend_request.fresh)
+            backend_request.fresh += 1
+        backend_request.ll_requests.append(LowLevelRequest("EQ", 1, shifts))
 
         ands = []
         i = preamble_size
-        rotations = self._make_rotations()
+        segment = 0
         while i < num_trials:
-            # For each trial in the segment:
-            for j in range(0, diagonal_length):
-                if i+j < num_trials:
-                    # Each possible choice of the main factor determines
-                    # the other factors
-                    for k in range(0, diagonal_length):
-                        l = main_factor.levels[(k + rotations[main_factor_idx]) % len(main_factor.levels)]
-                        main_var = block.get_variable(i+j+1, (main_factor, l))
-                        for idx, f in enumerate(self.factors):
-                            if idx != main_factor_idx:
-                                l = f.levels[(k + rotations[idx]) % len(f.levels)]
-                                var = block.get_variable(i+j+1, (f, l))
-                                ands.append(If(main_var, var))
+            for shift, shift_var in enumerate(shifts):
+                rotations = cycle[(segment + shift) % len(cycle)]
+                # For each trial in the segment:
+                for j in range(0, diagonal_length):
+                    if i+j < num_trials:
+                        # Each possible choice of the main factor determines
+                        # the other factors
+                        for k in range(0, diagonal_length):
+                            l = main_factor.levels[(k + rotations[main_factor_idx]) % len(main_factor.levels)]
+                            main_var = block.get_variable(i+j+1, (main_factor, l))
+                            for idx, f in enumerate(self.factors):
+                                if idx != main_factor_idx:
+                                    l = f.levels[(k + rotations[idx]) % len(f.levels)]
+                                    var = block.get_variable(i+j+1, (f, l))
+                                    ands.append(If(And([shift_var, main_var]), var))
 
             # Make sure each main-factor level is picked at most once in each segment
             for l in main_factor.levels:
@@ -1292,7 +1356,7 @@ class LatinSquare(Constraint):
                 new_request = LowLevelRequest("LT", 2, vars)
                 backend_request.ll_requests.append(new_request)
 
-            self._step_rotations(rotations, main_factor_idx)
+            segment += 1
 
             i += diagonal_length * sustain_count
 
@@ -1304,17 +1368,22 @@ class LatinSquare(Constraint):
         if len(self.factors) == 1:
             return True
 
+        cycle = self._rotation_cycle()
+        return any(self._conforms_at_shift(sample, block, cycle, shift)
+                   for shift in range(len(cycle)))
+
+    def _conforms_at_shift(self, sample: dict, block: Block, cycle, shift) -> bool:
         (diagonal_length, main_factor_idx) = self._get_shape()
 
-        level_lists = [list(f.levels) for f in self.factors]
         sustain_count = block.sustain_count(self.factors[0])
         preamble_size = block.factor_preamble_size(self.factors[0])
-        num_trials = block.trials_per_sample()
+        num_trials = block._trials_per_sample() - self._released_trials(block)
         main_factor = self.factors[main_factor_idx]
 
         i = preamble_size
-        rotations = self._make_rotations()
+        segment = 0
         while i < num_trials:
+            rotations = cycle[(segment + shift) % len(cycle)]
             # For each trial in the segment:
             for j in range(0, diagonal_length):
                 if i+j < num_trials:
@@ -1338,7 +1407,7 @@ class LatinSquare(Constraint):
                         return False
                     found[f] = True
 
-            self._step_rotations(rotations, main_factor_idx)
+            segment += 1
 
             i += diagonal_length * sustain_count
 
@@ -1385,7 +1454,7 @@ class Sequential(Constraint):
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
         sustain_count = block.sustain_count(self.factor)
         preamble_size = block.factor_preamble_size(self.factor)
-        num_trials = block.trials_per_sample()
+        num_trials = block._trials_per_sample()
         f = self.factor
         
         i = preamble_size
@@ -1407,7 +1476,7 @@ class Sequential(Constraint):
     def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
         sustain_count = block.sustain_count(self.factor)
         preamble_size = block.factor_preamble_size(self.factor)
-        num_trials = block.trials_per_sample()
+        num_trials = block._trials_per_sample()
         f = self.factor
 
         i = preamble_size
@@ -1732,7 +1801,7 @@ class CoverAllCombinations(Constraint):
         (pins, caps, seqs) = self._relevant_constraints(block)
         if analysis is not block:
             # Nest: one instance = one inner-block pass.
-            instance_len = analysis.trials_per_sample() - analysis.common_preamble_size()
+            instance_len = analysis._trials_per_sample() - analysis.common_preamble_size()
         else:
             # crossing_size already folds in the crossing's sustain count.
             instance_len = block.crossing_size(cell_crossing)
@@ -2004,7 +2073,7 @@ class CoverAllCombinations(Constraint):
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
         preamble = block.common_preamble_size()
-        num_trials = block.trials_per_sample()
+        num_trials = block._trials_per_sample()
         trials = list(range(1 + preamble, num_trials + 1))
 
         fresh = backend_request.fresh
@@ -2034,7 +2103,7 @@ class CoverAllCombinations(Constraint):
         backend_request.fresh = new_fresh
 
     def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
-        num_trials = block.trials_per_sample()
+        num_trials = block._trials_per_sample()
         analysis = self._analysis_block(block)
         for group in self.groups:
             (_, _, R_free, _, _, _, _) = self._coverage_analysis(

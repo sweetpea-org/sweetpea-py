@@ -85,7 +85,7 @@ def test_relax_widens_cap_to_the_demand(written, by):
     assert relaxation.original_k == written
     assert relaxation.applied_k == _DEMAND
     assert caps[0].k == _DEMAND
-    assert block.trials_per_sample() == 12
+    assert block._trials_per_sample() == 12
 
 
 @pytest.mark.parametrize('written,by', [(1, 1), (1, 2)])
@@ -111,7 +111,7 @@ def test_unwrapped_cap_still_errors():
 
 def test_unwrapped_cap_that_fits_is_unaffected():
     _, block, _ = _build(3, lambda c, w: [ExactlyK(4, (w, 'red'))])
-    assert block.trials_per_sample() == 12
+    assert block._trials_per_sample() == 12
     assert block.applied_relaxations == []
 
 
@@ -193,7 +193,7 @@ def test_relax_alongside_several_coverage_constraints():
 
     color, word, block = _simple(make)
     assert cap[0].relaxation.applied_k == 3
-    assert block.trials_per_sample() == 9
+    assert block._trials_per_sample() == 9
 
 
 def test_rebuilding_measures_the_budget_from_the_written_value():

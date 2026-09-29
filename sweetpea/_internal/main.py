@@ -192,7 +192,7 @@ def print_experiments(block, experiments):
         if ls_name:
             print('')
             for i in range(0, e_len, ls_dlen):
-                print('{} {}:'.format(ls_name, (i // ls_dlen) % ls_dlen))
+                print('{} {}:'.format(ls_name, i // ls_dlen))
                 _print_experiment_participant(block.orig_design, e, i, min(i+ls_dlen, e_len))
         else:
             _print_experiment_participant(block.orig_design, e, 0, e_len)
@@ -450,7 +450,35 @@ def _concede_until_satisfiable(block, result, run):
     Applied cumulatively and never taken back, so the sequence is linear in the
     number of concessions rather than a search over their combinations."""
     result = _weaken_until_satisfiable(block, result, run)
+    result = _release_square_until_satisfiable(block, result, run)
     return _drop_optional_until_satisfiable(block, result, run)
+
+
+def _release_square_until_satisfiable(block, result, run):
+    """Stop holding one more participant to the Latin square, last first.
+
+    Which pattern the held participants take is the solver's choice, so
+    releasing the last one amounts to leaving one of the diagonals out."""
+    square = _releasable_square(block)
+    if result.outcome is not SolveOutcome.UNSATISFIABLE or square is None:
+        return result
+    while square.can_release():
+        released = square.release_one()
+        print("No solution; leaving {} participant(s) out of the Latin "
+              "square.".format(released))
+        result = run()
+        if result.samples:
+            record_concessions(block)
+            return result
+    return result
+
+
+def _releasable_square(block):
+    """The block's Latin square that may still release a participant."""
+    for ct in block.constraints:
+        if isinstance(ct, LatinSquare) and ct.can_release():
+            return ct
+    return None
 
 
 def _drop_optional_until_satisfiable(block, result, run):
@@ -560,8 +588,8 @@ def sample_mismatch_experiment(block: Block, sample: dict) -> dict:
     """
     res = {}
     for key in sample:
-        if len(sample[key]) != block.trials_per_sample():
-            res['trial_count'] = [key, len(sample[key]), block.trials_per_sample()]
+        if len(sample[key]) != block._trials_per_sample():
+            res['trial_count'] = [key, len(sample[key]), block._trials_per_sample()]
     if not res:
         factor_errors = block.sample_mismatch_factors(sample)
         if factor_errors:

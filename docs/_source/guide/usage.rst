@@ -791,12 +791,11 @@ Let's start with a 2×2 inner design:
     >>> A = Factor("A", ["a1", "a2"])
     >>> B = Factor("B", ["b1", "b2"])
     >>> inner = CrossBlock([A, B], [A, B], [])
-    >>> inner.trials_per_sample()
-    4
 
 Here we repeat the 2×2 inner block for each level of an outer block
 that has a session :class:`.Factor`. During each 4-trial instance of
-the inner block, session is constant.
+the inner block, session is constant, so the nested block has
+2 × 4 = 8 trials.
 
 .. doctest::
 
@@ -804,8 +803,6 @@ the inner block, session is constant.
     >>> session = Factor("session", ["s1", "s2"])
     >>> outer = CrossBlock([session], [session], [])
     >>> nb = Nest(outer_block=outer, inner_block=inner, constraints=[])
-    >>> nb.trials_per_sample()
-    8 # Total trials = #session levels × inner trials = 2 × 4 = 8.
     >>> exps = synthesize_trials(nb, 1) 
     Sampling 1 trial sequences using NonUniformGen.
     Encoding experiment constraints...
@@ -1104,8 +1101,6 @@ but not crossed. Crossing `task` alone gives two trials.
     >>> size = Factor("size", ["big", "small"])
     >>> task = Factor("task", ["A", "B"])
     >>> b = CrossBlock(design=[task, colr, size], crossing=[task], constraints=[])
-    >>> b.trials_per_sample()
-    2
 
 The `colr` and `size` factors are unconstrained. When we ran this
 while writing the guide, both trials came out identical apart from
@@ -1131,8 +1126,6 @@ cannot hold four combinations, so the block grows to four trials.
     ...                 constraints=[CoverAllCombinations(colr, size)])
     CoverAllCombinations(colr, size) requires 4 trials.
     Any of colr, size can be moved to `optional`, to be given up for a shorter experiment if no solution is found.
-    >>> cb.trials_per_sample()
-    4
 
 .. doctest::
     :options: +SKIP
@@ -1168,8 +1161,6 @@ passes---nine trials---are required.
     ...                constraints=[CoverAllCombinations(color, word)])
     CoverAllCombinations(color, word) requires 9 trials.
     Any of color, word can be moved to `optional`, to be given up for a shorter experiment if no solution is found.
-    >>> b.trials_per_sample()
-    9
 
 .. doctest::
     :options: +SKIP
@@ -1201,8 +1192,6 @@ ruling out one `word` level leaves six combinations and six trials.
     ...                              Exclude((word, "red"))])
     CoverAllCombinations(color, word) requires 6 trials.
     Any of color, word can be moved to `optional`, to be given up for a shorter experiment if no solution is found.
-    >>> eb.trials_per_sample()
-    6
 
 Combinations that contradict the predicate of a :class:`.DerivedLevel`
 are dropped the same way.
@@ -1229,8 +1218,6 @@ passes.
     ...           constraints=[CoverAllCombinations(color, word)])
     CoverAllCombinations(color, word) requires 12 trials.
     Any of color, word can be moved to `optional`, to be given up for a shorter experiment if no solution is found.
-    >>> nb.trials_per_sample()
-    12
 
 .. doctest::
     :options: +SKIP
@@ -1276,8 +1263,6 @@ the block up to a fourth pass.
     ...                              Pin(0, (word, "red"))])
     CoverAllCombinations(color, word) requires 12 trials.
     Any of color, word can be moved to `optional`, to be given up for a shorter experiment if no solution is found.
-    >>> pb.trials_per_sample()
-    12
 
 When such a constraint cannot be reconciled at any number of trials,
 the conflict is reported as the block is built. Covering all
@@ -1348,8 +1333,6 @@ reported as the block is built, so it is visible without asking for it.
     ...                 constraints=[CoverAllCombinations(colr, size, cue)])
     CoverAllCombinations(colr, size, cue) requires 12 trials.
     Any of colr, size, cue can be moved to `optional`, to be given up for a shorter experiment if no solution is found.
-    >>> tb.trials_per_sample()
-    12
 
 The `optional` argument names factors that may be *given up* if the
 design turns out to have no solution. It changes nothing on its own:
@@ -1363,8 +1346,6 @@ naming `cue` optional leaves the same twelve trials.
     ...                                                   optional=[cue])])
     CoverAllCombinations(colr, size, optional=[cue]) requires 12 trials.
     Any of colr, size can be moved to `optional`, to be given up for a shorter experiment if no solution is found.
-    >>> pb.trials_per_sample()
-    12
 
 When the solver reports that the design has no solution, factors are
 given up one at a time, the last one named first. A factor that has been
@@ -1376,10 +1357,10 @@ combinations still appear and all three `cue` levels still appear, but
 the twelve three-way combinations no longer have to.
 
 Because factors are given up while the design is being solved, a block's
-trial count is provisional until then. Reading
-:meth:`.trials_per_sample` straight after building a block reports what
-full coverage costs, which is what the block will use if nothing has to
-be given up.
+trial count is provisional until then. The count reported as the block
+is built is what full coverage costs, which is what the block uses if
+nothing has to be given up, and each factor given up reports the new
+count.
 
 A factor may not be both required and optional, since it cannot both
 require its combinations and give them up.
@@ -1397,8 +1378,6 @@ count.
     CoverAllCombinations(colr, size) requires 4 trials.
     Any of colr, size can be moved to `optional`, to be given up for a shorter experiment if no solution is found.
     CoverAllCombinations(cue) requires 4 trials.
-    >>> sb.trials_per_sample()
-    4
 
 
 .. _relaxing-a-constraint:
@@ -1428,8 +1407,6 @@ adjusts it, provided the change stays within the budget.
     ExactlyK for 'word red' relaxed from 2 to 3, as CoverAllCombinations(color, word) requires.
     CoverAllCombinations(color, word) requires 9 trials.
     Any of color, word can be moved to `optional`, to be given up for a shorter experiment if no solution is found.
-    >>> rb.trials_per_sample()
-    9
 
 The value that was applied is also available on the constraint, for a
 script that needs to record what the experiment actually required.

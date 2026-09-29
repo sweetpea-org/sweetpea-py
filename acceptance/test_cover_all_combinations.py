@@ -55,7 +55,7 @@ def test_required_instances_overlap_below_biggest_group():
 @pytest.mark.parametrize('n,expected_trials', [(3, 12), (4, 32)])
 def test_autosize_trial_count(n, expected_trials):
     _, _, _, nest = _stroop_nest(n)
-    assert nest.trials_per_sample() == expected_trials
+    assert nest._trials_per_sample() == expected_trials
 
 
 @pytest.mark.parametrize('n', [3, 4])
@@ -86,7 +86,7 @@ def test_plain_crossblock_autosizes():
     colors, color, word, congruency, _ = _stroop(3)
     block = CrossBlock([congruency, color, word], [congruency, color],
                        [CoverAllCombinations(color, word)])
-    assert block.trials_per_sample() == 12
+    assert block._trials_per_sample() == 12
     exps = synthesize_trials(block, 3, sampling_strategy=IterateGen)
     assert exps
     for e in exps:
@@ -101,7 +101,7 @@ def test_merge_autosizes():
     task = Factor('task', ['A', 'B'])
     base = CrossBlock([task, colr, size], [task], [])
     block = Merge([base], [CoverAllCombinations(colr, size)])
-    assert block.trials_per_sample() == 4
+    assert block._trials_per_sample() == 4
     exps = synthesize_trials(block, 3, sampling_strategy=IterateGen)
     assert exps
     all_pairs = set((c, s) for c in ['red', 'green'] for s in ['big', 'small'])
@@ -113,7 +113,7 @@ def test_repeat_autosizes():
     colors, color, word, congruency, _ = _stroop(3)
     base = CrossBlock([congruency, color, word], [congruency, color], [])
     block = Repeat(base, [CoverAllCombinations(color, word)])
-    assert block.trials_per_sample() == 12
+    assert block._trials_per_sample() == 12
     exps = synthesize_trials(block, 3, sampling_strategy=IterateGen)
     assert exps
     for e in exps:
@@ -138,7 +138,7 @@ def test_sequential_on_listed_factor():
     instance = Factor('instance', ['a', 'b'])
     outer = CrossBlock([instance], [instance], [])
     nest = Nest(outer, inner, [CoverAllCombinations(color, word), Sequential(word)])
-    assert nest.trials_per_sample() == 12
+    assert nest._trials_per_sample() == 12
     exps = synthesize_trials(nest, 2, sampling_strategy=IterateGen)
     assert exps
     for e in exps:
@@ -170,7 +170,7 @@ def test_exclude_shrinks_required_set():
     task = Factor('task', ['A', 'B'])
     block = CrossBlock([task, colr, size], [task],
                        [CoverAllCombinations(colr, size), Exclude((colr, 'red'))])
-    assert block.trials_per_sample() == 2  # only 2 combos left to cover
+    assert block._trials_per_sample() == 2  # only 2 combos left to cover
     exps = synthesize_trials(block, 3, sampling_strategy=IterateGen)
     assert exps
     for e in exps:
@@ -192,7 +192,7 @@ def test_exactly_k_reconciled():
     colors, color, word, congruency, _ = _stroop(3)
     block = CrossBlock([congruency, color, word], [congruency, color],
                        [CoverAllCombinations(color, word), ExactlyK(4, (word, 'red'))])
-    assert block.trials_per_sample() == 12
+    assert block._trials_per_sample() == 12
     exps = synthesize_trials(block, 2, sampling_strategy=IterateGen)
     assert exps
     for e in exps:
@@ -206,7 +206,7 @@ def test_pin_grows_k():
     colors, color, word, congruency, _ = _stroop(3)
     block = CrossBlock([congruency, color, word], [congruency, color],
                        [CoverAllCombinations(color, word), Pin(0, (word, 'red'))])
-    assert block.trials_per_sample() == 18
+    assert block._trials_per_sample() == 18
     exps = synthesize_trials(block, 2, sampling_strategy=IterateGen)
     assert exps
     for e in exps:
@@ -268,7 +268,7 @@ def test_weighted_autosize_and_coverage(incon_weight, expected_trials,
     colors, color, word, congruency = _stroop_weighted(4, incon_weight)
     block = CrossBlock([congruency, color, word], [congruency, color],
                        [CoverAllCombinations(color, word)])
-    assert block.trials_per_sample() == expected_trials
+    assert block._trials_per_sample() == expected_trials
     exps = synthesize_trials(block, 2, sampling_strategy=IterateGen)
     assert exps
     for e in exps:
@@ -320,7 +320,7 @@ def _trio_block(colr, size, cue, task, required=None, **kw):
 @pytest.mark.parametrize('kw', [{}, {'optional': []}])
 def test_no_optional_keeps_full_coverage(kw):
     colr, size, cue, task = _trio()
-    assert _trio_block(colr, size, cue, task, **kw).trials_per_sample() == 12
+    assert _trio_block(colr, size, cue, task, **kw)._trials_per_sample() == 12
 
 
 def test_optional_is_covered_until_it_is_given_up():
@@ -328,7 +328,7 @@ def test_optional_is_covered_until_it_is_given_up():
     # colr-size-cue combination, which is the full 12 trials.
     colr, size, cue, task = _trio()
     block = _trio_block(colr, size, cue, task, required=[colr, size], optional=[cue])
-    assert block.trials_per_sample() == 12
+    assert block._trials_per_sample() == 12
 
 
 def test_giving_up_an_optional_factor_shortens_the_block():
@@ -337,7 +337,7 @@ def test_giving_up_an_optional_factor_shortens_the_block():
     block = _trio_block(colr, size, cue, task, required=[colr, size], optional=[cue])
     _coverage_of(block).drop_one()
     block.resize_for_coverage()
-    assert block.trials_per_sample() == 4
+    assert block._trials_per_sample() == 4
 
 
 def test_optional_ignores_duplicates():
@@ -350,7 +350,7 @@ def test_optional_ignores_duplicates():
     coverage.drop_one()
     assert not coverage.can_drop()
     block.resize_for_coverage()
-    assert block.trials_per_sample() == 4
+    assert block._trials_per_sample() == 4
 
 
 def test_optional_crossed_factor_is_harmless():
@@ -362,7 +362,7 @@ def test_optional_crossed_factor_is_harmless():
     while coverage.can_drop():
         coverage.drop_one()
     block.resize_for_coverage()
-    assert block.trials_per_sample() == 4
+    assert block._trials_per_sample() == 4
 
 
 def test_optional_without_any_required_factors():
@@ -370,7 +370,7 @@ def test_optional_without_any_required_factors():
     # appear, which two passes can hold.
     colr, size, cue, task = _trio()
     block = _trio_block(colr, size, cue, task, required=[], optional=[cue])
-    assert block.trials_per_sample() == 4
+    assert block._trials_per_sample() == 4
 
 
 def test_optional_keeps_both_guarantees():
@@ -390,7 +390,7 @@ def test_two_coverage_constraints_take_the_larger():
     block = CrossBlock(design=[task, colr, size, cue], crossing=[task],
                        constraints=[CoverAllCombinations(colr, size),
                                     CoverAllCombinations(cue)])
-    assert block.trials_per_sample() == 4
+    assert block._trials_per_sample() == 4
     exps = synthesize_trials(block, 1, sampling_strategy=IterateGen)
     assert exps
     for e in exps:
@@ -433,15 +433,15 @@ def test_optional_in_nest():
     # Full coverage: each incongruent cell is the only one that can serve its
     # own 8 word-cue combinations, so K = 8 over passes of 6.
     full = Nest(outer, inner, [CoverAllCombinations(color, word, cue)])
-    assert full.trials_per_sample() == 48
+    assert full._trials_per_sample() == 48
     # Naming cue optional changes nothing until it is given up.
     fewer = Nest(outer, inner,
                  [CoverAllCombinations(color, word, optional=[cue])])
-    assert fewer.trials_per_sample() == 48
+    assert fewer._trials_per_sample() == 48
     # Given up, the 6 free color-word pairs over 3 slots leave K = 2.
     _coverage_of(fewer).drop_one()
     fewer.resize_for_coverage()
-    assert fewer.trials_per_sample() == 12
+    assert fewer._trials_per_sample() == 12
 
 
 def test_optional_with_weighted_crossing():

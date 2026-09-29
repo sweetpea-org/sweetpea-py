@@ -185,10 +185,10 @@ def _weighted(constraints, optional):
 def test_optional_factor_is_given_up_and_the_block_shrinks():
     color, word, cue, block, _ = _weighted(
         lambda c: [AtMostKInARow(2, (c, 'red'))], lambda w, q: [q])
-    assert block.trials_per_sample() == 12
+    assert block._trials_per_sample() == 12
     experiments = synthesize_trials(block, 1, sampling_strategy=IterateGen)
     assert experiments
-    assert block.trials_per_sample() == 4
+    assert block._trials_per_sample() == 4
     assert set(experiments[0]['word']) == {'w1', 'w2', 'w3', 'w4'}
 
 
@@ -225,7 +225,7 @@ def test_relax_and_giving_up_apply_in_order():
     experiments = synthesize_trials(block, 1, sampling_strategy=IterateGen)
     assert experiments
     assert cap[0].relaxation.applied_k == 2
-    assert block.trials_per_sample() == 4
+    assert block._trials_per_sample() == 4
     reported = ' '.join(block.applied_relaxations)
     assert 'AtMostKInARow' in reported
     assert 'gave up cue' in reported

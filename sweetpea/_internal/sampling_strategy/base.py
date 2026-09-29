@@ -84,7 +84,7 @@ class Gen(ABC):
             #level_names = list(intersperse('', level_names, f.levels[0].window.stride - 1))
             #level_names = list(repeat('', f.levels[0].window.width - 1)) + level_names
             level_names_fill = []
-            for n in range(block.trials_per_sample()):
+            for n in range(block._trials_per_sample()):
                 level_names_fill.append(level_names.pop(0) if f.applies_to_trial(n//sustain_count+1) else '')
             experiment[f.name] = level_names_fill
 

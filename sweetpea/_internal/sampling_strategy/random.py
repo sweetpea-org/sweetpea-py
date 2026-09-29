@@ -79,7 +79,7 @@ class RandomGen(Gen):
         sampled = 0
         rejected = 0
         total_rejected = 0
-        trials_per_run = block.trials_per_sample()
+        trials_per_run = block._trials_per_sample()
         rounds_per_run = (trials_per_run - enumerator._preamble_size) // crossing_size
         leftover = (trials_per_run - enumerator._preamble_size) % crossing_size
         samples = cast(List[dict], [])
@@ -170,7 +170,7 @@ class RandomGen(Gen):
     @staticmethod
     def __validate(block: Block) -> None:
         # Triggers checks within `block`:
-        block.trials_per_sample()
+        block._trials_per_sample()
 
     @staticmethod
     def __combine_round(run: dict, round: dict) -> dict:
@@ -297,7 +297,7 @@ class UCSolutionEnumerator():
         self._leftover_components_shape = RandomComponentsShape()
         self._leftover_solution_count = 1
         self._leftover_pmemo = PermutationMemo()
-        leftover = (block.trials_per_sample() - preamble_size) % self.crossing_size;
+        leftover = (block._trials_per_sample() - preamble_size) % self.crossing_size;
         if (leftover != 0):
             self._leftover_solution_count = self.__count_solutions(leftover,
                                                                    self._leftover_components_shape,
