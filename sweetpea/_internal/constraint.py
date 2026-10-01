@@ -4,7 +4,7 @@ import operator as op
 from abc import abstractmethod
 from copy import copy, deepcopy
 from typing import List, Tuple, Any, Union, cast, Dict, Callable, Optional
-from itertools import chain, product
+from itertools import chain, combinations, product
 from math import ceil
 import inspect
 
@@ -773,10 +773,10 @@ def record_concessions(block) -> None:
                 "{} for '{} {}' relaxed from {} to {}, as {}."
                 .format(type(ct).__name__, ct.level.factor.name, ct.level.name,
                         rl.original_k, rl.applied_k, rl.applied_for))
-        elif isinstance(ct, LatinSquare) and ct.released:
+        elif isinstance(ct, LatinSquare) and ct.may_release:
             messages.append(
-                "Latin square stopped holding its last {} participant(s), as the "
-                "solver found no solution otherwise.".format(ct.released))
+                "Latin square let up to {} participant(s) leave the pattern, as the "
+                "solver found no solution otherwise.".format(ct.may_release))
         elif isinstance(ct, CoverAllCombinations) and ct.dropped:
             given_up = ct.optional[len(ct.optional) - ct.dropped:]
             messages.append(
@@ -1218,16 +1218,18 @@ class LatinSquare(Constraint):
         self.name = name
         # Set by `Relax`; None means every participant is held to the pattern.
         self.relaxation = cast(Optional[_Relaxation], None)
-        # Participants at the end that are no longer held to it.
-        self.released = 0
+        # How many participants may leave the pattern. Which ones is the
+        # solver's choice: releasing by position would have to give up every
+        # participant after a conflict in order to reach it.
+        self.may_release = 0
 
     def can_release(self) -> bool:
-        return self.relaxation is not None and self.released < self.relaxation.by
+        return self.relaxation is not None and self.may_release < self.relaxation.by
 
     def release_one(self) -> int:
-        """Stop holding one more participant, counting from the end."""
-        self.released += 1
-        return self.released
+        """Allow one more participant out of the pattern."""
+        self.may_release += 1
+        return self.may_release
 
     def validate(self, block: Block) -> None:
         who = "LatinSquare"
@@ -1255,7 +1257,7 @@ class LatinSquare(Constraint):
         # The copy is what the block holds and what a release mutates, so the
         # authorization has to travel with it.
         c.relaxation = self.relaxation
-        c.released = self.released
+        c.may_release = self.may_release
         return [c]
 
     def _make_rotations(self):
@@ -1283,11 +1285,6 @@ class LatinSquare(Constraint):
                 main_factor_idx = idx
         return (diagonal_length, main_factor_idx)
 
-    def _released_trials(self, block: Block) -> int:
-        """Trials at the end that no longer have to follow the pattern."""
-        return (self.released * self.diagonal_length()
-                * block.sustain_count(self.factors[0]))
-
     def _rotation_cycle(self):
         """Every rotation the odometer visits before it repeats, in order. Its
         length is how many participants a whole pattern takes."""
@@ -1310,7 +1307,7 @@ class LatinSquare(Constraint):
         level_lists = [list(f.levels) for f in self.factors]
         sustain_count = block.sustain_count(self.factors[0])
         preamble_size = block.factor_preamble_size(self.factors[0])
-        num_trials = block._trials_per_sample() - self._released_trials(block)
+        num_trials = block._trials_per_sample()
         main_factor = self.factors[main_factor_idx]
 
         cycle = self._rotation_cycle()
@@ -1326,10 +1323,15 @@ class LatinSquare(Constraint):
             backend_request.fresh += 1
         backend_request.ll_requests.append(LowLevelRequest("EQ", 1, shifts))
 
-        ands = []
+        ands = cast(List[FormulaWithIff], [])
+        # One per participant: true when it is let out of the pattern.
+        released = []
         i = preamble_size
         segment = 0
         while i < num_trials:
+            out = backend_request.fresh
+            backend_request.fresh += 1
+            released.append(out)
             for shift, shift_var in enumerate(shifts):
                 rotations = cycle[(segment + shift) % len(cycle)]
                 # For each trial in the segment:
@@ -1344,21 +1346,27 @@ class LatinSquare(Constraint):
                                 if idx != main_factor_idx:
                                     l = f.levels[(k + rotations[idx]) % len(f.levels)]
                                     var = block.get_variable(i+j+1, (f, l))
-                                    ands.append(If(And([shift_var, main_var]), var))
+                                    ands.append(If(And([shift_var, main_var]), Or([out, var])))
 
-            # Make sure each main-factor level is picked at most once in each segment
+            # Each main-factor level at most once in each segment that is held.
+            # Pairwise rather than a cardinality request, which cannot be made
+            # to depend on `out`.
             for l in main_factor.levels:
                 vars = []
                 for j in range(0, diagonal_length):
                     if i+j < num_trials:
                         var = block.get_variable(i+j+1, (main_factor, l))
                         vars.append(var)
-                new_request = LowLevelRequest("LT", 2, vars)
-                backend_request.ll_requests.append(new_request)
+                for a, b in combinations(vars, 2):
+                    ands.append(Or([out, Not(a), Not(b)]))
 
             segment += 1
 
             i += diagonal_length * sustain_count
+
+        if released:
+            backend_request.ll_requests.append(
+                LowLevelRequest("LT", self.may_release + 1, released))
 
         (cnf, new_fresh) = block.cnf_fn(And(ands), backend_request.fresh)
         backend_request.cnfs.append(cnf)
@@ -1367,51 +1375,45 @@ class LatinSquare(Constraint):
     def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
         if len(self.factors) == 1:
             return True
-
         cycle = self._rotation_cycle()
-        return any(self._conforms_at_shift(sample, block, cycle, shift)
-                   for shift in range(len(cycle)))
+        return any(len(self._strays(lambda f, t: sample[f][t].name, block, cycle, shift))
+                   <= self.may_release for shift in range(len(cycle)))
 
-    def _conforms_at_shift(self, sample: dict, block: Block, cycle, shift) -> bool:
+    def released_participants(self, experiment: dict, block: Block) -> List[int]:
+        """The participants in a synthesized experiment whose trials do not
+        follow the pattern. A released participant that happens to land on its
+        diagonal anyway did follow it, so it is not listed."""
+        if len(self.factors) == 1:
+            return []
+        cycle = self._rotation_cycle()
+        return min((self._strays(lambda f, t: experiment[f.name][t], block, cycle, shift)
+                    for shift in range(len(cycle))), key=len)
+
+    def _strays(self, level_name, block: Block, cycle, shift) -> List[int]:
+        """Participants that break the pattern when the cycle starts at `shift`.
+        `level_name(factor, trial)` reads a sample in whichever form it comes."""
         (diagonal_length, main_factor_idx) = self._get_shape()
-
         sustain_count = block.sustain_count(self.factors[0])
-        preamble_size = block.factor_preamble_size(self.factors[0])
-        num_trials = block._trials_per_sample() - self._released_trials(block)
+        num_trials = block._trials_per_sample()
         main_factor = self.factors[main_factor_idx]
+        names = [l.name for l in main_factor.levels]
 
-        i = preamble_size
+        strays = []
+        i = block.factor_preamble_size(self.factors[0])
         segment = 0
         while i < num_trials:
             rotations = cycle[(segment + shift) % len(cycle)]
-            # For each trial in the segment:
-            for j in range(0, diagonal_length):
-                if i+j < num_trials:
-                    # Each possible choice of the main factor determines
-                    # the other factors
-                    k = 0
-                    for idx, l in enumerate(main_factor.levels):
-                        if sample[main_factor][i+j] is l:
-                            k = idx
-                    for idx, f in enumerate(self.factors):
-                        expect_l = f.levels[(k + rotations[idx]) % len(f.levels)]
-                        if not sample[f][i+j] is expect_l:
-                            return False
-
-            # Make sure main-factor selections are unique
-            found = {}
-            for j in range(0, diagonal_length):
-                if i+j < num_trials:
-                    f = sample[main_factor][i+j]
-                    if f in found:
-                        return False
-                    found[f] = True
-
+            trials = [i + j for j in range(diagonal_length) if i + j < num_trials]
+            mains = [level_name(main_factor, t) for t in trials]
+            follows = len(set(mains)) == len(mains) and all(
+                level_name(f, t) == f.levels[(names.index(m) + rotations[idx]) % len(f.levels)].name
+                for t, m in zip(trials, mains)
+                for idx, f in enumerate(self.factors))
+            if not follows:
+                strays.append(segment)
             segment += 1
-
             i += diagonal_length * sustain_count
-
-        return True
+        return strays
 
     def derivable_factors(self, block: Block) -> Tuple[List[Factor], List[Factor]]:
         (diagonal_length, main_factor_idx) = self._get_shape()

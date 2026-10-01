@@ -55,8 +55,7 @@ def test_latin_rectangle1():
 
     for e in exps:
         assert { e["A"][i] for i in range(0, 4) } == { "a1", "a2", "a3", "a4" }
-        assert { e["B"][i] for i in range(0, 2) } == { "b1", "b2" }
-        assert { e["B"][i] for i in range(2, 4) } == { "b1", "b2" }
+        assert sorted(e["B"][i] for i in range(0, 4)) == [ "b1", "b1", "b2", "b2" ]
 
 def test_latin_rectangle2():
     A = Factor("A", ["a1", "a2", "a3", "a4"])

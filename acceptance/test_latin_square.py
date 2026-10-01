@@ -3,6 +3,7 @@ import operator as op
 import pytest
 
 from sweetpea import *
+from sweetpea._internal.constraint import LatinSquare
 
 @pytest.mark.parametrize('strategy', [RandomGen, IterateSATGen])
 # Counts cover every rotation of the pattern, since where the cycle starts is
@@ -59,7 +60,7 @@ def test_declaration_order_does_not_decide_satisfiability(color_levels):
 
 # ~~~~~~~~~~~~ Leaving participants out of the pattern ~~~~~~~~~~~~
 
-def _crowded(wrap, min_trials):
+def _crowded(wrap, min_trials, run=3):
     """Every participant held to the pattern gets exactly one `big`, so no run
     of `big` can span a whole participant. AtLeastKInARow wants a longer one."""
     font = Factor("Font", ["small", "big"])
@@ -67,7 +68,11 @@ def _crowded(wrap, min_trials):
     b = CrossBlock(design=[font, color], crossing=[], constraints=[MinimumTrials(min_trials)])
     square = LatinSquare([font, color], name="Participant")
     return Merge(blocks=[b], constraints=[wrap(square),
-                                          AtLeastKInARow(3, (font, "big"))])
+                                          AtLeastKInARow(run, (font, "big"))])
+
+
+def _square_of(block):
+    return next(c for c in block.constraints if isinstance(c, LatinSquare))
 
 
 def test_square_held_in_full_has_no_solution():
@@ -82,10 +87,31 @@ def test_releasing_a_participant_finds_a_solution():
     assert any('Latin square' in m for m in block.applied_relaxations)
 
 
-def test_release_budget_can_run_out():
-    # Across three participants, one released is not enough room for the run.
+def test_solver_chooses_which_participant_to_release():
+    # Three participants: only the middle one, released, lets the first end on
+    # big and the last start on big, joining a single run. Releasing by position
+    # would have needed two.
     block = _crowded(lambda s: Relax(s, by=1), 6)
-    assert synthesize_trials(block, 1, sampling_strategy=IterateGen) == []
+    experiments = synthesize_trials(block, 20, sampling_strategy=IterateGen)
+    assert experiments
+    for e in experiments:
+        assert _square_of(block).released_participants(e, block) == [1]
+
+
+def test_release_budget_can_run_out():
+    # A run of 5 across three participants needs two of them released.
+    assert synthesize_trials(_crowded(lambda s: Relax(s, by=1), 6, run=5), 1,
+                             sampling_strategy=IterateGen) == []
+    assert synthesize_trials(_crowded(lambda s: Relax(s, by=2), 6, run=5), 1,
+                             sampling_strategy=IterateGen)
+
+
+def test_released_participant_is_named_with_the_results(capsys):
+    block = _crowded(lambda s: Relax(s, by=1), 6)
+    experiments = synthesize_trials(block, 1, sampling_strategy=IterateGen)
+    capsys.readouterr()
+    print_experiments(block, experiments)
+    assert 'Released from the Latin square: participant 1' in capsys.readouterr().out
 
 
 def test_relax_accepts_a_latin_square():

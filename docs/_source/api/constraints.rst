@@ -129,8 +129,10 @@ Constraints
               reports that the design has no solution.
 
               For a :class:`.LatinSquare`, `by` is how many sequences
-              of N trials may be left out of the pattern, counting
-              from the end. A sequence left out keeps its trials but
+              of N trials may be left out of the pattern. Which
+              sequences are left out is the solver's choice, and
+              :func:`.print_experiments` names them for each
+              experiment. A sequence left out keeps its trials but
               is no longer required to hold a combination, so that
               combination may not appear at all. See
               :ref:`relaxing-a-constraint`.

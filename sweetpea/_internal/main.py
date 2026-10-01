@@ -183,11 +183,20 @@ def print_experiments(block, experiments):
             ls_name = ct.name
             ls_dlen = ct.diagonal_length()
 
+    released_from = [ct for ct in block.constraints
+                     if isinstance(ct, LatinSquare) and ct.may_release]
+
     for message in block.applied_relaxations:
         print(message)
     print('\n{} trial sequences found.\n'.format(len(experiments)))
     for idx, e in enumerate(experiments):
         print('Experiment {}:'.format(idx))
+        for ct in released_from:
+            # Each experiment may release different participants.
+            out = ct.released_participants(e, block)
+            if out:
+                print('Released from the Latin square: participant {}'.format(
+                    ', '.join(str(p) for p in out)))
         e_len = len(e[next(iter(e))])
         if ls_name:
             print('')
@@ -455,16 +464,16 @@ def _concede_until_satisfiable(block, result, run):
 
 
 def _release_square_until_satisfiable(block, result, run):
-    """Stop holding one more participant to the Latin square, last first.
+    """Let one more participant leave the Latin square, re-solving after each.
 
-    Which pattern the held participants take is the solver's choice, so
-    releasing the last one amounts to leaving one of the diagonals out."""
+    Which participants leave is the solver's choice, so the first allowance
+    that works is also the fewest participants the design can give up."""
     square = _releasable_square(block)
     if result.outcome is not SolveOutcome.UNSATISFIABLE or square is None:
         return result
     while square.can_release():
         released = square.release_one()
-        print("No solution; leaving {} participant(s) out of the Latin "
+        print("No solution; letting up to {} participant(s) leave the Latin "
               "square.".format(released))
         result = run()
         if result.samples:
