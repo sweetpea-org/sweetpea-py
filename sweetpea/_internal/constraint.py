@@ -1249,8 +1249,9 @@ class Sequential(Constraint):
 
         i = preamble_size
         while i < num_trials:
-            # For each trial in the segment:
-            use_l = f.levels[(i - preamble_size) % len(f.levels)]
+            # For each segment, the level is chosen by the segment index,
+            # not the trial index -- must match apply() above.
+            use_l = f.levels[((i - preamble_size) // sustain_count) % len(f.levels)]
             if not sample[self.factor][i] is use_l:
                 return False
             i += sustain_count

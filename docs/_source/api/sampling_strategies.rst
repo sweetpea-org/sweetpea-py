@@ -33,12 +33,11 @@ Sampling Strategies
 .. class:: sweetpea.UniformGen(seed=None, epsilon=None, delta=None)
 
            Automatically selects among strategies that provide uniformity.
-           The arguments are forwarded to the selected strategy; ``epsilon``
-           and ``delta`` apply only when :class:`.UniGen` is chosen, since
-           :class:`.RandomGen` samples exactly uniformly.
+           Arguments are forwarded to the selected strategy; ``epsilon``
+           and ``delta`` are ignored unless :class:`.UniGen` is selected.
            
            *Uniformity*: Generates trials with a guarantee of
-           uniformity, a long as only one trial sequence is requested
+           uniformity, as long as only one trial sequence is requested
            at a time.
 
            *Unspecified Replacement*: Generating multiple trials
@@ -63,17 +62,12 @@ Sampling Strategies
 
 .. class:: sweetpea.UniGen(seed=None, epsilon=None, delta=None)
 
-           *Approximate Uniformity*: Generates trials with a formal
-           guarantee that the sampling distribution is close to uniform,
-           but not exactly uniform. For each satisfying trial sequence,
-           the probability of generating that sequence lies between
-           ``1/((1+epsilon) * N)`` and ``(1+epsilon)/N``, where ``N`` is
-           the number of satisfying sequences, and the guarantee itself
-           holds with probability at least ``1-delta``. SweetPea uses the
-           underlying sampler's defaults, ``epsilon=0.8`` and
-           ``delta=0.2``, so a given sequence can be up to 1.8 times more
-           or less likely than under exact uniformity. For an exact
-           guarantee, see :class:`.RandomGen`.
+           *Approximate Uniformity*: Each satisfying trial sequence is
+           generated with probability between ``1/((1+epsilon) * N)`` and
+           ``(1+epsilon)/N``, where ``N`` is the number of satisfying
+           sequences; that guarantee itself holds with probability at
+           least ``1-delta``. For an exact guarantee, see
+           :class:`.RandomGen`.
 
            Unfortunately, due to the difficulty of sampling with a
            guarantee, this strategy is unlikely to succeed for
@@ -84,21 +78,18 @@ Sampling Strategies
            is, the single call is the same as separate calls that each
            generate one sequence of trials.
 
-           :param seed: A random seed. The default, ``None``, draws a fresh
-                        seed for every call, so repeated runs of the same
-                        design produce different trial sequences. Supplying
-                        an integer makes a run reproducible.
+           :param seed: a random seed; ``None`` draws a fresh seed for
+                        each call, and an integer makes a run reproducible
            :type seed: typing.Optional[int]
 
-           :param epsilon: The uniformity tolerance described above. The
-                           default, ``None``, uses the underlying sampler's
-                           value of ``0.8``. Smaller values tighten the
-                           guarantee, at a steep cost in running time.
+           :param epsilon: the uniformity tolerance above; ``None`` uses
+                           the underlying sampler's default of ``0.8``,
+                           and smaller values tighten the guarantee at a
+                           cost in running time
            :type epsilon: typing.Optional[float]
 
-           :param delta: The confidence parameter described above. The
-                         default, ``None``, uses the underlying sampler's
-                         value of ``0.2``.
+           :param delta: the confidence parameter above; ``None`` uses the
+                         underlying sampler's default of ``0.2``
            :type delta: typing.Optional[float]
 
 .. class:: sweetpea.CMSGen
@@ -142,11 +133,10 @@ Sampling Strategies
                                     to find
            :type acceptable_error: int
 
-           :param seed: A random seed. The default, ``None``, leaves the
-                        random number generator alone, so repeated runs of
-                        the same design produce different trial sequences.
-                        Supplying an integer makes a run reproducible; note
-                        that it seeds the process-wide generators.
+           :param seed: a random seed; ``None`` leaves the generators
+                        unseeded, and an integer makes a run reproducible
+                        by seeding the process-wide ``random`` and
+                        ``numpy`` generators
            :type seed: typing.Optional[int]
            
 .. class:: sweetpea.IterateSATGen
