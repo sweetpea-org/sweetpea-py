@@ -61,7 +61,7 @@ class GuidedGen(Gen):
         # Start a 'committed' list of CNFs
         committed = cast(List[And], [])
 
-        for trial_number in range(block.trials_per_sample()):
+        for trial_number in range(block._trials_per_sample()):
             trial_start_time = time()
 
             trial_metrics = {

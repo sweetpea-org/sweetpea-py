@@ -8,6 +8,7 @@ from math import factorial, ceil
 from typing import List, cast, Tuple, Dict, Optional, Union, Any
 
 from sweetpea._internal.block import Block
+from sweetpea._internal.core import SolveOutcome
 from sweetpea._internal.cross_block import CrossBlock
 from sweetpea._internal.combinatorics import (
     n_choose_m,
@@ -66,7 +67,9 @@ class RandomGen(Gen):
         metrics['solution_count'] = enumerator.solution_count()
 
         if (enumerator.solution_count() == 0):
-            return SamplingResult([], metrics)
+            # Exact enumeration, so this is a definitive answer about the design
+            # rather than a sampling run that came up empty.
+            return SamplingResult([], metrics, SolveOutcome.UNSATISFIABLE)
 
         crossing_size = enumerator.crossing_size # includes crossing weight
 
@@ -76,7 +79,7 @@ class RandomGen(Gen):
         sampled = 0
         rejected = 0
         total_rejected = 0
-        trials_per_run = block.trials_per_sample()
+        trials_per_run = block._trials_per_sample()
         rounds_per_run = (trials_per_run - enumerator._preamble_size) // crossing_size
         leftover = (trials_per_run - enumerator._preamble_size) % crossing_size
         samples = cast(List[dict], [])
@@ -125,7 +128,7 @@ class RandomGen(Gen):
         if (total_rejected > 10000):
             print("")
 
-        return SamplingResult(samples, metrics)
+        return SamplingResult(samples, metrics, SolveOutcome.SATISFIED)
 
     @staticmethod
     def __are_constraints_violated(block: CrossBlock, sample: dict, enumerator: 'UCSolutionEnumerator',
@@ -167,7 +170,7 @@ class RandomGen(Gen):
     @staticmethod
     def __validate(block: Block) -> None:
         # Triggers checks within `block`:
-        block.trials_per_sample()
+        block._trials_per_sample()
 
     @staticmethod
     def __combine_round(run: dict, round: dict) -> dict:
@@ -294,7 +297,7 @@ class UCSolutionEnumerator():
         self._leftover_components_shape = RandomComponentsShape()
         self._leftover_solution_count = 1
         self._leftover_pmemo = PermutationMemo()
-        leftover = (block.trials_per_sample() - preamble_size) % self.crossing_size;
+        leftover = (block._trials_per_sample() - preamble_size) % self.crossing_size;
         if (leftover != 0):
             self._leftover_solution_count = self.__count_solutions(leftover,
                                                                    self._leftover_components_shape,

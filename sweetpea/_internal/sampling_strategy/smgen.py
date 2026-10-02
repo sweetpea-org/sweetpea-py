@@ -42,7 +42,7 @@ class SMGen(Gen):
         maximum_trials = False
         scale_one = block.crossing_weight()
         if scale_one > 1:
-            maximum_trials = block.trials_per_sample()
+            maximum_trials = block._trials_per_sample()
 
         reset_state()
         design=block.orig_design

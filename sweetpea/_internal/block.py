@@ -78,8 +78,11 @@ class Block:
         self.excluded_derived = cast(List[Dict[Factor, SimpleLevel]], [])
         self.require_complete_crossing = require_complete_crossing
         self.errors = cast(Set[str], set())
+        # Filled in by coverage sizing when `Relax` authorizes a widening;
+        # reported as the block is built and again with the results.
+        self.applied_relaxations = cast(List[str], [])
         self.act_design = list(filter(lambda f: not self.factor_is_implied(f), self.design))
-        self._trials_per_sample = None
+        self._trials_per_sample_cache = None
         self._simple_tuples = cast(Optional[List[Tuple[Factor, Union[SimpleLevel, DerivedLevel]]]], None)
         self._variables_per_trial = None
         self.__validate(who)
@@ -145,7 +148,7 @@ class Block:
             # sample for current cfactor
             continuous_samples = []
             continuous_output[cFactor.name] = continuous_samples
-            for i in range(self._trials_per_sample):
+            for i in range(self._trials_per_sample_cache):
                 sample_input = []
                 # Get dependent factors for current factor
                 dependents = cFactor.get_levels()
@@ -278,7 +281,7 @@ class Block:
             c.validate(self)
         for c in self.constraints:
             if isinstance(c, AtLeastKInARow):
-                c.max_trials_required = self.trials_per_sample() * c.k
+                c.max_trials_required = self._trials_per_sample() * c.k
         
         from sweetpea._internal.constraint import ContinuousConstraint
         for c in self.constraints:
@@ -287,7 +290,7 @@ class Block:
                 for f in _factors:
                     self.errors.add("WARNING: ContinuousConstraint may cause the factor {} to deviate from its designated distribution.".format(f.name))
     @abstractmethod
-    def trials_per_sample(self):
+    def _trials_per_sample(self):
         """Indicates the number of trials that are generated per sample for
         this block configuration.
 
@@ -338,7 +341,7 @@ class Block:
         """Returns the variables for all non-derived factors for all trials.
         The values of these variables determine the values of all others."""
         vars = []
-        for t in range(self.trials_per_sample()):
+        for t in range(self._trials_per_sample()):
             for f in self.act_design:
                 if not isinstance(f, DerivedFactor):
                     vars += self.factor_variables_for_trial(f, t + 1)
@@ -349,7 +352,7 @@ class Block:
                              end: Optional[int] = None) -> int:
         """Indicates the number of variables needed to encode this factor."""
         sustain_count = self.sustain_count(f)
-        trial_list = range(1 + start, (end if end else self.trials_per_sample()) + 1)
+        trial_list = range(1 + start, (end if end else self._trials_per_sample()) + 1)
         return reduce(lambda sum, t: sum + len(f.levels) if f.applies_to_trial((t-1)//sustain_count + 1) else sum, trial_list, 0)
 
     def has_factor(self, factor: Factor) -> Factor:

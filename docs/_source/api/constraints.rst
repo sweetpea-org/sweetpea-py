@@ -105,6 +105,47 @@ Constraints
               :type level: Union[Level, Tuple[Factor, Any], Tuple[Factor, Level], Factor]
               :rtype: Constraint
 
+.. function:: sweetpea.Relax(constraint, by)
+
+              Authorizes `constraint` to be weakened by up to `by`,
+              when it would otherwise leave the experiment with no
+              satisfying trial sequences. Returns a copy of
+              `constraint` to use in place of the original; the
+              constraint passed in is unchanged.
+
+              A constraint is weakened only when it is passed through
+              this function, and any adjustment that is applied is
+              reported as the experiment runs and again by
+              :func:`.print_experiments`. An experiment may relax one
+              constraint.
+
+              :class:`.ExactlyK`, :class:`.AtMostKInARow`,
+              :class:`.AtLeastKInARow` and :class:`.LatinSquare` can
+              be relaxed; passing any other constraint raises an
+              error. An :class:`.ExactlyK` is adjusted while the block
+              is sized, where :class:`.CoverAllCombinations` can
+              compute the value it must take. The others have no such
+              model, so they are adjusted only after the solver
+              reports that the design has no solution.
+
+              For a :class:`.LatinSquare`, `by` is how many sequences
+              of N trials may be left out of the pattern. Which
+              sequences are left out is the solver's choice, and
+              :func:`.print_experiments` names them for each
+              experiment. A sequence left out keeps its trials but
+              is no longer required to hold a combination, so that
+              combination may not appear at all. See
+              :ref:`relaxing-a-constraint`.
+
+              :param constraint: the constraint that may be weakened
+              :type constraint: Constraint
+              :param by: how far the constraint may move towards the
+                         weaker requirement: for `k`, how many steps;
+                         for a :class:`.LatinSquare`, how many
+                         sequences may be left out
+              :type by: int
+              :rtype: Constraint
+
 .. class:: sweetpea.Sequential(factor)
 
               Constrains the experiment so that the levels of `factor`
@@ -126,8 +167,14 @@ Constraints
               N trials will include every level of every factor in
               `factors`. Furthermore, each subsequent sequence of N
               trials will have a distinct possible combination of
-              levels until all possibilities are exhausted, and the
-              combination order is deterministic.
+              levels until all possibilities are exhausted.
+
+              Which combination a given sequence receives is settled
+              when the experiment is solved. Consecutive sequences
+              take consecutive combinations and all are used before
+              any repeats, but where that cycle starts is left to the
+              solver, so it does not depend on the order the levels
+              were declared in.
 
               The given `factors` are typically crossed in an
               experiment description, but they are not required to be
@@ -142,15 +189,16 @@ Constraints
               :type factors: List[Factor]
               :rtype: Constraint
 
-.. class:: sweetpea.CoverAllCombinations(*factors)
+.. class:: sweetpea.CoverAllCombinations(*factors, optional=[])
 
               Constrains an experiment so that its trials collectively
               include every realizable combination of the levels of
-              `factors` at least once. A factor that is left out of a
-              crossing is otherwise assigned freely by the solver, so
-              nothing normally guarantees that a particular combination
-              ever appears; this constraint coordinates those free
-              choices.
+              `factors` and of `optional` at least once. A factor that
+              is left out of a crossing is assigned by the solver
+              subject only to whatever other constraints apply, so
+              nothing otherwise guarantees that a particular
+              combination ever appears; this constraint supplies that
+              guarantee.
 
               Unlike most constraints, :class:`CoverAllCombinations`
               can increase the number of trials: the count needed for
@@ -175,11 +223,33 @@ Constraints
               weighted levels elsewhere in the crossing are supported,
               and they change the trial count accordingly.
 
+              The two groups differ in what may be given up, not in
+              what is required to begin with. Every listed factor must
+              appear in combination with the others. When the solver
+              reports that the design has no solution, the factors named
+              in `optional` are given up one at a time, the last one
+              first: a factor that has been given up needs only each of
+              its own levels to appear, in no particular combination,
+              and the block is re-sized to the shorter experiment that
+              leaves. A factor may not be in both groups.
+
+              Because factors are given up while the design is being
+              solved, the trial count is provisional until then. The
+              count is printed as the block is built and again whenever
+              it changes, naming the factors given up so far.
+
               See :ref:`Covering All Combinations <covering-all-combinations>`
               for more information.
 
-              :param factors: the factors whose level combinations must all appear
+              :param factors: the factors that must appear in
+                              combination with one another
               :type factors: Factor
+              :param optional: further factors the constraint governs,
+                               which may be given up---last one first---
+                               when the design has no solution, leaving
+                               each needing only its own levels to
+                               appear rather than its combinations
+              :type optional: List[Factor]
               :rtype: Constraint
 
 .. class:: sweetpea.ContinuousConstraint(factors, predicate)

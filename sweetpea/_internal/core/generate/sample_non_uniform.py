@@ -14,11 +14,12 @@
 
 
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from ..cnf import CNF
 from .tools.cryptominisat import DEFAULT_DOCKER_MODE_ON, cryptominisat_solve
-from .utility import GenerationRequest, ProblemSpecification, Solution, combine_and_save_cnf, temporary_cnf_file
+from .utility import (GenerationRequest, ProblemSpecification, Solution, SolveOutcome,
+                      combine_and_save_cnf, temporary_cnf_file)
 
 
 __all__ = ['sample_non_uniform', 'sample_non_uniform_from_specification']
@@ -29,15 +30,16 @@ def sample_non_uniform(count: int,
                        fresh: int,
                        support: int,
                        generation_requests: List[GenerationRequest]
-                       ) -> List[Solution]:
+                       ) -> Tuple[List[Solution], SolveOutcome]:
     """Samples solutions to a CNF problem non-uniformly. Produces ``count``
-    solutions, each with a support set of length ``support``.
+    solutions, each with a support set of length ``support``, and the outcome
+    that explains how many were produced.
     """
     with temporary_cnf_file() as cnf_file:
         combine_and_save_cnf(cnf_file, initial_cnf, fresh, support, generation_requests)
         print("Running CryptoMiniSat...")
-        solutions = compute_solutions(cnf_file, support, count)
-        return [Solution(solution, 1) for solution in solutions]
+        (solutions, outcome) = compute_solutions(cnf_file, support, count)
+        return ([Solution(solution, 1) for solution in solutions], outcome)
 
 
 def sample_non_uniform_from_specification(spec: ProblemSpecification) -> List[Solution]:
@@ -50,7 +52,7 @@ def sample_non_uniform_from_specification(spec: ProblemSpecification) -> List[So
         SweetPea's input was given as JSON files. This should no longer be
         necessary.
     """
-    return sample_non_uniform(spec.sample_count, spec.cnf, spec.fresh, spec.support, spec.requests)
+    return sample_non_uniform(spec.sample_count, spec.cnf, spec.fresh, spec.support, spec.requests)[0]
 
 
 def compute_solutions(filename: Path,
@@ -58,26 +60,29 @@ def compute_solutions(filename: Path,
                       count: int,
                       solutions: Optional[List[List[int]]] = None,
                       use_docker: bool = DEFAULT_DOCKER_MODE_ON
-                      ) -> List[List[int]]:
+                      ) -> Tuple[List[List[int]], SolveOutcome]:
     """Attempts to solve a CNF problem ``count`` times with CryptoMiniSAT. Each
     time a solution is generated, it is added to the problem file's header so
     new solutions may be generated. If at any point CryptoMiniSAT fails to
     generate a solution, execution terminates and the existing list of
-    solutions will be returned.
+    solutions is returned, along with the outcome that explains the stop.
     """
-    # TODO: Implement iteratively instead of recursively.
-    while True:
-        if solutions is None:
-            solutions = []
-        if count == 0:
-            return solutions
+    if solutions is None:
+        solutions = []
+    while count > 0:
         solution = cryptominisat_solve(filename, use_docker)
+        if solution is None:
+            return (solutions, SolveOutcome.UNKNOWN)
         if not solution:
-            return solutions
+            # No solution on the first solve means the formula has none; after
+            # one has been found it means the distinct solutions ran out.
+            return (solutions,
+                    SolveOutcome.SATISFIED if solutions else SolveOutcome.UNSATISFIABLE)
         solution = solution[:support]
         update_file(filename, solution)
         count -= 1
         solutions += [solution]
+    return (solutions, SolveOutcome.SATISFIED)
 
 
 def update_file(filename: Path, solution: List[int]):

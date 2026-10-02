@@ -18,6 +18,7 @@ __all__ = [
 
     'Constraint', 
     'Exclude', 'Pin', 'MinimumTrials', 'ExactlyK',
+    'Relax',
     'AtMostKInARow', 'AtLeastKInARow',
     'ExactlyKInARow',
     'LatinSquare',
@@ -53,10 +54,13 @@ from sweetpea._internal.constraint import (
     Consistency, Constraint, Derivation,
     Exclude, Pin, MinimumTrials,
     ExactlyK, AtMostKInARow, AtLeastKInARow, ExactlyKInARow,
+    Relax,
     LatinSquare,
     Sequential,
-    CoverAllCombinations
+    CoverAllCombinations,
+    solver_relaxable, relax_budget, record_concessions
 )
+from sweetpea._internal.core import SolveOutcome
 from sweetpea._internal.sampling_strategy.base import Gen
 from sweetpea._internal.sampling_strategy.uniform import UniformGen
 from sweetpea._internal.sampling_strategy.iterate import IterateGen
@@ -179,14 +183,25 @@ def print_experiments(block, experiments):
             ls_name = ct.name
             ls_dlen = ct.diagonal_length()
 
+    released_from = [ct for ct in block.constraints
+                     if isinstance(ct, LatinSquare) and ct.may_release]
+
+    for message in block.applied_relaxations:
+        print(message)
     print('\n{} trial sequences found.\n'.format(len(experiments)))
     for idx, e in enumerate(experiments):
         print('Experiment {}:'.format(idx))
+        for ct in released_from:
+            # Each experiment may release different participants.
+            out = ct.released_participants(e, block)
+            if out:
+                print('Released from the Latin square: participant {}'.format(
+                    ', '.join(str(p) for p in out)))
         e_len = len(e[next(iter(e))])
         if ls_name:
             print('')
             for i in range(0, e_len, ls_dlen):
-                print('{} {}:'.format(ls_name, (i // ls_dlen) % ls_dlen))
+                print('{} {}:'.format(ls_name, i // ls_dlen))
                 _print_experiment_participant(block.orig_design, e, i, min(i+ls_dlen, e_len))
         else:
             _print_experiment_participant(block.orig_design, e, 0, e_len)
@@ -394,13 +409,17 @@ def synthesize_trials(block: Block,
         # type: (Any) -> None
         print("Sampling {} trial sequences using {}.".format(samples, who))
 
+    def run():
+        if isinstance(sampling_strategy, type):
+            return sampling_strategy.sample(block, samples)
+        return sampling_strategy.sample_object(block, samples)
+
     if isinstance(sampling_strategy, type):
         assert issubclass(sampling_strategy, Gen)
         starting(sampling_strategy.class_name())
-        sampling_result = sampling_strategy.sample(block, samples)
     else:
         starting(sampling_strategy)
-        sampling_result = sampling_strategy.sample_object(block, samples)
+    sampling_result = _concede_until_satisfiable(block, run(), run)
 
     # DW: I am not sure if I need to fix this. Need to discuss with Matthew
     raw_samples = sampling_result.samples[:samples]
@@ -428,23 +447,134 @@ def synthesize_trials(block: Block,
         # Restore ContinuousFactor to the design
 
     if not trialss:
-        # With a coverage constraint, an empty result means the solver found the
-        # joint constraints unsatisfiable. Point at the constraints that coverage
-        # auto-sizing cannot account for (ordering constraints and LatinSquare).
-        from sweetpea._internal.constraint import _KInARow
-        cacs = [ct for ct in block.orig_constraints if isinstance(ct, CoverAllCombinations)]
-        if cacs:
-            msg = ("No trial sequences found: the constraints could not be satisfied "
-                   "together with " + " and ".join(repr(ct) for ct in cacs) + ".")
-            unmodeled = sorted(set(type(ct).__name__ for ct in block.orig_constraints
-                                   if isinstance(ct, (_KInARow, LatinSquare))))
-            if unmodeled:
-                msg += (" Constraints of kind " + ", ".join(unmodeled)
-                        + " are not folded into coverage auto-sizing; a MinimumTrials"
-                          " constraint can provide additional trials.")
-            print(msg)
+        print(_no_sequences_message(block, sampling_result.outcome))
 
     return trialss
+
+
+def _concede_until_satisfiable(block, result, run):
+    """The concessions the design authorized, in order: every step of a Relax
+    budget, then one coverage factor at a time.
+
+    Applied cumulatively and never taken back, so the sequence is linear in the
+    number of concessions rather than a search over their combinations."""
+    result = _weaken_until_satisfiable(block, result, run)
+    result = _release_square_until_satisfiable(block, result, run)
+    return _drop_optional_until_satisfiable(block, result, run)
+
+
+def _release_square_until_satisfiable(block, result, run):
+    """Let one more participant leave the Latin square, re-solving after each.
+
+    Which participants leave is the solver's choice, so the first allowance
+    that works is also the fewest participants the design can give up."""
+    square = _releasable_square(block)
+    if result.outcome is not SolveOutcome.UNSATISFIABLE or square is None:
+        return result
+    while square.can_release():
+        released = square.release_one()
+        print("No solution; letting up to {} participant(s) leave the Latin "
+              "square.".format(released))
+        result = run()
+        if result.samples:
+            record_concessions(block)
+            return result
+    return result
+
+
+def _releasable_square(block):
+    """The block's Latin square that may still release a participant."""
+    for ct in block.constraints:
+        if isinstance(ct, LatinSquare) and ct.can_release():
+            return ct
+    return None
+
+
+def _drop_optional_until_satisfiable(block, result, run):
+    """Give up one optional coverage factor at a time, last in the list first,
+    resizing the block after each.
+
+    A drop is kept whether or not it helps, so what is reported is what the
+    block actually requires by the end."""
+    coverage = _droppable_coverage(block)
+    if result.outcome is not SolveOutcome.UNSATISFIABLE or coverage is None:
+        return result
+    while coverage.can_drop():
+        given_up = coverage.drop_one()
+        print("No solution; giving up {}.".format(given_up.name))
+        # The resize records the concession, from the constraint's own state.
+        block.resize_for_coverage()
+        result = run()
+        if result.samples:
+            return result
+    return result
+
+
+def _droppable_coverage(block):
+    """The block's coverage constraint that still has a factor to give up."""
+    for ct in block.constraints:
+        if isinstance(ct, CoverAllCombinations) and ct.can_drop():
+            return ct
+    return None
+
+
+def _weaken_until_satisfiable(block, result, run):
+    """Step the block's one `Relax`-authorized constraint until the design has a
+    solution or its budget runs out, re-solving after each step.
+
+    Only a definitive UNSATISFIABLE justifies this. An unknown outcome means the
+    solver failed, which is no reason to alter the experiment."""
+    constraint = solver_relaxable(block)
+    if result.outcome is not SolveOutcome.UNSATISFIABLE or constraint is None:
+        return result
+    relaxation = constraint.relaxation
+    written = relaxation.base_k(constraint.k)
+    relaxation.original_k = written
+    relaxation.applied_for = "the solver found no solution otherwise"
+    for _ in range(relax_budget(constraint)):
+        constraint.k += constraint.weaken_step
+        # Track the value as it moves, not only when this loop is the one that
+        # succeeds: a later concession can be what completes the design, and the
+        # report has to name every constraint the design ended up relying on.
+        relaxation.applied_k = constraint.k
+        print("No solution; retrying with {}(k={}).".format(
+            type(constraint).__name__, constraint.k))
+        result = run()
+        if result.samples:
+            record_concessions(block)
+            return result
+    # The steps stay: concessions accumulate so that a later one starts from
+    # what the earlier ones bought. Nothing is written to the block's report
+    # here, so a run that never produces a design reports nothing.
+    return result
+
+
+def _no_sequences_message(block, outcome) -> str:
+    """Why nothing came back, taken from the solver's answer rather than
+    inferred from the empty list."""
+    from sweetpea._internal.constraint import _KInARow
+    if outcome is SolveOutcome.UNKNOWN:
+        return ("No trial sequences found: the solver gave no answer, so this "
+                "reports a solver failure rather than the design.")
+    relaxed = solver_relaxable(block)
+    if relaxed is not None:
+        return ("No trial sequences found: the design has no solution, and "
+                "weakening {} by up to {} was not enough."
+                .format(type(relaxed).__name__, relaxed.relaxation.by))
+    cacs = [ct for ct in block.orig_constraints if isinstance(ct, CoverAllCombinations)]
+    if not cacs:
+        return "No trial sequences found: the design has no solution."
+    # Coverage auto-sizing cannot account for ordering constraints or
+    # LatinSquare, so name those as the likely conflict.
+    msg = ("No trial sequences found: the constraints could not be satisfied "
+           "together with " + " and ".join(repr(ct) for ct in cacs) + ".")
+    unmodeled = sorted(set(type(ct).__name__ for ct in block.orig_constraints
+                           if isinstance(ct, (_KInARow, LatinSquare))))
+    if unmodeled:
+        msg += (" Constraints of kind " + ", ".join(unmodeled)
+                + " are not folded into coverage auto-sizing; a MinimumTrials"
+                  " constraint can provide additional trials.")
+    return msg
 
 def sample_mismatch_experiment(block: Block, sample: dict) -> dict:
     """Given an experiment described with a :class:`.Block`, tests if :class:`list`
@@ -467,8 +597,8 @@ def sample_mismatch_experiment(block: Block, sample: dict) -> dict:
     """
     res = {}
     for key in sample:
-        if len(sample[key]) != block.trials_per_sample():
-            res['trial_count'] = [key, len(sample[key]), block.trials_per_sample()]
+        if len(sample[key]) != block._trials_per_sample():
+            res['trial_count'] = [key, len(sample[key]), block._trials_per_sample()]
     if not res:
         factor_errors = block.sample_mismatch_factors(sample)
         if factor_errors:

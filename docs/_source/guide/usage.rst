@@ -791,12 +791,11 @@ Let's start with a 2×2 inner design:
     >>> A = Factor("A", ["a1", "a2"])
     >>> B = Factor("B", ["b1", "b2"])
     >>> inner = CrossBlock([A, B], [A, B], [])
-    >>> inner.trials_per_sample()
-    4
 
 Here we repeat the 2×2 inner block for each level of an outer block
 that has a session :class:`.Factor`. During each 4-trial instance of
-the inner block, session is constant.
+the inner block, session is constant, so the nested block has
+2 × 4 = 8 trials.
 
 .. doctest::
 
@@ -804,8 +803,6 @@ the inner block, session is constant.
     >>> session = Factor("session", ["s1", "s2"])
     >>> outer = CrossBlock([session], [session], [])
     >>> nb = Nest(outer_block=outer, inner_block=inner, constraints=[])
-    >>> nb.trials_per_sample()
-    8 # Total trials = #session levels × inner trials = 2 × 4 = 8.
     >>> exps = synthesize_trials(nb, 1) 
     Sampling 1 trial sequences using NonUniformGen.
     Encoding experiment constraints...
@@ -1086,9 +1083,9 @@ some combinations may never show up at all.
 The :class:`.CoverAllCombinations` constraint asks for a weaker
 guarantee than crossing: over the experiment as a whole, every
 combination of the listed factors must appear at least once.
-Individual trials still vary freely, and the design itself implies no
-particular number of trials, so SweetPea computes how many trials
-coverage needs and grows the block to fit.
+It says nothing about which trial holds which combination, and the
+design itself implies no particular number of trials, so SweetPea
+computes how many trials coverage needs and grows the block to fit.
 
 A Free-Factor Example
 ^^^^^^^^^^^^^^^^^^^^^
@@ -1104,8 +1101,6 @@ but not crossed. Crossing `task` alone gives two trials.
     >>> size = Factor("size", ["big", "small"])
     >>> task = Factor("task", ["A", "B"])
     >>> b = CrossBlock(design=[task, colr, size], crossing=[task], constraints=[])
-    >>> b.trials_per_sample()
-    2
 
 The `colr` and `size` factors are unconstrained. When we ran this
 while writing the guide, both trials came out identical apart from
@@ -1129,8 +1124,8 @@ cannot hold four combinations, so the block grows to four trials.
 
     >>> cb = CrossBlock(design=[task, colr, size], crossing=[task],
     ...                 constraints=[CoverAllCombinations(colr, size)])
-    >>> cb.trials_per_sample()
-    4
+    CoverAllCombinations(colr, size) requires 4 trials.
+    Any of colr, size can be moved to `optional`, to be given up for a shorter experiment if no solution is found.
 
 .. doctest::
     :options: +SKIP
@@ -1164,8 +1159,8 @@ passes---nine trials---are required.
     >>> word  = Factor("word",  ["red", "green", "blue"])
     >>> b = CrossBlock(design=[color, word], crossing=[color],
     ...                constraints=[CoverAllCombinations(color, word)])
-    >>> b.trials_per_sample()
-    9
+    CoverAllCombinations(color, word) requires 9 trials.
+    Any of color, word can be moved to `optional`, to be given up for a shorter experiment if no solution is found.
 
 .. doctest::
     :options: +SKIP
@@ -1195,8 +1190,8 @@ ruling out one `word` level leaves six combinations and six trials.
     >>> eb = CrossBlock(design=[color, word], crossing=[color],
     ...                 constraints=[CoverAllCombinations(color, word),
     ...                              Exclude((word, "red"))])
-    >>> eb.trials_per_sample()
-    6
+    CoverAllCombinations(color, word) requires 6 trials.
+    Any of color, word can be moved to `optional`, to be given up for a shorter experiment if no solution is found.
 
 Combinations that contradict the predicate of a :class:`.DerivedLevel`
 are dropped the same way.
@@ -1221,8 +1216,8 @@ passes.
     ...                    constraints=[])
     >>> nb = Nest(outer_block=outer, inner_block=inner,
     ...           constraints=[CoverAllCombinations(color, word)])
-    >>> nb.trials_per_sample()
-    12
+    CoverAllCombinations(color, word) requires 12 trials.
+    Any of color, word can be moved to `optional`, to be given up for a shorter experiment if no solution is found.
 
 .. doctest::
     :options: +SKIP
@@ -1266,8 +1261,8 @@ the block up to a fourth pass.
     >>> pb = CrossBlock(design=[color, word], crossing=[color],
     ...                 constraints=[CoverAllCombinations(color, word),
     ...                              Pin(0, (word, "red"))])
-    >>> pb.trials_per_sample()
-    12
+    CoverAllCombinations(color, word) requires 12 trials.
+    Any of color, word can be moved to `optional`, to be given up for a shorter experiment if no solution is found.
 
 When such a constraint cannot be reconciled at any number of trials,
 the conflict is reported as the block is built. Covering all
@@ -1316,3 +1311,150 @@ and coverage takes that into account when sizing the block. The levels
 of the factors listed in :class:`.CoverAllCombinations` itself must be
 unweighted, however, since the meaning of a weight on a covered
 combination is not currently defined.
+
+Trading Coverage for Fewer Trials
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The set of combinations to cover is the product of the levels of the
+listed factors, so each factor added to
+:class:`.CoverAllCombinations` multiplies the trial count. Covering
+`colr`, `size`, and `cue` together takes twelve trials. The count is
+reported as the block is built, so it is visible without asking for it.
+
+  .. doctest::
+
+    >>> from sweetpea import Factor, CrossBlock, CoverAllCombinations
+    >>> colr = Factor("colr", ["red", "green"])
+    >>> size = Factor("size", ["big", "small"])
+    >>> cue = Factor("cue", ["c1", "c2", "c3"])
+    >>> task = Factor("task", ["A", "B"])
+    >>> design = [task, colr, size, cue]
+    >>> tb = CrossBlock(design=design, crossing=[task],
+    ...                 constraints=[CoverAllCombinations(colr, size, cue)])
+    CoverAllCombinations(colr, size, cue) requires 12 trials.
+    Any of colr, size, cue can be moved to `optional`, to be given up for a shorter experiment if no solution is found.
+
+The `optional` argument names factors that may be *given up* if the
+design turns out to have no solution. It changes nothing on its own:
+coverage still asks for every combination of every listed factor, so
+naming `cue` optional leaves the same twelve trials.
+
+  .. doctest::
+
+    >>> pb = CrossBlock(design=design, crossing=[task],
+    ...                 constraints=[CoverAllCombinations(colr, size,
+    ...                                                   optional=[cue])])
+    CoverAllCombinations(colr, size, optional=[cue]) requires 12 trials.
+    Any of colr, size can be moved to `optional`, to be given up for a shorter experiment if no solution is found.
+
+When the solver reports that the design has no solution, factors are
+given up one at a time, the last one named first. A factor that has been
+given up needs only each of its own levels to appear, in no particular
+combination, which usually takes fewer trials --- so the block is
+re-sized after each one, and the new count is reported. Giving `cue` up
+here brings the design down to four trials: all four `colr`-`size`
+combinations still appear and all three `cue` levels still appear, but
+the twelve three-way combinations no longer have to.
+
+Because factors are given up while the design is being solved, a block's
+trial count is provisional until then. The count reported as the block
+is built is what full coverage costs, which is what the block uses if
+nothing has to be given up, and each factor given up reports the new
+count.
+
+A factor may not be both required and optional, since it cannot both
+require its combinations and give them up.
+
+Listing the same factors in two separate constraints asks for the
+weaker requirement outright, without waiting for a design to fail, since
+each constraint is sized on its own and the block takes the larger
+count.
+
+  .. doctest::
+
+    >>> sb = CrossBlock(design=design, crossing=[task],
+    ...                 constraints=[CoverAllCombinations(colr, size),
+    ...                              CoverAllCombinations(cue)])
+    CoverAllCombinations(colr, size) requires 4 trials.
+    Any of colr, size can be moved to `optional`, to be given up for a shorter experiment if no solution is found.
+    CoverAllCombinations(cue) requires 4 trials.
+
+
+.. _relaxing-a-constraint:
+
+Relaxing a Constraint
+---------------------
+
+A constraint can conflict with what :class:`.CoverAllCombinations`
+requires. Crossing `color` alone over three colors gives nine trials
+that hold each `color`-`word` combination once, so `word` is `red` in
+three of them. An :class:`.ExactlyK` constraint allowing two such
+trials contradicts that, and the block reports the conflict and stops.
+
+:func:`.Relax` authorizes a constraint to be weakened instead. It takes
+the constraint and a budget, and returns a copy to use in its place.
+Coverage sizing then computes the value the constraint has to take and
+adjusts it, provided the change stays within the budget.
+
+  .. doctest::
+
+    >>> from sweetpea import Factor, CrossBlock, CoverAllCombinations, ExactlyK, Relax
+    >>> color = Factor("color", ["red", "green", "blue"])
+    >>> word  = Factor("word",  ["red", "green", "blue"])
+    >>> cap = Relax(ExactlyK(2, (word, "red")), by=1)
+    >>> rb = CrossBlock(design=[color, word], crossing=[color],
+    ...                 constraints=[CoverAllCombinations(color, word), cap])
+    ExactlyK for 'word red' relaxed from 2 to 3, as CoverAllCombinations(color, word) requires.
+    CoverAllCombinations(color, word) requires 9 trials.
+    Any of color, word can be moved to `optional`, to be given up for a shorter experiment if no solution is found.
+
+The value that was applied is also available on the constraint, for a
+script that needs to record what the experiment actually required.
+
+  .. doctest::
+
+    >>> cap.relaxation.original_k, cap.relaxation.applied_k
+    (2, 3)
+
+`by` is a budget, not a target. The constraint's `k` may end up
+anywhere within `by` of the value written, and the adjustment applied
+is the smallest one that resolves the conflict. A constraint that is
+already consistent with coverage is left alone, whether or not it was
+relaxed. When the required value lies outside the budget, the block
+reports the value it would need and stops rather than exceeding what
+was authorized.
+
+Weakening is never inferred. A constraint that was not passed through
+:func:`.Relax` keeps its stated value, and a conflict involving it
+remains an error. Every adjustment that is applied is printed as the
+block is built and repeated by :func:`.print_experiments`, so it
+appears alongside the trial sequences it produced.
+
+Weakening After the Solver
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:class:`.AtMostKInARow` and :class:`.AtLeastKInARow` can also be
+relaxed. They govern the order of trials rather than a count, so
+coverage sizing cannot work out the value they must take, and no
+adjustment is made until the solver reports that the design has no
+solution. SweetPea then moves `k` one step at a time towards the weaker
+requirement---a larger `k` for :class:`.AtMostKInARow`, a smaller one
+for :class:`.AtLeastKInARow`---re-solving after each step and stopping
+at the first value that works.
+
+::
+
+    block = CrossBlock(design=[color, word], crossing=[color],
+                       constraints=[Relax(AtMostKInARow(1, (color, "red")), by=2)])
+
+`k` never falls below one, so an :class:`.AtLeastKInARow` already at
+one has no room to move. If the budget runs out before a solution is
+found, the constraint is restored to the value written and no trial
+sequences are returned.
+
+An experiment may relax one constraint. Weakening is only attempted
+when the solver reports the design unsatisfiable; a solver that fails
+to answer says nothing about the design, so nothing is adjusted.
+
+Constraints other than these three cannot be relaxed, and passing one
+to :func:`.Relax` raises an error.

@@ -37,7 +37,7 @@ print_experiments(nested_block2, experiments)
 print('Nested block with an additional factor on original block and crossing with color')
 print("run_len =", block.preamble_size(block.crossings[0]) + block.crossing_size(block.crossings[0]))
 permuted_block = NestedBlock(nested_design, nested_design, [], num_permutations=None)
-print("trials_per_sample =", permuted_block.trials_per_sample())
+print("_trials_per_sample =", permuted_block._trials_per_sample())
 experiments = synthesize_trials(permuted_block, 1)#, CMSGen)
 print_experiments(permuted_block, experiments)
 
@@ -50,7 +50,7 @@ block        = CrossBlock(design, crossing, [])
 print("run_len =", block.preamble_size(block.crossings[0]) + block.crossing_size(block.crossings[0]))
 nested_design = [task, block]
 permuted_block2 = NestedBlock(nested_design, nested_design, [])
-print("trials_per_sample =", permuted_block2.trials_per_sample())
+print("_trials_per_sample =", permuted_block2._trials_per_sample())
 experiments  = synthesize_trials(permuted_block2, 1)#, CMSGen)
 print_experiments(permuted_block2, experiments)
 
