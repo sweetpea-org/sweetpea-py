@@ -21,7 +21,7 @@ print('=== A plain block with a single crossed factor ===')
 size  = Factor("size", ["large", "small"])
 block = CrossBlock([size], [size], [])
 
-print("trials_per_sample =", block.trials_per_sample())
+print("_trials_per_sample =", block._trials_per_sample())
 experiments = synthesize_trials(block, 1, CMSGen)
 print_experiments(block, experiments)
 
@@ -32,7 +32,7 @@ color = Factor("color", ["red", "blue"])
 color_block = CrossBlock([color], [color], [])
 
 nested_block = Nest(outer_block=color_block, inner_block=block, constraints=[])
-print("trials_per_sample =", nested_block.trials_per_sample())
+print("_trials_per_sample =", nested_block._trials_per_sample())
 experiments = synthesize_trials(nested_block, 1, CMSGen)
 print_experiments(nested_block, experiments)
 
@@ -44,7 +44,7 @@ task    = Factor("task",    ["A", "B"])
 ct_block = CrossBlock([context, task], [context, task], [])
 
 nested_block2 = Nest(outer_block=ct_block, inner_block=nested_block, constraints=[])
-print("trials_per_sample =", nested_block2.trials_per_sample())
+print("_trials_per_sample =", nested_block2._trials_per_sample())
 experiments = synthesize_trials(nested_block2, 1, CMSGen)
 print_experiments(nested_block2, experiments)
 
@@ -64,7 +64,7 @@ print("inner run length =",
 
 task_block = CrossBlock([task], [task], [])
 nested_block3 = Nest(outer_block=task_block, inner_block=inner2, constraints=[])
-print("trials_per_sample =", nested_block3.trials_per_sample())
+print("_trials_per_sample =", nested_block3._trials_per_sample())
 experiments = synthesize_trials(nested_block3, 1, CMSGen)
 print_experiments(nested_block3, experiments)
 
@@ -72,6 +72,6 @@ print_experiments(nested_block3, experiments)
 print('=== Repeat: run the inner design twice with a constraint spanning both ===')
 
 repeated = Repeat(inner2, [MinimumTrials(8), AtMostKInARow(1, size)])
-print("trials_per_sample =", repeated.trials_per_sample())
+print("_trials_per_sample =", repeated._trials_per_sample())
 experiments = synthesize_trials(repeated, 1, CMSGen)
 print_experiments(repeated, experiments)

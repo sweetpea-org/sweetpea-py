@@ -54,6 +54,12 @@ class Constraint(ABC):
     def init_within_block(self, within_block) -> None:
         pass
 
+    def set_within_block(self, within_block) -> None:
+        """Replace the geometry, where `init_within_block` only fills an empty
+        one. A block resizing itself calls this on the constraints it owns; a
+        constraint shared with an inner block is left alone."""
+        pass
+
     def sustain_within_block(self, sustain_count: int) -> None:
         pass
 

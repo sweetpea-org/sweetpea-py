@@ -37,8 +37,8 @@ def collect_design_metrics(block: Block) -> Dict:
         'crossing_factor_count': len(block.crossings),
         'constraint_count': len(block.constraints),
 
-        'block_length': block.trials_per_sample(),
-        'block_length_factorial': factorial(block.trials_per_sample()),
+        'block_length': block._trials_per_sample(),
+        'block_length_factorial': factorial(block._trials_per_sample()),
 
         'low_level_request_count': len(backend_request.ll_requests),
         'cnf_total_variables': int(dimacs_header[2]),

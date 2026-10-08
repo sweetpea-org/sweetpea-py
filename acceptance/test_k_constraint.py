@@ -74,3 +74,37 @@ def test_check_constraints_on_design_factor(strategy, constraints_and_solutions)
     experiments  = synthesize_trials(block, 500, sampling_strategy=strategy)
 
     assert len(experiments) == solutions
+
+
+# ~~~~~~~~~~~~ AtLeastKInARow where no run boundary fits ~~~~~~~~~~~~
+
+def _free_color(constraints):
+    """`color` is uncrossed, so nothing forces how often a level appears."""
+    color = Factor('color', ['red', 'green', 'blue'])
+    return color, CrossBlock([color], [], constraints(color) + [MinimumTrials(6)])
+
+
+def test_at_least_k_filling_the_block_is_all_or_nothing():
+    # k equals the trial count, so a run of k is the whole block: red fills it
+    # or stays away. Pinning one trial leaves only the filled option.
+    color, block = _free_color(lambda c: [AtLeastKInARow(6, (c, 'red')),
+                                          Pin(0, (c, 'red'))])
+    experiments = synthesize_trials(block, 5, sampling_strategy=IterateGen)
+    assert experiments
+    for e in experiments:
+        assert e['color'] == ['red'] * 6
+
+
+def test_at_least_k_longer_than_the_block_excludes_the_level():
+    # A run of 9 cannot fit in 6 trials, so red cannot appear at all.
+    color, block = _free_color(lambda c: [AtLeastKInARow(9, (c, 'red'))])
+    experiments = synthesize_trials(block, 5, sampling_strategy=IterateGen)
+    assert experiments
+    for e in experiments:
+        assert 'red' not in e['color']
+
+
+def test_at_least_k_longer_than_the_block_conflicts_with_a_pin():
+    color, block = _free_color(lambda c: [AtLeastKInARow(9, (c, 'red')),
+                                          Pin(0, (c, 'red'))])
+    assert synthesize_trials(block, 1, sampling_strategy=IterateGen) == []

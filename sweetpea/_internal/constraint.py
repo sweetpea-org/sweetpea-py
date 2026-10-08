@@ -2,9 +2,9 @@
 
 import operator as op
 from abc import abstractmethod
-from copy import deepcopy
+from copy import copy, deepcopy
 from typing import List, Tuple, Any, Union, cast, Dict, Callable, Optional
-from itertools import chain, product
+from itertools import chain, combinations, product
 from math import ceil
 import inspect
 
@@ -67,7 +67,7 @@ class Consistency(Constraint):
     @staticmethod
     def apply(block: Block, backend_request: BackendRequest) -> None:
         next_var = 1
-        for _ in range(block.trials_per_sample()):
+        for _ in range(block._trials_per_sample()):
             for f in filter(lambda f: not f.has_complex_window, block.act_design):
                 number_of_levels = len(f.levels)
                 new_request = LowLevelRequest("EQ", 1, list(range(next_var, next_var + number_of_levels)))
@@ -138,7 +138,7 @@ class Cross(Constraint):
             # Step 1a: Get a list of the trials that are involved in the crossing. That list
             # omits leading trials that will be present to initialize transitions, and the
             # number of trials may have been reduced by exclusions.
-            crossing_trials = list(range(1+preamble_size, block.trials_per_sample() + 1))
+            crossing_trials = list(range(1+preamble_size, block._trials_per_sample() + 1))
 
             # Step 1b: For each trial, cross all levels of all factors in the crossing.
             # We exclude any combination that is dsiallowed by implicit or explicit exlcusions.
@@ -311,7 +311,7 @@ class Derivation(Constraint):
 
     def __apply_derivation(self, block: Block, backend_request: BackendRequest) -> None:
         trial_size = block.variables_per_trial()
-        cross_size = block.trials_per_sample()
+        cross_size = block._trials_per_sample()
 
         iffs = []
         for n in range(cross_size):
@@ -325,7 +325,7 @@ class Derivation(Constraint):
 
     def __apply_derivation_with_complex_window(self, block: Block, backend_request: BackendRequest) -> None:
         trial_size = block.variables_per_trial()
-        trial_count = block.trials_per_sample()
+        trial_count = block._trials_per_sample()
         iffs = []
         f = self.factor
         sustain_count = block.sustain_count(f)
@@ -382,10 +382,16 @@ class Derivation(Constraint):
 
 
 class _KInARow(Constraint):
+    #: How `k` moves to weaken this constraint: +1 raises it, -1 lowers it.
+    #: Zero means the solver loop cannot step it.
+    weaken_step = 0
+
     def __init__(self, k, level):
         self.k = k
         self.level = level
         self.within_block = cast(Optional[BlockGeometry], None)
+        # Set by `Relax`; None means the constraint is binding.
+        self.relaxation = cast(Optional['_Relaxation'], None)
         self.__validate()
 
     def __validate(self) -> None:
@@ -406,6 +412,9 @@ class _KInARow(Constraint):
     def init_within_block(self, within_block: BlockGeometry) -> None:
         if self.within_block is None:
             self.within_block = within_block
+
+    def set_within_block(self, within_block: BlockGeometry) -> None:
+        self.within_block = within_block
 
     def sustain_within_block(self, sustain_count: int) -> None:
         self.within_block = self.within_block.sustain(sustain_count)
@@ -517,6 +526,9 @@ class AtMostKInARow(_KInARow):
         sum(1, 7, 13)  LT 3
         sum(7, 13, 19) LT 3
     """
+    # Longer runs are the weaker requirement.
+    weaken_step = 1
+
     def apply_to_backend_request(self, block: Block, level: Tuple[Factor, Union[SimpleLevel, DerivedLevel]], backend_request: BackendRequest) -> None:
         sublistss = self._build_variable_sublistss(block, level, self.k + 1)
         # Build the requests
@@ -559,6 +571,9 @@ class AtLeastKInARow(_KInARow):
         If(And(!1, 7)) Then (13, 19)
         If(19) Then (7, 13)   --------This is a corner case
     """
+    # Shorter runs are the weaker requirement.
+    weaken_step = -1
+
     def __init__(self, k, levels):
         super().__init__(k, levels)
         self.max_trials_required = cast(int, None)
@@ -567,9 +582,20 @@ class AtLeastKInARow(_KInARow):
                                     backend_request: BackendRequest) -> None:
 
         # Request sublists for k+1 to allow us to determine the transition
+        var_lists = block.build_variable_lists(level, self.within_block)
         sublistss = self._build_variable_sublistss(block, level, self.k + 1)
-        implications = []
-        for sublists in sublistss:
+        implications = cast(List[FormulaWithIff], [])
+        for var_list, sublists in zip(var_lists, sublistss):
+            if not sublists:
+                # No window of k+1 trials fits, so there is no transition to
+                # find: a run of k can only be the whole stretch. The level
+                # therefore fills every trial or none of them, and none at all
+                # when the stretch is shorter than k.
+                if len(var_list) < self.k:
+                    implications.extend(Not(v) for v in var_list)
+                else:
+                    implications.extend(Iff(var_list[0], v) for v in var_list[1:])
+                continue
             # Starting corner case
             implications.append(If(sublists[0][0], And(sublists[0][1:-1])))
             for sublist in sublists:
@@ -593,6 +619,59 @@ class AtLeastKInARow(_KInARow):
 
     def _potential_counts_conform(self, counts: List[int]) -> bool:
         return self._potential_counts_conform_individually(counts, op.ge)
+
+
+class _Relaxation:
+    """How far a constraint's `k` may be adjusted, and what it was adjusted to.
+
+    `by` is a budget in the same units as the `k` it accompanies: the value may
+    land anywhere in [k - by, k + by]. `original_k` records what the user wrote,
+    so that re-sizing a block measures the budget from there rather than from an
+    already-widened value --- `_KInARow.desugar` returns the constraint itself
+    when its level needs no replacement, so the object a repair mutates is often
+    the one the user still holds."""
+
+    def __init__(self, by: int) -> None:
+        self.by = by
+        self.original_k = cast(Optional[int], None)
+        self.applied_k = cast(Optional[int], None)
+        # What asked for the change, for the report; None until one applies.
+        self.applied_for = cast(Optional[str], None)
+
+    def base_k(self, k: int) -> int:
+        """The value the budget is measured from: what the user wrote."""
+        return self.original_k if self.original_k is not None else k
+
+    def permits(self, k: int, candidate: int) -> bool:
+        return abs(candidate - self.base_k(k)) <= self.by
+
+    def scale(self, sustain_count: int) -> None:
+        """Follow `k` when a block sustains it. A budget counts the same
+        occurrences `k` does, so whatever multiplies one multiplies the other."""
+        self.by *= sustain_count
+        if self.original_k is not None:
+            self.original_k *= sustain_count
+        if self.applied_k is not None:
+            self.applied_k *= sustain_count
+
+    def __eq__(self, other):
+        return isinstance(other, _Relaxation) and self.__dict__ == other.__dict__
+
+    def __repr__(self):
+        return "by={}".format(self.by)
+
+
+class _CapConflict(Exception):
+    """The ExactlyK caps a coverage sizing pass needs widened, each paired with
+    its relaxation and the value it must take.
+
+    Raised only for caps that `Relax` authorized, so that the caller can repair
+    and re-run the sizing; an unauthorized cap raises `ValueError` where it is
+    found instead."""
+
+    def __init__(self, deficits) -> None:
+        super().__init__("cap conflict")
+        self.deficits = deficits
 
 
 class ExactlyK(_KInARow):
@@ -627,7 +706,102 @@ class ExactlyK(_KInARow):
     def sustain_within_block(self, sustain_count: int) -> None:
         super().sustain_within_block(sustain_count)
         self.k *= sustain_count
- 
+        if self.relaxation is not None:
+            self.relaxation.scale(sustain_count)
+
+
+def Relax(constraint: Constraint, by: int) -> Constraint:
+    """Authorizes `constraint` to be weakened by up to `by`, when it would
+    otherwise leave the design with no solution. Returns a copy to use in place
+    of the original, which is left unchanged.
+
+    `by` is a budget of steps towards the weaker requirement: a larger `k` for
+    :class:`.AtMostKInARow`, a smaller one for :class:`.AtLeastKInARow`, and
+    either direction for :class:`.ExactlyK`, where neither is weaker.
+
+    Weakening is never inferred: only a constraint passed through this function
+    is eligible, and any adjustment applied is reported as the block is built or
+    as trials are synthesized, and again alongside the results. An experiment may
+    relax one constraint.
+
+    An :class:`.ExactlyK` is repaired while the block is sized, where
+    :class:`.CoverAllCombinations` can compute the value it must take. The
+    in-a-row constraints have no such model, so they are stepped only after the
+    solver reports the design unsatisfiable.
+
+    Usage::
+
+        CrossBlock(design, crossing, [CoverAllCombinations(color, word),
+                                      Relax(ExactlyK(3, (word, 'red')), by=1)])
+        CrossBlock(design, crossing, [Relax(AtMostKInARow(2, (color, 'red')), by=1)])
+    """
+    who = "Relax"
+    # Named here rather than at module level because LatinSquare is defined
+    # further down. ExactlyK is repaired while the block is sized; the rest are
+    # stepped only after the solver reports no solution.
+    relaxable = (ExactlyK, AtMostKInARow, AtLeastKInARow, LatinSquare)
+    if not isinstance(constraint, relaxable):
+        raise ValueError((who,
+                          "only {} can be relaxed, received {}"
+                          .format(", ".join(c.__name__ for c in relaxable),
+                                  type(constraint).__name__)))
+    # bool is a subclass of int, and `by=True` is a units mistake, not a budget.
+    if not isinstance(by, int) or isinstance(by, bool):
+        raise ValueError((who, "by must be an integer, received {}".format(by)))
+    if by <= 0:
+        raise ValueError((who, "by must be greater than 0"))
+    # A copy, so that a constraint the caller holds is not altered by wrapping
+    # it. Shallow: a deep copy would clone the level, and with it the factor,
+    # leaving the constraint pointing at a factor the design does not contain.
+    relaxed = copy(constraint)
+    relaxed.relaxation = _Relaxation(by)
+    return relaxed
+
+
+def record_concessions(block) -> None:
+    """Restate every concession from the block's own state.
+
+    Derived rather than accumulated, so that a constraint changed over several
+    passes is reported at its final value, and so that no kind of concession
+    overwrites another's entries."""
+    messages = []
+    for ct in block.constraints:
+        if isinstance(ct, _KInARow) and ct.relaxation is not None \
+                and ct.relaxation.applied_k is not None:
+            rl = ct.relaxation
+            messages.append(
+                "{} for '{} {}' relaxed from {} to {}, as {}."
+                .format(type(ct).__name__, ct.level.factor.name, ct.level.name,
+                        rl.original_k, rl.applied_k, rl.applied_for))
+        elif isinstance(ct, LatinSquare) and ct.may_release:
+            messages.append(
+                "Latin square let up to {} participant(s) leave the pattern, as the "
+                "solver found no solution otherwise.".format(ct.may_release))
+        elif isinstance(ct, CoverAllCombinations) and ct.dropped:
+            given_up = ct.optional[len(ct.optional) - ct.dropped:]
+            messages.append(
+                "Coverage gave up {}: each of their levels appears at least "
+                "once, as the solver found no solution otherwise."
+                .format(", ".join(str(f.name) for f in given_up)))
+    block.applied_relaxations = messages
+
+
+def solver_relaxable(block):
+    """The block's `Relax`-authorized constraint that the solver loop can step,
+    or None. An `ExactlyK` has no step: coverage sizing already repaired it, so
+    it never reaches the loop."""
+    for c in block.constraints:
+        if isinstance(c, _KInARow) and c.relaxation is not None and c.weaken_step:
+            return c
+    return None
+
+
+def relax_budget(constraint) -> int:
+    """Steps the loop may take. `k` must stay positive, so lowering it stops at
+    1 however large the authorized budget is."""
+    by = constraint.relaxation.by
+    return by if constraint.weaken_step > 0 else min(by, constraint.k - 1)
+
 
 class ExactlyKInARow(_KInARow):
     """Requires that if the given level exists at all, it must exist in a
@@ -691,7 +865,7 @@ class ExactlyKMultipleInARow(_KInARow):
     ) -> None:
     
         k = self.k
-        max_len = block.trials_per_sample()
+        max_len = block._trials_per_sample()
         implications: List[Any] = [] 
         var_lists = block.build_variable_lists(level, self.within_block)
         all_trial_vars = var_lists[0]  # assume non-blocked design for now
@@ -864,6 +1038,9 @@ class Pin(Constraint):
         if self.within_block is None:
             self.within_block = within_block
 
+    def set_within_block(self, within_block: BlockGeometry) -> None:
+        self.within_block = within_block
+
     def sustain_within_block(self, sustain_count: int) -> None:
         if self.within_block:
             self.within_block = self.within_block.sustain(sustain_count)
@@ -871,7 +1048,7 @@ class Pin(Constraint):
     def validate(self, block: Block) -> None:
         validate_factor_and_level(block, self.factor, self.level)
         if not block.get_trial_numbers(self.factor, self.index):
-            num_trials = block.trials_per_sample()
+            num_trials = block._trials_per_sample()
             block.errors.add("WARNING: Pin constraint unsatisfiable, because "
                              + str(self.index) + " is out of range for " + str(num_trials) + " trials")
 
@@ -1039,6 +1216,20 @@ class LatinSquare(Constraint):
         self.factors = factors
         self.within_block = cast(Optional[BlockGeometry], None)
         self.name = name
+        # Set by `Relax`; None means every participant is held to the pattern.
+        self.relaxation = cast(Optional[_Relaxation], None)
+        # How many participants may leave the pattern. Which ones is the
+        # solver's choice: releasing by position would have to give up every
+        # participant after a conflict in order to reach it.
+        self.may_release = 0
+
+    def can_release(self) -> bool:
+        return self.relaxation is not None and self.may_release < self.relaxation.by
+
+    def release_one(self) -> int:
+        """Allow one more participant out of the pattern."""
+        self.may_release += 1
+        return self.may_release
 
     def validate(self, block: Block) -> None:
         who = "LatinSquare"
@@ -1061,8 +1252,13 @@ class LatinSquare(Constraint):
         return False
 
     def desugar(self, replacements: dict) -> List:
-        return [LatinSquare([replacements.get(f, [f, f])[1] for f in self.factors],
-                            self.name)]
+        c = LatinSquare([replacements.get(f, [f, f])[1] for f in self.factors],
+                        self.name)
+        # The copy is what the block holds and what a release mutates, so the
+        # authorization has to travel with it.
+        c.relaxation = self.relaxation
+        c.may_release = self.may_release
+        return [c]
 
     def _make_rotations(self):
         return [0 for f in self.factors]
@@ -1089,6 +1285,19 @@ class LatinSquare(Constraint):
                 main_factor_idx = idx
         return (diagonal_length, main_factor_idx)
 
+    def _rotation_cycle(self):
+        """Every rotation the odometer visits before it repeats, in order. Its
+        length is how many participants a whole pattern takes."""
+        (_, main_factor_idx) = self._get_shape()
+        start = self._make_rotations()
+        rotations = self._make_rotations()
+        cycle = []
+        while True:
+            cycle.append(list(rotations))
+            self._step_rotations(rotations, main_factor_idx)
+            if rotations == start:
+                return cycle
+
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
         if len(self.factors) == 1:
             return
@@ -1098,40 +1307,66 @@ class LatinSquare(Constraint):
         level_lists = [list(f.levels) for f in self.factors]
         sustain_count = block.sustain_count(self.factors[0])
         preamble_size = block.factor_preamble_size(self.factors[0])
-        num_trials = block.trials_per_sample()
+        num_trials = block._trials_per_sample()
         main_factor = self.factors[main_factor_idx]
 
-        ands = []
-        i = preamble_size
-        rotations = self._make_rotations()
-        while i < num_trials:
-            # For each trial in the segment:
-            for j in range(0, diagonal_length):
-                if i+j < num_trials:
-                    # Each possible choice of the main factor determines
-                    # the other factors
-                    for k in range(0, diagonal_length):
-                        l = main_factor.levels[(k + rotations[main_factor_idx]) % len(main_factor.levels)]
-                        main_var = block.get_variable(i+j+1, (main_factor, l))
-                        for idx, f in enumerate(self.factors):
-                            if idx != main_factor_idx:
-                                l = f.levels[(k + rotations[idx]) % len(f.levels)]
-                                var = block.get_variable(i+j+1, (f, l))
-                                ands.append(If(main_var, var))
+        cycle = self._rotation_cycle()
 
-            # Make sure each main-factor level is picked at most once in each segment
+        # One shift for the whole experiment: participant s takes rotation
+        # s + shift of the cycle. Participants still take consecutive rotations
+        # and still exhaust the cycle before it repeats; only where the cycle
+        # starts is left open, which is otherwise settled by the order the
+        # levels happen to be declared in.
+        shifts = []
+        for _ in cycle:
+            shifts.append(backend_request.fresh)
+            backend_request.fresh += 1
+        backend_request.ll_requests.append(LowLevelRequest("EQ", 1, shifts))
+
+        ands = cast(List[FormulaWithIff], [])
+        # One per participant: true when it is let out of the pattern.
+        released = []
+        i = preamble_size
+        segment = 0
+        while i < num_trials:
+            out = backend_request.fresh
+            backend_request.fresh += 1
+            released.append(out)
+            for shift, shift_var in enumerate(shifts):
+                rotations = cycle[(segment + shift) % len(cycle)]
+                # For each trial in the segment:
+                for j in range(0, diagonal_length):
+                    if i+j < num_trials:
+                        # Each possible choice of the main factor determines
+                        # the other factors
+                        for k in range(0, diagonal_length):
+                            l = main_factor.levels[(k + rotations[main_factor_idx]) % len(main_factor.levels)]
+                            main_var = block.get_variable(i+j+1, (main_factor, l))
+                            for idx, f in enumerate(self.factors):
+                                if idx != main_factor_idx:
+                                    l = f.levels[(k + rotations[idx]) % len(f.levels)]
+                                    var = block.get_variable(i+j+1, (f, l))
+                                    ands.append(If(And([shift_var, main_var]), Or([out, var])))
+
+            # Each main-factor level at most once in each segment that is held.
+            # Pairwise rather than a cardinality request, which cannot be made
+            # to depend on `out`.
             for l in main_factor.levels:
                 vars = []
                 for j in range(0, diagonal_length):
                     if i+j < num_trials:
                         var = block.get_variable(i+j+1, (main_factor, l))
                         vars.append(var)
-                new_request = LowLevelRequest("LT", 2, vars)
-                backend_request.ll_requests.append(new_request)
+                for a, b in combinations(vars, 2):
+                    ands.append(Or([out, Not(a), Not(b)]))
 
-            self._step_rotations(rotations, main_factor_idx)
+            segment += 1
 
             i += diagonal_length * sustain_count
+
+        if released:
+            backend_request.ll_requests.append(
+                LowLevelRequest("LT", self.may_release + 1, released))
 
         (cnf, new_fresh) = block.cnf_fn(And(ands), backend_request.fresh)
         backend_request.cnfs.append(cnf)
@@ -1140,46 +1375,45 @@ class LatinSquare(Constraint):
     def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
         if len(self.factors) == 1:
             return True
+        cycle = self._rotation_cycle()
+        return any(len(self._strays(lambda f, t: sample[f][t].name, block, cycle, shift))
+                   <= self.may_release for shift in range(len(cycle)))
 
+    def released_participants(self, experiment: dict, block: Block) -> List[int]:
+        """The participants in a synthesized experiment whose trials do not
+        follow the pattern. A released participant that happens to land on its
+        diagonal anyway did follow it, so it is not listed."""
+        if len(self.factors) == 1:
+            return []
+        cycle = self._rotation_cycle()
+        return min((self._strays(lambda f, t: experiment[f.name][t], block, cycle, shift)
+                    for shift in range(len(cycle))), key=len)
+
+    def _strays(self, level_name, block: Block, cycle, shift) -> List[int]:
+        """Participants that break the pattern when the cycle starts at `shift`.
+        `level_name(factor, trial)` reads a sample in whichever form it comes."""
         (diagonal_length, main_factor_idx) = self._get_shape()
-
-        level_lists = [list(f.levels) for f in self.factors]
         sustain_count = block.sustain_count(self.factors[0])
-        preamble_size = block.factor_preamble_size(self.factors[0])
-        num_trials = block.trials_per_sample()
+        num_trials = block._trials_per_sample()
         main_factor = self.factors[main_factor_idx]
+        names = [l.name for l in main_factor.levels]
 
-        i = preamble_size
-        rotations = self._make_rotations()
+        strays = []
+        i = block.factor_preamble_size(self.factors[0])
+        segment = 0
         while i < num_trials:
-            # For each trial in the segment:
-            for j in range(0, diagonal_length):
-                if i+j < num_trials:
-                    # Each possible choice of the main factor determines
-                    # the other factors
-                    k = 0
-                    for idx, l in enumerate(main_factor.levels):
-                        if sample[main_factor][i+j] is l:
-                            k = idx
-                    for idx, f in enumerate(self.factors):
-                        expect_l = f.levels[(k + rotations[idx]) % len(f.levels)]
-                        if not sample[f][i+j] is expect_l:
-                            return False
-
-            # Make sure main-factor selections are unique
-            found = {}
-            for j in range(0, diagonal_length):
-                if i+j < num_trials:
-                    f = sample[main_factor][i+j]
-                    if f in found:
-                        return False
-                    found[f] = True
-
-            self._step_rotations(rotations, main_factor_idx)
-
+            rotations = cycle[(segment + shift) % len(cycle)]
+            trials = [i + j for j in range(diagonal_length) if i + j < num_trials]
+            mains = [level_name(main_factor, t) for t in trials]
+            follows = len(set(mains)) == len(mains) and all(
+                level_name(f, t) == f.levels[(names.index(m) + rotations[idx]) % len(f.levels)].name
+                for t, m in zip(trials, mains)
+                for idx, f in enumerate(self.factors))
+            if not follows:
+                strays.append(segment)
+            segment += 1
             i += diagonal_length * sustain_count
-
-        return True
+        return strays
 
     def derivable_factors(self, block: Block) -> Tuple[List[Factor], List[Factor]]:
         (diagonal_length, main_factor_idx) = self._get_shape()
@@ -1222,7 +1456,7 @@ class Sequential(Constraint):
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
         sustain_count = block.sustain_count(self.factor)
         preamble_size = block.factor_preamble_size(self.factor)
-        num_trials = block.trials_per_sample()
+        num_trials = block._trials_per_sample()
         f = self.factor
         
         i = preamble_size
@@ -1244,7 +1478,7 @@ class Sequential(Constraint):
     def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
         sustain_count = block.sustain_count(self.factor)
         preamble_size = block.factor_preamble_size(self.factor)
-        num_trials = block.trials_per_sample()
+        num_trials = block._trials_per_sample()
         f = self.factor
 
         i = preamble_size
@@ -1275,30 +1509,76 @@ def _val_name(x):
 
 class CoverAllCombinations(Constraint):
     """Requires that the trials of an experiment collectively include every realizable
-    combination of `factors` at least once.
+    combination of `factors` at least once, plus a weaker requirement for each
+    factor named in `optional`.
 
     Factors left out of a crossing are otherwise assigned freely by the solver; this
     constraint coordinates those free choices so that the union of all trials covers
     every combination. The number of trials needed is computed automatically and the
     block is grown to fit (see the auto-sizing notes on the block constructors).
 
+    The two groups carry different guarantees. The positional `factors` must
+    appear in combination with one another---every combination of their levels.
+    A factor named in `optional` needs only each of its own levels to appear
+    somewhere, in no particular combination, which trades coverage for a shorter
+    experiment. A factor may not be in both groups.
+
     Usage::
 
         Nest(outer, inner, [CoverAllCombinations(color, word)])
         CrossBlock(design, crossing, [CoverAllCombinations(color, word)])
+        CrossBlock(design, crossing, [CoverAllCombinations(color, word,
+                                                           optional=[cue])])
     """
 
-    def __init__(self, *factors):
+    def __init__(self, *factors, optional=[]):
         who = "CoverAllCombinations"
-        factor_list = list(factors)
-        if factor_list == []:
+        required = list(factors)
+        argcheck(who, required, make_islistof(Factor), "factors")
+        # Checked before list(), so that a non-iterable (e.g. a stray boolean)
+        # reports the parameter by name instead of raising from the conversion.
+        argcheck(who, optional, make_islistof(Factor), "optional")
+        self.required = required
+        self.optional = cast(List[Factor], [])
+        for f in optional:
+            if f in required:
+                raise ValueError((who,
+                                  "'{}' is both required and optional; a factor belongs "
+                                  "to one group or the other".format(f.name)))
+            if f not in self.optional:
+                self.optional.append(f)
+        # Every factor the constraint governs, whichever guarantee it carries.
+        self.factors = self.required + self.optional
+        if self.factors == []:
             raise ValueError(who, "factor list must be non-empty")
-        argcheck(who, factor_list, make_islistof(Factor), "factors")
-        self.factors = factor_list
+        # How many optional factors have been given up so far.
+        self.dropped = 0
+        self.groups = self._grouping_after(0)
         # Set by Nest during construction: the inner block whose crossing determines
         # which listed factors are pinned vs. free. None for other block types, in
         # which case the attached block itself is analyzed.
         self._inner_block = cast(Optional[MultiCrossBlockRepeat], None)
+
+    def _grouping_after(self, dropped: int) -> List[List[Factor]]:
+        """Coverage requirements once `dropped` optional factors have been given
+        up, last in the list first.
+
+        A factor still kept is crossed with the others, so their combinations
+        must all appear. A factor given up forms a group of its own, which asks
+        only that each of its own levels appears somewhere."""
+        keep_count = len(self.optional) - dropped
+        kept = self.required + self.optional[:keep_count]
+        return (cast(List[List[Factor]], [kept] if kept else [])
+                + [[f] for f in self.optional[keep_count:]])
+
+    def drop_one(self) -> Factor:
+        """Give up the last optional factor still kept, and report it."""
+        self.dropped += 1
+        self.groups = self._grouping_after(self.dropped)
+        return self.optional[len(self.optional) - self.dropped]
+
+    def can_drop(self) -> bool:
+        return self.dropped < len(self.optional)
 
     # ~~~~~~~~~~~~~~ Coverage analysis (the "K" computation) ~~~~~~~~~~~~~~
 
@@ -1337,11 +1617,11 @@ class CoverAllCombinations(Constraint):
                         return True
         return False
 
-    def _coverage_analysis(self, block, exclusion_block=None):
-        """Structural analysis over `self.factors` for the given analysis block.
-        When `exclusion_block` is given (e.g. the merged block of a Nest), its
-        exclusions are folded into realizability as well, so that an Exclude at
-        any level simply removes combinations from the required set.
+    def _coverage_analysis(self, block, factors, exclusion_block=None):
+        """Structural analysis over `factors` (one coverage group) for the given
+        analysis block. When `exclusion_block` is given (e.g. the merged block of
+        a Nest), its exclusions are folded into realizability as well, so that an
+        Exclude at any level simply removes combinations from the required set.
 
         Returns ``(R, forced, R_free, slots, combo_levels, slot_weights,
         forced_weights)`` where:
@@ -1359,7 +1639,7 @@ class CoverAllCombinations(Constraint):
         - ``forced_weights``: per forced combo, its occurrences per instance
           (sum of the combination weights of the cells that force it).
         """
-        listed = self.factors
+        listed = factors
         crossing_factors = self._cell_factors(block)
         if not crossing_factors:
             return (set(), set(), set(), [], {}, [], {})
@@ -1411,11 +1691,16 @@ class CoverAllCombinations(Constraint):
         return (R, forced, R_free, slots, combo_levels, slot_weights, forced_weights)
 
     def required_instances(self, block=None):
-        """Minimum number of instances (K) needed to cover ``R_free``."""
+        """Minimum number of instances (K) needed to cover ``R_free``, over the
+        largest of the coverage groups."""
         if block is None:
             block = self._inner_block
-        (_, _, R_free, slots, _, slot_weights, _) = self._coverage_analysis(block)
-        return self._min_instances(R_free, slots, slot_weights)
+        k = 1
+        for group in self.groups:
+            (_, _, R_free, slots, _, slot_weights, _) = \
+                self._coverage_analysis(block, group)
+            k = max(k, self._min_instances(R_free, slots, slot_weights))
+        return k
 
     def _relevant_constraints(self, sizing_block):
         """The sizing block's constraints that are statically reconciled into the
@@ -1436,19 +1721,29 @@ class CoverAllCombinations(Constraint):
                 seqs.append(ct)
         return (pins, caps, seqs)
 
+    @staticmethod
+    def _cap_demand(ct, k, R_free, forced, forced_weights) -> int:
+        """The occurrences an ExactlyK's level is driven to at `k` instances:
+        each forced combination at its per-instance weight, plus one for each
+        free combination that contains the level.
+
+        Only the forced term grows with `k`, so `k` = 1 gives the floor across
+        every instance count, and a larger `k` always demands at least as much."""
+        fname, lname = ct.level.factor.name, ct.level.name
+        forced_l = sum(forced_weights.get(c, 1) for c in forced if (fname, lname) in c)
+        free_l = sum(1 for c in R_free if (fname, lname) in c)
+        return k * forced_l + free_l
+
     def _feasible_at(self, k, instance_len, R_free, forced, slots, pins, caps,
                      seq_free, sizing_block, slot_weights=None, forced_weights={}):
         """Whether coverage is achievable with `k` instances, once the statically
         modeled constraint effects are folded in jointly."""
-        # ExactlyK caps: the capped level's minimum occurrences at k instances are
-        # k * (forced occurrences per instance) + (one per required free combo).
-        # The forced term grows with k, so feasibility is NOT monotone in k —
+        # A cap's demand grows with k, so feasibility is NOT monotone in k —
         # which is why the caller scans k linearly instead of binary-searching.
+        # `caps` carries only the binding caps; ones that `Relax` authorized are
+        # reconciled by the caller against the K the scan settles on.
         for ct in caps:
-            fname, lname = ct.level.factor.name, ct.level.name
-            forced_l = sum(forced_weights.get(c, 1) for c in forced if (fname, lname) in c)
-            free_l = sum(1 for c in R_free if (fname, lname) in c)
-            if k * forced_l + free_l > ct.k:
+            if self._cap_demand(ct, k, R_free, forced, forced_weights) > ct.k:
                 return False
         if seq_free:
             return self._positional_feasible(k, instance_len, R_free, seq_free,
@@ -1506,27 +1801,10 @@ class CoverAllCombinations(Constraint):
         for c in analysis.crossings:
             if c is not cell_crossing and any(f in c for f in self.factors):
                 return 0
-        (R, forced, R_free, slots, _, slot_weights, forced_weights) = \
-            self._coverage_analysis(analysis, exclusion_block=block)
         (pins, caps, seqs) = self._relevant_constraints(block)
-        # Definitive check: `required` = the capped level's occurrences at K=1
-        # (each free combo at least once + each forced combo at its per-instance
-        # weight). Adding instances only increases the forced term, so a cap
-        # below this can never be reconciled at any K.
-        for ct in caps:
-            fname, lname = ct.level.factor.name, ct.level.name
-            required = (sum(1 for c in R_free if (fname, lname) in c)
-                        + sum(forced_weights.get(c, 1) for c in forced
-                              if (fname, lname) in c))
-            if required > ct.k:
-                raise ValueError((who,
-                                  "covering all combinations requires at least {} trials "
-                                  "with '{} {}' but an ExactlyK constraint allows exactly "
-                                  "{}".format(required, fname, lname, ct.k)))
-        k_opt = self._min_instances(R_free, slots, slot_weights)
         if analysis is not block:
             # Nest: one instance = one inner-block pass.
-            instance_len = analysis.trials_per_sample() - analysis.common_preamble_size()
+            instance_len = analysis._trials_per_sample() - analysis.common_preamble_size()
         else:
             # crossing_size already folds in the crossing's sustain count.
             instance_len = block.crossing_size(cell_crossing)
@@ -1535,21 +1813,15 @@ class CoverAllCombinations(Constraint):
         # Sequential enrichment applies to listed factors the cells leave free.
         cell_factors = self._cell_factors(analysis)
         seq_free = [ct for ct in seqs if ct.factor not in cell_factors]
-        # Scan ceiling: |R_free| instances provably suffice for the plain model
-        # (see _min_instances), so twice that (or twice k_opt) leaves headroom
-        # for what constraints consume; exhausting it => irreconcilable.
-        cap = max(len(R), k_opt) * 2
-        k = k_opt
-        while k <= cap:
-            if self._feasible_at(k, instance_len, R_free, forced, slots, pins, caps,
-                                 seq_free, block, slot_weights, forced_weights):
-                break
-            k += 1
-        else:
-            conflicting = [repr(ct) for ct in (pins + caps + seq_free)]
-            raise ValueError((who,
-                              "no trial count up to {} instances reconciles coverage with "
-                              "the other constraints ({})".format(cap, ", ".join(conflicting))))
+        # Each group is sized on its own and the block takes the largest K: one
+        # trial serves one combination from every group at once, so the groups
+        # do not add up. A priority list only ever produces groups that are
+        # disjoint in the factors the cells leave free, so the per-group counts
+        # are independent and the largest is exact rather than a lower bound.
+        k = 1
+        for group in self.groups:
+            k = max(k, self._instances_for_group(block, analysis, group, instance_len,
+                                                 pins, caps, seq_free, who))
         total = k * instance_len
         # Round up to complete passes of every crossing. Iterating settles on a
         # common multiple; the iteration bound avoids chasing a large LCM when
@@ -1564,6 +1836,136 @@ class CoverAllCombinations(Constraint):
                 break
             total = rounded
         return total
+
+    def _instances_for_group(self, block, analysis, group, instance_len,
+                             pins, caps, seq_free, who) -> int:
+        """Instances (K) needed for one coverage group, with the statically
+        modeled effects of the block's other constraints folded in.
+
+        The ExactlyK arithmetic here counts one group's requirements. Across
+        several groups it therefore under-counts a level's total demand; the
+        residual is left to the solver, as the in-a-row family and LatinSquare
+        already are."""
+        (R, forced, R_free, slots, _, slot_weights, forced_weights) = \
+            self._coverage_analysis(analysis, group, exclusion_block=block)
+        binding = []
+        relaxable = []
+        for ct in caps:
+            rl = ct.relaxation
+            if rl is None:
+                binding.append(ct)
+            else:
+                relaxable.append((ct, rl))
+        # Definitive check: a cap below the K=1 demand (see _cap_demand) can be
+        # reconciled at no instance count at all, so it fails here rather than
+        # after a scan that cannot succeed.
+        for ct in binding:
+            required = self._cap_demand(ct, 1, R_free, forced, forced_weights)
+            if required > ct.k:
+                raise ValueError((who,
+                                  "covering all combinations requires at least {} trials "
+                                  "with '{} {}' but an ExactlyK constraint allows exactly "
+                                  "{}".format(required, ct.level.factor.name,
+                                              ct.level.name, ct.k)))
+        k_opt = self._min_instances(R_free, slots, slot_weights)
+        # Scan ceiling: |R_free| instances provably suffice for the plain model
+        # (see _min_instances), so twice that (or twice k_opt) leaves headroom
+        # for what constraints consume; exhausting it => irreconcilable.
+        cap = max(len(R), k_opt) * 2
+        k = k_opt
+        while k <= cap:
+            if self._feasible_at(k, instance_len, R_free, forced, slots, pins, binding,
+                                 seq_free, block, slot_weights, forced_weights):
+                # The scan rises from the floor, so this is the smallest feasible
+                # K, and since demand grows with K it is also the K that asks the
+                # least of the relaxable caps.
+                deficits = []
+                for (ct, rl) in relaxable:
+                    demand = self._cap_demand(ct, k, R_free, forced, forced_weights)
+                    # Demand under the cap is no conflict: the model counts a
+                    # minimum, and the solver can reach the equality using the
+                    # occurrences the crossing leaves free.
+                    if demand > ct.k:
+                        deficits.append((ct, rl, demand))
+                if deficits:
+                    raise _CapConflict(deficits)
+                return k
+            k += 1
+        conflicting = [repr(ct) for ct in (pins + caps + seq_free)]
+        raise ValueError((who,
+                          "no trial count up to {} instances reconciles coverage with "
+                          "the other constraints ({})".format(cap, ", ".join(conflicting))))
+
+    def reconcile_trials(self, block) -> int:
+        """`autosize_trials`, plus the widening that `Relax` authorizes.
+
+        `autosize_trials` stays a pure computation so that this can re-run it
+        after each repair: a widened cap changes the coverage model, so sizing
+        is recomputed rather than patched.
+
+        Every pass either returns or raises some cap by at least one, and every
+        budget is finite, so the authorized slack bounds the number of passes."""
+        who = "CoverAllCombinations"
+        for _ in range(self._relaxation_budget(block) + 1):
+            try:
+                total = self.autosize_trials(block)
+            except _CapConflict as conflict:
+                for (ct, rl, needed) in conflict.deficits:
+                    if not rl.permits(ct.k, needed):
+                        raise ValueError((who,
+                                          "covering all combinations requires {} trials "
+                                          "with '{} {}', but the ExactlyK constraint allows "
+                                          "{} and Relax authorizes a change of only {}"
+                                          .format(needed, ct.level.factor.name,
+                                                  ct.level.name, rl.base_k(ct.k), rl.by)))
+                    if rl.original_k is None:
+                        rl.original_k = ct.k
+                    rl.applied_k = needed
+                    rl.applied_for = "{} requires".format(repr(self))
+                    ct.k = needed
+                continue
+            self._record_relaxations(block)
+            return total
+        raise ValueError((who,
+                          "coverage sizing did not settle after applying every "
+                          "authorized relaxation"))
+
+    @staticmethod
+    def _relaxation_budget(block) -> int:
+        """Total slack `Relax` authorized across the block's ExactlyK caps."""
+        total = 0
+        for ct in block.constraints:
+            if isinstance(ct, ExactlyK) and ct.relaxation is not None:
+                total += ct.relaxation.by
+        return total
+
+    @staticmethod
+    def _record_relaxations(block) -> None:
+        record_concessions(block)
+
+    def sizing_message(self, total) -> str:
+        """The line a block reports as it sizes itself for coverage. Named
+        factors are the ones already given up, so nothing is listed until a drop
+        has happened."""
+        msg = "{} requires {} trials.".format(repr(self), total)
+        given_up = self.optional[len(self.optional) - self.dropped:] if self.dropped else []
+        if given_up:
+            msg += " ({}: each level appears at least once)".format(
+                ", ".join(str(f.name) for f in given_up))
+        return msg
+
+    def optional_hint(self) -> Optional[str]:
+        """What could still be moved to `optional`, or None when there is
+        nothing worth suggesting: with one factor, giving it up leaves coverage
+        asking almost nothing.
+
+        Worded as a condition because a factor in `optional` is given up only
+        when the design has no solution, so this cannot promise fewer trials."""
+        if not self.required or len(self.factors) < 2:
+            return None
+        return ("Any of {} can be moved to `optional`, to be given up for a "
+                "shorter experiment if no solution is found."
+                .format(", ".join(str(f.name) for f in self.required)))
 
     @staticmethod
     def _k_lower_bound(R_free, slots, slot_weights=None):
@@ -1649,9 +2051,16 @@ class CoverAllCombinations(Constraint):
         return any(factor.uses_factor(f) for factor in self.factors)
 
     def desugar(self, replacements: dict) -> List[Constraint]:
-        factors = [replacements.get(f, [f, f])[1] for f in self.factors]
-        c = CoverAllCombinations(*factors)
+        def replace(fs):
+            return [replacements.get(f, [f, f])[1] for f in fs]
+        # Rebuilding through the constructor re-derives the groups from the
+        # mapped factors, so no group can keep a pre-desugar factor that the
+        # block no longer has.
+        c = CoverAllCombinations(*replace(self.required),
+                                 optional=replace(self.optional))
         c._inner_block = self._inner_block
+        c.dropped = self.dropped
+        c.groups = c._grouping_after(c.dropped)
         return [c]
 
     def validate(self, block: Block) -> None:
@@ -1666,48 +2075,56 @@ class CoverAllCombinations(Constraint):
             validate_factor(block, f)
 
     def apply(self, block: Block, backend_request: BackendRequest) -> None:
-        (_, _, R_free, _, combo_levels, _, _) = self._coverage_analysis(
-            self._analysis_block(block), exclusion_block=block)
-        if not R_free:
-            return
         preamble = block.common_preamble_size()
-        num_trials = block.trials_per_sample()
+        num_trials = block._trials_per_sample()
         trials = list(range(1 + preamble, num_trials + 1))
 
         fresh = backend_request.fresh
         formula_parts = cast(List[FormulaWithIff], [])
-        for combo in R_free:
-            levels = combo_levels[combo]
-            state_vars = []
-            for t in trials:
-                sv = fresh
-                fresh += 1
-                state_vars.append(sv)
-                formula_parts.append(Iff(sv, And(list(block.encode_combination(levels, t)))))
-            # At least one trial must instantiate this combination.
-            formula_parts.append(Or(state_vars))
+        analysis = self._analysis_block(block)
+        for group in self.groups:
+            (_, _, R_free, _, combo_levels, _, _) = self._coverage_analysis(
+                analysis, group, exclusion_block=block)
+            # A group's combinations name only its own factors, so a demoted
+            # singleton asks for its level alone; encode_combination takes the
+            # partial assignment as-is.
+            for combo in R_free:
+                levels = combo_levels[combo]
+                state_vars = []
+                for t in trials:
+                    sv = fresh
+                    fresh += 1
+                    state_vars.append(sv)
+                    formula_parts.append(Iff(sv, And(list(block.encode_combination(levels, t)))))
+                # At least one trial must instantiate this combination.
+                formula_parts.append(Or(state_vars))
+        if not formula_parts:
+            return
 
         (cnf, new_fresh) = block.cnf_fn(And(formula_parts), fresh)
         backend_request.cnfs.append(cnf)
         backend_request.fresh = new_fresh
 
     def potential_sample_conforms(self, sample: dict, block: Block) -> bool:
-        (_, _, R_free, _, _, _, _) = self._coverage_analysis(
-            self._analysis_block(block), exclusion_block=block)
-        if not R_free:
-            return True
-        num_trials = block.trials_per_sample()
-        for combo in R_free:
-            need = dict(combo)  # factor_name -> level_name
-            found = False
-            for t in range(num_trials):
-                if all(sample[f][t].name == need[f.name] for f in self.factors):
-                    found = True
-                    break
-            if not found:
-                return False
+        num_trials = block._trials_per_sample()
+        analysis = self._analysis_block(block)
+        for group in self.groups:
+            (_, _, R_free, _, _, _, _) = self._coverage_analysis(
+                analysis, group, exclusion_block=block)
+            for combo in R_free:
+                need = dict(combo)  # factor_name -> level_name
+                found = False
+                for t in range(num_trials):
+                    if all(sample[f][t].name == need[f.name] for f in group):
+                        found = True
+                        break
+                if not found:
+                    return False
         return True
 
     def __repr__(self):
-        return "CoverAllCombinations({})".format(
-            ", ".join([f.name for f in self.factors]))
+        args = [f.name for f in self.required]
+        if self.optional:
+            args.append("optional=[{}]".format(
+                ", ".join(f.name for f in self.optional)))
+        return "CoverAllCombinations({})".format(", ".join(args))

@@ -17,6 +17,7 @@ from ..cnf import CNF, Var
 
 __all__ = [
     'AssertionType', 'GenerationRequest', 'SampleType', 'ProblemSpecification', 'Solution',
+    'SolveOutcome',
     'combine_and_save_cnf', 'combine_cnf_with_requests', 'save_cnf', 'temporary_cnf_file'
 ]
 
@@ -36,6 +37,16 @@ def temporary_cnf_file(base_path: Path = Path('.'), suffix: str = ".cnf") -> Ite
     finally:
         if cnf_file.exists():
             cnf_file.unlink()
+
+
+class SolveOutcome(Enum):
+    """Why a solver run produced the samples it did."""
+    #: At least one solution was found.
+    SATISFIED = auto()
+    #: The formula has no solution.
+    UNSATISFIABLE = auto()
+    #: The solver reported neither, e.g. it crashed or timed out.
+    UNKNOWN = auto()
 
 
 class AssertionType(Enum):

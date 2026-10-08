@@ -31,7 +31,7 @@ def __generate_encoding_diagram(blk: Block) -> str:
     diagram_str = ""
 
     design_size = blk.variables_per_trial()
-    num_trials = blk.trials_per_sample()
+    num_trials = blk._trials_per_sample()
     num_vars = blk.variables_per_sample()
 
     largest_number_len = len(str(num_vars))

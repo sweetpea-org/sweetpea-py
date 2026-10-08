@@ -3,6 +3,7 @@ from typing import List, cast
 from itertools import repeat
 
 from sweetpea._internal.block import Block
+from sweetpea._internal.core import SolveOutcome
 from sweetpea._internal.iter import intersperse
 
 
@@ -10,9 +11,13 @@ from sweetpea._internal.iter import intersperse
 Data object for sampling result.
 """
 class SamplingResult:
-    def __init__(self, samples: List[dict], metrics: dict) -> None:
+    def __init__(self, samples: List[dict], metrics: dict,
+                 outcome: SolveOutcome = SolveOutcome.UNKNOWN) -> None:
         self.samples = samples
         self.metrics = metrics
+        # Why `samples` is as short as it is. Strategies that cannot tell leave
+        # this UNKNOWN, which never triggers a fallback.
+        self.outcome = outcome
 
 """
 Generic interface for sampling strategies.
@@ -79,7 +84,7 @@ class Gen(ABC):
             #level_names = list(intersperse('', level_names, f.levels[0].window.stride - 1))
             #level_names = list(repeat('', f.levels[0].window.width - 1)) + level_names
             level_names_fill = []
-            for n in range(block.trials_per_sample()):
+            for n in range(block._trials_per_sample()):
                 level_names_fill.append(level_names.pop(0) if f.applies_to_trial(n//sustain_count+1) else '')
             experiment[f.name] = level_names_fill
 
