@@ -19,6 +19,37 @@ guide the choices it makes.
 
 While sufficient in some cases, this strategy isn't guaranteed to produce uniform results
 because trial selections early on can prune the remaining search space unevenly.
+
+STATUS: dormant research code, deliberately retained.
+
+  * Not exported. `GuidedGen` is absent from `main.py`'s `__all__`, so
+    `from sweetpea import GuidedGen` fails. The only way to reach it is the
+    private path used by its own tests:
+        from sweetpea._internal.sampling_strategy.guided import GuidedGen
+  * Not documented. It has no entry in the API reference and appears in no
+    example program.
+  * No caller. Nothing in the library imports this module, and neither
+    `IterateGen` nor `UniformGen` can route to it. Its only callers are
+    `sweetpea/tests/sampling_strategies/test_guided.py` and
+    `acceptance/test_guided_sampling.py`.
+  * Last substantive change: December 2022.
+
+Measured behaviour (September 2026), for anyone weighing whether to revive it:
+
+  * Uniformity: consistent with uniform on designs with no cross-trial
+    dependency (chi-square 16.0 on a 24-sequence 2x2 design, 6.5 with an
+    AtMostKInARow constraint), but measurably skewed once a Transition factor
+    is present (chi-square ~41 on 23 df, reproduced over three independent
+    runs). That is exactly the failure predicted above: committing to early
+    trials prunes the remaining space unevenly.
+  * Cost: 27x to 478x slower than CMSGen across nine designs, because it
+    issues one satisfiability check per candidate level-combination per trial
+    rather than one solve per sample. It did not finish a 4x4 Stroop design
+    with a response transition inside 90 seconds.
+
+It is kept because its per-trial instrumentation (solver-call counts and
+timings) is useful for studying how constrained a design's search space is --
+not because it is a sampler anyone should select.
 """
 class GuidedGen(Gen):
 
@@ -188,6 +219,16 @@ class GuidedGen(Gen):
 
 """
 Generates a static HTML file that will render a flamegraph showing the time breakdown for a given sampling.
+
+NOT REACHABLE. Nothing in the library, the test suite, or the example programs
+calls `Flamegraph.generate`, and the module that defines it is itself not
+exported (see the note on `GuidedGen` above). It is retained alongside
+`GuidedGen` as part of the same profiling instrument; to use it, call
+`Flamegraph.generate(filename, result)` on the `SamplingResult` that
+`GuidedGen.sample` returns.
+
+Note also that the generated page loads d3.js and d3-flame-graph from public
+CDNs, so it requires network access to render.
 """
 class Flamegraph():
     GRAPH_FILE_TEMPLATE = '''

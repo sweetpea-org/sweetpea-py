@@ -44,10 +44,22 @@ class RandomGen(Gen):
     def sample(block: Block, sample_count: int) -> SamplingResult:
         return RandomGen.__sample(block, sample_count, 0)
 
-    def __init__(self, acceptable_error):
+    def __init__(self, acceptable_error: int = 0, seed: Optional[int] = None):
+        """
+        :param acceptable_error: With derived factors in the crossing, the number
+                                 of combinations allowed to be missing.
+        :param seed: Random seed. ``None`` (the default) leaves the random number
+                     generator alone, so repeated runs differ. Supplying an
+                     integer seeds it, making a run reproducible. Note that this
+                     seeds the process-wide generators in `random` and `numpy`.
+        """
         self.acceptable_error = acceptable_error
+        self.seed = seed
 
     def sample_object(self, block: Block, sample_count: int) -> SamplingResult:
+        if self.seed is not None:
+            random.seed(self.seed)
+            np.random.seed(self.seed % (2 ** 32))
         return RandomGen.__sample(block, sample_count, self.acceptable_error)
 
     @staticmethod
@@ -124,7 +136,7 @@ class RandomGen(Gen):
 
         metrics['sample_count'] = sample_count
         metrics['total_rejected'] = total_rejected
-        metrics['avg_rejected'] = total_rejected / sample_count
+        metrics['avg_rejected'] = (total_rejected / sample_count) if sample_count else 0
         if (total_rejected > 10000):
             print("")
 

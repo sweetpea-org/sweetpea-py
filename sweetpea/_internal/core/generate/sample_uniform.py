@@ -3,10 +3,10 @@
 """
 
 
-from typing import List
+from typing import List, Optional
 
 from ..cnf import CNF
-from .tools.unigen import DEFAULT_DOCKER_MODE_ON, call_unigen
+from .tools.unigen import call_unigen
 from .utility import GenerationRequest, Solution, combine_and_save_cnf, temporary_cnf_file
 
 
@@ -18,8 +18,10 @@ def sample_uniform(sample_count: int,
                    fresh: int,
                    support: int,
                    generation_requests: List[GenerationRequest],
-                   use_docker: bool = DEFAULT_DOCKER_MODE_ON,
-                   use_cmsgen: bool = False
+                   use_cmsgen: bool = False,
+                   seed: Optional[int] = None,
+                   epsilon: Optional[float] = None,
+                   delta: Optional[float] = None
                    ) -> List[Solution]:
     """Samples solutions to a CNF problem uniformly. The solution is computed
     using Unigen.
@@ -28,7 +30,9 @@ def sample_uniform(sample_count: int,
         combine_and_save_cnf(cnf_file, initial_cnf, fresh, support, generation_requests)
         solver_name = "UniGen" if not use_cmsgen else "CMSGen"
         print(f"Running {solver_name}...")
-        solution_str = call_unigen(sample_count, cnf_file, docker_mode=use_docker, use_cmsgen=use_cmsgen)
+        solution_str = call_unigen(sample_count, cnf_file,
+                                   use_cmsgen=use_cmsgen, seed=seed,
+                                   epsilon=epsilon, delta=delta)
         # TODO: Validate that skipping the comments is the intended
         #       functionality. The Haskell code doesn't appear to need to do
         #       this, but this could be due to the Unigen upgrade or something

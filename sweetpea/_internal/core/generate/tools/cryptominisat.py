@@ -12,13 +12,12 @@ from subprocess import CompletedProcess, run
 from typing import List, Optional, Tuple
 import warnings
 
-from .docker_utility import DEFAULT_DOCKER_MODE_ON, docker_run
 from .executables import CRYPTOMINISAT_EXE, DEFAULT_DOWNLOAD_IF_MISSING, ensure_executable_available
 from .return_code import ReturnCodeEnum
 from .tool_error import ToolError
 
 
-__all__ = ['DEFAULT_DOCKER_MODE_ON', 'cryptominisat_solve', 'cryptominisat_is_satisfiable']
+__all__ = ['cryptominisat_solve', 'cryptominisat_is_satisfiable']
 
 
 try:
@@ -115,17 +114,6 @@ def _use_pycryptosat_library(input_file: Path) -> CompletedProcess:
     )
 
 
-def call_cryptominisat_docker(input_file: Path) -> CompletedProcess:
-    """Calls CryptoMiniSAT in a Docker container, reading a given file as the
-    input problem.
-    """
-    cms_container = 'msoos/cryptominisat'
-    input_bytes = input_file.read_bytes()
-    args = shell_split("--rm -i -a stdin -a stdout")
-    result = docker_run(cms_container, args, input_bytes)
-    return result
-
-
 def call_cryptominisat_cli(input_file: Path, download_if_missing: bool) -> CompletedProcess:
     """Calls CryptoMiniSAT from the command line, reading a given file as the
     input problem.
@@ -157,8 +145,7 @@ Windows DLL Error: CryptoMiniSAT binary is missing Visual C++ dependencies.
 
 SOLUTIONS:
 1. Use Python mode (recommended): pip install pycryptosat
-2. Use Docker mode: Set docker_mode=True
-3. Install Visual C++ Redistributable 2015-2022:
+2. Install Visual C++ Redistributable 2015-2022:
    - x64: https://aka.ms/vs/17/release/vc_redist.x64.exe
    - x86: https://aka.ms/vs/17/release/vc_redist.x86.exe
 """
@@ -168,23 +155,16 @@ SOLUTIONS:
 
 
 def call_cryptominisat(input_file: Path,
-                       docker_mode: bool = DEFAULT_DOCKER_MODE_ON,
                        download_if_missing: bool = DEFAULT_DOWNLOAD_IF_MISSING
                        ) -> Tuple[str, CryptoMiniSATReturnCode]:
     """Calls CryptoMiniSAT with the given file as input.
 
-    If ``docker_mode`` is ``True``, this will use a Docker container to run
-    CryptoMiniSAT. If it's ``False``, a command-line executable will be used
-    (with automatic fallback to pycryptosat library if available).
-
-    If ``docker_mode`` is ``False`` *and* no local CryptoMiniSAT executable can
-    be found, and if ``download_if_missing`` is ``True``, the needed executable
-    will be automatically downloaded if it's missing.
+    The pycryptosat library is used when it is available; otherwise a
+    command-line executable is used. If no local CryptoMiniSAT executable can
+    be found and ``download_if_missing`` is ``True``, the needed executable
+    will be downloaded automatically.
     """
-    if docker_mode:
-        result = call_cryptominisat_docker(input_file)
-    else:
-        result = call_cryptominisat_cli(input_file, download_if_missing)
+    result = call_cryptominisat_cli(input_file, download_if_missing)
     
     if CryptoMiniSATReturnCode.has_value(result.returncode):
         return (result.stdout.decode(), CryptoMiniSATReturnCode(result.returncode))
@@ -194,14 +174,14 @@ def call_cryptominisat(input_file: Path,
         raise CryptoMiniSATError(result.returncode, stdout, stderr)
 
 
-def cryptominisat_solve(input_file: Path, docker_mode: bool = DEFAULT_DOCKER_MODE_ON) -> Optional[List[int]]:
+def cryptominisat_solve(input_file: Path) -> Optional[List[int]]:
     """Attempts to solve a CNF formula with CryptoMiniSAT and returns the
     result as a list of integers.
 
     Returns an empty list if the result was unsatisfiable, and returns ``None``
     if CryptoMiniSAT encounters some unknown issue.
     """
-    (result, code) = call_cryptominisat(input_file, docker_mode)
+    (result, code) = call_cryptominisat(input_file)
     if code is CryptoMiniSATReturnCode.Unsatisfiable:
         return []
     elif code is CryptoMiniSATReturnCode.Satisfiable:
@@ -212,13 +192,13 @@ def cryptominisat_solve(input_file: Path, docker_mode: bool = DEFAULT_DOCKER_MOD
         return None
 
 
-def cryptominisat_is_satisfiable(input_file: Path, docker_mode: bool = DEFAULT_DOCKER_MODE_ON) -> Optional[bool]:
+def cryptominisat_is_satisfiable(input_file: Path) -> Optional[bool]:
     """Determines whether the CNF formula encoded in the input file is
     satisfiable, according to CryptoMiniSAT.
 
     Returns ``None`` if CryptoMiniSAT encounters an unknown issue.
     """
-    (_, code) = call_cryptominisat(input_file, docker_mode)
+    (_, code) = call_cryptominisat(input_file)
     if code is CryptoMiniSATReturnCode.Satisfiable:
         return True
     elif code is CryptoMiniSATReturnCode.Unsatisfiable:

@@ -763,8 +763,8 @@ In that case, we can add :class:`.ContinuousConstraint` to achieve that.
 
 
 
-Nesting Designs with NestedBlock
---------------------------------
+Nesting Designs with Nest
+-------------------------
 
 Instead of performing multiple crossings in parallel with
 :class:`.MultiCrossBlock` or :class:`.Merge`, some experiments need an
@@ -778,8 +778,8 @@ must have distinct factors in their crossings.
 
 .. _nestedblock-example:
 
-Using NestedBlock
-^^^^^^^^^^^^^^^^^
+Using Nest
+^^^^^^^^^^
 A :class:`.Nest` block keeps an `outer block` combination
 constant over multiple trials representing an instance of the `inner block`.
 

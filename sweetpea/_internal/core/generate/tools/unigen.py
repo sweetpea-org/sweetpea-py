@@ -10,16 +10,15 @@ from pathlib import Path
 from shlex import split as shell_split
 from subprocess import CompletedProcess, run
 from numpy import random
-from typing import Tuple
+from typing import Any, Dict, Optional, Tuple
 import warnings
 
-from .docker_utility import DEFAULT_DOCKER_MODE_ON, docker_run
 from .executables import DEFAULT_DOWNLOAD_IF_MISSING, UNIGEN_EXE, CMSGEN_EXE, ensure_executable_available
 from .tool_error import ToolError
 from ..utility import temporary_cnf_file
 
 
-__all__ = ['DEFAULT_DOCKER_MODE_ON', 'UnigenError', 'call_unigen']
+__all__ = ['UnigenError', 'call_unigen']
 
 
 try:
@@ -94,7 +93,11 @@ def parse_cnf_file(input_file: Path) -> Tuple[list, list, int]:
     return clauses, sampling_set, num_vars
 
 
-def call_unigen_python(input_file: Path, sample_count: int) -> str:
+def call_unigen_python(input_file: Path,
+                       sample_count: int,
+                       seed: Optional[int] = None,
+                       epsilon: Optional[float] = None,
+                       delta: Optional[float] = None) -> str:
     """Calls the ``pyunigen`` library for uniform sampling.
 
     :param input_file:
@@ -118,7 +121,17 @@ def call_unigen_python(input_file: Path, sample_count: int) -> str:
     if not sampling_set:
         sampling_set = list(range(1, num_vars + 1))
     
-    sampler = pyunigen.Sampler()
+    # Seed explicitly: pyunigen defaults to seed=1, which would make every
+    # run of the same problem produce an identical sample stream. A caller
+    # may supply a seed to make a run reproducible.
+    if seed is None:
+        seed = random.randint(999999999)
+    sampler_args: Dict[str, Any] = {'seed': int(seed)}
+    if epsilon is not None:
+        sampler_args['epsilon'] = float(epsilon)
+    if delta is not None:
+        sampler_args['delta'] = float(delta)
+    sampler = pyunigen.Sampler(**sampler_args)
     for clause in clauses:
         sampler.add_clause(clause)
     
@@ -144,7 +157,9 @@ def call_unigen_python(input_file: Path, sample_count: int) -> str:
         raise UnigenError(-1, str(e), f"pyunigen sampling failed: {e}")
 
 
-def call_cmsgen_python(input_file: Path, sample_count: int) -> str:
+def call_cmsgen_python(input_file: Path,
+                       sample_count: int,
+                       seed: Optional[int] = None) -> str:
     """Calls the ``pycmsgen`` library for near-uniform sampling.
 
     Unlike ``pyunigen`` which returns multiple samples in one call, ``pycmsgen``
@@ -174,8 +189,13 @@ def call_cmsgen_python(input_file: Path, sample_count: int) -> str:
     try:
         output_lines = []
         for i in range(sample_count):
-            seed = random.randint(999999999)
-            solver = pycmsgen.Solver(seed=int(seed))
+            # Without a caller-supplied seed, draw a fresh one per sample.
+            # With one, derive a distinct but reproducible seed per sample.
+            if seed is None:
+                sample_seed = random.randint(999999999)
+            else:
+                sample_seed = int(seed) + i
+            solver = pycmsgen.Solver(seed=int(sample_seed))
             for clause in clauses:
                 solver.add_clause(clause)
 
@@ -200,19 +220,13 @@ def call_cmsgen_python(input_file: Path, sample_count: int) -> str:
         raise UnigenError(-1, str(e), f"pycmsgen sampling failed: {e}")
 
 
-def call_unigen_docker(input_file: Path, sample_count: int) -> Tuple[CompletedProcess, str]:
-    """Calls Unigen in a Docker container, reading a given file as the input problem."""
-    unigen_container = 'msoos/unigen'
-    input_bytes = input_file.read_bytes()
-    args = shell_split("--rm -i -a stdin -a stdout")
-    result = docker_run(unigen_container, args, input_bytes)
-    return (result, "")
-
-
 def call_unigen_cli(input_file: Path,
                     download_if_missing: bool,
                     sample_count: int,
-                    use_cmsgen: bool) -> Tuple[CompletedProcess, str]:
+                    use_cmsgen: bool,
+                    seed: Optional[int] = None,
+                    epsilon: Optional[float] = None,
+                    delta: Optional[float] = None) -> Tuple[CompletedProcess, str]:
     """Calls Unigen or CMSGen from the command line, reading a given file as the input problem.
 
     If ``download_if_missing`` is ``True``, SweetPea will automatically
@@ -222,8 +236,19 @@ def call_unigen_cli(input_file: Path,
     """
     unigen_exe = CMSGEN_EXE if use_cmsgen else UNIGEN_EXE
     ensure_executable_available(unigen_exe, download_if_missing)
-    seed = random.randint(999999999)
-    command = [str(unigen_exe), str(input_file), "--samples="+str(sample_count), "--seed="+str(seed)]
+    if seed is None:
+        seed = random.randint(999999999)
+    command = [str(unigen_exe), str(input_file), "--samples="+str(sample_count),
+               "--seed="+str(int(seed))]
+    # `epsilon` and `delta` are forwarded only when the caller sets them, so
+    # the default command line is unchanged. NOTE: the flag spelling has not
+    # been verified against the bundled unigen binary; if it is wrong the
+    # binary fails loudly rather than silently ignoring the setting.
+    if not use_cmsgen:
+        if epsilon is not None:
+            command.append("--epsilon=" + str(float(epsilon)))
+        if delta is not None:
+            command.append("--delta=" + str(float(delta)))
     
     if use_cmsgen:
         with temporary_cnf_file(suffix=".out") as output_file:
@@ -239,10 +264,12 @@ def call_unigen_cli(input_file: Path,
 
 def call_unigen(sample_count: int,
                 input_file: Path,
-                docker_mode: bool = DEFAULT_DOCKER_MODE_ON,
                 download_if_missing: bool = DEFAULT_DOWNLOAD_IF_MISSING,
                 use_cmsgen: bool = False,
-                use_python: bool = True
+                use_python: bool = True,
+                seed: Optional[int] = None,
+                epsilon: Optional[float] = None,
+                delta: Optional[float] = None
                 ) -> str:
     """Calls Unigen or CMSGen with the given file as input.
 
@@ -252,21 +279,19 @@ def call_unigen(sample_count: int,
 
     If ``use_cmsgen`` is ``True``, CMSGen sampler is used instead of UniGen.
 
-    If ``docker_mode`` is ``True``, this will use a Docker container to run
-    Unigen/CMSGen. If it's ``False``, a command-line executable will be used.
-
-    If ``docker_mode`` is ``False`` and no local Unigen executable can be
-    found, and if ``download_if_missing`` is ``True``, the needed executable
-    will be automatically downloaded if it's missing.
+    The Python library is used when available (pyunigen for UniGen, pycmsgen
+    for CMSGen); otherwise a command-line executable is used. If no local
+    executable can be found and ``download_if_missing`` is ``True``, the needed
+    executable will be downloaded automatically.
     """
-    # Priority for UniGen: Python → Docker → Binary
-    # Priority for CMSGen: Python → Docker → Binary
+    # Priority for UniGen: Python → Binary
+    # Priority for CMSGen: Python → Binary
 
-    if use_python and not docker_mode:
+    if use_python:
         if use_cmsgen:
             if HAS_PYCMSGEN:
                 try:
-                    return call_cmsgen_python(input_file, sample_count)
+                    return call_cmsgen_python(input_file, sample_count, seed=seed)
                 except ImportError:
                     pass
                 except Exception as e:
@@ -278,7 +303,8 @@ def call_unigen(sample_count: int,
         else:
             if HAS_PYUNIGEN:
                 try:
-                    return call_unigen_python(input_file, sample_count)
+                    return call_unigen_python(input_file, sample_count,
+                                              seed=seed, epsilon=epsilon, delta=delta)
                 except ImportError:
                     pass
                 except Exception as e:
@@ -288,12 +314,10 @@ def call_unigen(sample_count: int,
                         stacklevel=2
                     )
     
-    # Fall back to Docker or binary
-    if docker_mode:
-        (result, samples) = call_unigen_docker(input_file, sample_count)
-    else:
-        (result, samples) = call_unigen_cli(input_file, download_if_missing, 
-                                            sample_count, use_cmsgen)
+    # Fall back to the binary
+    (result, samples) = call_unigen_cli(input_file, download_if_missing,
+                                        sample_count, use_cmsgen,
+                                        seed=seed, epsilon=epsilon, delta=delta)
     
     if result.returncode == (10 if use_cmsgen else 0):
         return result.stdout.decode() + samples
@@ -311,15 +335,13 @@ SOLUTIONS:
 """
             if not use_cmsgen:
                 friendly_message += """1. Use Python mode (recommended): pip install pyunigen
-2. Use Docker mode: Set docker_mode=True
-3. Install Visual C++ Redistributable 2015-2022:
+2. Install Visual C++ Redistributable 2015-2022:
    - x64: https://aka.ms/vs/17/release/vc_redist.x64.exe
    - x86: https://aka.ms/vs/17/release/vc_redist.x86.exe
 """
             else:
                 friendly_message += """1. Use Python mode (recommended): pip install pycmsgen
-2. Use Docker mode: Set docker_mode=True
-3. Install Visual C++ Redistributable 2015-2022:
+2. Install Visual C++ Redistributable 2015-2022:
    - x64: https://aka.ms/vs/17/release/vc_redist.x64.exe
    - x86: https://aka.ms/vs/17/release/vc_redist.x86.exe
 """

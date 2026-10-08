@@ -70,8 +70,6 @@ from sweetpea._internal.sampling_strategy.cmsgen import CMSGen
 from sweetpea._internal.sampling_strategy.random import RandomGen
 from sweetpea._internal.sampling_strategy.smgen import SMGen
 from sweetpea._internal.sampling_strategy.iterate_ilp import IterateILPGen
-from sweetpea._internal.server import build_cnf
-from sweetpea._internal.core.cnf import Var
 from sweetpea._internal.argcheck import argcheck, make_islistof
 
 from sweetpea._internal.distribution import (
@@ -677,37 +675,3 @@ def auto_correlation_scores_sample_within(sample: dict, factor_names: List[str] 
         for f in factor_names:
             res[f] = auto_correlation_score_factor_within(sample, f, k=number_trials, starts=starts)
     return res
-
-
-# TODO: This function isn't called anywhere, so it should be removed.
-def save_cnf(block: Block, filename: str):
-    """Generates a CNF formula from a :class:`.Block` and then writes that CNF
-    formula to the indicated file in the Unigen-specific DIMACS format.
-
-    :param block:
-        A description of a CNF formula as a :class:`.Block`.
-
-    :param filename:
-        The name of the file to write the CNF formula to.
-    """
-    cnf_str = __generate_cnf(block)
-    with open(filename, 'w') as f:
-        f.write(cnf_str)
-
-
-# ~~~~~~~~~~ Helper functions ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# TODO: This should be a method in Block.
-def __generate_cnf(block: Block) -> str:
-    """Converts a :class:`.Block` into a CNF formula and renders that CNF
-    formula in the Unigen-specific DIMACS format.
-
-    :param block:
-        A description of a CNF formula as a :class:`.Block`.
-
-    :returns:
-        The given :class:`.Block` rendered as a Unigen-specific
-        DIMACS-formatted string.
-    """
-    cnf = build_cnf(block)
-    return cnf.as_unigen_string(sampled_variables=[Var(n) for n in block.support_variables()])

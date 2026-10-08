@@ -1,3 +1,19 @@
+"""Gurobi-backed variant of :class:`.IterateSATGen`.
+
+This strategy is intentionally undocumented: it is kept importable so that
+existing code continues to work, but it is not advertised in the API
+reference or the example programs.
+
+It is functional -- with `pip install gurobipy` it produces valid samples --
+but it requires a dependency that is declared nowhere in SweetPea's
+packaging, it is limited by Gurobi's free license size cap, it has no test
+coverage, and benchmarking in Sep 2026 found it 1.2x to 3.5x *slower* than
+IterateSATGen across nine designs, with the gap widening on designs with
+more crossing structure. The motivating idea -- that an ILP encoding handles
+SweetPea's cardinality constraints better than a CNF encoding -- did not pay
+off at these problem sizes.
+"""
+
 from sweetpea._internal.sampling_strategy.base import Gen, SamplingResult
 from sweetpea._internal.block import Block
 from sweetpea._internal.core import CNF

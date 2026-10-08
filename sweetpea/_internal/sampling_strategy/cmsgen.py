@@ -18,5 +18,5 @@ class CMSGen(Gen):
         return 'CMSGen'
 
     @staticmethod
-    def sample(block: Block, sample_count: int, min_search: bool=False) -> SamplingResult:
-        return UniGen.sample(block, sample_count, min_search, use_cmsgen=True)
+    def sample(block: Block, sample_count: int) -> SamplingResult:
+        return UniGen.sample(block, sample_count, use_cmsgen=True)

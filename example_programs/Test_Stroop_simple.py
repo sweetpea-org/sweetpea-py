@@ -6,7 +6,7 @@ sys.path.append("..")
 from sweetpea import (
     Factor, DerivedLevel, WithinTrial, Transition, AtMostKInARow, AtLeastKInARow, Exclude, ExactlyK,
     CrossBlock, synthesize_trials, print_experiments, tabulate_experiments, sample_mismatch_experiment,
-    CMSGen, IterateGen, RandomGen, IterateILPGen,
+    CMSGen, IterateGen, RandomGen,
 )
 from sweetpea._internal.sampling_strategy.random import UCSolutionEnumerator
 """
