@@ -1,9 +1,14 @@
 import { useState } from "react";
 import { api, type Row } from "../api";
-import { SAMPLERS, findFactor, type Check, type Model } from "../model";
+import { SAMPLERS, type Check, type Model } from "../model";
 import { download } from "./CodePane";
 
-type Props = { model: Model; check: Check; onChange: (model: Model) => void };
+type Props = {
+  model: Model;
+  check: Check;
+  onChange: (model: Model) => void;
+  onSample: (rows: Row[] | null) => void;
+};
 type Result = { sequences: Row[][]; log: string; columns: string[] };
 
 const cell = (value: unknown) => {
@@ -18,7 +23,7 @@ function toCsv(columns: string[], sequences: Row[][]): string {
   return [header, ...rows].join("\n") + "\n";
 }
 
-export default function GeneratePanel({ model, check, onChange }: Props) {
+export default function GeneratePanel({ model, check, onChange, onSample }: Props) {
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
@@ -29,8 +34,14 @@ export default function GeneratePanel({ model, check, onChange }: Props) {
     setError(null);
     try {
       const sampled = await api.synthesize(model);
-      if ("error" in sampled) setError(sampled.error);
-      else setResult({ ...sampled, columns: model.factors.map((f) => f.name) });
+      if ("error" in sampled) {
+        setError(sampled.error);
+      } else {
+        // Only factors in some block's design appear in the trials.
+        const first = sampled.sequences[0]?.[0] ?? {};
+        setResult({ ...sampled, columns: model.factors.map((f) => f.name).filter((n) => n in first) });
+        onSample(sampled.sequences[0] ?? null);
+      }
       setShown(0);
     } catch (e) {
       setError(String(e));
@@ -39,11 +50,12 @@ export default function GeneratePanel({ model, check, onChange }: Props) {
     }
   }
 
-  // Each level keeps the color of its position in its factor.
-  const levelClass = (column: string, value: unknown) => {
-    const index = findFactor(model, column)?.levels.findIndex((l) => l.name === value) ?? -1;
-    return index < 0 ? undefined : `lv lv${index % 8}`;
-  };
+  // Per-level colouring, kept for later: the table alternates two row shades instead, because
+  // colouring by position confuses factors whose levels are themselves colours.
+  // const levelClass = (column: string, value: unknown) => {
+  //   const index = findFactor(model, column)?.levels.findIndex((l) => l.name === value) ?? -1;
+  //   return index < 0 ? undefined : `lv lv${index % 8}`;
+  // };
 
   const rows = result?.sequences[shown] ?? [];
 
@@ -100,7 +112,7 @@ export default function GeneratePanel({ model, check, onChange }: Props) {
                     <tr key={t}>
                       <td className="hint">{t + 1}</td>
                       {result.columns.map((c) => (
-                        <td key={c}><span className={levelClass(c, row[c])}>{row[c] ?? "—"}</span></td>
+                        <td key={c}>{row[c] ?? "—"}</td>
                       ))}
                     </tr>
                   ))}

@@ -4,6 +4,7 @@ import pytest
 
 import sweetpea
 from sweetpea_gui.codegen import generate
+from sweetpea_gui.examples import list_examples
 from sweetpea_gui.parse import Unsupported, parse_program
 from sweetpea_gui.run import check, synthesize
 
@@ -30,7 +31,7 @@ def test_generated_code_builds_the_example_block(name, monkeypatch):
     namespace: dict = {}
     exec((EXAMPLES / name).read_text(), namespace)
     model = parse_program((EXAMPLES / name).read_text())
-    assert check(model) == {"trials": namespace["block"]._trials_per_sample()}
+    assert check(model)["trials"] == namespace["block"]._trials_per_sample()
 
 
 def test_rule_forms_read_as_conditions():
@@ -87,9 +88,9 @@ block = CrossBlock([color, size], [color], constraints, require_complete_crossin
 experiments = synthesize_trials(block, 3, RandomGen)
 ''')
     assert model["factors"][0]["levels"] == [{"name": "red", "weight": 2}, {"name": "blue", "weight": 1}]
-    assert model["constraints"][0] == {"type": "AtMostKInARow", "k": 3, "factor": "color", "level": "red"}
-    assert model["constraints"][1]["level"] is None
-    assert (model["samples"], model["sampler"], model["requireCompleteCrossing"]) == (3, "RandomGen", False)
+    assert model["block"]["constraints"][0] == {"type": "AtMostKInARow", "k": 3, "factor": "color", "level": "red"}
+    assert model["block"]["constraints"][1]["level"] is None
+    assert (model["samples"], model["sampler"], model["block"]["requireCompleteCrossing"]) == (3, "RandomGen", False)
     assert parse_program(generate(model)) == model
 
 
@@ -109,7 +110,7 @@ block = CrossBlock([a, b, c], [a], [])
 @pytest.mark.parametrize("source, line", [
     ("x = Factor('x', ['a'])\nfor i in []:\n    pass\n", 3),
     ("x = Factor('x', ['a'])\ny = Factor('y', [DerivedLevel('d', WithinTrial(lambda v: len(v) > 1, [x]))])\n", 3),
-    ("x = Factor('x', ['a'])\nblock = CrossBlock([], [x], [])\n", 3),
+    ("x = Factor('x', ['a'])\nb = CrossBlock([x], [x], [])\nsynthesize_trials(b)\nsynthesize_trials(b)\n", 5),
 ])
 def test_unsupported_code_reports_its_line(source, line):
     with pytest.raises(Unsupported) as e:
@@ -122,7 +123,7 @@ def test_check_reports_sweetpea_errors():
 x = Factor("x", ["a", "b"])
 block = CrossBlock([x], [x], [AtMostKInARow(1, (x, "a"))])
 ''')
-    model["constraints"][0]["level"] = "missing"
+    model["block"]["constraints"][0]["level"] = "missing"
     assert "error" in check(model)
 
 
@@ -132,3 +133,69 @@ def test_synthesize_returns_rows_per_trial():
     result = synthesize(model)
     assert len(result["sequences"]) == 2
     assert all(len(rows) == check(model)["trials"] for rows in result["sequences"])
+
+
+NESTED = '''
+A = Factor("A", ["a1", "a2"])
+B = Factor("B", ["b1", "b2"])
+session = Factor("session", ["s1", "s2"])
+day = Factor("day", ["d1", "d2"])
+inner = CrossBlock([A, B], [A, B], [])
+outer = CrossBlock([session], [session], [])
+nb = Nest(outer_block=outer, inner_block=inner, constraints=[])
+ordered = Merge([nb], constraints=[Sequential(session)])
+nnb = Nest(CrossBlock([day], [day], []), ordered)
+repeated = Repeat(inner, [MinimumTrials(8), AtMostKInARow(1, A)])
+f3 = Factor("f3", ["x", "y", "z"])
+multi = MultiCrossBlock([A, B, f3], [[A, B], [f3]], [], mode=RepeatMode.WEIGHT)
+'''
+
+
+@pytest.mark.parametrize("root, trials", [("nb", 8), ("ordered", 8), ("nnb", 16), ("repeated", 8), ("multi", 4)])
+def test_block_structures_round_trip_with_sweetpea_trial_counts(root, trials):
+    source = NESTED + "experiments = synthesize_trials({}, 1)\n".format(root)
+    model = model_of(source)
+    assert model["block"]["name"] == root
+    assert parse_program(generate(model)) == model
+    namespace: dict = {}
+    exec("from sweetpea import *\n" + NESTED, namespace)
+    nodes = check(model)["nodes"]
+    assert nodes[root]["trials"] == namespace[root]._trials_per_sample() == trials
+    assert all(nodes[n]["trials"] == namespace[n]._trials_per_sample() for n in nodes if n in namespace)
+
+
+def test_nest_reads_outer_and_inner_blocks():
+    block = model_of(NESTED + "synthesize_trials(nnb)\n")["block"]
+    assert block["type"] == "nest" and block["outer"]["crossings"] == [["day"]]
+    merge = block["inner"]
+    assert merge["type"] == "merge" and merge["constraints"] == [{"type": "Sequential", "factor": "session"}]
+    assert [merge["blocks"][0]["outer"]["name"], merge["blocks"][0]["inner"]["name"]] == ["outer", "inner"]
+
+
+def test_inline_blocks_get_generated_names():
+    block = model_of(NESTED + "synthesize_trials(nnb)\n")["block"]
+    assert block["outer"]["name"] == "cross_block_1"
+
+
+def test_modes_read_as_enum_or_string():
+    as_enum = model_of(NESTED + "m = Merge([inner], mode=RepeatMode.WEIGHT, alignment=AlignmentMode.POST_PREAMBLE)\n")
+    as_text = model_of(NESTED + "m = Merge([inner], mode='weight', alignment='post preamble')\n")
+    assert as_enum == as_text
+    assert (as_enum["block"]["mode"], as_enum["block"]["alignment"]) == ("weight", "post preamble")
+    assert "mode=RepeatMode.WEIGHT" in generate(as_enum)
+
+
+def test_root_defaults_to_last_block_created():
+    assert model_of(NESTED)["block"]["name"] == "multi"
+
+
+def test_single_crossing_with_mode_renders_as_multicrossblock():
+    model = model_of(NESTED + "m = MultiCrossBlock([A], [[A]], [], mode=RepeatMode.REPEAT)\n")
+    assert "m = MultiCrossBlock(" in generate(model)
+    assert parse_program(generate(model)) == model
+
+
+@pytest.mark.parametrize("example", list_examples(), ids=lambda e: e["title"])
+def test_every_example_opens_in_the_gui(example):
+    model = parse_program(example["code"])
+    assert "trials" in check(model)

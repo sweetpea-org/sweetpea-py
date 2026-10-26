@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
-  TEMPLATES, defaultRule, renameFactor, renameLevel, ruleUses, uniqueName, usages,
-  type Factor, type Kind, type Level, type Model,
+  TEMPLATES, defaultRule, dropFactor, leaves, renameFactor, renameLevel, ruleUses, uniqueName, updateBlock, usages,
+  type Factor, type Kind, type LeafBlock, type Level, type Model,
 } from "../model";
 import CommitInput from "./CommitInput";
 import RuleEditor from "./RuleEditor";
@@ -50,8 +50,7 @@ function FactorCard({ model, index, onChange }: Props & { index: number }) {
       alert(`“${factor.name}” is used by ${used.join(", ")}. Remove those first.`);
       return;
     }
-    onChange({ ...model, factors: model.factors.filter((_, i) => i !== index),
-               crossing: model.crossing.filter((n) => n !== factor.name) });
+    onChange(dropFactor(model, factor.name));
   }
 
   function setInputs(inputs: string[]) {
@@ -71,6 +70,11 @@ function FactorCard({ model, index, onChange }: Props & { index: number }) {
           validate={nameTaken(model.factors.map((f) => f.name).filter((n) => n !== factor.name))}
           onCommit={(name) => onChange(renameFactor(model, factor.name, name))} />
         <span className="badge">{factor.kind === "basic" ? "factor" : "derived factor"}</span>
+        {!leaves(model.block).some((b) => b.design.includes(factor.name)) && (
+          <span className="badge warning" title="Add it to a block's design on the Blocks step to include it in trials">
+            not in any block
+          </span>
+        )}
         <button className="small remove" title="Delete factor" onClick={remove}>Delete</button>
       </header>
 
@@ -156,10 +160,20 @@ function FactorCard({ model, index, onChange }: Props & { index: number }) {
 export default function FactorsPanel({ model, onChange }: Props) {
   const names = model.factors.map((f) => f.name);
 
+  // A new factor joins the design of the first block, so that it shows up in trials.
+  function add(factor: Factor) {
+    const first = leaves(model.block)[0];
+    onChange({
+      ...model,
+      factors: [...model.factors, factor],
+      block: updateBlock(model.block, first.name, (b) => ({ ...b, design: [...(b as LeafBlock).design, factor.name] })),
+    });
+  }
+
   function addDerived(key: string) {
     const template = TEMPLATES[key];
     const factor = template.make(model, names.slice(0, template.inputs));
-    onChange({ ...model, factors: [...model.factors, { ...factor, name: uniqueName(names, factor.name) }] });
+    add({ ...factor, name: uniqueName(names, factor.name) });
   }
 
   return (
@@ -172,8 +186,7 @@ export default function FactorsPanel({ model, onChange }: Props) {
         <FactorCard key={i} model={model} index={i} onChange={onChange} />
       ))}
       <div className="add-bar">
-        <button onClick={() => onChange({ ...model, factors: [...model.factors,
-          { name: uniqueName(names, "factor"), kind: "basic", levels: [] }] })}>
+        <button onClick={() => add({ name: uniqueName(names, "factor"), kind: "basic", levels: [] })}>
           + Factor
         </button>
         <select value="" onChange={(e) => addDerived(e.target.value)}>

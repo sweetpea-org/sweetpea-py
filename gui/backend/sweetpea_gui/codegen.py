@@ -4,47 +4,88 @@ SweetPea program."""
 import json
 import keyword
 import re
-from typing import Dict, List
+from typing import Dict, List, Set
 
 from sweetpea._internal.main import __all__ as SWEETPEA_NAMES
 
-RESERVED = {"design", "crossing", "constraints", "block", "experiments", "sweetpea"} | set(SWEETPEA_NAMES)
+RESERVED = {"experiments", "sweetpea"} | set(SWEETPEA_NAMES)
 
 
 def generate(model: dict) -> str:
     """The full program: definitions, then synthesis and printing."""
-    run = ("experiments = synthesize_trials(block, {}, {})\n"
-           "print_experiments(block, experiments)\n").format(model["samples"], model["sampler"])
-    body = definitions(model) + run
+    root = model["block"]["name"]
+    run = ("experiments = synthesize_trials({}, {}, {})\n"
+           "print_experiments({}, experiments)\n").format(root, model["samples"], model["sampler"], root)
+    body = definitions(model) + "\n" + run
     names = [n for n in SWEETPEA_NAMES if re.search(r"\b{}\b".format(n), body)]
     return _imports(names) + "\n" + body
 
 
 def definitions(model: dict) -> str:
-    """Factor, constraint, and block definitions, ending with ``block = ...``."""
-    var = variable_names([f["name"] for f in model["factors"]])
+    """Factor and block definitions; the root block is defined last."""
+    blocks = post_order(model["block"])
+    var = variable_names([f["name"] for f in model["factors"]], {b["name"] for b in blocks})
     factors = "".join(_factor(f, var) + "\n" for f in model["factors"])
-    constraints = "".join("    {},\n".format(_constraint(c, var)) for c in model["constraints"])
-    complete = "" if model["requireCompleteCrossing"] else ", require_complete_crossing=False"
-    return (factors + "\n"
-            + "design = [{}]\n".format(", ".join(var[f["name"]] for f in model["factors"]))
-            + "crossing = [{}]\n".format(", ".join(var[n] for n in model["crossing"]))
-            + "constraints = [\n{}]\n".format(constraints)
-            + "\nblock = CrossBlock(design, crossing, constraints{})\n".format(complete))
+    return factors + "".join("\n" + _block(b, var) for b in blocks)
 
 
-def variable_names(names: List[str]) -> Dict[str, str]:
-    """A distinct Python identifier for each factor name."""
+def children(block: dict) -> List[dict]:
+    return [block[k] for k in ("outer", "inner", "block") if k in block] + block.get("blocks", [])
+
+
+def post_order(block: dict) -> List[dict]:
+    """Blocks with each one after the blocks it contains."""
+    return [b for c in children(block) for b in post_order(c)] + [block]
+
+
+def variable_names(names: List[str], taken: Set[str] = frozenset()) -> Dict[str, str]:
+    """A distinct Python identifier for each factor name, avoiding ``taken``."""
     var: Dict[str, str] = {}
     for name in names:
         base = re.sub(r"\W", "_", name) or "factor"
         if base[0].isdigit():
             base = "f_" + base
         candidate, n = base, 2
-        while candidate in RESERVED or keyword.iskeyword(candidate) or candidate in var.values():
+        while candidate in RESERVED or candidate in taken or keyword.iskeyword(candidate) \
+                or candidate in var.values():
             candidate, n = "{}_{}".format(base, n), n + 1
         var[name] = candidate
     return var
+
+
+def _list(items: List[str]) -> str:
+    return "[{}]".format(", ".join(items))
+
+
+def _enum(enum: str, value: str) -> str:
+    return "{}.{}".format(enum, value.upper().replace(" ", "_"))
+
+
+def _block(block: dict, var: Dict[str, str]) -> str:
+    kind = block["type"]
+    factors = lambda names: _list([var[n] for n in names])
+    if kind == "cross":
+        # CrossBlock takes neither mode nor alignment.
+        multi = len(block["crossings"]) != 1 or block["mode"] or block["alignment"]
+        args = [("design", factors(block["design"])),
+                ("crossings", _list([factors(c) for c in block["crossings"]])) if multi
+                else ("crossing", factors(block["crossings"][0]))]
+        ctor = "MultiCrossBlock" if multi else "CrossBlock"
+    elif kind == "nest":
+        ctor, args = "Nest", [("outer_block", block["outer"]["name"]), ("inner_block", block["inner"]["name"])]
+    elif kind == "merge":
+        ctor, args = "Merge", [("blocks", _list([b["name"] for b in block["blocks"]]))]
+    else:
+        ctor, args = "Repeat", [("block", block["block"]["name"])]
+    constraints = "".join("        {},\n".format(_constraint(c, var)) for c in block["constraints"])
+    args.append(("constraints", "[\n{}    ]".format(constraints) if constraints else "[]"))
+    if block.get("requireCompleteCrossing") is False:
+        args.append(("require_complete_crossing", "False"))
+    if block.get("mode"):
+        args.append(("mode", _enum("RepeatMode", block["mode"])))
+    if block.get("alignment"):
+        args.append(("alignment", _enum("AlignmentMode", block["alignment"])))
+    return "{} = {}(\n{})\n".format(block["name"], ctor, "".join("    {}={},\n".format(k, v) for k, v in args))
 
 
 def _imports(names: List[str]) -> str:

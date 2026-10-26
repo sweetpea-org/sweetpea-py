@@ -50,9 +50,9 @@ functions defined with `def` or `lambda`, `if ...: return True else: return
 False` bodies, calls from one predicate to another, `in` tests, and
 variables for levels, constants, and lists.
 
-The GUI cannot yet show `Window` derivations, `ContinuousFactor`,
-`MultiCrossBlock`, `Merge`/`Nest`/`Repeat`, `Relax`, sampler objects such as
-`RandomGen(acceptable_error=3)`, or code that uses the generated trials.
+The GUI cannot yet show `Window` derivations, `ContinuousFactor`, `Relax`,
+sampler objects such as `RandomGen(acceptable_error=3)`, code that uses the
+generated trials, or a program with more than one `synthesize_trials` call.
 
 ## Design JSON
 
@@ -70,15 +70,42 @@ The GUI cannot yet show `Window` derivations, `ContinuousFactor`,
        {"name": "other", "weight": 1, "rule": null}      // ElseLevel
      ]}
   ],
-  "crossing": ["color", "word"],
-  "constraints": [{"type": "AtMostKInARow", "k": 3, "factor": "color", "level": null}],
-  "requireCompleteCrossing": true,
+  "block": {
+    "type": "cross", "name": "block",
+    "design": ["color", "word", "congruency"],
+    "crossings": [["color", "word"]],
+    "constraints": [{"type": "AtMostKInARow", "k": 3, "factor": "color", "level": null}],
+    "requireCompleteCrossing": true, "mode": null, "alignment": null
+  },
   "samples": 5,
   "sampler": "CMSGen"
 }
 ```
 
-Factors appear in definition order; every factor is in the block's design.
+Factors appear in definition order. A factor that is in no block's design is
+allowed, but it appears in no trials.
+
+A **block** is one of the following. `name` is its Python variable name, and
+each block carries the `constraints` that apply within it.
+
+- `{"type": "cross", design, crossings, requireCompleteCrossing, mode, alignment}`:
+  a `CrossBlock`, or a `MultiCrossBlock` when it has more than one crossing or
+  sets `mode` / `alignment`.
+- `{"type": "nest", outer, inner, alignment}`: `Nest(outer_block, inner_block)`.
+- `{"type": "merge", blocks, mode, alignment}`: `Merge(blocks)`.
+- `{"type": "repeat", block}`: `Repeat(block, constraints)`.
+
+`mode` and `alignment` are `null` for SweetPea's default, or the enum's value,
+such as `"weight"` or `"post preamble"`.
+
+The program samples the root block. When reading code, the root is the block
+passed to `synthesize_trials`, or the last block created if there is none.
+Blocks written inline, without a variable, are given names such as
+`cross_block_1`.
+
+The server's `check` result gives the trials per sequence, plus the
+`trials` and `preamble` of each block by name; the Blocks step draws its
+timeline from these.
 
 A **rule** is one of:
 

@@ -3,6 +3,7 @@ import type { Check, Model } from "./model";
 export type Row = Record<string, string | number | null>;
 export type Rendered = { code: string; check: Check };
 export type Parsed = { model: Model; check: Check } | { error: string; line: number | null };
+export type Example = { title: string; description: string; code: string };
 export type Sampled = { sequences: Row[][]; log: string } | { error: string };
 
 async function post<T>(path: string, body: unknown): Promise<T> {
@@ -18,4 +19,5 @@ export const api = {
   render: (model: Model) => post<Rendered>("/api/render", model),
   parse: (code: string) => post<Parsed>("/api/parse", { code }),
   synthesize: (model: Model) => post<Sampled>("/api/synthesize", model),
+  examples: (): Promise<Example[]> => fetch("/api/examples").then((r) => r.json()),
 };

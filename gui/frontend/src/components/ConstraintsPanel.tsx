@@ -1,4 +1,4 @@
-import { findFactor, type Constraint, type Model } from "../model";
+import { BLOCK_LABELS, allBlocks, findFactor, updateBlock, type Block, type Constraint, type Model } from "../model";
 
 type Props = { model: Model; onChange: (model: Model) => void };
 type Field = "k" | "factor" | "level" | "anyLevel" | "index" | "trials" | "factors" | "optional";
@@ -16,7 +16,7 @@ const TYPES: Record<string, { label: string; help: string; fields: Field[] }> = 
   Sequential: { label: "Sequential", help: "The factor's levels appear in their listed order, starting over after the last.", fields: ["factor"] },
 };
 
-function blank(type: string, model: Model): Constraint {
+function blank(type: string, model: Model, crossed: string[]): Constraint {
   const factor = model.factors[0];
   const level = factor?.levels[0]?.name ?? null;
   const fields = TYPES[type].fields;
@@ -28,7 +28,7 @@ function blank(type: string, model: Model): Constraint {
     ...(fields.includes("anyLevel") && { level: null }),
     ...(fields.includes("index") && { index: 0 }),
     ...(fields.includes("trials") && { trials: 24 }),
-    ...(fields.includes("factors") && { factors: model.crossing.slice() }),
+    ...(fields.includes("factors") && { factors: crossed.slice() }),
     ...(fields.includes("optional") && { optional: [] }),
   };
 }
@@ -100,23 +100,47 @@ function ConstraintCard({ model, constraint: c, onChange, onRemove }: {
   );
 }
 
+export function scopeNote(block: Block): string {
+  return block.type === "cross"
+    ? "These apply within each run of this block."
+    : "These apply across everything inside this block, including where its runs meet.";
+}
+
+/** The constraints of one block, edited in place. */
+export function ConstraintList({ model, block, onChange }: Props & { block: Block }) {
+  const set = (constraints: Constraint[]) =>
+    onChange({ ...model, block: updateBlock(model.block, block.name, (b) => ({ ...b, constraints })) });
+  const crossed = block.type === "cross" ? block.crossings[0] ?? [] : [];
+  return (
+    <div className="constraint-list">
+      {block.constraints.map((c, i) => (
+        <ConstraintCard key={i} model={model} constraint={c}
+          onChange={(next) => set(block.constraints.map((d, j) => (j === i ? next : d)))}
+          onRemove={() => set(block.constraints.filter((_, j) => j !== i))} />
+      ))}
+      <select value="" disabled={model.factors.length === 0}
+        onChange={(e) => set([...block.constraints, blank(e.target.value, model, crossed)])}>
+        <option value="">+ Constraint…</option>
+        {Object.entries(TYPES).map(([type, t]) => <option key={type} value={type}>{t.label}</option>)}
+      </select>
+    </div>
+  );
+}
+
 export default function ConstraintsPanel({ model, onChange }: Props) {
-  const set = (constraints: Constraint[]) => onChange({ ...model, constraints });
   return (
     <div className="constraints-panel">
-      <p className="intro">Constraints shape the order of trials within each sequence.</p>
-      {model.constraints.map((c, i) => (
-        <ConstraintCard key={i} model={model} constraint={c}
-          onChange={(next) => set(model.constraints.map((d, j) => (j === i ? next : d)))}
-          onRemove={() => set(model.constraints.filter((_, j) => j !== i))} />
+      <p className="intro">
+        Constraints shape the order of trials. Each belongs to a block, which sets where it applies. They can
+        also be edited inside each block on the Blocks step.
+      </p>
+      {allBlocks(model.block).map((block) => (
+        <section key={block.name} className="constraint-group">
+          <h3>{block.name} <span className="badge">{BLOCK_LABELS[block.type]}</span></h3>
+          <p className="hint">{scopeNote(block)}</p>
+          <ConstraintList model={model} block={block} onChange={onChange} />
+        </section>
       ))}
-      <div className="add-bar">
-        <select value="" disabled={model.factors.length === 0}
-          onChange={(e) => set([...model.constraints, blank(e.target.value, model)])}>
-          <option value="">+ Constraint…</option>
-          {Object.entries(TYPES).map(([type, t]) => <option key={type} value={type}>{t.label}</option>)}
-        </select>
-      </div>
     </div>
   );
 }

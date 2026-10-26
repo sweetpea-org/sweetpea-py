@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .codegen import generate
+from .examples import list_examples
 from .parse import Unsupported, parse_program
 from .run import check, synthesize
 
@@ -25,6 +26,11 @@ def parse(body: dict) -> dict:
     except Unsupported as e:
         return {"error": str(e), "line": e.line}
     return {"model": model, "check": check(model)}
+
+
+@app.get("/api/examples")
+def examples() -> list:
+    return list_examples()
 
 
 @app.post("/api/synthesize")

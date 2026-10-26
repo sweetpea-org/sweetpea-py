@@ -8,7 +8,12 @@ line that caused it.
 import ast
 from typing import Any, Dict, List, Optional
 
+from sweetpea import AlignmentMode, RepeatMode
+
+from .codegen import post_order
+
 SAMPLERS = ["CMSGen", "IterateGen", "RandomGen"]
+ENUMS = {"RepeatMode": RepeatMode, "AlignmentMode": AlignmentMode}
 K_CONSTRAINTS = ["AtMostKInARow", "AtLeastKInARow", "ExactlyKInARow", "ExactlyK"]
 # Calls whose only effect is output, which the GUI produces itself.
 OUTPUT_CALLS = {"print_experiments", "tabulate_experiments", "save_experiments_csv", "print"}
@@ -40,6 +45,14 @@ class Predicate:
 class Sampler:
     def __init__(self, name):
         self.name = name
+
+
+class Block(dict):
+    """A block in the design; a dict, so the model serializes as JSON."""
+
+
+def _is_constraint(value: Any) -> bool:
+    return isinstance(value, dict) and not isinstance(value, Block)
 
 
 def parse_program(source: str) -> dict:
@@ -105,14 +118,23 @@ class _Program:
     def __init__(self):
         self.env: Dict[str, Any] = {name: Sampler(name) for name in SAMPLERS}
         self.factors: Dict[str, dict] = {}
-        self.block: Optional[dict] = None
+        # The block passed to synthesize_trials, else the last block created.
+        self.root: Optional[Block] = None
+        self.synthesized = False
         self.samples, self.sampler = 5, "CMSGen"
 
     def model(self) -> dict:
-        if self.block is None:
-            raise Unsupported(None, "the program must create a CrossBlock")
-        return dict(factors=list(self.factors.values()), samples=self.samples, sampler=self.sampler,
-                    **self.block)
+        if self.root is None:
+            raise Unsupported(None, "the program must create a block, such as a CrossBlock")
+        blocks = post_order(self.root)
+        taken = {b["name"] for b in blocks}
+        for b in blocks:
+            if b["name"] is None:
+                b["name"] = next(n for n in ("{}_block_{}".format(b["type"], i) for i in range(1, len(blocks) + 2))
+                                 if n not in taken)
+                taken.add(b["name"])
+        return dict(factors=list(self.factors.values()), block=self.root,
+                    samples=self.samples, sampler=self.sampler)
 
     # Statements
 
@@ -123,7 +145,9 @@ class _Program:
         if isinstance(stmt, ast.FunctionDef):
             self.env[stmt.name] = Predicate([a.arg for a in stmt.args.args], _function_body(stmt))
         elif isinstance(stmt, ast.Assign) and len(stmt.targets) == 1 and isinstance(stmt.targets[0], ast.Name):
-            self.env[stmt.targets[0].id] = self.value(stmt.value)
+            value = self.env[stmt.targets[0].id] = self.value(stmt.value)
+            if isinstance(value, Block) and value["name"] is None:
+                value["name"] = stmt.targets[0].id
         elif isinstance(stmt, ast.Expr):
             self.value(stmt.value)
         else:
@@ -156,6 +180,11 @@ class _Program:
             return tuple(self.value(e) for e in node.elts)
         if isinstance(node, ast.Lambda):
             return Predicate([a.arg for a in node.args.args], node.body)
+        if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) and node.value.id in ENUMS:
+            member = getattr(ENUMS[node.value.id], node.attr, None)
+            if member is None:
+                raise Unsupported(node, "unknown {}".format(_excerpt(node)))
+            return member.value
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
             handler = getattr(self, "call_" + node.func.id, None)
             if handler is not None:
@@ -340,25 +369,73 @@ class _Program:
 
     # Block and synthesis
 
+    def new_block(self, node, kind: str, constraints: Any, **fields) -> "Block":
+        if not isinstance(constraints, list) or not all(_is_constraint(c) for c in constraints):
+            raise Unsupported(node, "expected a list of constraints")
+        block = Block(type=kind, name=None, **fields, constraints=constraints)
+        if not self.synthesized:
+            self.root = block
+        return block
+
+    def block_arg(self, node, value: Any) -> "Block":
+        if not isinstance(value, Block):
+            raise Unsupported(node, "expected a block")
+        return value
+
+    def enum_value(self, node, enum: str, value: Optional[str]) -> Optional[str]:
+        """An enum member's string value; ``None`` keeps SweetPea's default."""
+        if value is None:
+            return None
+        try:
+            return ENUMS[enum](value).value
+        except ValueError:
+            raise Unsupported(node, "unknown {} {!r}".format(enum, value)) from None
+
     def call_CrossBlock(self, node):
-        if self.block is not None:
-            raise Unsupported(node, "the GUI shows one block per program")
         a = self.arguments(node, ["design", "crossing", "constraints", "require_complete_crossing"],
                            require_complete_crossing=True)
-        design = self.factor_names(node, a["design"])
-        if sorted(design) != sorted(self.factors):
-            raise Unsupported(node, "the design must list every factor exactly once")
-        constraints = a["constraints"]
-        if not isinstance(constraints, list) or not all(isinstance(c, dict) for c in constraints):
-            raise Unsupported(node, "expected a list of constraints")
-        self.block = {"crossing": self.factor_names(node, a["crossing"]), "constraints": constraints,
-                      "requireCompleteCrossing": a["require_complete_crossing"]}
-        return None
+        return self.new_block(node, "cross", a["constraints"], design=self.factor_names(node, a["design"]),
+                              crossings=[self.factor_names(node, a["crossing"])],
+                              requireCompleteCrossing=a["require_complete_crossing"], mode=None, alignment=None)
+
+    def call_MultiCrossBlock(self, node):
+        a = self.arguments(node, ["design", "crossings", "constraints", "require_complete_crossing", "mode",
+                                  "alignment"], require_complete_crossing=True, mode=None, alignment=None)
+        if not isinstance(a["crossings"], list):
+            raise Unsupported(node, "expected a list of crossings")
+        return self.new_block(node, "cross", a["constraints"], design=self.factor_names(node, a["design"]),
+                              crossings=[self.factor_names(node, c) for c in a["crossings"]],
+                              requireCompleteCrossing=a["require_complete_crossing"],
+                              mode=self.enum_value(node, "RepeatMode", a["mode"]),
+                              alignment=self.enum_value(node, "AlignmentMode", a["alignment"]))
+
+    def call_Nest(self, node):
+        a = self.arguments(node, ["outer_block", "inner_block", "constraints", "alignment"],
+                           constraints=[], alignment=None)
+        return self.new_block(node, "nest", a["constraints"], outer=self.block_arg(node, a["outer_block"]),
+                              inner=self.block_arg(node, a["inner_block"]),
+                              alignment=self.enum_value(node, "AlignmentMode", a["alignment"]))
+
+    def call_Merge(self, node):
+        a = self.arguments(node, ["blocks", "constraints", "mode", "alignment"],
+                           constraints=[], mode=None, alignment=None)
+        if not isinstance(a["blocks"], list) or not a["blocks"]:
+            raise Unsupported(node, "expected a list of blocks")
+        return self.new_block(node, "merge", a["constraints"], blocks=[self.block_arg(node, b) for b in a["blocks"]],
+                              mode=self.enum_value(node, "RepeatMode", a["mode"]),
+                              alignment=self.enum_value(node, "AlignmentMode", a["alignment"]))
+
+    def call_Repeat(self, node):
+        a = self.arguments(node, ["block", "constraints"])
+        return self.new_block(node, "repeat", a["constraints"], block=self.block_arg(node, a["block"]))
 
     def call_synthesize_trials(self, node):
+        if self.synthesized:
+            raise Unsupported(node, "the GUI shows one experiment per program, so one synthesize_trials call")
         a = self.arguments(node, ["block", "samples", "sampling_strategy"],
                            samples=10, sampling_strategy=Sampler("IterateGen"))
         if not isinstance(a["sampling_strategy"], Sampler):
             raise Unsupported(node, "the GUI offers the samplers {}".format(", ".join(SAMPLERS)))
+        self.root, self.synthesized = self.block_arg(node, a["block"]), True
         self.samples, self.sampler = a["samples"], a["sampling_strategy"].name
         return None
