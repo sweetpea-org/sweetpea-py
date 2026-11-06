@@ -1,7 +1,7 @@
 """
 Stroop in two sessions, with Repeat and Merge.
 
-- stroop_trials: every ink color x word pair once (4 trials).
+- stroop_trials: every color x word pair once (4 trials).
 - stroop_twice: those trials run twice (8 trials).
 - sessions_of_stroop: morning and afternoon each hold for stroop_twice
   (16 trials); incongruent trials never come more than 2 in a row, even
@@ -17,11 +17,11 @@ from sweetpea import (
     CMSGen,
 )
 
-ink_color = Factor("ink_color", ["red", "blue"])
+color = Factor("color", ["red", "blue"])
 word = Factor("word", ["red", "blue"])
 congruency = Factor("congruency", [
-    DerivedLevel("congruent", WithinTrial(lambda ink_color, word: ink_color == word, [ink_color, word])),
-    DerivedLevel("incongruent", WithinTrial(lambda ink_color, word: ink_color != word, [ink_color, word])),
+    DerivedLevel("congruent", WithinTrial(lambda color, word: color == word, [color, word])),
+    DerivedLevel("incongruent", WithinTrial(lambda color, word: color != word, [color, word])),
 ])
 session = Factor("session", ["morning", "afternoon"])
 response_hand = Factor("response_hand", ["left", "right"])
@@ -33,8 +33,8 @@ session_block = CrossBlock(
 )
 
 stroop_trials = CrossBlock(
-    design=[ink_color, word, congruency],
-    crossing=[ink_color, word],
+    design=[color, word, congruency],
+    crossing=[color, word],
     constraints=[],
 )
 

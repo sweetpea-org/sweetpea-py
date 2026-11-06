@@ -26,7 +26,9 @@ export default function CommitInput({ value, onCommit, validate, placeholder, cl
 
   return (
     <input
-      className={problem ? `${className ?? ""} invalid` : className}
+      className={`name-input ${className ?? ""}${problem ? " invalid" : ""}`}
+      // Fits the text where the browser has no field-sizing.
+      size={Math.max(4, draft.length + 1)}
       value={draft}
       placeholder={placeholder}
       title={problem ?? undefined}

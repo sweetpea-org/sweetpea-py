@@ -29,7 +29,6 @@ function AddInput({ placeholder, onAdd }: { placeholder: string; onAdd: (text: s
 function Weight({ level, onChange }: { level: Level; onChange: (weight: number) => void }) {
   return (
     <label className="weight" title="How often this level appears relative to the others">
-      ×
       <input type="number" min={1} value={level.weight}
         onChange={(e) => onChange(Math.max(1, Math.round(Number(e.target.value)) || 1))} />
     </label>
@@ -75,13 +74,14 @@ function FactorCard({ model, index, onChange }: Props & { index: number }) {
             not in any block
           </span>
         )}
-        <button className="small remove" title="Delete factor" onClick={remove}>Delete</button>
+        <button className="small remove" title="Delete factor" onClick={remove}>×</button>
       </header>
 
       {factor.kind === "basic" ? (
         <div className="levels">
           {factor.levels.map((level, i) => (
             <span className="chip" key={`${i}-${level.name}`}>
+              <span className="badge">level</span>
               <CommitInput value={String(level.name)}
                 validate={nameTaken(levelNames.filter((n) => n !== level.name).map(String))}
                 onCommit={(name) => onChange(renameLevel(model, factor.name, level.name, name))} />
@@ -114,39 +114,32 @@ function FactorCard({ model, index, onChange }: Props & { index: number }) {
               <option value="transition">compared with the previous trial</option>
             </select>
           </div>
-          <table className="derived-levels">
-            <tbody>
-              {factor.levels.map((level, i) => (
-                <tr key={i}>
-                  <td className="level-name">
-                    <CommitInput value={String(level.name)}
-                      validate={nameTaken(levelNames.filter((n) => n !== level.name).map(String))}
-                      onCommit={(name) => onChange(renameLevel(model, factor.name, level.name, name))} />
-                    <Weight level={level} onChange={(weight) => updateLevel(i, { ...level, weight })} />
-                  </td>
-                  <td>
-                    <select value={level.rule ? "when" : "otherwise"} onChange={(e) =>
-                      updateLevel(i, { ...level, rule: e.target.value === "when" ? defaultRule(model, factor.inputs!) : null })}>
-                      <option value="when">when</option>
-                      <option value="otherwise">otherwise</option>
-                    </select>
-                  </td>
-                  <td>
-                    {level.rule ? (
-                      <RuleEditor rule={level.rule} model={model} inputs={factor.inputs!} kind={factor.kind}
-                        onChange={(rule) => updateLevel(i, { ...level, rule })} />
-                    ) : (
-                      <span className="hint">no other level applies</span>
-                    )}
-                  </td>
-                  <td>
-                    <button className="small remove" title="Remove level"
-                      onClick={() => update({ ...factor, levels: factor.levels.filter((_, j) => j !== i) })}>×</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="derived-levels">
+            {factor.levels.map((level, i) => (
+              <div className="derived-level" key={i}>
+                <span className="level-name">
+                  <span className="badge">level</span>
+                  <CommitInput value={String(level.name)}
+                    validate={nameTaken(levelNames.filter((n) => n !== level.name).map(String))}
+                    onCommit={(name) => onChange(renameLevel(model, factor.name, level.name, name))} />
+                  <Weight level={level} onChange={(weight) => updateLevel(i, { ...level, weight })} />
+                </span>
+                <select value={level.rule ? "when" : "otherwise"} onChange={(e) =>
+                  updateLevel(i, { ...level, rule: e.target.value === "when" ? defaultRule(model, factor.inputs!) : null })}>
+                  <option value="when">when</option>
+                  <option value="otherwise">otherwise</option>
+                </select>
+                {level.rule ? (
+                  <RuleEditor rule={level.rule} model={model} inputs={factor.inputs!} kind={factor.kind}
+                    onChange={(rule) => updateLevel(i, { ...level, rule })} />
+                ) : (
+                  <span className="hint">no other level applies</span>
+                )}
+                <button className="small remove level-remove" title="Remove level"
+                  onClick={() => update({ ...factor, levels: factor.levels.filter((_, j) => j !== i) })}>×</button>
+              </div>
+            ))}
+          </div>
           <button className="small" onClick={() => update({ ...factor, levels: [...factor.levels,
             { name: uniqueName(levelNames, "level"), weight: 1, rule: defaultRule(model, factor.inputs!) }] })}>
             + level
@@ -180,7 +173,7 @@ export default function FactorsPanel({ model, onChange }: Props) {
     <div className="factors-panel">
       <p className="intro">
         Factors are what varies from trial to trial. A <strong>derived factor</strong> is computed from other
-        factors — for example, whether the color matches the word.
+        factors.
       </p>
       {model.factors.map((_, i) => (
         <FactorCard key={i} model={model} index={i} onChange={onChange} />
@@ -189,12 +182,17 @@ export default function FactorsPanel({ model, onChange }: Props) {
         <button onClick={() => add({ name: uniqueName(names, "factor"), kind: "basic", levels: [] })}>
           + Factor
         </button>
+        <button disabled={names.length === 0} title="A factor whose levels follow from other factors"
+          onClick={() => addDerived("custom")}>
+          + Derived factor
+        </button>
+        {/* Templates for common derived factors, kept for later:
         <select value="" onChange={(e) => addDerived(e.target.value)}>
           <option value="">+ Derived factor…</option>
           {Object.entries(TEMPLATES).map(([key, t]) => (
             <option key={key} value={key} disabled={names.length < t.inputs}>{t.label}</option>
           ))}
-        </select>
+        </select> */}
       </div>
     </div>
   );

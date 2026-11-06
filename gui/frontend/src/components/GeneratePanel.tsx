@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { api, type Row } from "../api";
 import { SAMPLERS, type Check, type Model } from "../model";
-import { download } from "./CodePane";
+import { download } from "./FileMenu";
 
 type Props = {
   model: Model;
@@ -88,7 +88,7 @@ export default function GeneratePanel({ model, check, onChange, onSample }: Prop
       {result && (
         <>
           {result.sequences.length === 0 ? (
-            <div className="banner warning">No sequences satisfy this design. See the solver’s report below.</div>
+            <div className="banner warning">The solver found no answer (UNSAT). Try changing the design, for example by loosening or removing a constraint. The solver’s report is below.</div>
           ) : (
             <div className="sequence-tabs">
               {result.sequences.map((_, i) => (

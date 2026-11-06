@@ -262,7 +262,7 @@ export default function BlockBox(props: BoxProps) {
     <article ref={ref} className={`${frameClass} repeat-deck`}>
       <header className="block-header" onClick={select}>
         <span className="frame-title">Repeat</span>
-        <span className="runs-badge">×{runs(block, check.nodes) ?? "?"} runs</span>
+        <span className="runs-badge">×{runs(block, check.nodes) ?? "?"}</span>
         <Controls {...props} />
       </header>
       <BlockBox model={model} check={check} onChange={onChange} block={block.block} inside={inside} {...sel} />

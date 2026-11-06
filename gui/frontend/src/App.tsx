@@ -4,6 +4,7 @@ import { STARTER, type Check, type Model } from "./model";
 import StructurePane from "./components/StructurePane";
 import Splitter, { HideButton } from "./components/Splitter";
 import CodePane, { type CodeError } from "./components/CodePane";
+import FileMenu from "./components/FileMenu";
 import ConstraintsPanel from "./components/ConstraintsPanel";
 import BlocksPanel from "./components/BlocksPanel";
 import FactorsPanel from "./components/FactorsPanel";
@@ -138,7 +139,7 @@ export default function App() {
         <fieldset disabled={codeError !== null}>{panels[step]}</fieldset>
       </section>
     ),
-    Structure: <StructurePane block={model.block} nodes={check.nodes} selected={selected} onSelect={selectBlock}
+    Structure: <StructurePane block={model.block} factors={model.factors} nodes={check.nodes} selected={selected} onSelect={selectBlock}
       onHide={hide("Structure")} />,
     Code: <CodePane code={code} error={codeError} onChange={editCode} onHide={hide("Code")} />,
   };
@@ -147,6 +148,7 @@ export default function App() {
     <div className="app">
       <header className="topbar">
         <h1>SweetPea Designer</h1>
+        <FileMenu code={code} onOpen={editCode} />
         <nav className="steps">
           {STEPS.map((s, i) => (
             <button key={s} className={s === step ? "step active" : "step"} onClick={() => setStep(s)}>

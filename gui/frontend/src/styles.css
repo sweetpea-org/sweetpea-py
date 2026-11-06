@@ -77,6 +77,8 @@ h2, h3 { font-size: 14px; }
 .pane-toolbar { display: flex; align-items: center; justify-content: space-between; margin: -10px 0 10px; }
 .views { display: flex; align-items: center; gap: 8px; }
 .views-label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.file-menu { display: flex; gap: 6px; align-items: center; }
+.import-menu { width: 120px; }
 .view-toggles { display: flex; gap: 4px; }
 .view-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; font-size: 12px; color: var(--muted); }
 .view-toggle.on { color: var(--text); font-weight: 600; }
@@ -92,7 +94,7 @@ fieldset:disabled { opacity: 0.55; }
 .intro { color: var(--muted); margin: 0 0 16px; max-width: 70ch; }
 .hint { color: var(--muted); font-size: 12px; }
 
-.banner { padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; }
+.banner { padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; white-space: pre-line; }
 .banner.error { background: var(--error-bg); color: var(--error); }
 .banner.warning { background: var(--warning-bg); }
 
@@ -112,6 +114,8 @@ input.invalid { border-color: var(--error); }
 input[type="number"] { width: 72px; }
 input[type="checkbox"] { padding: 0; }
 .factor-name { font-weight: 600; font-size: 15px; }
+/* Name boxes grow with their text, so no name is ever cut off. */
+.name-input { field-sizing: content; min-width: 4ch; max-width: 100%; }
 
 button, .button {
   background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 5px 12px; cursor: pointer;
@@ -129,17 +133,21 @@ button.link { border: 0; background: none; padding: 0; color: var(--accent); tex
   display: inline-flex; align-items: center; gap: 4px; background: var(--surface-2);
   border-radius: 8px; padding: 3px 4px 3px 6px;
 }
-.chip input:not([type="number"]) { width: 9ch; border-color: transparent; background: transparent; }
+.chip input:not([type="number"]) { border-color: transparent; background: transparent; }
 .chip .remove { border: 0; background: none; }
 .weight { display: inline-flex; align-items: center; color: var(--muted); font-size: 12px; }
 .weight input { width: 44px; padding: 2px 4px; }
 .add-input { width: 16ch; }
 
-.derived-levels { border-collapse: collapse; width: 100%; margin-bottom: 8px; }
-.derived-levels td { padding: 6px 6px 6px 0; vertical-align: top; border-top: 1px solid var(--border); }
-.level-name { white-space: nowrap; }
-.derived-levels td:nth-child(3) { width: 100%; }
-.level-name input:not([type="number"]) { width: 12ch; }
+.derived-levels { margin-bottom: 8px; }
+/* Each level's parts wrap onto new lines in a narrow pane; the × keeps its corner. */
+.derived-level {
+  position: relative; display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-start;
+  padding: 6px 30px 6px 0; border-top: 1px solid var(--border); min-width: 0;
+}
+.derived-level > .rule { min-width: 0; max-width: 100%; }
+.level-name { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.level-remove { position: absolute; top: 6px; right: 0; }
 
 .rule { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .rule.group {
@@ -147,7 +155,8 @@ button.link { border: 0; background: none; padding: 0; color: var(--accent); tex
   padding-left: 10px;
 }
 .comparison { display: flex; gap: 6px; flex-wrap: wrap; }
-.member { display: flex; gap: 6px; align-items: flex-start; }
+.member { display: flex; gap: 6px; align-items: flex-start; min-width: 0; max-width: 100%; }
+.member > .rule { min-width: 0; }
 .group-label { color: var(--muted); }
 
 .add-bar { display: flex; gap: 8px; margin-top: 8px; }
@@ -180,15 +189,9 @@ table.trials { border-collapse: collapse; width: 100%; background: var(--surface
 .code-toolbar .hint { flex: 1; color: #9aa59d; }
 .code-toolbar button, .code-toolbar .button { background: transparent; border-color: #3a433d; color: var(--code-text); }
 .code-toolbar button:hover, .code-toolbar .button:hover { background: #2a312c; }
-.code-toolbar select { background: transparent; border-color: #3a433d; color: var(--code-text); }
-.code-toolbar option { background: var(--code-bg); }
-.code-editor { flex: 1; display: flex; min-height: 0; font: 13px/1.5 ui-monospace, Consolas, monospace; }
-.gutter { overflow: hidden; padding: 10px 8px; text-align: right; color: #6b756e; user-select: none; }
-.gutter .bad-line { color: #ff8a80; font-weight: 700; }
-.code-editor textarea {
-  flex: 1; resize: none; border: 0; padding: 10px; background: transparent; color: inherit;
-  font: inherit; white-space: pre; overflow: auto; tab-size: 4;
-}
+.code-editor { flex: 1; min-height: 0; overflow: hidden; }
+.code-editor .cm-editor { height: 100%; font-size: 13px; }
+.code-editor .cm-scroller { font-family: ui-monospace, Consolas, monospace; line-height: 1.5; }
 
 /* Blocks */
 .badge.warning { background: var(--warning-bg); color: var(--text); }
@@ -205,7 +208,7 @@ table.trials { border-collapse: collapse; width: 100%; background: var(--surface
 .block-badge { font-weight: 600; }
 .block-merge > .block-header .block-badge { color: var(--merge); }
 .block-repeat > .block-header .block-badge { color: var(--repeat); }
-.block-name { font-weight: 600; width: 14ch; }
+.block-name { font-weight: 600; }
 .trials { color: var(--muted); font-size: 12px; }
 .block-header .actions { margin-left: auto; width: 120px; }
 .crossing-title, .frame-title { font-weight: 600; }
@@ -231,36 +234,83 @@ table.trials { border-collapse: collapse; width: 100%; background: var(--surface
 .band-nest .block-badge { color: var(--nest); }
 .frame-band.selected { outline: 2px solid var(--accent); outline-offset: -2px; }
 
-/* Structure pane: the same containment, read-only */
+/* Structure pane: containment for Nest, side-by-side junctions for Merge, an outside arrow for Repeat */
 .structure { padding: 4px 12px 16px; }
+/* The stage takes the scaled size; the diagram inside keeps its natural size and is scaled. */
+.d-stage { position: relative; }
+.d-root { width: max-content; transform-origin: 0 0; position: absolute; top: 0; left: 0; }
+.zoom-controls { display: flex; gap: 2px; margin-left: auto; margin-right: 8px; }
+.zoom-controls .on { background: var(--surface-2); font-weight: 600; }
+.zoom-level { font-size: 12px; color: var(--muted); min-width: 3.5em; text-align: center; align-self: center; }
+.zoom-note { margin: 4px 14px 8px; }
 .d-box {
   border: 1px solid var(--border); border-left: 4px solid var(--leaf); border-radius: 8px;
   background: var(--bg); padding: 6px 8px; margin: 6px 0; cursor: pointer; display: flex; flex-direction: column; gap: 4px;
 }
 .d-box .d-box { background: var(--surface); }
 .d-box .d-box .d-box { background: var(--bg); }
-.d-merge { border-left-color: var(--merge); }
-.d-repeat {
-  border-left-color: var(--repeat); margin-right: 10px; margin-bottom: 12px;
-  box-shadow: 4px 4px 0 -1px var(--surface), 4px 4px 0 0 var(--repeat), 8px 8px 0 -1px var(--surface), 8px 8px 0 0 var(--repeat);
-}
-.d-box.selected, .d-band.selected { outline: 2px solid var(--accent); outline-offset: 1px; }
+.d-frame { border-color: var(--nest); border-left-color: var(--nest); }
+/* A plain block is a little wider than tall, with its text stacked and wrapped. */
+.d-box:not(.d-frame) { width: 170px; min-height: 84px; }
+.d-box:not(.d-frame) > .d-head { flex-direction: column; align-items: flex-start; }
+.d-box:not(.d-frame) .d-head strong, .d-box:not(.d-frame) .d-note { overflow-wrap: anywhere; }
+.d-box:not(.d-frame) > .d-ticks { margin-top: auto; }
+.d-box.selected, .d-band.selected, .merge-span.selected { outline: 2px solid var(--accent); outline-offset: 1px; }
 .d-head { display: flex; flex-wrap: wrap; gap: 2px 8px; align-items: baseline; font-size: 12px; }
 .d-note { font-size: 11px; color: var(--muted); }
 .d-label { font-size: 11px; font-weight: 600; color: var(--nest); }
+.d-label.merge { color: var(--merge); }
 .d-ticks { height: 8px; border: 1px solid var(--border); border-radius: 3px; background-image: linear-gradient(to left, var(--tick) 1px, transparent 1px); }
-.d-held { border-top: 1px dashed var(--border); padding-top: 4px; }
-.d-tracks { display: flex; flex-direction: column; }
-.d-tracks > .d-box { margin: 3px 0; }
+.d-held { padding: 2px 0 2px 10px; }
+.d-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+/* A bordered chip on a darker fill stands out on every background: boxes, bands and the bracket. */
+.d-tag { font-size: 11px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 0 6px; display: inline-flex; align-items: center; gap: 3px; color: var(--text); font-weight: 400; }
+.d-icon { width: 11px; height: 11px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tree-pane > .hint .d-icon { vertical-align: -1px; }
+.d-chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.d-chip { font-size: 11px; border: 1px solid var(--nest); color: var(--text); border-radius: 10px; padding: 0 7px; }
 .d-band {
   border-top: 2px solid var(--nest); background: var(--surface-2); margin: 4px -8px -6px; padding: 4px 8px 6px;
   border-radius: 0 0 7px 7px; display: flex; flex-wrap: wrap; gap: 2px 8px; align-items: baseline; cursor: pointer;
 }
-.d-band.d-own { border-top-color: var(--border); cursor: default; }
-.d-merge > .d-band.d-own { border-top-color: var(--merge); }
-.d-repeat > .d-band.d-own { border-top-color: var(--repeat); }
 .d-band + .d-band { margin-top: 0; }
-.d-constraints { margin: 0; padding-left: 16px; font-size: 11px; width: 100%; }
+
+.merge-row { display: flex; align-items: center; }
+.merge-row > .d-box, .merge-row > .d-merge, .merge-row > .d-repeat { flex: none; }
+/* Long labels wrap instead of widening a merged block. */
+.merge-row > .d-box, .merge-row > .d-repeat { max-width: 380px; }
+/* A double line through a + junction joins two merged blocks. */
+.merge-link { position: relative; flex: none; width: 60px; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; }
+.merge-link::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 10px; height: 4px;
+  border-top: 1.5px solid var(--merge); border-bottom: 1.5px solid var(--merge);
+}
+.merge-node {
+  position: relative; width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--merge);
+  background: var(--surface); color: var(--merge); display: grid; place-items: center; font-weight: 700; line-height: 1;
+}
+.merge-link.selected .merge-node { border-color: var(--accent); color: var(--accent); }
+/* The bracket under merged blocks: the same trials span all of them. */
+.merge-span {
+  border: 1.5px solid var(--merge); border-top: 0; border-radius: 0 0 10px 10px; margin: 0 4px 6px;
+  padding: 8px 8px 4px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px;
+}
+
+.d-repeat { display: flex; flex-direction: column; width: fit-content; }
+/* The label sits above its constraints, as the Nest and Merge labels do. */
+.loop-label { align-self: flex-end; display: flex; flex-direction: column; gap: 3px; align-items: center;
+  font-size: 11px; color: var(--repeat); font-weight: 600; cursor: pointer; padding-right: 4px; max-width: 100%; }
+.loop-label.selected { outline: 2px solid var(--accent); border-radius: 4px; }
+/* Room above and to the right of the block for the arrow; the block's top-right corner is the
+   centre of the 52px arrow drawing. */
+.loop-area { position: relative; padding: 26px 26px 0 0; }
+.loop-body { position: relative; z-index: 1; }
+.loop-body > .d-box { margin-top: 0; }
+.loop-arrow { position: absolute; top: 0; right: 0; width: 52px; height: 52px; overflow: visible; cursor: pointer; }
+.loop-arrow path { stroke: var(--repeat); stroke-width: 2; }
+.loop-arrow polygon { fill: var(--repeat); }
+.loop-arrow.selected path { stroke: var(--accent); }
+.loop-arrow.selected polygon { fill: var(--accent); }
 .field-row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; }
 .field-label { font-weight: 600; font-size: 12px; min-width: 70px; }
 .advanced summary { cursor: pointer; color: var(--muted); font-size: 12px; }

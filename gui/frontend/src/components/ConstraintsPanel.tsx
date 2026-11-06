@@ -56,15 +56,20 @@ function ConstraintCard({ model, constraint: c, onChange, onRemove }: {
 }) {
   const { label, help, fields } = TYPES[c.type];
   const levels = findFactor(model, c.factor)?.levels ?? [];
-  const number = (key: "k" | "index" | "trials") => (
-    <input type="number" value={c[key]} onChange={(e) => onChange({ ...c, [key]: Math.round(Number(e.target.value)) })} />
-  );
+  // K and a trial count start at 1; a pinned trial may count back from the end, so it can be negative.
+  const number = (key: "k" | "index" | "trials") => {
+    const min = key === "index" ? undefined : 1;
+    return (
+      <input type="number" value={c[key]} min={min}
+        onChange={(e) => onChange({ ...c, [key]: Math.max(min ?? -Infinity, Math.round(Number(e.target.value))) })} />
+    );
+  };
 
   return (
     <article className="card constraint">
       <header className="card-header">
         <h3>{label}</h3>
-        <button className="small remove" onClick={onRemove}>Delete</button>
+        <button className="small remove" title="Delete constraint" onClick={onRemove}>×</button>
       </header>
       <p className="hint">{help}</p>
       <div className="fields">

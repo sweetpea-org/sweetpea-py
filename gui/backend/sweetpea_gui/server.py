@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from .codegen import generate
 from .examples import list_examples
 from .parse import Unsupported, parse_program
-from .run import check, synthesize
+from .run import DesignError, check, synthesize
 
 app = FastAPI(title="SweetPea GUI")
 
@@ -37,7 +37,7 @@ def examples() -> list:
 def sample(model: dict):
     try:
         return synthesize(model)
-    except Exception as e:
+    except DesignError as e:
         return JSONResponse({"error": str(e)}, status_code=400)
 
 

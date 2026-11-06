@@ -6,7 +6,7 @@ import sweetpea
 from sweetpea_gui.codegen import generate
 from sweetpea_gui.examples import list_examples
 from sweetpea_gui.parse import Unsupported, parse_program
-from sweetpea_gui.run import check, synthesize
+from sweetpea_gui.run import DesignError, check, synthesize
 
 EXAMPLES = Path(__file__).resolve().parents[3] / "example_programs"
 READABLE_EXAMPLES = ["Simple.py", "Stroop_simple.py", "Stroop_congruency_balanced.py",
@@ -199,3 +199,62 @@ def test_single_crossing_with_mode_renders_as_multicrossblock():
 def test_every_example_opens_in_the_gui(example):
     model = parse_program(example["code"])
     assert "trials" in check(model)
+
+
+def _simple():
+    return parse_program((EXAMPLES / "Simple.py").read_text())
+
+
+def _factor(model, name):
+    return next(f for f in model["factors"] if f["name"] == name)
+
+
+def _only_otherwise(m):
+    _factor(m, "volume")["levels"] = [l for l in _factor(m, "volume")["levels"] if l["rule"] is None]
+
+
+def _overlap(m):
+    _factor(m, "volume")["levels"][1]["rule"] = {
+        "cmp": "==", "left": {"factor": "color", "at": 0}, "right": {"level": "red"}}
+
+
+def _exclude_every_color(m):
+    m["block"]["constraints"] += [{"type": "Exclude", "factor": "color", "level": l} for l in ("red", "blue")]
+
+
+@pytest.mark.parametrize("mutate, expected", [
+    (_only_otherwise, "“volume” needs at least one level with a condition"),
+    (lambda m: _factor(m, "color").update(levels=[]), "“color” has no levels"),
+    (lambda m: _factor(m, "volume")["levels"].append({"name": "quiet", "weight": 1, "rule": None}),
+     "more than one “otherwise” level"),
+    (_overlap, "Levels “yelling” and “normal” of “volume” both apply when color is red, size is large"),
+    (lambda m: m["block"].update(design=["volume"], crossings=[["volume"]]), "which is computed from"),
+    (lambda m: m["block"]["constraints"].append({"type": "Exclude", "factor": "color", "level": "purple"}),
+     "“color” has no level “purple”"),
+    (lambda m: m["block"]["constraints"].__setitem__(0, {"type": "AtMostKInARow", "k": 0, "factor": "color",
+                                                          "level": None}), "K must be at least 1"),
+    (lambda m: m["block"]["constraints"].append({"type": "MinimumTrials", "trials": 0}), "must be at least 1"),
+    (lambda m: m["block"]["constraints"].append({"type": "Pin", "index": 50, "factor": "color", "level": "red"}),
+     "the block has 4 trials, so use 0 to 3"),
+    (_exclude_every_color, "Every level of “color” is excluded"),
+    (lambda m: m["block"]["constraints"].append({"type": "LatinSquare", "factors": []}), "choose at least one factor"),
+])
+def test_design_mistakes_are_explained_in_gui_terms(mutate, expected):
+    model = _simple()
+    mutate(model)
+    error = check(model)["error"]
+    assert expected in error
+    assert not any(code in error for code in ("Factor<", "arg is an empty sequence", "division", "('"))
+
+
+def test_nest_crossing_a_factor_twice_is_explained():
+    model = parse_program((EXAMPLES.parent / "gui" / "examples" / "nested_sessions.py").read_text())
+    model["block"]["inner"]["inner"].update(design=["A", "B", "session"], crossings=[["A", "B", "session"]])
+    assert "“session” is crossed in both the outer and the inner block" in check(model)["error"]
+
+
+def test_synthesize_refuses_a_design_with_mistakes():
+    model = _simple()
+    _only_otherwise(model)
+    with pytest.raises(DesignError, match="needs at least one level with a condition"):
+        synthesize(model)
