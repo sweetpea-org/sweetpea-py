@@ -53,7 +53,7 @@ h2, h3 { font-size: 14px; }
 .app { display: flex; flex-direction: column; height: 100vh; }
 
 .topbar {
-  display: flex; align-items: center; gap: 24px; padding: 10px 20px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; padding: 10px 20px;
   background: var(--surface); border-bottom: 1px solid var(--border);
 }
 .steps { display: flex; gap: 4px; flex: 1; }
