@@ -15,7 +15,9 @@ sequence of trials. Such a design is constructed by calling the various
 functions exposed at the top of the :mod:`sweetpea` module.
 
 If you are new to SweetPea or factorial experiment design, we recommend starting
-with :ref:`the guide <guide>`.
+with :ref:`the guide <guide>`. To build designs without writing code, use the
+:ref:`SweetPea Designer <designer>`, a graphical editor that keeps a design and
+its SweetPea program in step.
 
 .. toctree::
    :maxdepth: 1
@@ -23,3 +25,4 @@ with :ref:`the guide <guide>`.
 
    guide
    api
+   designer

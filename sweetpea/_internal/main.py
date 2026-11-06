@@ -552,8 +552,8 @@ def _no_sequences_message(block, outcome) -> str:
     inferred from the empty list."""
     from sweetpea._internal.constraint import _KInARow
     if outcome is SolveOutcome.UNKNOWN:
-        return ("No trial sequences found: the solver gave no answer, so this "
-                "reports a solver failure rather than the design.")
+        return ("No trial sequences found: the solver found no answer (UNSAT). "
+                "Try changing the design.")
     relaxed = solver_relaxable(block)
     if relaxed is not None:
         return ("No trial sequences found: the design has no solution, and "
