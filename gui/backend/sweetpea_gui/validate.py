@@ -8,7 +8,7 @@ would otherwise fail with an internal error or report them in code terms.
 import re
 from typing import Dict, List, Set
 
-from .codegen import post_order
+from .codegen import enumeration_keys, post_order
 
 K_TYPES = {"AtMostKInARow", "AtLeastKInARow", "ExactlyKInARow", "ExactlyK"}
 # Exceptions that come from inside SweetPea rather than from its own checks.
@@ -51,8 +51,13 @@ def problems(model: dict) -> List[str]:
     found: List[str] = []
 
     for f in model["factors"]:
+        if f["kind"] == "transition" and not (isinstance(f.get("lag", 1), int) and f.get("lag", 1) >= 1):
+            found.append("{} compares across trials, so its lag must be a whole number of trials, "
+                         "1 or more.".format(_q(f["name"])))
         if not f["levels"]:
             found.append("{} has no levels. Add at least one level.".format(_q(f["name"])))
+        elif f.get("define") == "enumerate":
+            found.extend(_enumeration_problems(f, factors))
         elif f["kind"] != "basic":
             otherwise = [l["name"] for l in f["levels"] if l["rule"] is None]
             if len(otherwise) == len(f["levels"]):
@@ -82,6 +87,29 @@ def problems(model: dict) -> List[str]:
                 found.append("{} is crossed in both the outer and the inner block of nest {}. Cross it in only one of them."
                              .format(_q(both), name))
         found.extend(_constraint_problems(block, factors))
+    return found
+
+
+def _enumeration_problems(factor: dict, factors: Dict[str, dict]) -> List[str]:
+    """Combinations that name a missing level, or that two levels both claim."""
+    found: List[str] = []
+    keys = enumeration_keys(factor)
+    owner: Dict[tuple, str] = {}
+    for level in factor["levels"]:
+        for combo in level["combos"]:
+            shown = "({})".format(", ".join(map(str, combo)))
+            if len(combo) != len(keys):
+                found.append("{} lists the combination {}, which doesn't match the factors it is based on."
+                             .format(_q(factor["name"]), shown))
+                continue
+            for (name, _), value in zip(keys, combo):
+                if name in factors and value not in [l["name"] for l in factors[name]["levels"]]:
+                    found.append("{} lists the combination {}, but {} has no level {}.".format(
+                        _q(factor["name"]), shown, _q(name), _q(value)))
+            if tuple(combo) in owner:
+                found.append("{} puts the combination {} under both {} and {}. Choose one.".format(
+                    _q(factor["name"]), shown, _q(owner[tuple(combo)]), _q(level["name"])))
+            owner[tuple(combo)] = level["name"]
     return found
 
 

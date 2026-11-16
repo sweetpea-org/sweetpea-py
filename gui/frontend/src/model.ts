@@ -9,8 +9,14 @@ export type Rule =
   | { not: Rule };
 
 export type Kind = "basic" | "within" | "transition";
-export type Level = { name: Value; weight: number; rule?: Rule | null };
-export type Factor = { name: string; kind: Kind; inputs?: string[]; levels: Level[] };
+// A derived level has a condition (`rule`; null for "otherwise"), or, in a factor defined by
+// enumeration, the combinations of its inputs' levels where it applies (`combos`).
+export type Level = { name: Value; weight: number; rule?: Rule | null; combos?: Value[][] };
+// `lag`: how many trials back a "transition" factor looks; 1 (the previous trial) when absent.
+export type Factor = { name: string; kind: Kind; inputs?: string[]; lag?: number; define?: "enumerate"; levels: Level[] };
+
+/** How many trials back a derived factor looks: 0 within a trial. */
+export const lagOf = (f: Factor) => (f.kind === "transition" ? f.lag ?? 1 : 0);
 
 export type Constraint = {
   type: string;
@@ -106,7 +112,7 @@ export const leaves = (block: Block) => allBlocks(block).filter((b): b is LeafBl
 
 /** A block's crossings as read aloud, such as "color × word". */
 export const crossingTitle = (block: LeafBlock) =>
-  block.crossings.map((c) => c.join(" × ")).join(" + ") || "nothing crossed";
+  block.crossings.map((c) => c.join(" × ")).join(" + ") || "Nothing crossed";
 
 /** How many times a Repeat runs its block, or undefined before the sizes are known. */
 export function runs(block: RepeatBlock, nodes: Record<string, BlockSize> | undefined): number | undefined {
@@ -115,6 +121,20 @@ export function runs(block: RepeatBlock, nodes: Record<string, BlockSize> | unde
   if (!total || !child || child.trials <= child.preamble) return undefined;
   // The preamble trials come once, before the first run.
   return Math.ceil((total.trials - child.preamble) / (child.trials - child.preamble));
+}
+
+/** Whether a constraint is a Repeat's run count, which is shown as "Repeats n times" rather
+ * than as a constraint. */
+export const setsRuns = (block: Block, c: Constraint) => block.type === "repeat" && c.type === "MinimumTrials";
+
+/** The Repeat set to run its block `count` times. SweetPea's Repeat has no count: it repeats
+ * its block until the sequence has MinimumTrials trials, so the count becomes that minimum. */
+export function withRuns(block: RepeatBlock, count: number, nodes: Record<string, BlockSize> | undefined): RepeatBlock {
+  const child = nodes?.[block.block.name];
+  if (!child) return block;
+  const minimum: Constraint = { type: "MinimumTrials", trials: child.preamble + count * (child.trials - child.preamble) };
+  const others = block.constraints.filter((c) => c.type !== "MinimumTrials");
+  return { ...block, constraints: [minimum, ...others] };
 }
 
 // Names a block may not take: Python keywords and the names generated code uses.
@@ -218,6 +238,10 @@ function renameLevelInRule(rule: Rule, factor: string, from: Value, to: Value): 
 }
 
 export function renameLevel(model: Model, factor: string, from: Value, to: Value): Model {
+  // An enumerated factor's combinations hold one level per input, or two for a transition.
+  const columns = (f: Factor) => (f.inputs ?? []).flatMap((n) => (f.kind === "transition" ? [n, n] : [n]));
+  const renameIn = (f: Factor, combo: Value[]) =>
+    combo.map((v, i) => (columns(f)[i] === factor && v === from ? to : v));
   return {
     ...model,
     factors: model.factors.map((f) => ({
@@ -226,6 +250,7 @@ export function renameLevel(model: Model, factor: string, from: Value, to: Value
         ...l,
         name: f.name === factor && l.name === from ? to : l.name,
         rule: l.rule && renameLevelInRule(l.rule, factor, from, to),
+        ...(l.combos && { combos: l.combos.map((c) => renameIn(f, c)) }),
       })),
     })),
     block: mapBlocks(model.block, (b) => ({

@@ -23,6 +23,13 @@ function toCsv(columns: string[], sequences: Row[][]): string {
   return [header, ...rows].join("\n") + "\n";
 }
 
+// How each sampler chooses sequences, from SweetPea's sampling strategies.
+const SAMPLER_HELP: Record<string, string> = {
+  CMSGen: "CMSGen: close to uniformly random; two sequences may come out the same. A good default.",
+  IterateGen: "IterateGen: every sequence is different, but they may not be uniformly random.",
+  RandomGen: "RandomGen: uniformly random and all different; can be slow, or find nothing, when constraints are tight.",
+};
+
 export default function GeneratePanel({ model, check, onChange, onSample }: Props) {
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -62,22 +69,24 @@ export default function GeneratePanel({ model, check, onChange, onSample }: Prop
   return (
     <div className="generate-panel">
       <div className="card fields">
-        <label>
+        <label title="How many trial sequences to generate, for example one per participant">
           Sequences
           <input type="number" min={1} value={model.samples}
             onChange={(e) => onChange({ ...model, samples: Math.max(1, Math.round(Number(e.target.value)) || 1) })} />
         </label>
-        <label>
+        <label title={SAMPLER_HELP[model.sampler]}>
           Sampler
           <select value={model.sampler} onChange={(e) => onChange({ ...model, sampler: e.target.value })}>
-            {SAMPLERS.map((s) => <option key={s}>{s}</option>)}
+            {SAMPLERS.map((s) => <option key={s} title={SAMPLER_HELP[s]}>{s}</option>)}
           </select>
         </label>
-        <button className="primary" disabled={running || !!check.error} onClick={generate}>
+        <button className="primary" disabled={running || !!check.error} onClick={generate}
+          title={check.error ? "Fix the design's problem first" : "Run the solver and show the sequences"}>
           {running ? "Generating…" : "Generate"}
         </button>
         {result && result.sequences.length > 0 && (
-          <button onClick={() => download("experiment.csv", toCsv(result.columns, result.sequences), "text/csv")}>
+          <button title="Save every sequence in one CSV file, with sequence and trial numbers"
+            onClick={() => download("experiment.csv", toCsv(result.columns, result.sequences), "text/csv")}>
             Download CSV
           </button>
         )}
@@ -92,7 +101,7 @@ export default function GeneratePanel({ model, check, onChange, onSample }: Prop
           ) : (
             <div className="sequence-tabs">
               {result.sequences.map((_, i) => (
-                <button key={i} className={i === shown ? "step active" : "step"} onClick={() => setShown(i)}>
+                <button key={i} className={i === shown ? "step active" : "step"} title="Show this sequence" onClick={() => setShown(i)}>
                   Sequence {i + 1}
                 </button>
               ))}
@@ -121,7 +130,7 @@ export default function GeneratePanel({ model, check, onChange, onSample }: Prop
             </div>
           )}
           <details className="log">
-            <summary>Solver report</summary>
+            <summary title="What SweetPea printed while generating">Solver report</summary>
             <pre>{result.log}</pre>
           </details>
         </>

@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 
 from sweetpea import AlignmentMode, RepeatMode
 
-from .codegen import post_order
+from .codegen import enumeration_keys, lag, post_order
 
 SAMPLERS = ["CMSGen", "IterateGen", "RandomGen"]
 ENUMS = {"RepeatMode": RepeatMode, "AlignmentMode": AlignmentMode}
@@ -229,17 +229,24 @@ class _Program:
         a = self.arguments(node, ["name", "weight"], weight=1)
         return LevelSpec(a["name"], a["weight"], is_else=True)
 
-    def window(self, node, kind):
-        a = self.arguments(node, ["predicate", "factors"])
+    def window(self, node, steps, a=None):
+        """A derivation looking `steps` trials back: (steps, predicate, factor names)."""
+        a = a or self.arguments(node, ["predicate", "factors"])
         if not isinstance(a["predicate"], Predicate):
             raise Unsupported(node, "expected a predicate function")
-        return kind, a["predicate"], self.factor_names(node, a["factors"])
+        return steps, a["predicate"], self.factor_names(node, a["factors"])
 
     def call_WithinTrial(self, node):
-        return self.window(node, "within")
+        return self.window(node, 0)
 
     def call_Transition(self, node):
-        return self.window(node, "transition")
+        return self.window(node, 1)
+
+    def call_Window(self, node):
+        a = self.arguments(node, ["predicate", "factors", "width", "stride", "start"], stride=1, start=None)
+        if not (isinstance(a["width"], int) and a["width"] >= 2 and a["stride"] == 1 and a["start"] is None):
+            raise Unsupported(node, "the GUI reads a Window of width 2 or more, with stride 1 and no start")
+        return self.window(node, a["width"] - 1, a)
 
     def call_Factor(self, node):
         a = self.arguments(node, ["name", "initial_levels"])
@@ -268,69 +275,125 @@ class _Program:
         windows = {(l.window[0], tuple(l.window[2])) for l in levels if l.window}
         if len(windows) != 1:
             raise Unsupported(node, "the levels of {} must share one derivation over the same factors".format(name))
-        kind, inputs = windows.pop()
-        result = []
+        steps, inputs = windows.pop()
         for level in levels:
             level.factor = name
-            rule = None if level.is_else else self.rule(node, level.window[1], list(inputs), kind)
-            result.append({"name": level.name, "weight": level.weight, "rule": rule})
-        return {"name": name, "kind": kind, "inputs": list(inputs), "levels": result}
+        factor = {"name": name, "kind": "transition" if steps else "within", "inputs": list(inputs)}
+        if steps > 1:
+            factor["lag"] = steps
+        combos = self.enumeration(factor, levels)
+        if combos is not None:
+            return dict(factor, define="enumerate", levels=[
+                {"name": l.name, "weight": l.weight, "rule": None, "combos": c} for l, c in zip(levels, combos)])
+        return dict(factor, levels=[
+            {"name": l.name, "weight": l.weight,
+             "rule": None if l.is_else else self.rule(node, l.window[1], list(inputs), steps)} for l in levels])
+
+    def enumeration(self, factor: dict, levels: List[LevelSpec]) -> Optional[List[list]]:
+        """Each level's combinations when every level is written as
+        ``(inputs...) in {(levels...), ...}`` (or ``False`` for none); otherwise None."""
+        if any(l.is_else for l in levels):
+            return None
+        combos = [self.combinations(factor, l.window[1]) for l in levels]
+        if any(c is None for c in combos) or not any(combos):
+            return None
+        return combos
+
+    def combinations(self, factor: dict, predicate: Predicate) -> Optional[list]:
+        body = predicate.body
+        if isinstance(body, ast.Constant) and body.value is False:
+            return []
+        if not (isinstance(body, ast.Compare) and len(body.ops) == 1 and isinstance(body.ops[0], ast.In)
+                and isinstance(body.left, ast.Tuple) and isinstance(body.comparators[0], ast.Set)):
+            return None
+        scope = dict(zip(predicate.params, factor["inputs"]))
+        try:
+            keys = [self.term(e, scope, lag(factor)) for e in body.left.elts]
+        except Unsupported:
+            return None
+        if [(k.get("factor"), k.get("at")) for k in keys] != list(enumeration_keys(factor)):
+            return None
+        rows = []
+        for row in body.comparators[0].elts:
+            if not (isinstance(row, ast.Tuple) and len(row.elts) == len(keys)
+                    and all(isinstance(v, ast.Constant) for v in row.elts)):
+                return None
+            rows.append([v.value for v in row.elts])
+        return rows
 
     # Predicates
 
-    def rule(self, node, predicate: Predicate, inputs: List[str], kind: str) -> dict:
+    def rule(self, node, predicate: Predicate, inputs: List[str], steps: int) -> dict:
         if len(predicate.params) != len(inputs):
             raise Unsupported(node, "the predicate needs one parameter per factor")
-        return self.condition(predicate.body, dict(zip(predicate.params, inputs)), kind)
+        return self.condition(predicate.body, dict(zip(predicate.params, inputs)), steps)
 
-    def condition(self, node: ast.expr, scope: Dict[str, str], kind: str) -> dict:
+    def condition(self, node: ast.expr, scope: Dict[str, str], steps: int) -> dict:
         if isinstance(node, ast.BoolOp):
             group = "all" if isinstance(node.op, ast.And) else "any"
-            return {group: [self.condition(v, scope, kind) for v in node.values]}
+            return {group: [self.condition(v, scope, steps) for v in node.values]}
         if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
-            return _negate(self.condition(node.operand, scope, kind))
+            return _negate(self.condition(node.operand, scope, steps))
         if isinstance(node, ast.Constant) and isinstance(node.value, bool):
             return {"all": []} if node.value else {"any": []}
         if isinstance(node, ast.Compare) and len(node.ops) == 1:
-            return self.comparison(node, scope, kind)
+            return self.comparison(node, scope, steps)
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) \
                 and isinstance(self.env.get(node.func.id), Predicate):
-            return self.inline(node, scope, kind)
+            return self.inline(node, scope, steps)
         raise Unsupported(node, "the GUI can't show the condition {}".format(_excerpt(node)))
 
-    def comparison(self, node: ast.Compare, scope, kind) -> dict:
+    def comparison(self, node: ast.Compare, scope, steps) -> dict:
         op, right = node.ops[0], node.comparators[0]
-        left = self.term(node.left, scope, kind)
+        if isinstance(node.left, ast.Tuple):
+            return self.combination_test(node, scope, steps)
+        left = self.term(node.left, scope, steps)
         if isinstance(op, (ast.Eq, ast.NotEq)):
             return {"cmp": "==" if isinstance(op, ast.Eq) else "!=",
-                    "left": left, "right": self.term(right, scope, kind)}
+                    "left": left, "right": self.term(right, scope, steps)}
         if isinstance(op, (ast.In, ast.NotIn)) and isinstance(right, (ast.List, ast.Tuple, ast.Set)):
-            rule = {"any": [{"cmp": "==", "left": left, "right": self.term(e, scope, kind)} for e in right.elts]}
+            rule = {"any": [{"cmp": "==", "left": left, "right": self.term(e, scope, steps)} for e in right.elts]}
             return rule if isinstance(op, ast.In) else _negate(rule)
         raise Unsupported(node, "the GUI reads ==, !=, and in comparisons")
 
-    def term(self, node: ast.expr, scope, kind) -> dict:
+    def combination_test(self, node: ast.Compare, scope, steps) -> dict:
+        """``(a, b) in {(x, y), ...}`` as a condition: one of the listed combinations."""
+        op, right = node.ops[0], node.comparators[0]
+        if not (isinstance(op, (ast.In, ast.NotIn)) and isinstance(right, (ast.Set, ast.List, ast.Tuple))):
+            raise Unsupported(node, "a tuple of factors can only be tested with in")
+        keys = [self.term(e, scope, steps) for e in node.left.elts]
+        rows = []
+        for row in right.elts:
+            if not (isinstance(row, ast.Tuple) and len(row.elts) == len(keys)):
+                raise Unsupported(row, "each combination needs one level per factor")
+            rows.append({"all": [{"cmp": "==", "left": k, "right": self.term(v, scope, steps)}
+                                 for k, v in zip(keys, row.elts)]})
+        rule = {"any": rows}
+        return rule if isinstance(op, ast.In) else _negate(rule)
+
+    def term(self, node: ast.expr, scope, steps) -> dict:
         if isinstance(node, ast.Constant):
             return {"level": node.value}
-        if kind == "within" and isinstance(node, ast.Name) and node.id in scope:
+        if not steps and isinstance(node, ast.Name) and node.id in scope:
             return {"factor": scope[node.id], "at": 0}
-        if kind == "transition" and isinstance(node, ast.Subscript) \
+        if steps and isinstance(node, ast.Subscript) \
                 and isinstance(node.value, ast.Name) and node.value.id in scope:
             at = self.value(node.slice)
-            if at in (0, -1):
+            if at in (0, -steps):
                 return {"factor": scope[node.value.id], "at": at}
+        back = "the previous one" if steps == 1 else "{} trials back".format(steps)
         raise Unsupported(node, "expected a factor or a level, not {}".format(_excerpt(node))
-                          + ("; transitions use factor[0] (current) or factor[-1] (previous)"
-                             if kind == "transition" else ""))
+                          + ("; use factor[0] for this trial or factor[-{}] for {}".format(steps, back)
+                             if steps else ""))
 
-    def inline(self, node: ast.Call, scope, kind) -> dict:
+    def inline(self, node: ast.Call, scope, steps) -> dict:
         """Expands a call to another predicate function."""
         callee: Predicate = self.env[node.func.id]
         if len(node.args) != len(callee.params) or node.keywords \
                 or not all(isinstance(a, ast.Name) and a.id in scope for a in node.args):
             raise Unsupported(node, "a predicate may call another only with its own parameters")
         inner = {p: scope[a.id] for p, a in zip(callee.params, node.args)}
-        return self.condition(callee.body, inner, kind)
+        return self.condition(callee.body, inner, steps)
 
     # Constraints
 

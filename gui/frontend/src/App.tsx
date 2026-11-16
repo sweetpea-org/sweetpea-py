@@ -12,6 +12,12 @@ import GeneratePanel from "./components/GeneratePanel";
 
 const STEPS = ["Factors", "Blocks", "Constraints", "Generate"] as const;
 type Step = (typeof STEPS)[number];
+const STEP_HELP: Record<Step, string> = {
+  Factors: "Define what varies from trial to trial",
+  Blocks: "Choose which factors are crossed, and nest, merge or repeat blocks",
+  Constraints: "Add rules on the order of trials",
+  Generate: "Generate trial sequences and download them",
+};
 
 // How long typing in the code pane pauses before the GUI catches up.
 const PARSE_DELAY_MS = 400;
@@ -151,7 +157,7 @@ export default function App() {
         <FileMenu code={code} onOpen={editCode} />
         <nav className="steps">
           {STEPS.map((s, i) => (
-            <button key={s} className={s === step ? "step active" : "step"} onClick={() => setStep(s)}>
+            <button key={s} className={s === step ? "step active" : "step"} title={STEP_HELP[s]} onClick={() => setStep(s)}>
               <span className="step-number">{i + 1}</span> {s}
             </button>
           ))}

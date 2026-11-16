@@ -31,7 +31,7 @@ export default function CommitInput({ value, onCommit, validate, placeholder, cl
       size={Math.max(4, draft.length + 1)}
       value={draft}
       placeholder={placeholder}
-      title={problem ?? undefined}
+      title={problem ?? "Click to rename, then press Enter"}
       onChange={(e) => setDraft(e.target.value)}
       onBlur={commit}
       onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}

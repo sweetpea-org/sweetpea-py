@@ -117,13 +117,48 @@ def _basic_level(level: dict) -> str:
 
 
 def _derived_level(factor: dict, level: dict, var: Dict[str, str]) -> str:
-    if level["rule"] is None:
+    enumerated = factor.get("define") == "enumerate"
+    if level["rule"] is None and not enumerated:
         return "ElseLevel({})".format(_weighted(_literal(level["name"]), level["weight"]))
     params = ", ".join(var[n] for n in factor["inputs"])
-    window = "{}(lambda {}: {}, [{}])".format(
-        "WithinTrial" if factor["kind"] == "within" else "Transition",
-        params, render_rule(level["rule"], factor["kind"], var), params)
+    condition = _enumeration(factor, level, var) if enumerated else render_rule(level["rule"], factor["kind"], var)
+    window = _window(factor, "lambda {}: {}, [{}]".format(params, condition, params))
     return "DerivedLevel({})".format(_weighted("{}, {}".format(_literal(level["name"]), window), level["weight"]))
+
+
+def lag(factor: dict) -> int:
+    """How many trials back a derived factor looks: 0 within a trial, 1 for the previous trial."""
+    return factor.get("lag", 1) if factor["kind"] == "transition" else 0
+
+
+def _window(factor: dict, predicate: str) -> str:
+    if lag(factor) == 0:
+        return "WithinTrial({})".format(predicate)
+    if lag(factor) == 1:
+        return "Transition({})".format(predicate)
+    # The window spans lag + 1 trials: the current one back to the one `lag` trials earlier.
+    return "Window({}, {}, 1)".format(predicate, lag(factor) + 1)
+
+
+def enumeration_keys(factor: dict) -> List[tuple]:
+    """What each column of an enumerated factor's table holds, as (factor, trial):
+    0 is the current trial and -lag the trial that many back."""
+    if lag(factor):
+        return [(n, at) for n in factor["inputs"] for at in (-lag(factor), 0)]
+    return [(n, 0) for n in factor["inputs"]]
+
+
+def _tuple(items: List[str]) -> str:
+    return "({},)".format(items[0]) if len(items) == 1 else "({})".format(", ".join(items))
+
+
+def _enumeration(factor: dict, level: dict, var: Dict[str, str]) -> str:
+    """An enumerated level: the inputs, as a tuple, are one of the level's combinations."""
+    if not level["combos"]:
+        return "False"
+    keys = [var[n] if factor["kind"] == "within" else "{}[{}]".format(var[n], at) for n, at in enumeration_keys(factor)]
+    combos = ", ".join(_tuple([_literal(v) for v in combo]) for combo in level["combos"])
+    return "{} in {{{}}}".format(_tuple(keys), combos)
 
 
 def render_rule(rule: dict, kind: str, var: Dict[str, str]) -> str:
@@ -131,7 +166,11 @@ def render_rule(rule: dict, kind: str, var: Dict[str, str]) -> str:
     if "cmp" in rule:
         return "{} {} {}".format(_term(rule["left"], kind, var), rule["cmp"], _term(rule["right"], kind, var))
     if "not" in rule:
-        return "not " + _nested(rule["not"], kind, var)
+        listed = _membership(rule["not"], kind, var)
+        return "{} not in {}".format(*listed) if listed else "not " + _nested(rule["not"], kind, var)
+    listed = _membership(rule, kind, var)
+    if listed:
+        return "{} in {}".format(*listed)
     group = "all" if "all" in rule else "any"
     parts = [_nested(r, kind, var) for r in rule[group]]
     if not parts:
@@ -139,11 +178,21 @@ def render_rule(rule: dict, kind: str, var: Dict[str, str]) -> str:
     return (" and " if group == "all" else " or ").join(parts)
 
 
+def _membership(rule: dict, kind: str, var: Dict[str, str]):
+    """(factor, levels) when the rule says one factor has one of two or more levels, else None."""
+    members = rule.get("any", [])
+    refs = [(json.dumps(m["left"], sort_keys=True), m["right"]["level"]) for m in members
+            if m.get("cmp") == "==" and "factor" in m["left"] and "level" in m["right"]]
+    if len(members) < 2 or len(refs) != len(members) or len({r for r, _ in refs}) != 1:
+        return None
+    return _term(members[0]["left"], kind, var), _tuple([_literal(level) for _, level in refs])
+
+
 def _nested(rule: dict, kind: str, var: Dict[str, str]) -> str:
     text = render_rule(rule, kind, var)
     # A one-member group renders as its member, which needs no parentheses.
     group = rule.get("all", rule.get("any"))
-    return "({})".format(text) if group is not None and len(group) > 1 else text
+    return "({})".format(text) if group is not None and len(group) > 1 and not _membership(rule, kind, var) else text
 
 
 def _term(term: dict, kind: str, var: Dict[str, str]) -> str:

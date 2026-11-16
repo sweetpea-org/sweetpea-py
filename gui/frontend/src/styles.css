@@ -102,8 +102,26 @@ fieldset:disabled { opacity: 0.55; }
   background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
   padding: 14px 16px; margin-bottom: 12px;
 }
-.card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.card-header .remove { margin-left: auto; }
+.card-header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 10px; }
+.card-header > .remove, .card-actions { margin-left: auto; }
+.card-actions { display: inline-flex; gap: 6px; }
+.card.collapsed .card-header { margin-bottom: 0; }
+.card-header button.collapse { font-size: 14px; line-height: 1; padding: 3px 7px; }
+
+/* Fixed column widths, so the columns line up across every factor whatever the names' lengths. */
+.level-table { border-collapse: collapse; table-layout: fixed; width: 100%; max-width: 360px; }
+.level-table th:nth-child(2) { width: 72px; }
+.level-table th:nth-child(3) { width: 36px; }
+.level-table th { text-align: left; font-size: 12px; font-weight: 600; color: var(--muted); padding: 0 8px 4px 0; }
+.level-table td { padding: 4px 8px 4px 0; border-top: 1px solid var(--border); }
+/* Each heading starts where the text in its column's boxes starts: past the box's border and padding. */
+.level-table th:nth-child(1) { padding-left: 9px; }
+.level-table th:nth-child(2) { padding-left: 5px; }
+/* A name fills its column; a longer one scrolls inside its box. */
+.level-table .name-input, .derived-level .name-input { field-sizing: fixed; width: 100%; box-sizing: border-box; }
+.level-table .remove { border: 0; background: none; }
+.lag { display: inline-flex; align-items: center; gap: 6px; }
+.lag input { width: 56px; }
 .badge { font-size: 11px; color: var(--muted); background: var(--surface-2); padding: 2px 8px; border-radius: 10px; }
 
 input, select {
@@ -125,6 +143,9 @@ button:disabled { cursor: default; opacity: 0.6; }
 button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
 button.small { padding: 2px 8px; font-size: 12px; }
 button.remove { color: var(--muted); }
+/* Buttons and menus that add something stand slightly apart from the surface they sit on. */
+button.add, select.add { background: var(--surface-2); }
+button.add:hover:not(:disabled) { background: var(--border); }
 button.link { border: 0; background: none; padding: 0; color: var(--accent); text-decoration: underline; }
 
 .levels, .derivation { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
@@ -139,15 +160,55 @@ button.link { border: 0; background: none; padding: 0; color: var(--accent); tex
 .weight input { width: 44px; padding: 2px 4px; }
 .add-input { width: 16ch; }
 
-.derived-levels { margin-bottom: 8px; }
-/* Each level's parts wrap onto new lines in a narrow pane; the × keeps its corner. */
+.derived-levels { margin-bottom: 8px; container-type: inline-size; }
+/* One banner per level, holding its name, weight and condition, on the same grid in every banner
+ * so the parts line up from level to level. The × keeps its corner. */
 .derived-level {
-  position: relative; display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-start;
-  padding: 6px 30px 6px 0; border-top: 1px solid var(--border); min-width: 0;
+  position: relative; display: grid; grid-template-columns: auto minmax(0, 9rem) 52px 104px minmax(0, 1fr);
+  gap: 6px; align-items: center;
+  padding: 6px 30px 6px 8px; margin: 6px 0; background: var(--surface-2); border-radius: 8px; min-width: 0;
 }
+.derived-level > select { width: 100%; }
+/* An enumerated level has no condition, so its count takes the rest of the row. */
+.derived-level > .combos { grid-column: 4 / -1; }
+/* In a narrow pane the condition takes its own line under the level's other parts. */
+@container (max-width: 520px) {
+  .derived-level > .condition, .derived-level > .hint { grid-column: 1 / -1; }
+}
+.derived-level > .badge { background: var(--surface); }
+.derived-level > .level-remove { border: 0; background: none; }
 .derived-level > .rule { min-width: 0; max-width: 100%; }
 .level-name { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .level-remove { position: absolute; top: 6px; right: 0; }
+
+.define-switch { display: flex; gap: 0; align-items: center; margin-bottom: 8px; }
+.define-switch > span { color: var(--muted); margin-right: 8px; }
+.define-switch button { border-radius: 0; }
+.define-switch button:first-of-type { border-radius: 4px 0 0 4px; }
+.define-switch button:last-of-type { border-radius: 0 4px 4px 0; border-left: 0; }
+.define-switch button.on { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+
+/* The suggestion list floats under the box, over the rows below it. */
+.condition { position: relative; min-width: 0; max-width: 100%; }
+.condition-input { width: 100%; box-sizing: border-box; font-family: ui-monospace, Consolas, monospace; }
+.condition-input.invalid { border-color: var(--error); background: var(--error-bg); }
+.condition-error { color: var(--error); font-size: 12px; margin: 4px 0 0; }
+.condition-help { margin: 4px 0 0; }
+.suggestions {
+  position: absolute; z-index: 20; left: 0; top: 100%; margin: 2px 0 0; padding: 4px 0; list-style: none;
+  min-width: 100%; max-width: 40ch; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+.suggestions li { padding: 3px 10px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.suggestions li.active, .suggestions li:hover { background: var(--surface-2); }
+
+.enumeration { border-collapse: collapse; margin: 4px 0 8px; font-size: 13px; }
+.enumeration th, .enumeration td { border: 1px solid var(--border); padding: 3px 8px; text-align: left; }
+.enumeration th { background: var(--surface-2); font-weight: 600; }
+.enumeration tbody tr:nth-child(odd) td { background: var(--shade-a); }
+.enumeration tbody tr:nth-child(even) td { background: var(--shade-b); }
+.enumeration tr.unassigned td { color: var(--muted); }
+.enumeration tr.unassigned select { border-style: dashed; }
 
 .rule { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .rule.group {
@@ -159,7 +220,7 @@ button.link { border: 0; background: none; padding: 0; color: var(--accent); tex
 .member > .rule { min-width: 0; }
 .group-label { color: var(--muted); }
 
-.add-bar { display: flex; gap: 8px; margin-top: 8px; }
+.add-bar { display: flex; gap: 8px; margin: 0 0 12px; }
 
 .fields { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
 .fields label { display: inline-flex; gap: 6px; align-items: center; }
@@ -221,7 +282,8 @@ table.trials { border-collapse: collapse; width: 100%; background: var(--surface
   margin: 10px 16px 18px 0;
   box-shadow: 6px 6px 0 -1px var(--surface), 6px 6px 0 0 var(--repeat), 12px 12px 0 -1px var(--surface), 12px 12px 0 0 var(--repeat);
 }
-.runs-badge { font-size: 12px; font-weight: 600; color: var(--repeat); }
+.runs { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--repeat); }
+.runs input { width: 56px; font-weight: 400; color: var(--text); }
 .frame-band {
   border-top: 2px solid var(--border); margin: 4px -14px -12px; padding: 8px 14px 12px;
   background: var(--surface-2); border-radius: 0 0 9px 9px; display: flex; flex-direction: column; gap: 6px;
@@ -297,9 +359,13 @@ table.trials { border-collapse: collapse; width: 100%; background: var(--surface
 }
 
 .d-repeat { display: flex; flex-direction: column; width: fit-content; }
-/* The label sits above its constraints, as the Nest and Merge labels do. */
-.loop-label { align-self: flex-end; display: flex; flex-direction: column; gap: 3px; align-items: center;
-  font-size: 11px; color: var(--repeat); font-weight: 600; cursor: pointer; padding-right: 4px; max-width: 100%; }
+/* The label sits above its constraints, as the Nest and Merge labels do. It takes the width of
+   the repeated block instead of setting it (contain), so however many constraints it lists, they
+   wrap and the arrow stays on the block's corner. */
+.loop-label { align-self: stretch; contain: inline-size; display: flex; flex-direction: column; gap: 3px;
+  align-items: flex-end; text-align: right;
+  font-size: 11px; color: var(--repeat); font-weight: 600; cursor: pointer; padding-right: 4px; }
+.loop-label .d-tags { justify-content: flex-end; }
 .loop-label.selected { outline: 2px solid var(--accent); border-radius: 4px; }
 /* Room above and to the right of the block for the arrow; the block's top-right corner is the
    centre of the 52px arrow drawing. */

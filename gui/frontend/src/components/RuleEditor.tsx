@@ -22,16 +22,17 @@ function termLabel(term: Term, kind: Kind): string {
   return `${term.factor} (${term.at === 0 ? "this trial" : "previous trial"})`;
 }
 
-function TermSelect({ term, options, kind, onChange }: {
+function TermSelect({ term, options, kind, onChange, title }: {
   term: Term;
   options: Term[];
   kind: Kind;
   onChange: (t: Term) => void;
+  title: string;
 }) {
   const key = JSON.stringify(term);
   const all = options.some((o) => JSON.stringify(o) === key) ? options : [term, ...options];
   return (
-    <select value={key} onChange={(e) => onChange(JSON.parse(e.target.value))}>
+    <select value={key} title={title} onChange={(e) => onChange(JSON.parse(e.target.value))}>
       {all.map((o) => (
         <option key={JSON.stringify(o)} value={JSON.stringify(o)}>
           {termLabel(o, kind)}
@@ -56,13 +57,15 @@ function Comparison({ rule, model, inputs, kind, onChange }: Props & { rule: Ext
 
   return (
     <div className="comparison">
-      <TermSelect term={left} options={refs} kind={kind} onChange={setLeft} />
-      <select value={rule.cmp} onChange={(e) => onChange({ ...rule, cmp: e.target.value as "==" | "!=" })}>
+      <TermSelect term={left} options={refs} kind={kind} onChange={setLeft} title="The factor this condition tests" />
+      <select value={rule.cmp} title="Whether the two sides must match or differ"
+        onChange={(e) => onChange({ ...rule, cmp: e.target.value as "==" | "!=" })}>
         <option value="==">is</option>
         <option value="!=">is not</option>
       </select>
       <TermSelect term={rule.right} options={[...levels, ...refs.filter((r) => JSON.stringify(r) !== JSON.stringify(left))]}
-        kind={kind} onChange={(right) => onChange({ ...rule, right })} />
+        kind={kind} onChange={(right) => onChange({ ...rule, right })}
+        title="What to compare it with: one of its levels, or another factor" />
     </div>
   );
 }
@@ -115,7 +118,8 @@ export default function RuleEditor(props: Props) {
 
   return (
     <div className="rule group">
-      <select value={group.mode} onChange={(e) => onChange(makeGroup(e.target.value as GroupMode, group.members))}>
+      <select value={group.mode} title="How the conditions below combine"
+        onChange={(e) => onChange(makeGroup(e.target.value as GroupMode, group.members))}>
         {Object.entries(GROUP_LABELS).map(([mode, label]) => (
           <option key={mode} value={mode}>{label}</option>
         ))}
@@ -126,7 +130,8 @@ export default function RuleEditor(props: Props) {
           <button className="small remove" title="Remove condition" onClick={() => removeMember(i)}>×</button>
         </div>
       ))}
-      <button className="small" onClick={() => onChange(makeGroup(group.mode, [...group.members, defaultRule(model, inputs)]))}>
+      <button className="small" title="Add another condition to this group"
+        onClick={() => onChange(makeGroup(group.mode, [...group.members, defaultRule(model, inputs)]))}>
         + condition
       </button>
     </div>

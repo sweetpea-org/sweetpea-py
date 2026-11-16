@@ -1,6 +1,6 @@
 import { useEffect, useRef, type MouseEvent, type ReactNode } from "react";
 import {
-  BLOCK_LABELS, blockNameProblem, crossingTitle, newLeaf, runs, uniqueBlockName, unwrapBlock, updateBlock, wrapBlock,
+  BLOCK_LABELS, blockNameProblem, newLeaf, runs, uniqueBlockName, unwrapBlock, updateBlock, withRuns, wrapBlock,
   type Alignment, type Block, type Check, type LeafBlock, type Mode, type Model, type Wrapper,
 } from "../model";
 import CommitInput from "./CommitInput";
@@ -9,14 +9,14 @@ import { ConstraintList, scopeNote } from "./ConstraintsPanel";
 type Props = { model: Model; check: Check; onChange: (model: Model) => void };
 
 const MODES: Record<Mode, string> = {
-  repeat: "repeat — each combination once per run of the crossing",
-  weight: "weight — combinations may repeat anywhere",
-  equal: "equal — crossings must be the same size",
+  repeat: "Repeat — each combination once per run of the crossing",
+  weight: "Weight — combinations may repeat anywhere",
+  equal: "Equal — crossings must be the same size",
 };
 const ALIGNMENTS: Record<Alignment, string> = {
-  "equal preamble": "equal preamble — crossings need the same preamble",
-  "post preamble": "post preamble — all crossings start after the longest preamble",
-  "parallel start": "parallel start — each crossing starts after its own preamble",
+  "equal preamble": "Equal preamble — crossings need the same preamble",
+  "post preamble": "Post preamble — all crossings start after the longest preamble",
+  "parallel start": "Parallel start — each crossing starts after its own preamble",
 };
 
 function Advanced({ block, onChange }: { block: Block; onChange: (b: Block) => void }) {
@@ -24,21 +24,21 @@ function Advanced({ block, onChange }: { block: Block; onChange: (b: Block) => v
   const option = (value: string | null, label: string) => <option key={label} value={value ?? ""}>{label}</option>;
   return (
     <details className="advanced">
-      <summary>Advanced</summary>
+      <summary title="Settings for crossings of different sizes; the defaults suit most designs">Advanced</summary>
       {"mode" in block && (
-        <label>
+        <label title="When one crossing has fewer combinations than the block has trials, how it fills the rest">
           Smaller crossings fill extra trials by
           <select value={block.mode ?? ""} onChange={(e) => onChange({ ...block, mode: (e.target.value || null) as Mode | null })}>
-            {option(null, "default")}
+            {option(null, "Default")}
             {Object.entries(MODES).map(([value, label]) => option(value, label))}
           </select>
         </label>
       )}
-      <label>
+      <label title="Factors that compare with the previous trial need extra trials at the start; this sets how crossings line up after them">
         Preamble alignment
         <select value={block.alignment ?? ""}
           onChange={(e) => onChange({ ...block, alignment: (e.target.value || null) as Alignment | null })}>
-          {option(null, "default")}
+          {option(null, "Default")}
           {Object.entries(ALIGNMENTS).map(([value, label]) => option(value, label))}
         </select>
       </label>
@@ -65,7 +65,7 @@ function LeafBody({ model, block, onChange }: Props & { block: LeafBlock }) {
     <>
       <div className="field-row">
         <span className="field-label" title="Factors that get a level on every trial of this block">Design</span>
-        <span className="checks">
+        <span className="checks" title="Tick the factors that get a level on every trial of this block">
           {model.factors.map((f) => (
             <label key={f.name} className="check">
               <input type="checkbox" checked={block.design.includes(f.name)} onChange={() => toggleDesign(f.name)} />
@@ -79,7 +79,7 @@ function LeafBody({ model, block, onChange }: Props & { block: LeafBlock }) {
           <span className="field-label" title="Every combination of these factors' levels appears in each run">
             Crossing{block.crossings.length > 1 ? ` ${i + 1}` : ""}
           </span>
-          <span className="checks">
+          <span className="checks" title="Tick the factors to cross: every combination of their levels appears in each run">
             {model.factors.map((f) => (
               <label key={f.name} className="check">
                 <input type="checkbox" checked={crossing.includes(f.name)} onChange={() => toggleCrossed(i, f.name)} />
@@ -95,12 +95,12 @@ function LeafBody({ model, block, onChange }: Props & { block: LeafBlock }) {
         </div>
       ))}
       <div className="field-row">
-        <button className="small" title="Cross another set of factors independently in the same trials"
-          onClick={() => set({ ...block, crossings: [...block.crossings, []] })}>+ crossing</button>
+        <button className="small add" title="Cross another set of factors independently in the same trials"
+          onClick={() => set({ ...block, crossings: [...block.crossings, []] })}>+ Crossing</button>
         <label className="check" title="Turn off when constraints exclude some combinations">
           <input type="checkbox" checked={block.requireCompleteCrossing}
             onChange={(e) => set({ ...block, requireCompleteCrossing: e.target.checked })} />
-          every combination must appear
+          Every combination must appear
         </label>
       </div>
     </>
@@ -150,8 +150,9 @@ function Controls({ model, check, onChange, block, onSelect, selected, onRemove,
         // An outer block's trials are combinations, each held for a run of what it contains.
         <span className="trials">{trials} {block.type === "cross" && inside ? "combinations" : "trials"}</span>
       )}
-      <select className="actions" value="" onChange={(e) => act(e.target.value)}>
-        <option value="">Arrange…</option>
+      <select className="actions" value="" title="Nest, merge or repeat this block, or remove such an arrangement"
+        onChange={(e) => act(e.target.value)}>
+        <option value="" hidden disabled>Arrange…</option>
         <option value="nest">Nest inside a new outer block</option>
         <option value="merge">Merge with other blocks</option>
         <option value="repeat">Repeat</option>
@@ -211,7 +212,8 @@ export default function BlockBox(props: BoxProps) {
     return (
       <article ref={ref} className={frameClass}>
         <header className="block-header" onClick={select}>
-          <span className="crossing-title">{crossingTitle(block)}</span>
+          {/* The crossing, shown in the structure pane instead:
+          <span className="crossing-title">{crossingTitle(block)}</span> */}
           <Controls {...props} />
         </header>
         <LeafBody model={model} check={check} onChange={onChange} block={block} />
@@ -247,9 +249,9 @@ export default function BlockBox(props: BoxProps) {
               onRemove={block.blocks.length > 1 ? remove(i) : undefined} />
           ))}
         </div>
-        <button className="small" onClick={() =>
-          setBlock({ ...block, blocks: [...block.blocks, newLeaf(uniqueBlockName(model, "track"))] })}>
-          + block
+        <button className="small add" title="Add another block that runs over the same trials"
+          onClick={() => setBlock({ ...block, blocks: [...block.blocks, newLeaf(uniqueBlockName(model, "track"))] })}>
+          + Block
         </button>
         {inside && <div className="held"><span className="held-note">Held constant for each run of:</span>{inside}</div>}
         <Band {...props} label="Merge · across all trials" withControls={false} />
@@ -261,8 +263,14 @@ export default function BlockBox(props: BoxProps) {
   return (
     <article ref={ref} className={`${frameClass} repeat-deck`}>
       <header className="block-header" onClick={select}>
-        <span className="frame-title">Repeat</span>
-        <span className="runs-badge">×{runs(block, check.nodes) ?? "?"}</span>
+        {/* The "Repeats n times" box names this frame. <span className="frame-title">Repeat</span> */}
+        <label className="runs" title="How many times the block inside runs, one run after another">
+          Repeats
+          <input type="number" min={1} value={runs(block, check.nodes) ?? ""} disabled={!check.nodes?.[block.block.name]}
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => setBlock(withRuns(block, Math.max(1, Math.round(Number(e.target.value)) || 1), check.nodes))} />
+          times
+        </label>
         <Controls {...props} />
       </header>
       <BlockBox model={model} check={check} onChange={onChange} block={block.block} inside={inside} {...sel} />

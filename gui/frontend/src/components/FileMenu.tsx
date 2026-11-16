@@ -34,7 +34,7 @@ export default function FileMenu({ code, onOpen }: Props) {
     <div className="file-menu">
       <select className="import-menu" value="" title="Replace the current design with an example or your own .py file"
         onChange={(e) => choose(e.target.value)}>
-        <option value="">Import…</option>
+        <option value="" hidden disabled>Import…</option>
         <optgroup label="Examples">
           {examples.map((ex, i) => <option key={ex.title} value={i} title={ex.description}>{ex.title}</option>)}
         </optgroup>

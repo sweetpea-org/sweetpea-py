@@ -29,7 +29,7 @@ constraints that apply across all of them.
 constraints. Every trial gets a level from each merged block.
 
 **Repeat: a circular arrow.** The arrow leaves the block and points back into
-it. The label above gives the number of runs, such as **repeat ×2**, with the
+it. The label above gives the number of runs, such as **Repeat ×2**, with the
 constraints that span the runs underneath.
 
 **Constraints.** Each constraint is a chip marked with a chain-link icon, placed

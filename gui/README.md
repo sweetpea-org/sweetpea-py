@@ -112,8 +112,22 @@ A **rule** is one of:
 - `{"cmp": "==" | "!=", "left": term, "right": term}`
 - `{"all": [rule, ...]}`, `{"any": [rule, ...]}`, `{"not": rule}`
 
-A **term** is `{"factor": name, "at": 0 | -1}` (in a transition, `-1` is the
-previous trial; within a trial `at` is `0`) or `{"level": value}`.
+A **term** is `{"factor": name, "at": 0 | -lag}` (within a trial `at` is `0`)
+or `{"level": value}`. A `"transition"` factor looks `lag` trials back (1 when
+absent): lag 1 is written as `Transition`, and a larger lag as
+`Window(predicate, factors, lag + 1, 1)`.
+
+A derived factor with `"define": "enumerate"` lists, instead of a rule, the
+combinations of its inputs' levels where each level applies:
+`{"name": "con", "weight": 1, "rule": null, "combos": [["red", "red"], ...]}`.
+A combination has one value per input, in `inputs` order; in a transition each
+input gives two values, the earlier trial's and then this trial's. The code
+form is `(color, word) in {("red", "red"), ...}`, and a level with no
+combinations is `False`. Code that mixes the two forms reads as rules.
+
+In the Designer, rules are typed as the Python expression of the lambda, such
+as `color == word` or `color in ("red", "blue") and response[0] != response[-1]`.
+The text is parsed in the browser into a rule and never run.
 
 **Constraints** carry a `type` and the fields of that constraint:
 `k` (`AtMostKInARow`, `AtLeastKInARow`, `ExactlyKInARow`, `ExactlyK`),

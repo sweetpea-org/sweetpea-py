@@ -258,3 +258,119 @@ def test_synthesize_refuses_a_design_with_mistakes():
     _only_otherwise(model)
     with pytest.raises(DesignError, match="needs at least one level with a condition"):
         synthesize(model)
+
+
+ENUMERATED = '''
+color = Factor("color", ["red", "blue"])
+word = Factor("word", ["red", "blue"])
+congruency = Factor("congruency", [
+    DerivedLevel("congruent", WithinTrial(lambda color, word: (color, word) in {("red", "red"), ("blue", "blue")}, [color, word])),
+    DerivedLevel("incongruent", WithinTrial(lambda color, word: (color, word) in {("red", "blue"), ("blue", "red")}, [color, word])),
+])
+shift = Factor("shift", [
+    DerivedLevel("repeat", Transition(lambda color: (color[-1], color[0]) in {("red", "red"), ("blue", "blue")}, [color])),
+    DerivedLevel("switch", Transition(lambda color: (color[-1], color[0]) in {("red", "blue"), ("blue", "red")}, [color])),
+])
+hand = Factor("hand", [
+    DerivedLevel("left", WithinTrial(lambda color: (color,) in {("red",)}, [color])),
+    DerivedLevel("right", WithinTrial(lambda color: (color,) in {("blue",)}, [color])),
+])
+block = CrossBlock([color, word, congruency, shift, hand], [color, word, congruency], [])
+'''
+
+
+def test_enumerated_levels_read_as_combinations():
+    model = model_of(ENUMERATED)
+    congruency, shift, hand = model["factors"][2:]
+    assert congruency["define"] == "enumerate"
+    assert congruency["levels"][0]["combos"] == [["red", "red"], ["blue", "blue"]]
+    assert shift["levels"][1]["combos"] == [["red", "blue"], ["blue", "red"]]
+    assert hand["levels"][0]["combos"] == [["red"]]
+    assert parse_program(generate(model)) == model
+
+
+def test_enumerated_factor_builds_the_same_block_as_its_conditions():
+    enumerated = check(model_of(ENUMERATED))
+    by_conditions = check(model_of(ENUMERATED
+        .replace('(color, word) in {("red", "red"), ("blue", "blue")}', "color == word")
+        .replace('(color, word) in {("red", "blue"), ("blue", "red")}', "color != word")))
+    assert enumerated == by_conditions
+
+
+def test_a_level_with_no_combinations_writes_false():
+    model = model_of(ENUMERATED)
+    model["factors"][4]["levels"].append({"name": "never", "weight": 1, "rule": None, "combos": []})
+    assert "WithinTrial(lambda color: False, [color])" in generate(model)
+    assert parse_program(generate(model)) == model
+
+
+def test_a_factor_mixing_combinations_and_conditions_reads_as_conditions():
+    model = model_of(ENUMERATED.replace('(color,) in {("blue",)}', 'color == "blue"'))
+    hand = model["factors"][4]
+    assert "define" not in hand
+    red = {"cmp": "==", "left": {"factor": "color", "at": 0}, "right": {"level": "red"}}
+    assert hand["levels"][0]["rule"] == {"any": [{"all": [red]}]}
+    assert check(model) == check(model_of(ENUMERATED))
+
+
+@pytest.mark.parametrize("change, expected", [
+    (lambda f: f["levels"][0]["combos"].append(["red", "purple"]), "but “word” has no level “purple”"),
+    (lambda f: f["levels"][1]["combos"].append(["red", "red"]),
+     "puts the combination (red, red) under both “congruent” and “incongruent”"),
+])
+def test_enumeration_mistakes_are_explained(change, expected):
+    model = model_of(ENUMERATED)
+    change(model["factors"][2])
+    assert expected in check(model)["error"]
+
+
+LAGGED = '''
+from sweetpea import *
+color = Factor("color", ["red", "blue"])
+two_back = Factor("two_back", [
+    DerivedLevel("same", Window(lambda color: color[0] == color[-2], [color], 3, 1)),
+    DerivedLevel("other", Window(lambda color: color[0] != color[-2], [color], 3, 1)),
+])
+block = CrossBlock([color, two_back], [color], [MinimumTrials(6)])
+experiments = synthesize_trials(block, 1, CMSGen)
+'''
+
+
+def test_a_window_reads_as_a_lag_and_writes_back():
+    model = model_of(LAGGED)
+    assert model["factors"][1]["lag"] == 2
+    assert model["factors"][1]["levels"][0]["rule"] == {
+        "cmp": "==", "left": {"factor": "color", "at": 0}, "right": {"factor": "color", "at": -2}}
+    assert "Window(lambda color: color[0] == color[-2], [color], 3, 1)" in generate(model)
+    assert parse_program(generate(model)) == model
+
+
+def test_a_lagged_condition_must_look_exactly_lag_trials_back():
+    with pytest.raises(Unsupported, match=r"factor\[-2\] for 2 trials back"):
+        model_of(LAGGED.replace("color[0] == color[-2]", "color[0] == color[-1]"))
+
+
+def test_a_lagged_enumeration_lists_the_trial_lag_back():
+    model = model_of(LAGGED)
+    model["factors"][1]["define"] = "enumerate"
+    for level, combos in zip(model["factors"][1]["levels"],
+                             ([["red", "red"], ["blue", "blue"]], [["red", "blue"], ["blue", "red"]])):
+        level.update(rule=None, combos=combos)
+    assert '(color[-2], color[0]) in {("red", "red"), ("blue", "blue")}' in generate(model)
+    assert parse_program(generate(model)) == model
+    assert check(model) == check(model_of(LAGGED))
+
+
+def test_one_of_several_levels_writes_as_in():
+    model = model_of('''
+color = Factor("color", ["red", "blue", "green"])
+warm = Factor("warm", [
+    DerivedLevel("yes", WithinTrial(lambda color: color in ("red", "green"), [color])),
+    DerivedLevel("no", WithinTrial(lambda color: color not in ("red", "green"), [color])),
+])
+block = CrossBlock([color, warm], [color], [])
+''')
+    code = generate(model)
+    assert 'lambda color: color in ("red", "green")' in code
+    assert 'lambda color: color not in ("red", "green")' in code
+    assert parse_program(code) == model

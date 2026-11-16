@@ -17,25 +17,42 @@ ideas behind each step.
 
    The *Simple* example: two factors and a derived factor, *volume*.
 
-**+ Factor** adds a factor. Type its levels into the *+ level, then Enter* box.
-The number next to a level is its weight: how often it appears compared with the
-other levels. **×** removes a level or a factor.
+**+ Factor** adds a factor. Each factor is a table with one row per level; **+
+Level** adds a row, and you click a name to rename it. The weight is how often a
+level appears compared with the other levels. **×** removes a level or a factor,
+and **▾** hides a factor's levels.
 
 **+ Derived factor** adds a factor whose level follows from other factors, such
 as whether a trial is congruent.
 
 - **Based on** lists the factors it depends on.
-- **within the same trial** compares factors in one trial. **compared with the
-  previous trial** can also look one trial back, for repeat and switch trials.
-- A level applies **when** its condition holds, or **otherwise** when no other
-  level does. A factor can have one *otherwise* level.
-- A condition compares a factor with a level or another factor, such as
-  *color is red* or *color is not word*. **+ and / or** combines conditions.
+- **Compare values: Within the same trial (lag = 0)** looks at one trial.
+  **Across trials** also looks back: **Lag = 1** is the previous trial, as for
+  repeat and switch trials, and **Lag = 2** is two trials back.
+- **Define levels by** chooses how each level is decided: **Function** or
+  **Enumerate**. Switching converts the levels from one way to the other.
+
+With **Function**, a level set to **When** applies if its condition holds, and
+one set to **Otherwise** applies when no other level does. A factor can have one *Otherwise* level.
+A condition is written in Python, the same as in the code pane. Suggestions
+appear as you type; press Enter to apply it.
+
+- ``color == word``, ``color != "red"``: compare a factor with another factor
+  or with a level. Levels go in quotes.
+- ``color in ("red", "blue")``: color has one of these levels.
+- Across trials, ``response[0]`` is this trial and ``response[-1]`` the trial
+  *lag* trials back (``response[-2]`` for lag 2). ``response[0] == response[-1]``
+  is a repeat.
+- Combine conditions with ``and``, ``or`` and ``not``.
+
+With **Enumerate**, a table lists every combination of the inputs' levels, and
+you choose the level for each. A combination set to *None* never occurs.
+Enumerate is offered when there are at most 64 combinations.
 
 Renaming a factor or a level updates every place that uses it.
 
 A factor only appears in trials if a block includes it. New factors join the
-first block; a factor in no block is marked *not in any block*.
+first block; a factor in no block is marked *Not in any block*.
 
 
 2. Blocks
@@ -51,9 +68,9 @@ A block crosses factors so that every combination of their levels appears. Each
 block's box has:
 
 - **Design**: the factors that get a level on every trial.
-- **Crossing**: the factors whose combinations are balanced. **+ crossing**
+- **Crossing**: the factors whose combinations are balanced. **+ Crossing**
   adds a second crossing over the same trials.
-- **every combination must appear**: turn this off when constraints rule out
+- **Every combination must appear**: turn this off when constraints rule out
   some combinations.
 - **Advanced**: rarely needed settings for crossings of different sizes.
 - **Constraints**: rules that apply within each run of the block.
@@ -66,11 +83,11 @@ Nest inside a new outer block
    Choose the outer block's factor under its **Crossing**.
 
 Merge with other blocks
-   Runs blocks over the same trials, each balanced on its own. **+ block** adds a
+   Runs blocks over the same trials, each balanced on its own. **+ Block** adds a
    block to the Merge; **×** removes one.
 
 Repeat
-   Runs the block again until its *Minimum trials* constraint is met.
+   Runs the block several times in a row; **Repeats [n] times** sets how many.
 
 Remove this Nest / Merge / Repeat
    Removes the arrangement and keeps the blocks inside it.
@@ -108,7 +125,8 @@ Pin a trial
    last.
 
 Minimum trials
-   Each sequence has at least this many trials.
+   Each sequence has at least this many trials. A Repeat has no *Minimum
+   trials* of its own: its **Repeats [n] times** box sets it.
 
 Cover all combinations
    Every combination of these factors' levels appears, and the sequence is

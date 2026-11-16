@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useLayoutEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { HideButton } from "./Splitter";
-import { crossingTitle, runs, type Block, type BlockSize, type Constraint, type Factor } from "../model";
+import { crossingTitle, runs, setsRuns, type Block, type BlockSize, type Constraint, type Factor } from "../model";
 
 // Above this many trials, ticks would be thinner than a pixel.
 const MAX_TICKS = 120;
@@ -10,16 +10,16 @@ function describe(c: Constraint): string {
   const ref = c.level === null || c.level === undefined ? c.factor : `${c.factor} = ${c.level}`;
   const factors = (c.factors ?? []).join(", ");
   switch (c.type) {
-    case "AtMostKInARow": return `at most ${c.k} in a row: ${ref}`;
-    case "AtLeastKInARow": return `at least ${c.k} in a row: ${ref}`;
-    case "ExactlyKInARow": return `exactly ${c.k} in a row: ${ref}`;
-    case "ExactlyK": return `exactly ${c.k} times: ${ref}`;
-    case "Exclude": return `never ${ref}`;
-    case "Pin": return `trial ${c.index} is ${ref}`;
-    case "MinimumTrials": return `at least ${c.trials} trials`;
+    case "AtMostKInARow": return `At most ${c.k} in a row: ${ref}`;
+    case "AtLeastKInARow": return `At least ${c.k} in a row: ${ref}`;
+    case "ExactlyKInARow": return `Exactly ${c.k} in a row: ${ref}`;
+    case "ExactlyK": return `Exactly ${c.k} times: ${ref}`;
+    case "Exclude": return `Never ${ref}`;
+    case "Pin": return `Trial ${c.index} is ${ref}`;
+    case "MinimumTrials": return `At least ${c.trials} trials`;
     case "Sequential": return `${c.factor} in order`;
     case "LatinSquare": return `Latin square of ${factors}`;
-    default: return `cover all combinations of ${factors}`;
+    default: return `Cover all combinations of ${factors}`;
   }
 }
 
@@ -45,10 +45,11 @@ function LinkIcon() {
 }
 
 function Tags({ block }: { block: Block }) {
-  if (block.constraints.length === 0) return null;
+  const shown = block.constraints.filter((c) => !setsRuns(block, c));
+  if (shown.length === 0) return null;
   return (
     <span className="d-tags">
-      {block.constraints.map((c, i) => <span key={i} className="d-tag" title="Constraint"><LinkIcon />{describe(c)}</span>)}
+      {shown.map((c, i) => <span key={i} className="d-tag" title="Constraint"><LinkIcon />{describe(c)}</span>)}
     </span>
   );
 }
@@ -128,7 +129,7 @@ function Diagram(props: DiagramProps) {
               {i > 0 && (
                 <div className={mark("merge-link")} onClick={pick} role="button" tabIndex={0} title={`Merge · ${block.name}`}>
                   <span className="merge-node">+</span>
-                  <span className="d-note">merge</span>
+                  <span className="d-note">Merge</span>
                 </div>
               )}
               {sub(b)}
@@ -148,7 +149,7 @@ function Diagram(props: DiagramProps) {
   return (
     <div className="d-repeat">
       <div className={mark("loop-label")} onClick={pick} role="button" tabIndex={0}>
-        <span>↻ repeat ×{runs(block, sizes) ?? "?"}</span>
+        <span>↻ Repeat ×{runs(block, sizes) ?? "?"}</span>
         <Tags block={block} />
       </div>
       <div className="loop-area">

@@ -1,4 +1,4 @@
-import { BLOCK_LABELS, allBlocks, findFactor, updateBlock, type Block, type Constraint, type Model } from "../model";
+import { BLOCK_LABELS, allBlocks, findFactor, setsRuns, updateBlock, type Block, type Constraint, type Model } from "../model";
 
 type Props = { model: Model; onChange: (model: Model) => void };
 type Field = "k" | "factor" | "level" | "anyLevel" | "index" | "trials" | "factors" | "optional";
@@ -73,11 +73,11 @@ function ConstraintCard({ model, constraint: c, onChange, onRemove }: {
       </header>
       <p className="hint">{help}</p>
       <div className="fields">
-        {fields.includes("k") && <label>K {number("k")}</label>}
-        {fields.includes("index") && <label>Trial {number("index")}</label>}
-        {fields.includes("trials") && <label>Trials {number("trials")}</label>}
+        {fields.includes("k") && <label title="The number of trials this constraint counts">K {number("k")}</label>}
+        {fields.includes("index") && <label title="Position in the block: 0 is the first trial, -1 the last">Trial {number("index")}</label>}
+        {fields.includes("trials") && <label title="The fewest trials a sequence may have">Trials {number("trials")}</label>}
         {fields.includes("factor") && (
-          <label>
+          <label title="The factor this constraint applies to; it must be in the block's design">
             Factor
             <select value={c.factor} onChange={(e) => onChange({ ...c, factor: e.target.value,
               level: c.level === null ? null : findFactor(model, e.target.value)?.levels[0]?.name ?? null })}>
@@ -86,16 +86,16 @@ function ConstraintCard({ model, constraint: c, onChange, onRemove }: {
           </label>
         )}
         {(fields.includes("level") || fields.includes("anyLevel")) && (
-          <label>
+          <label title="The level this constraint applies to">
             Level
             <select value={JSON.stringify(c.level)} onChange={(e) => onChange({ ...c, level: JSON.parse(e.target.value) })}>
-              {fields.includes("anyLevel") && <option value="null">any level</option>}
+              {fields.includes("anyLevel") && <option value="null">Any level</option>}
               {levels.map((l) => <option key={String(l.name)} value={JSON.stringify(l.name)}>{l.name}</option>)}
             </select>
           </label>
         )}
         {fields.includes("factors") && (
-          <div>Factors <FactorChecks model={model} chosen={c.factors!} onChange={(factors) => onChange({ ...c, factors })} /></div>
+          <div title="The factors this constraint applies to">Factors <FactorChecks model={model} chosen={c.factors!} onChange={(factors) => onChange({ ...c, factors })} /></div>
         )}
         {fields.includes("optional") && (
           <div>Optional <FactorChecks model={model} chosen={c.optional!} onChange={(optional) => onChange({ ...c, optional })} /></div>
@@ -118,15 +118,16 @@ export function ConstraintList({ model, block, onChange }: Props & { block: Bloc
   const crossed = block.type === "cross" ? block.crossings[0] ?? [] : [];
   return (
     <div className="constraint-list">
-      {block.constraints.map((c, i) => (
+      {block.constraints.map((c, i) => setsRuns(block, c) ? null : (
         <ConstraintCard key={i} model={model} constraint={c}
           onChange={(next) => set(block.constraints.map((d, j) => (j === i ? next : d)))}
           onRemove={() => set(block.constraints.filter((_, j) => j !== i))} />
       ))}
-      <select value="" disabled={model.factors.length === 0}
+      <select className="add" value="" disabled={model.factors.length === 0} title="Add a constraint to this block"
         onChange={(e) => set([...block.constraints, blank(e.target.value, model, crossed)])}>
-        <option value="">+ Constraint…</option>
-        {Object.entries(TYPES).map(([type, t]) => <option key={type} value={type}>{t.label}</option>)}
+        <option value="" hidden disabled>+ Constraint…</option>
+        {Object.entries(TYPES).filter(([type]) => !setsRuns(block, { type })).map(([type, t]) =>
+          <option key={type} value={type} title={t.help}>{t.label}</option>)}
       </select>
     </div>
   );
